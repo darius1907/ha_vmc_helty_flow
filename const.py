@@ -1,0 +1,4 @@
+DOMAIN = "vmc_helty_flow"
+DEFAULT_PORT = 5001
+SCAN_TIMEOUT = 2
+
