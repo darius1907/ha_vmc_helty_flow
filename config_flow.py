@@ -46,90 +46,65 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             # Prima volta: esegui discovery
             try:
-                ips = await discover_vmc_devices(subnet=self.subnet, port=self.port)
+                devices = await discover_vmc_devices(subnet=self.subnet, port=self.port)
+                self.discovered_devices = devices
 
-                if not ips:
+                if not devices:
+                    errors["base"] = "no_devices_found"
+                else:
+                    # Crea le opzioni per la selezione con formato: "Nome (IP)"
+                    device_options = {}
+                    for device in devices:
+                        key = device["ip"]
+                        display_name = f"{device['name']} ({device['ip']})"
+                        device_options[key] = display_name
+
+                    schema = vol.Schema({
+                        vol.Required("selected_devices"): cv.multi_select(device_options)
+                    })
+
                     return self.async_show_form(
                         step_id="discovery",
-                        data_schema=vol.Schema({}),
-                        errors={"base": "no_devices_found"},
+                        data_schema=schema,
+                        errors=errors,
                         description_placeholders={
-                            "subnet": self.subnet,
-                            "port": str(self.port)
+                            "help": f"Trovati {len(devices)} dispositivi. Seleziona quelli da aggiungere."
                         }
                     )
 
-                # Recupera i nomi dei dispositivi
-                self.discovered_devices = []
-                for ip in ips:
-                    try:
-                        name = await get_device_name(ip, port=self.port)
-                        if not name:
-                            name = f"VMC {ip}"
-                        self.discovered_devices.append({"ip": ip, "name": name})
-                    except Exception:
-                        # Se non riusciamo a ottenere il nome, usa l'IP
-                        self.discovered_devices.append({"ip": ip, "name": f"VMC {ip}"})
+            except Exception as ex:
+                errors["base"] = "discovery_failed"
 
-                # Crea le opzioni per la selezione
-                device_options = {}
-                for device in self.discovered_devices:
-                    key = f"{device['ip']}"
-                    device_options[key] = f"{device['name']} ({device['ip']})"
+            # Se ci sono errori, mostra di nuovo la form iniziale
+            schema = vol.Schema({
+                vol.Required("subnet", default=self.subnet): str,
+                vol.Required("port", default=self.port): int
+            })
+            return self.async_show_form(
+                step_id="user",
+                data_schema=schema,
+                errors=errors
+            )
 
-                schema = vol.Schema({
-                    vol.Required("selected_devices", default=list(device_options.keys())):
-                    vol.All(cv.multi_select(device_options), vol.Length(min=1))
-                })
+        # L'utente ha selezionato i dispositivi
+        selected_ips = user_input["selected_devices"]
 
-                return self.async_show_form(
-                    step_id="discovery",
-                    data_schema=schema,
-                    description_placeholders={
-                        "count": str(len(self.discovered_devices)),
-                        "subnet": self.subnet,
-                        "port": str(self.port)
-                    }
-                )
+        # Crea le entry per ogni dispositivo selezionato
+        for ip in selected_ips:
+            # Trova il dispositivo corrispondente
+            device = next((d for d in self.discovered_devices if d["ip"] == ip), None)
+            if device:
+                await self.async_set_unique_id(ip)
+                self._abort_if_unique_id_configured()
 
-            except Exception as e:
-                errors["base"] = "cannot_connect"
-                return self.async_show_form(
-                    step_id="discovery",
-                    data_schema=vol.Schema({}),
-                    errors=errors,
-                    description_placeholders={
-                        "subnet": self.subnet,
-                        "port": str(self.port)
-                    }
-                )
-        else:
-            # L'utente ha selezionato i dispositivi
-            try:
-                selected_ips = user_input["selected_devices"]
-                selected_devices = []
-
-                for device in self.discovered_devices:
-                    if device["ip"] in selected_ips:
-                        selected_devices.append(device)
-
-                # Crea l'entry di configurazione
                 return self.async_create_entry(
-                    title="VMC Helty Flow",
+                    title=device["name"],
                     data={
-                        "devices": selected_devices,
-                        "subnet": self.subnet,
-                        "port": self.port
+                        "ip": ip,
+                        "port": self.port,
+                        "name": device["name"]
                     }
                 )
 
-            except Exception as e:
-                errors["base"] = "unknown"
-                schema = vol.Schema({
-                    vol.Required("selected_devices"): vol.All(cv.multi_select({}), vol.Length(min=1))
-                })
-                return self.async_show_form(
-                    step_id="discovery",
-                    data_schema=schema,
-                    errors=errors
-                )
+        # Se non ci sono dispositivi selezionati validi
+        return self.async_abort(reason="no_devices_selected")
