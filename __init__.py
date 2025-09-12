@@ -1,8 +1,8 @@
-from fan import VmcHeltyFan
-from sensor import VmcHeltySensor
+from .fan import VmcHeltyFan
+from .sensor import VmcHeltySensor, VmcHeltyOnOffSensor, VmcHeltyResetFilterButton, VmcHeltyNameText
 from .switch import VmcHeltyModeSwitch, VmcHeltyPanelLedSwitch
-from light import VmcHeltyLight
-from light_timer import VmcHeltyLightTimer
+from .light import VmcHeltyLight
+from .light_timer import VmcHeltyLightTimer
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -24,5 +24,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         entities.append(VmcHeltyPanelLedSwitch(ip, name))
         entities.append(VmcHeltyLight(ip, name))
         entities.append(VmcHeltyLightTimer(ip, name))
+        entities.append(VmcHeltyOnOffSensor(ip, name))
+        entities.append(VmcHeltyResetFilterButton(ip, name))
+        entities.append(VmcHeltyNameText(ip, name))
     async_add_entities(entities)
     return True
