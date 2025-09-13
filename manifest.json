@@ -4,13 +4,17 @@
   "codeowners": ["@dpezzoli"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://gitea.lan/dpezzoli/ha_vmc_helty_flow",
-  "integration_type": "hub",
+  "documentation": "https://github.com/dpezzoli/ha_vmc_helty_flow",
+  "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/dpezzoli/ha_vmc_helty_flow/issues",
   "requirements": [],
   "ssdp": [],
   "version": "1.0.0",
-  "zeroconf": []
+  "zeroconf": [],
+  "quality_scale": "silver",
+  "loggers": ["vmc_helty_flow"],
+  "homekit": {},
+  "after_dependencies": ["network"],
+  "dhcp": []
 }
-

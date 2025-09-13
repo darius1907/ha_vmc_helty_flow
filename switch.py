@@ -2,8 +2,36 @@
 Entità Switch per modalità speciali VMC Helty Flow
 """
 from homeassistant.components.switch import SwitchEntity
-from .const import DOMAIN, DEFAULT_PORT
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .const import DOMAIN
+from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up VMC Helty switches from config entry."""
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+
+    entities = [
+        # Modalità speciali
+        VmcHeltyModeSwitch(coordinator, "hyperventilation", "Iperventilazione"),
+        VmcHeltyModeSwitch(coordinator, "night", "Modalità Notte"),
+        VmcHeltyModeSwitch(coordinator, "free_cooling", "Free Cooling"),
+
+        # Altri switch
+        VmcHeltyPanelLedSwitch(coordinator),
+        VmcHeltySensorsSwitch(coordinator),
+    ]
+
+    async_add_entities(entities)
+
 
 MODES = {
     "hyperventilation": {"cmd": "VMWH0000005", "fan_value": 6, "name": "Iperventilazione"},
@@ -11,112 +39,159 @@ MODES = {
     "free_cooling": {"cmd": "VMWH0000007", "fan_value": 7, "name": "Free Cooling"}
 }
 
-class VmcHeltyModeSwitch(SwitchEntity):
-    def __init__(self, ip, name, mode_key):
-        self._ip = ip
-        self._name = name
+
+class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
+    """VMC Helty special mode switch."""
+
+    def __init__(self, coordinator, mode_key, mode_name):
+        """Initialize the switch."""
+        super().__init__(coordinator)
         self._mode_key = mode_key
-        self._is_on = False
-        self._available = True
+        self._attr_unique_id = f"{coordinator.ip}_{mode_key}"
+        self._attr_name = f"{coordinator.name} {mode_name}"
+        self._attr_icon = self._get_mode_icon(mode_key)
 
-    @property
-    def name(self):
-        return f"{self._name} {MODES[self._mode_key]['name']}"
-
-    @property
-    def is_on(self):
-        return self._is_on
-
-    @property
-    def available(self):
-        return self._available
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._ip)},
-            "name": self._name,
-            "manufacturer": "Helty",
-            "model": "VMC Flow",
-            "sw_version": "1.0"
+    def _get_mode_icon(self, mode_key):
+        """Get icon for mode."""
+        icons = {
+            "hyperventilation": "mdi:fan-plus",
+            "night": "mdi:weather-night",
+            "free_cooling": "mdi:snowflake"
         }
+        return icons.get(mode_key, "mdi:toggle-switch")
 
-    async def async_turn_on(self, **kwargs):
-        cmd = MODES[self._mode_key]["cmd"]
-        response = await tcp_send_command(self._ip, DEFAULT_PORT, cmd)
-        if response == "OK":
-            self._is_on = True
-            self.async_write_ha_state()
+    @property
+    def is_on(self) -> bool:
+        """Return True if mode is active."""
+        if not self.coordinator.data:
+            return False
 
-    async def async_turn_off(self, **kwargs):
-        # Disattivare la modalità speciale: imposto la ventola su manuale (es. livello 1)
-        response = await tcp_send_command(self._ip, DEFAULT_PORT, "VMWH0000001")
-        if response == "OK":
-            self._is_on = False
-            self.async_write_ha_state()
-
-    async def async_update(self):
-        response = await tcp_send_command(self._ip, DEFAULT_PORT, "VMGH?")
-        if response and response.startswith("VMGO"):
-            parts = response.split(",")
+        status = self.coordinator.data.get("status", "")
+        if status and status.startswith("VMGO"):
             try:
-                fan_value = int(parts[1])
-                self._is_on = fan_value == MODES[self._mode_key]["fan_value"]
-                self._available = True
-            except Exception:
-                self._available = False
-        else:
-            self._available = False
+                parts = status.split(",")
+                fan_speed = int(parts[1]) if len(parts) > 1 else 0
+                return fan_speed == MODES[self._mode_key]["fan_value"]
+            except (ValueError, IndexError):
+                return False
+        return False
 
-class VmcHeltyPanelLedSwitch(SwitchEntity):
-    def __init__(self, ip, name):
-        self._ip = ip
-        self._name = name
-        self._is_on = False
-        self._available = True
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn on the mode."""
+        try:
+            response = await tcp_send_command(
+                self.coordinator.ip, 5001, MODES[self._mode_key]["cmd"]
+            )
+            if response == "OK":
+                await self.coordinator.async_request_refresh()
+        except Exception as err:
+            raise err
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn off the mode (set to manual speed 1)."""
+        try:
+            # Disattiva la modalità speciale impostando velocità manuale 1
+            response = await tcp_send_command(
+                self.coordinator.ip, 5001, "VMWH0000001"
+            )
+            if response == "OK":
+                await self.coordinator.async_request_refresh()
+        except Exception as err:
+            raise err
+
+
+class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
+    """VMC Helty panel LED switch."""
+
+    def __init__(self, coordinator):
+        """Initialize the switch."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.ip}_panel_led"
+        self._attr_name = f"{coordinator.name} Panel LED"
+        self._attr_icon = "mdi:led-on"
 
     @property
-    def name(self):
-        return f"{self._name} LED Pannello"
+    def is_on(self) -> bool:
+        """Return True if panel LED is on."""
+        if not self.coordinator.data:
+            return False
 
-    @property
-    def is_on(self):
-        return self._is_on
-
-    @property
-    def available(self):
-        return self._available
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._ip)},
-            "name": self._name,
-            "manufacturer": "Helty",
-            "model": "VMC Flow",
-            "sw_version": "1.0"
-        }
-
-    async def async_turn_on(self, **kwargs):
-        response = await tcp_send_command(self._ip, DEFAULT_PORT, "VMWH0100010")
-        if response == "OK":
-            self._is_on = True
-            self.async_write_ha_state()
-
-    async def async_turn_off(self, **kwargs):
-        response = await tcp_send_command(self._ip, DEFAULT_PORT, "VMWH0100000")
-        if response == "OK":
-            self._is_on = False
-            self.async_write_ha_state()
-
-    async def async_update(self):
-        response = await tcp_send_command(self._ip, DEFAULT_PORT, "VMGH?")
-        if response and response.startswith("VMGO"):
-            parts = response.split(",")
+        status = self.coordinator.data.get("status", "")
+        if status and status.startswith("VMGO"):
             try:
-                self._is_on = int(parts[1]) == 1  # 2° campo: LED pannello
-                self._available = True
-            except Exception:
-                self._available = False
-        else:
-            self._available = False
+                parts = status.split(",")
+                return parts[2] == "1" if len(parts) > 2 else False
+            except (ValueError, IndexError):
+                return False
+        return False
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn on panel LED."""
+        try:
+            response = await tcp_send_command(
+                self.coordinator.ip, 5001, "VMWH0100010"
+            )
+            if response == "OK":
+                await self.coordinator.async_request_refresh()
+        except Exception as err:
+            raise err
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn off panel LED."""
+        try:
+            response = await tcp_send_command(
+                self.coordinator.ip, 5001, "VMWH0100000"
+            )
+            if response == "OK":
+                await self.coordinator.async_request_refresh()
+        except Exception as err:
+            raise err
+
+
+class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
+    """VMC Helty sensors activation switch."""
+
+    def __init__(self, coordinator):
+        """Initialize the switch."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.ip}_sensors"
+        self._attr_name = f"{coordinator.name} Sensors"
+        self._attr_icon = "mdi:eye"
+
+    @property
+    def is_on(self) -> bool:
+        """Return True if sensors are active."""
+        if not self.coordinator.data:
+            return True  # Default active
+
+        status = self.coordinator.data.get("status", "")
+        if status and status.startswith("VMGO"):
+            try:
+                parts = status.split(",")
+                # Sensori attivi se il valore è 0, inattivi se 1
+                return parts[4] == "0" if len(parts) > 4 else True
+            except (ValueError, IndexError):
+                return True
+        return True
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn on sensors."""
+        try:
+            response = await tcp_send_command(
+                self.coordinator.ip, 5001, "VMWH0300000"
+            )
+            if response == "OK":
+                await self.coordinator.async_request_refresh()
+        except Exception as err:
+            raise err
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn off sensors."""
+        try:
+            response = await tcp_send_command(
+                self.coordinator.ip, 5001, "VMWH0300002"
+            )
+            if response == "OK":
+                await self.coordinator.async_request_refresh()
+        except Exception as err:
+            raise err

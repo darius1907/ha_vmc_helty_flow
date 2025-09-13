@@ -1,19 +1,19 @@
-# Specifiche Funzionali del Progetto VMC Control
+# Specifiche Funzionali del Progetto VMC Helty Flow Integration per Home Assistant
 
-## Panoramica
+## 1. Panoramica
 Il progetto vmc_helty_flow è un'integrazione per home assistant per rilevare nella subnet locale i dispositivi VMC Helty Flow (Ventilazione Meccanica Controllata) 
 L'applicazione offre inoltre una dashboard lovelace per la gestione e il monitoraggio dello stato in tempo reale e controllo delle principali impostazioni.
 L'obiettivo è fornire un'interfaccia utente intuitiva e centralizzata per la gestione dei dispositivi VMC, semplificando la configurazione e il monitoraggio.
 
-## Architettura
+## 2. Architettura
 L'applicazione è un custom component per Home Assistant, sviluppato in Python, che utilizza protocolli di rete per comunicare con i dispositivi VMC Helty Flow.
 L'architettura si basa su una scansione della rete locale per individuare i dispositivi VMC, seguita da una gestione centralizzata delle connessioni e dello stato dei dispositivi.
 L'interfaccia utente è realizzata tramite una dashboard lovelace personalizzata, che consente di visualizzare lo stato dei dispositivi e di inviare comandi.
 
 
-## Funzionalità Dettagliate
+## 3. Funzionalità Dettagliate
 
-### 1. Discovery dei Dispositivi
+### 3.1 Discovery dei Dispositivi
 - **Scansione della rete**:
     - L'applicazione esegue una scansione asincrona della subnet locale (192.168.1.1-192.168.1.254) sulla porta 5001 per identificare i dispositivi VMC attivi.
     - Utilizza Socket TCP/IP asincroni per gestire connessioni multiple simultaneamente.
@@ -79,7 +79,7 @@ L'interfaccia utente è realizzata tramite una dashboard lovelace personalizzata
     - Al dispositivo viene associato un sensore di stato che indica la password della rete a cui è connesso, basato sull'ultimo comando di rete ricevuto (mascherata per sicurezza)
 
 
-### 2. Dashboard lovelace
+### 3.2 Dashboard lovelace
 - **Single Device**:
     - Permette di controllare un singolo dispositivo VMC.
     - Ogni dispositivo ha un pannello dedicato con i controlli specifici, fornendo un'interfaccia chiara e focalizzata.
@@ -96,7 +96,7 @@ L'interfaccia utente è realizzata tramite una dashboard lovelace personalizzata
   **Notifiche**: Le notifiche di errore vanno gestite tramite persistent_notification e toast, le notifiche di successo solo tramite toast.
 
 
-### 3. Comandi Supportati
+### 3.3 Comandi Supportati
 L'applicazione supporta i seguenti comandi per interagire con i dispositivi VMC:
 - **Lettura dello stato**:
     - `get_status`: Ottiene lo stato generale del dispositivo.
@@ -241,7 +241,7 @@ L'applicazione supporta i seguenti comandi per interagire con i dispositivi VMC:
         - **Reset**: In caso di password dimenticata, è possibile resettare il dispositivo tramite il pulsante fisico di reset
         - **Feedback utente**: `Password dispositivo aggiornata correttamente`
 
-#### Dettaglio campi output VMGH? (Stato dispositivo)
+### 3.4 Dettaglio campi output VMGH? (Stato dispositivo)
 
 Il comando `VMGH?` restituisce una stringa con 15 valori:
 
@@ -260,7 +260,7 @@ Esempio: `VMGO,00001,00000,00004,00002,00000,00010,00000,01200,00200,00220,09000
 
 ---
 
-#### Dettaglio campi output VMGI? (Dati sensori)
+### 3.5 Dettaglio campi output VMGI? (Dati sensori)
 
 Il comando `VMGI?` restituisce una stringa con 15 valori:
 
@@ -281,9 +281,88 @@ Esempio: `VMGI,00260,00257,00469,00320,16384,06043,00247,00112,04354,00125,00015
 - co2: 850 ppm
 - voc: 120 ppb
 
----
+### 3.6 Protocollo di Comunicazione VMC
+- **Tipo di Protocollo**: TCP/IP su porta 5001.
+- **Formato dei Comandi**: Stringhe ASCII terminate da `\r\n`.
+- **Encoding**: ASCII (i caratteri non ASCII vengono ignorati).
+- **Struttura dei Comandi**:
+    - I comandi iniziano con un identificativo (es. `VMNM`, `VMSL`, `VMGH`, `VMWH`).
+    - Alcuni comandi richiedono parametri, separati da spazi (es. `VMNM NomeDispositivo`).
+    - La lunghezza massima dei comandi è di circa 200 caratteri.
+- **Risposte**:
+    - Le risposte sono stringhe ASCII.
+    - I comandi di "lettura" (es. `VMNM?`, `VMSL?`, `VMGH?`, `VMGI?`) restituiscono stringhe contenenti i dati richiesti.
+    - I comandi di "scrittura" (es. `VMWH*`, `VMNM`) generalmente restituiscono `OK` se l'operazione ha avuto successo.
+    - In caso di errore, il dispositivo può restituire una stringa di errore o non rispondere affatto.
+- **Formato dello Stato (`VMGH?`)**:
+    - La risposta inizia con `VMGO,` seguito da 15 valori separati da virgole.
+    - I valori rappresentano:
+        1. Velocità della ventola (0-7, vedi sezione "Logica Ventola/Modalità Speciali").
+        2. Stato del LED del pannello (0 o 1).
+        3. Riservato.
+        4. Stato dei sensori (0 = attivi, 1 = inattivi).
+        5. -10. Riservati.
+        11. Livello delle luci (0-100).
+        12. -14. Riservati.
+        15. Timer delle luci (in secondi).
+- **Logica Ventola/Modalità Speciali**:
+    - Il valore della velocità della ventola nello stato (`VMGH?`) può indicare anche la modalità speciale attiva:
+        - 5: Modalità notte attiva, ventola a 1.
+        - 6: Iperventilazione attiva, ventola a 4.
+        - 7: Free cooling attivo, ventola a 0.
+    - L'applicazione gestisce questa decodifica internamente per mostrare lo stato corretto nell'interfaccia utente.
+- **Gestione degli Errori**:
+    - L'applicazione implementa timeout per evitare blocchi in caso di mancata risposta del dispositivo.
+    - Le risposte non valide o inattese vengono gestite con messaggi di errore appropriati.
+    - Le password vengono mascherate nei log per motivi di sicurezza.
 
-#### Gestione degli errori
+
+### 3.7 Interpretazione delle Risposte VMC
+- **Generalità**:
+    - Le risposte dei dispositivi VMC sono stringhe ASCII.
+    - La prima parte della stringa indica il tipo di risposta (es. `VMGO`, `VMNM`, `VMSL`, `VMGI`).
+    - I dati sono separati da virgole.
+- **Risposta `get_status` (VMGH?)**:
+    - Formato: `VMGO,fan_speed,panel_led,reserved,sensors,reserved,...,lights_level,reserved,...,lights_timer`
+    - `fan_speed`: Velocità della ventola (0-7). Vedi "Logica Ventola/Modalità Speciali".
+    - `panel_led`: Stato del LED del pannello (0 = spento, 1 = acceso).
+    - `sensors`: Stato dei sensori (0 = attivi, 1 = inattivi).
+    - `lights_level`: Livello delle luci (0-100).
+    - `lights_timer`: Timer delle luci (in secondi).
+- **Risposta `get_name` (VMNM?)**:
+    - Formato: `VMNM nome_dispositivo`
+    - `nome_dispositivo`: Nome del dispositivo (stringa ASCII).
+- **Risposta `get_network_info` (VMSL?)**:
+    - Formato: `ssidpassword0000000000000000500100000000000000000000000000000001`
+    - `ssid`: SSID della rete Wi-Fi (32 caratteri, riempiti con `*` se più corto).
+    - `password`: Password della rete Wi-Fi (32 caratteri, riempiti con `*` se più corta).
+    - L'applicazione rimuove i caratteri di riempimento (`*`) per visualizzare solo l'SSID e la password effettivi.
+- **Risposta `get_sensors_data` (VMGI?)**:
+    - Formato: `VMGI,temp_int,temp_ext,humidity,co2,reserved,...,voc`
+    - `temp_int`: Temperatura interna (decimi di grado Celsius).
+    - `temp_ext`: Temperatura esterna (decimi di grado Celsius).
+    - `humidity`: Umidità (decimi di percentuale).
+    - `co2`: Livello di CO2 (ppm).
+    - `voc`: Livello di VOC (ppb).
+    - L'applicazione converte i valori in unità di misura comprensibili (es. gradi Celsius, percentuale, ppm, ppb).
+- **Risposte ai Comandi di Scrittura**:
+    - Generalmente, i comandi di scrittura (es. `set_fan_speed`, `set_lights`, `set_name`) restituiscono `OK` in caso di successo.
+    - In caso di errore, il dispositivo può restituire una stringa di errore o non rispondere affatto.
+    - L'applicazione gestisce questi casi e fornisce un feedback appropriato all'utente.
+- **Logica Ventola/Modalità Speciali**:
+    - Il valore della velocità della ventola nello stato (`VMGH?`) può indicare anche la modalità speciale attiva:
+        - 5: Modalità notte attiva, valore ventola visualizzato a 1.
+        - 6: Iperventilazione attiva, valore ventola visualizzato a 4.
+        - 7: Free cooling attivo, valore ventola visualizzato a 0.
+        - Se il valore della ventola reale è compreso tra 0 e 4, le modalità speciali sono disattivate e la velocità della ventola è impostata manualmente.
+    - L'applicazione gestisce questa decodifica internamente per mostrare lo stato corretto nell'interfaccia utente.
+- **Gestione degli Errori**:
+    - L'applicazione implementa timeout per evitare blocchi in caso di mancata risposta del dispositivo.
+    - Le risposte non valide o inattese vengono gestite con messaggi di errore appropriati.
+    - Le password vengono mascherate nei log per motivi di sicurezza.
+
+
+### 3.8 Gestione degli errori
 - **Timeout di connessione**: Se un dispositivo non risponde entro il timeout configurato, viene considerato offline e viene mostrato un messaggio di errore.
 - **Comando non riuscito**: Se un comando non viene eseguito correttamente, viene mostrato un messaggio di errore con il motivo del fallimento.
 - **Input non valido**: Se l'utente inserisce un valore non valido, viene mostrato un messaggio di errore e il valore non viene inviato al dispositivo.
@@ -292,7 +371,7 @@ Esempio: `VMGI,00260,00257,00469,00320,16384,06043,00247,00112,04354,00125,00015
 - **Notifiche all'utente**: L'utente viene informato degli errori tramite notifiche nell'interfaccia utente, con suggerimenti per la risoluzione
 - **Rate limiting**: Per prevenire il sovraccarico del dispositivo, i comandi inviati non possono superare una frequenza di 1 comando ogni 2 secondi per dispositivo.
 
-### 4. Dashboard e Interfaccia Utente
+### 3.9 Interfaccia Utente
 L'interfaccia utente è progettata per essere intuitiva e facile da usare. 
 
 Le principali componenti sono:
@@ -340,35 +419,19 @@ Le principali componenti sono:
 - **Feedback utente**:
     - Utilizza notifiche toast per informare l'utente sull'esito delle operazioni
     - Mostra messaggi di errore chiari e informativi in caso di problemi
-    - Fornisce suggerimenti per la risoluzione dei problemi comuni
+    - Fornisce suggerimenti per la risoluzione dei problemi comuni.
+    - Garantisce che l'utente riceva un feedback chiaro e immediato su ogni azione eseguita.
+    - Include best practice per l'utilizzo dell'interfaccia e la gestione dei dispositivi VMC.
     - Feedback immediato all'utente sull'esito dei comandi
-    - Messaggi di errore chiari e informativi
-    - Suggerimenti per la risoluzione dei problemi
-- **Logging e diagnostica**:
-    - Log dettagliati delle operazioni di rete e dei comandi
-    - Mascheramento automatico delle password nei log
-    - Debug mode per informazioni aggiuntive durante lo sviluppo
-- **Decodifica dello stato della ventola**:
-    - Gestione automatica delle modalità speciali:
-        - 5: Modalità notte attiva (ventola a 1)
-        - 6: Iperventilazione attiva (ventola a 4)
-        - 7: Free cooling attivo (ventola a 0)
-    - Aggiornamento automatico dell'interfaccia utente in base alla modalità attiva
-- **Stato del dispositivo**:
-  - Un dispositivo che non risponde ai comandi viene considerato offline dopo 3 tentativi falliti.
-  - Lo stato online/offline viene visualizzato chiaramente nell'interfaccia utente.
-  - Viene mostrato l'ultimo timestamp di risposta valida del dispositivo.
-  - Viene mostrato il numero di ore di utilizzo del filtro, basato su un contatore interno del dispositivo.
-  - Viene mostrato l'indirizzo IP attuale del dispositivo.
-  - Viene mostrato l'SSID della rete a cui è connesso il dispositivo.
 
-### 6. Sicurezza
+
+## 4. Sicurezza
 - **Mascheramento password**: Le password non vengono mai mostrate in chiaro nell'interfaccia utente o nei log.
 - **Validazione input**: I dati inseriti dall'utente vengono validati per prevenire errori e problemi di sicurezza.
 - **Gestione connessioni**: Le connessioni socket vengono gestite in modo sicuro con timeout e chiusura appropriata.
 - **Protezione dati**: I dati sensibili vengono salvati in modo sicuro utilizzando le API di sistema appropriate per ogni piattaforma.
 
-### 7. Gestione Connessioni
+## 5. Gestione Connessioni
 - **Connessioni Socket**:
     - Gestione asincrona delle connessioni TCP/IP
     - Implementazione di timeout configurabili
@@ -380,7 +443,7 @@ Le principali componenti sono:
     - Feedback all'utente sullo stato della connessione
     - Tentativi automatici di riconnessione
 
-### 8. Persistenza
+## 6. Persistenza
 
 - **Storage Integrato Home Assistant**:
     - L'integrazione sfrutta le API di storage di Home Assistant per la persistenza dei dati, utilizzando la classe `Store` (`homeassistant.helpers.storage.Store`) per salvare e recuperare le informazioni dei dispositivi VMC e delle relative configurazioni.
@@ -412,7 +475,7 @@ Le principali componenti sono:
     - Il restore avviene importando i file di storage nella nuova istanza o ripristinando i file originali, garantendo la continuità della configurazione e dello stato dei dispositivi.
     - La documentazione dell'integrazione fornisce istruzioni dettagliate per eseguire backup e restore in modo sicuro e compatibile con le versioni future di Home Assistant.
 
-### 9. Test e Validazione
+## 7. Test e Validazione
 - **Copertura di test automatici**:
     - L'integrazione prevede una copertura di test automatici (unitari e di integrazione) pari ad almeno l'80% del codice.
     - I test unitari verificano la correttezza delle singole funzioni e classi.
@@ -420,14 +483,14 @@ Le principali componenti sono:
     - I test vengono eseguiti automaticamente tramite pipeline CI/CD ad ogni modifica del codice.
     - La documentazione include istruzioni su come eseguire i test manualmente e interpretare i risultati, sia tramite comandi da terminale che tramite strumenti di Home Assistant.
 
-### 10. Internazionalizzazione
+## 8. Internazionalizzazione
 - **Supporto lingue**:
     - L'integrazione supporta la localizzazione completa in italiano e inglese.
     - Tutti i messaggi, le notifiche, le descrizioni e le etichette dell'interfaccia utente sono tradotti tramite le funzionalità di localizzazione di Home Assistant.
     - La lingua visualizzata viene selezionata automaticamente in base alle impostazioni di Home Assistant o può essere configurata dall'utente.
     - La documentazione include istruzioni su come contribuire con nuove traduzioni e come segnalare errori di localizzazione.
 
-### 11. Aggiornamenti e Manutenzione
+## 9. Aggiornamenti e Manutenzione
 - **Gestione degli aggiornamenti**:
     - Gli aggiornamenti dell'integrazione vengono gestiti tramite HACS (Home Assistant Community Store) o repository ufficiale Home Assistant.
     - Ad ogni aggiornamento, viene verificata la compatibilità con la versione corrente di Home Assistant.
@@ -437,150 +500,58 @@ Le principali componenti sono:
     - Gli utenti sono informati tramite changelog e notifiche in Home Assistant sulle novità e sulle procedure consigliate per l'aggiornamento.
 
 
-### 13. Protocollo di Comunicazione VMC
-- **Tipo di Protocollo**: TCP/IP su porta 5001.
-- **Formato dei Comandi**: Stringhe ASCII terminate da `\r\n`.
-- **Encoding**: ASCII (i caratteri non ASCII vengono ignorati).
-- **Struttura dei Comandi**:
-    - I comandi iniziano con un identificativo (es. `VMNM`, `VMSL`, `VMGH`, `VMWH`).
-    - Alcuni comandi richiedono parametri, separati da spazi (es. `VMNM NomeDispositivo`).
-    - La lunghezza massima dei comandi è di circa 200 caratteri.
-- **Risposte**:
-    - Le risposte sono stringhe ASCII.
-    - I comandi di "lettura" (es. `VMNM?`, `VMSL?`, `VMGH?`, `VMGI?`) restituiscono stringhe contenenti i dati richiesti.
-    - I comandi di "scrittura" (es. `VMWH*`, `VMNM`) generalmente restituiscono `OK` se l'operazione ha avuto successo.
-    - In caso di errore, il dispositivo può restituire una stringa di errore o non rispondere affatto.
-- **Formato dello Stato (`VMGH?`)**:
-    - La risposta inizia con `VMGO,` seguito da 15 valori separati da virgole.
-    - I valori rappresentano:
-        1. Velocità della ventola (0-7, vedi sezione "Logica Ventola/Modalità Speciali").
-        2. Stato del LED del pannello (0 o 1).
-        3. Riservato.
-        4. Stato dei sensori (0 = attivi, 1 = inattivi).
-        5. -10. Riservati.
-        11. Livello delle luci (0-100).
-        12. -14. Riservati.
-        15. Timer delle luci (in secondi).
-- **Logica Ventola/Modalità Speciali**:
-    - Il valore della velocità della ventola nello stato (`VMGH?`) può indicare anche la modalità speciale attiva:
-        - 5: Modalità notte attiva, ventola a 1.
-        - 6: Iperventilazione attiva, ventola a 4.
-        - 7: Free cooling attivo, ventola a 0.
-    - L'applicazione gestisce questa decodifica internamente per mostrare lo stato corretto nell'interfaccia utente.
-- **Gestione degli Errori**:
-    - L'applicazione implementa timeout per evitare blocchi in caso di mancata risposta del dispositivo.
-    - Le risposte non valide o inattese vengono gestite con messaggi di errore appropriati.
-    - Le password vengono mascherate nei log per motivi di sicurezza.
 
 
-#### 13.1. Comandi Supportati
-L'applicazione supporta i seguenti comandi per interagire con i dispositivi VMC:
-- **Lettura dello stato**:
-    - `get_status`: Ottiene lo stato generale del dispositivo.
-        - Include la velocità della ventola, lo stato dei sensori, lo stato del LED del pannello, il livello delle luci e il timer.
-        - I valori vengono decodificati e visualizzati in modo comprensibile nell'interfaccia utente, fornendo un quadro completo dello stato del dispositivo.
-        - I dati vengono aggiornati periodicamente per garantire che l'interfaccia utente rifletta lo stato reale del dispositivo.
-    - `get_name`: Ottiene il nome del dispositivo.
-        - Il nome viene utilizzato come titolo del pannello del dispositivo, facilitando l'identificazione.
-        - Permette di personalizzare l'identificazione dei dispositivi.
-    - `get_network_info`: Ottiene le informazioni sulla rete a cui è connesso il dispositivo.
-        - Include l'SSID, la password (mascherata), l'indirizzo IP, la subnet mask e il gateway.
-        - Le informazioni vengono visualizzate in un pannello espandibile, consentendo all'utente di visualizzare e modificare la configurazione di rete.
-        - La password viene mascherata per proteggere la privacy dell'utente.
-        - **Formato comando**: `VMSL?`
-        - **Formato risposta**: Stringa di 64 caratteri, dove i primi 32 rappresentano l'SSID (riempito con `*`) e i successivi 32 rappresentano la password (riempita con `*`).
-        - **Elaborazione**: La risposta viene processata rimuovendo i caratteri `*` di riempimento e separando SSID e password.
-        - **Feedback utente**: `{"SSID": "nome_rete", "Password": "password_mascherata"}`
-    - `get_sensors_data`: Ottiene i dati dai sensori ambientali del dispositivo.
-        - Include la temperatura interna ed esterna, l'umidità, il livello di CO2 e il livello di VOC.
-        - I dati vengono visualizzati in una modale, fornendo un'interfaccia chiara e organizzata per la visualizzazione dei dati dei sensori.
-        - I dati possono essere utilizzati per monitorare la qualità dell'aria e ottimizzare le impostazioni del dispositivo.
-        - **Formato comando**: `VMGI?`
-        - **Formato risposta**: `VMGI [temp_int] [temp_ext] [umidità] [CO2] [VOC]`
-            - `temp_int`: Temperatura interna in °C (moltiplicata per 10)
-            - `temp_ext`: Temperatura esterna in °C (moltiplicata per 10)
-            - `umidità`: Umidità relativa in % (0-100)
-            - `CO2`: Livello di CO2 in ppm
-            - `VOC`: Livello di composti organici volatili (scala relativa)
-        - **Elaborazione**: I valori di temperatura vengono divisi per 10 per ottenere il valore reale in °C.
-        - **Feedback utente**: `{"temp_internal": 22.5, "temp_external": 18.3, "humidity": 65, "co2": 850, "voc": 120}`
-- **Controllo del dispositivo**:
-    - `set_fan_speed`: Imposta la velocità della ventola (0-4).
-        - 0: Ventola spenta.
-        - 1-4: Velocità della ventola.
-        - Gestisce internamente le modalità speciali (iperventilazione, notte, free cooling), semplificando l'interazione con il dispositivo.
-        - L'interfaccia utente riflette lo stato reale del dispositivo, mostrando la velocità della ventola e le modalità speciali attive.
-    - `set_hyperventilation`: Attiva/disattiva la modalità di iperventilazione.
-        - Se attiva, imposta la ventola a 4.
-        - Disattiva le altre modalità speciali, garantendo che solo una modalità speciale sia attiva alla volta.
-    - `set_night_mode`: Attiva/disattiva la modalità notturna.
-        - Se attiva, imposta la ventola a 1.
-        - Disattiva le altre modalità speciali.
-    - `set_free_cooling`: Attiva/disattiva la modalità free cooling.
-        - Se attiva, imposta la ventola a 0.
-        - Disattiva le altre modalità speciali.
-    - `set_sensors_on`: Attiva i sensori.
-        - Permette di visualizzare i dati ambientali.
-    - `set_sensors_off`: Disattiva i sensori.
-        - Consente di risparmiare energia.
-    - `set_panel_led_on`: Accende il LED del pannello.
-        - Permette di visualizzare lo stato del dispositivo.
-    - `set_panel_led_off`: Spegne il LED del pannello.
-        - Consente di risparmiare energia.
-    - `set_lights`: Imposta il livello delle luci (0-100).
-        - Permette di regolare l'illuminazione dell'ambiente.
-    - `set_lights_timer`: Imposta il timer per le luci (0-300 secondi).
-        - Permette di spegnere automaticamente le luci dopo un certo periodo di tempo.
-    - `set_filter_reset`: Resetta il contatore del filtro.
-        - Permette di tenere traccia della durata del filtro e pianificare la manutenzione.
-    - `set_name`: Imposta il nome del dispositivo.
-        - Permette di personalizzare l'identificazione del dispositivo.
-    - `set_network`: Imposta la configurazione di rete del dispositivo.
-        - Permette di connettere il dispositivo a una rete Wi-Fi diversa.
-    - `set_password`: Imposta la password del dispositivo.
-        - Permette di proteggere l'accesso al dispositivo.
+## 10. Fine documento
+Questo documento riassume tutti i requisiti funzionali e tecnici per l'integrazione VMC Helty Flow su Home Assistant. Ogni sezione può essere aggiornata o ampliata in base all'evoluzione del progetto e alle esigenze degli utenti.
+- Messaggi di errore chiari e informativi
+- Suggerimenti per la risoluzione dei problemi
+- **Logging e diagnostica**:
+    - Log dettagliati delle operazioni di rete e dei comandi
+    - Mascheramento automatico delle password nei log
+    - Debug mode per informazioni aggiuntive durante lo sviluppo
+- **Decodifica dello stato della ventola**:
+    - Gestione automatica delle modalità speciali:
+        - 5: Modalità notte attiva (ventola a 1)
+        - 6: Iperventilazione attiva (ventola a 4)
+        - 7: Free cooling attivo (ventola a 0)
+    - Aggiornamento automatico dell'interfaccia utente in base alla modalità attiva
+- **Stato del dispositivo**:
+    - Un dispositivo che non risponde ai comandi viene considerato offline dopo 3 tentativi falliti.
+    - Lo stato online/offline viene visualizzato chiaramente nell'interfaccia utente.
+    - Viene mostrato l'ultimo timestamp di risposta valida del dispositivo.
+    - Viene mostrato il numero di ore di utilizzo del filtro, basato su un contatore interno del dispositivo.
+    - Viene mostrato l'indirizzo IP attuale del dispositivo.
+    - Viene mostrato l'SSID della rete a cui è connesso il dispositivo.
 
-### 14. Interpretazione delle Risposte VMC
-- **Generalità**:
-    - Le risposte dei dispositivi VMC sono stringhe ASCII.
-    - La prima parte della stringa indica il tipo di risposta (es. `VMGO`, `VMNM`, `VMSL`, `VMGI`).
-    - I dati sono separati da virgole.
-- **Risposta `get_status` (VMGH?)**:
-    - Formato: `VMGO,fan_speed,panel_led,reserved,sensors,reserved,...,lights_level,reserved,...,lights_timer`
-    - `fan_speed`: Velocità della ventola (0-7). Vedi "Logica Ventola/Modalità Speciali".
-    - `panel_led`: Stato del LED del pannello (0 = spento, 1 = acceso).
-    - `sensors`: Stato dei sensori (0 = attivi, 1 = inattivi).
-    - `lights_level`: Livello delle luci (0-100).
-    - `lights_timer`: Timer delle luci (in secondi).
-- **Risposta `get_name` (VMNM?)**:
-    - Formato: `VMNM nome_dispositivo`
-    - `nome_dispositivo`: Nome del dispositivo (stringa ASCII).
-- **Risposta `get_network_info` (VMSL?)**:
-    - Formato: `ssidpassword0000000000000000500100000000000000000000000000000001`
-    - `ssid`: SSID della rete Wi-Fi (32 caratteri, riempiti con `*` se più corto).
-    - `password`: Password della rete Wi-Fi (32 caratteri, riempiti con `*` se più corta).
-    - L'applicazione rimuove i caratteri di riempimento (`*`) per visualizzare solo l'SSID e la password effettivi.
-- **Risposta `get_sensors_data` (VMGI?)**:
-    - Formato: `VMGI,temp_int,temp_ext,humidity,co2,reserved,...,voc`
-    - `temp_int`: Temperatura interna (decimi di grado Celsius).
-    - `temp_ext`: Temperatura esterna (decimi di grado Celsius).
-    - `humidity`: Umidità (decimi di percentuale).
-    - `co2`: Livello di CO2 (ppm).
-    - `voc`: Livello di VOC (ppb).
-    - L'applicazione converte i valori in unità di misura comprensibili (es. gradi Celsius, percentuale, ppm, ppb).
-- **Risposte ai Comandi di Scrittura**:
-    - Generalmente, i comandi di scrittura (es. `set_fan_speed`, `set_lights`, `set_name`) restituiscono `OK` in caso di successo.
-    - In caso di errore, il dispositivo può restituire una stringa di errore o non rispondere affatto.
-    - L'applicazione gestisce questi casi e fornisce un feedback appropriato all'utente.
-- **Logica Ventola/Modalità Speciali**:
-    - Il valore della velocità della ventola nello stato (`VMGH?`) può indicare anche la modalità speciale attiva:
-        - 5: Modalità notte attiva, valore ventola visualizzato a 1.
-        - 6: Iperventilazione attiva, valore ventola visualizzato a 4.
-        - 7: Free cooling attivo, valore ventola visualizzato a 0.
-        - Se il valore della ventola reale è compreso tra 0 e 4, le modalità speciali sono disattivate e la velocità della ventola è impostata manualmente.
-    - L'applicazione gestisce questa decodifica internamente per mostrare lo stato corretto nell'interfaccia utente.
-- **Gestione degli Errori**:
-    - L'applicazione implementa timeout per evitare blocchi in caso di mancata risposta del dispositivo.
-    - Le risposte non valide o inattese vengono gestite con messaggi di errore appropriati.
-    - Le password vengono mascherate nei log per motivi di sicurezza.
+## 11. Appendice: Tabella Riassuntiva delle Entità Home Assistant
 
+Questa tabella riassume le entità Home Assistant create per ogni dispositivo VMC Helty Flow rilevato dall'integrazione.
+
+| Entità                | Tipo         | Descrizione                                                        | Valori/Range                |
+|-----------------------|--------------|--------------------------------------------------------------------|-----------------------------|
+| fan_speed             | select       | Velocità ventola / modalità speciale                               | 0-4, 5 (notte), 6 (ipervent.), 7 (free cooling) |
+| panel_led             | switch       | LED pannello acceso/spento                                         | on/off                      |
+| sensors               | switch       | Sensori attivi/inattivi                                            | on/off                      |
+| lights_level          | select       | Livello luci                                                       | 0, 25, 50, 75, 100          |
+| lights_timer          | number       | Timer luci                                                         | 0-300 sec (step 5)          |
+| filter_reset          | button       | Reset contatore filtro                                             | azione                      |
+| device_name           | text         | Nome dispositivo                                                   | testo (max 32 caratteri)    |
+| network_ssid          | text         | SSID rete Wi-Fi                                                    | testo (max 32 caratteri)    |
+| network_password      | text         | Password rete Wi-Fi (mascherata)                                   | testo (max 32 caratteri)    |
+| ip_address            | sensor       | Indirizzo IP attuale                                               | IPv4                        |
+| subnet_mask           | sensor       | Subnet mask attuale                                                | IPv4 mask                   |
+| gateway               | sensor       | Gateway attuale                                                    | IPv4                        |
+| online_status         | binary_sensor| Stato online/offline                                               | on/off                      |
+| last_response         | sensor       | Timestamp ultima risposta valida                                   | datetime                    |
+| filter_hours          | sensor       | Ore di utilizzo filtro                                             | numero                      |
+| temperature_internal  | sensor       | Temperatura interna                                                | °C                          |
+| temperature_external  | sensor       | Temperatura esterna                                                | °C                          |
+| humidity              | sensor       | Umidità relativa                                                   | %                           |
+| co2                   | sensor       | Livello CO2                                                        | ppm                         |
+| voc                   | sensor       | Livello VOC                                                        | ppb                         |
+| hyperventilation      | switch       | Modalità iperventilazione attiva/disattiva                         | on/off                      |
+| night_mode            | switch       | Modalità notturna attiva/disattiva                                 | on/off                      |
+| free_cooling          | switch       | Modalità free cooling attiva/disattiva                             | on/off                      |
+
+**Nota:** Alcune entità possono essere implementate come servizi, azioni o attributi a seconda della configurazione e delle best practice Home Assistant. La tabella rappresenta la struttura tipica per ogni dispositivo VMC gestito dall'integrazione.
