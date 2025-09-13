@@ -11,6 +11,9 @@ class VmcHeltyFan(FanEntity):
         self._name = name
         self._speed = 0
         self._available = True
+        self._night_mode = False
+        self._hyperventilation = False
+        self._free_cooling = False
 
     @property
     def name(self):
@@ -50,10 +53,38 @@ class VmcHeltyFan(FanEntity):
         if response and response.startswith("VMGO"):
             parts = response.split(",")
             try:
-                speed = int(parts[1])
-                self._speed = speed if speed <= 4 else (1 if speed == 5 else 4 if speed == 6 else 0)
+                speed_raw = int(parts[1])
+                # Gestione modalità speciali
+                if speed_raw == 5:
+                    self._speed = 1
+                    self._night_mode = True
+                    self._hyperventilation = False
+                    self._free_cooling = False
+                elif speed_raw == 6:
+                    self._speed = 4
+                    self._night_mode = False
+                    self._hyperventilation = True
+                    self._free_cooling = False
+                elif speed_raw == 7:
+                    self._speed = 0
+                    self._night_mode = False
+                    self._hyperventilation = False
+                    self._free_cooling = True
+                else:
+                    self._speed = speed_raw
+                    self._night_mode = False
+                    self._hyperventilation = False
+                    self._free_cooling = False
                 self._available = True
             except Exception:
                 self._available = False
         else:
             self._available = False
+
+    @property
+    def extra_state_attributes(self):
+        return {
+            "night_mode": getattr(self, "_night_mode", False),
+            "hyperventilation": getattr(self, "_hyperventilation", False),
+            "free_cooling": getattr(self, "_free_cooling", False)
+        }

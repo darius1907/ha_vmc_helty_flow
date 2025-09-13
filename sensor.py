@@ -41,19 +41,22 @@ class VmcHeltySensor(SensorEntity):
     async def async_update(self):
         response = await tcp_send_command(self._ip, DEFAULT_PORT, "VMGI?")
         if response and response.startswith("VMGI"):
-            parts = response.split()
+            parts = response.split(",")
             try:
-                if self._sensor_type == "Temperatura Interna":
-                    self._state = float(parts[1]) / 10
-                elif self._sensor_type == "Temperatura Esterna":
-                    self._state = float(parts[2]) / 10
-                elif self._sensor_type == "Umidità":
-                    self._state = int(parts[3])
-                elif self._sensor_type == "CO2":
-                    self._state = int(parts[4])
-                elif self._sensor_type == "VOC":
-                    self._state = int(parts[5])
-                self._available = True
+                if len(parts) >= 15:
+                    if self._sensor_type == "Temperatura Interna":
+                        self._state = float(parts[1]) / 10
+                    elif self._sensor_type == "Temperatura Esterna":
+                        self._state = float(parts[2]) / 10
+                    elif self._sensor_type == "Umidità":
+                        self._state = float(parts[3]) / 10
+                    elif self._sensor_type == "CO2":
+                        self._state = int(parts[4])
+                    elif self._sensor_type == "VOC":
+                        self._state = int(parts[14])
+                    self._available = True
+                else:
+                    self._available = False
             except Exception:
                 self._available = False
         else:

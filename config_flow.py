@@ -2,12 +2,12 @@
 Config flow per l'integrazione VMC Helty Flow
 """
 from homeassistant import config_entries
-from .const import DOMAIN
-from .helpers import discover_vmc_devices, get_device_name
+import const
+from helpers import discover_vmc_devices, get_device_name, load_devices, save_devices
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 
-class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=const.DOMAIN):
 
     VERSION = 1
 
@@ -19,7 +19,33 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
-        if user_input is None:
+        # Carica dispositivi già configurati
+        existing_devices = load_devices()
+        if existing_devices:
+            # Chiedi conferma prima di avviare una nuova scansione
+            if user_input is None or user_input.get("confirm") is None:
+                schema = vol.Schema({
+                    vol.Required("confirm", default=False): bool
+                })
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=schema,
+                    description_placeholders={
+                        "help": f"Sono già configurati {len(existing_devices)} dispositivi. Vuoi avviare una nuova scansione?"
+                    }
+                )
+            # Se l'utente non conferma, mostra i dispositivi già configurati
+            if not user_input["confirm"]:
+                device_list = "\n".join([f"{d['name']} ({d['ip']})" for d in existing_devices])
+                return self.async_show_form(
+                    step_id="user",
+                    description_placeholders={
+                        "help": f"Dispositivi configurati:\n{device_list}"
+                    },
+                    errors={"base": "scan_annullata"}
+                )
+        # Se confermato o nessun dispositivo, chiedi subnet e porta
+        if user_input is None or user_input.get("subnet") is None:
             schema = vol.Schema({
                 vol.Required("subnet", default="192.168.1."): str,
                 vol.Required("port", default=5001): int
@@ -31,60 +57,55 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "help": "Inserisci la subnet e la porta TCP per la ricerca dei dispositivi Helty."
                 }
             )
-
         # Salva i parametri per il prossimo step
         self.subnet = user_input["subnet"]
         self.port = user_input["port"]
-
         # Passa al discovery
         return await self.async_step_discovery()
 
     async def async_step_discovery(self, user_input=None):
         """Handle device discovery and selection."""
         errors = {}
-
-        if user_input is None:
-            # Prima volta: esegui discovery
-            try:
-                devices = await discover_vmc_devices(subnet=self.subnet, port=self.port)
-                self.discovered_devices = devices
-
-                if not devices:
-                    errors["base"] = "no_devices_found"
-                else:
-                    # Crea le opzioni per la selezione con formato: "Nome (IP)"
-                    device_options = {}
-                    for device in devices:
-                        key = device["ip"]
-                        display_name = f"{device['name']} ({device['ip']})"
-                        device_options[key] = display_name
-
-                    schema = vol.Schema({
-                        vol.Required("selected_devices"): cv.multi_select(device_options)
-                    })
-
-                    return self.async_show_form(
-                        step_id="discovery",
-                        data_schema=schema,
-                        errors=errors,
-                        description_placeholders={
-                            "help": f"Trovati {len(devices)} dispositivi. Seleziona quelli da aggiungere."
-                        }
-                    )
-
-            except Exception as ex:
-                errors["base"] = "discovery_failed"
-
-            # Se ci sono errori, mostra di nuovo la form iniziale
-            schema = vol.Schema({
-                vol.Required("subnet", default=self.subnet): str,
-                vol.Required("port", default=self.port): int
-            })
-            return self.async_show_form(
-                step_id="user",
-                data_schema=schema,
-                errors=errors
-            )
+        try:
+            devices = await discover_vmc_devices(subnet=self.subnet, port=self.port)
+            self.discovered_devices = devices
+            # Salva i dispositivi trovati
+            save_devices(devices)
+            if not devices:
+                errors["base"] = "no_devices_found"
+            else:
+                # Crea le opzioni per la selezione con formato: "Nome (IP)"
+                device_options = {}
+                for device in devices:
+                    key = device["ip"]
+                    display_name = f"{device['name']} ({device['ip']})"
+                    device_options[key] = display_name
+                schema = vol.Schema({
+                    vol.Required("selected_devices"): cv.multi_select(device_options)
+                })
+                return self.async_show_form(
+                    step_id="discovery",
+                    data_schema=schema,
+                    errors=errors,
+                    description_placeholders={
+                        "help": f"Scansione completata. Trovati {len(devices)} dispositivi. Seleziona quelli da aggiungere."
+                    }
+                )
+        except Exception as ex:
+            errors["base"] = "discovery_failed"
+        # Se ci sono errori, mostra di nuovo la form iniziale
+        schema = vol.Schema({
+            vol.Required("subnet", default=self.subnet): str,
+            vol.Required("port", default=self.port): int
+        })
+        return self.async_show_form(
+            step_id="user",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "help": "Errore nella scansione. Riprova."
+            }
+        )
 
         # L'utente ha selezionato i dispositivi
         selected_ips = user_input["selected_devices"]
