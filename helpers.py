@@ -135,12 +135,9 @@ async def get_device_info(ip: str, port: int = DEFAULT_PORT, timeout: int = TCP_
                 # Recupera il nome mnemonico con VMNM?
                 try:
                     name_response = await tcp_send_command(ip, port, "VMNM?", timeout)
+                    _LOGGER.debug(f"Risposta VMNM? da {ip}: {name_response}")
                     if name_response and name_response.startswith("VMNM"):
-                        nome_parts = name_response.split(",")
-                        nome = nome_parts[1].strip() if len(nome_parts) > 1 else f"VMC Helty {ip.split('.')[-1]}"
-                    else:
-                        nome = f"VMC Helty {ip.split('.')[-1]}"
-                except VMCConnectionError as err:
+                        nome_parts = name_response.split(" ")
                     _LOGGER.warning("Impossibile recuperare il nome del dispositivo %s: %s", ip, err)
                     nome = f"VMC Helty {ip.split('.')[-1]}"
 

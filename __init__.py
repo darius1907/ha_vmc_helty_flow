@@ -22,6 +22,7 @@ from .device_action import async_setup_device_actions
 from .device_registry import async_get_or_create_device, async_remove_orphaned_devices
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.DEBUG)
 
 # Definisce le platform supportate dall'integrazione
 PLATFORMS: list[Platform] = [
