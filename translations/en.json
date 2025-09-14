@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "VMC Helty Flow Configuration",
+        "description": "Configure your VMC Helty devices",
+        "data": {
+          "subnet": "Subnet (CIDR format, e.g. 192.168.1.0/24)",
+          "port": "TCP Port",
+          "timeout": "Timeout (seconds)",
+          "confirm": "Confirm new scan"
+        },
+        "data_description": {
+          "subnet": "Enter your network subnet in CIDR format to search for VMC devices",
+          "port": "TCP port used by VMC Helty devices (default: 5001)",
+          "timeout": "TCP connection timeout in seconds (1-60)",
+          "confirm": "Some devices are already configured. Do you want to start a new scan?"
+        }
+      },
+      "discovery": {
+        "title": "VMC Device Selection",
+        "description": "Select VMC devices to configure",
+        "data": {
+          "selected_devices": "Devices to configure",
+          "interrupt_scan": "Interrupt scan"
+        },
+        "data_description": {
+          "selected_devices": "Select one or more VMC devices from the list to add them to Home Assistant",
+          "interrupt_scan": "Check to interrupt the ongoing scan"
+        }
+      }
+    },
+    "error": {
+      "subnet_non_valida": "Invalid subnet format. Use CIDR format (e.g. 192.168.1.0/24)",
+      "porta_non_valida": "Port must be between 1 and 65535",
+      "timeout_non_valido": "Timeout must be between 1 and 60 seconds",
+      "subnet_troppo_grande": "Subnet cannot generate more than 254 IP addresses",
+      "discovery_failed": "Error during VMC device discovery",
+      "scan_interrotta": "Scan interrupted by user",
+      "no_devices_found": "No VMC devices found in the specified subnet",
+      "scan_annullata": "Scan cancelled. Existing devices kept.",
+      "cannot_connect": "Unable to connect to VMC device",
+      "invalid_response": "Invalid response from VMC device",
+      "timeout": "Timeout during communication with device",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "all_devices_already_configured": "All selected devices are already configured",
+      "no_devices": "No devices found"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "VMC Helty Flow Options",
+        "description": "Configure advanced options for the integration",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "timeout": "Connection timeout (seconds)",
+          "retry_attempts": "Reconnect attempts"
+        },
+        "data_description": {
+          "scan_interval": "Data update frequency from VMC device (30-600 seconds)",
+          "timeout": "TCP connection timeout to device (5-60 seconds)",
+          "retry_attempts": "Number of attempts in case of communication error (1-10)"
+        }
+      }
+    }
+  }
+}
