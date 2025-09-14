@@ -5,10 +5,8 @@ from typing import Dict, Any, Optional
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry
+from homeassistant.helpers import entity_registry
 from homeassistant.helpers.device_registry import DeviceRegistry, DeviceEntry
-from homeassistant.helpers.entity_registry import (
-    async_get_registry as async_get_entity_registry,
-)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
@@ -141,12 +139,12 @@ async def async_get_device_info(hass: HomeAssistant, ip_address: str) -> Dict[st
 
 async def async_remove_orphaned_devices(hass: HomeAssistant) -> None:
     """Rimuovi i dispositivi orfani quando l'integrazione viene rimossa."""
-    device_registry = await async_get_device_registry(hass)
-    entity_registry = await async_get_entity_registry(hass)
+    device_registry_instance = device_registry.async_get(hass)
+    entity_registry_instance = entity_registry.async_get(hass)
 
     # Trova tutti i dispositivi associati al dominio
     domain_devices = [
-        entry for entry in device_registry.devices.values()
+        entry for entry in device_registry_instance.devices.values()
         if any(ident[0] == DOMAIN for ident in entry.identifiers)
     ]
 
@@ -158,4 +156,4 @@ async def async_remove_orphaned_devices(hass: HomeAssistant) -> None:
     for device in domain_devices:
         if not any(entry_id in active_entry_ids for entry_id in device.config_entries):
             _LOGGER.debug("Removing orphaned device: %s", device.name)
-            device_registry.async_remove_device(device.id)
+            device_registry_instance.async_remove_device(device.id)
