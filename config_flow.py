@@ -4,8 +4,8 @@ Config flow per l'integrazione VMC Helty Flow
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.storage import Store
-from const import DOMAIN
-from helpers import discover_vmc_devices
+from .const import DOMAIN
+from .helpers import discover_vmc_devices
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 
