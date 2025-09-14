@@ -4,11 +4,8 @@ import re
 from typing import Dict, Any, Optional
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import (
-    DeviceRegistry,
-    DeviceEntry,
-    async_get_registry as async_get_device_registry,
-)
+from homeassistant.helpers import device_registry
+from homeassistant.helpers.device_registry import DeviceRegistry, DeviceEntry
 from homeassistant.helpers.entity_registry import (
     async_get_registry as async_get_entity_registry,
 )
@@ -24,7 +21,7 @@ async def async_get_or_create_device(
     hass: HomeAssistant, coordinator: DataUpdateCoordinator
 ) -> DeviceEntry:
     """Get o crea un device entry nel device registry."""
-    device_registry = await async_get_device_registry(hass)
+    device_registry_instance = device_registry.async_get(hass)
 
     # Recupera l'indirizzo IP dal coordinatore
     ip_address = coordinator.ip
@@ -41,7 +38,7 @@ async def async_get_or_create_device(
     device_info = await async_get_device_info(hass, ip_address)
 
     # Crea o aggiorna il device nel registry
-    device_entry = device_registry.async_get_or_create(
+    device_entry = device_registry_instance.async_get_or_create(
         config_entry_id=coordinator.config_entry.entry_id,
         # Usa sia MAC/identificatore univoco che IP come identificatori
         identifiers={(DOMAIN, unique_id), (DOMAIN, ip_address)},
