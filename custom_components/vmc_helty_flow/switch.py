@@ -1,4 +1,4 @@
-"""Entità Switch per modalità speciali VMC Helty Flow"""
+"""Entità Switch per modalità speciali VMC Helty Flow."""
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry

@@ -1,4 +1,4 @@
-"""Costanti per l'integrazione VMC Helty Flow"""
+"""Costanti per l'integrazione VMC Helty Flow."""
 
 DOMAIN = "vmc_helty_flow"
 DEFAULT_PORT = 5001

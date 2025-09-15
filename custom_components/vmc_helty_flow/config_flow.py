@@ -1,7 +1,7 @@
 """Config flow per l'integrazione VMC Helty Flow."""
 
-import asyncio
 import contextlib
+
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
@@ -11,9 +11,7 @@ from homeassistant.helpers.storage import Store
 from .const import DOMAIN
 from .helpers import (
     count_ips_in_subnet,
-    discover_vmc_devices,
     discover_vmc_devices_with_progress,
-    get_device_info,
     parse_subnet_for_discovery,
     validate_subnet,
 )
@@ -200,18 +198,18 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         # Esegui la scansione se non è già stata fatta
-        if not hasattr(self, 'discovered_devices'):
+        if not hasattr(self, "discovered_devices"):
             errors = {}
             self.scan_interrupted = False
             devices = []
-            
+
             try:
                 # Avvia la scansione con indicatore di progresso
                 devices = await self._discover_devices_async(
                     self.subnet, self.port, self.timeout
                 )
                 self.discovered_devices = devices
-            except Exception as err:
+            except Exception:
                 errors["base"] = "discovery_failed"
                 self.discovered_devices = []
 
@@ -246,13 +244,13 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional("interrupt_scan", default=False): bool,
             }
         )
-        
+
         # Calcola statistiche per il messaggio
-        total_scanned = getattr(self, 'total_ips_scanned', 0)
+        total_scanned = getattr(self, "total_ips_scanned", 0)
         progress_msg = f"Scansione completata ({total_scanned} IP scansionati). "
         progress_msg += f"Trovati {len(devices)} dispositivi. "
         progress_msg += "Seleziona i dispositivi da configurare:"
-        
+
         return self.async_show_form(
             step_id="discovery",
             data_schema=schema,
@@ -268,32 +266,32 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "devices_found": progress_info.get("devices_found", 0),
             "scanned": progress_info.get("scanned", 0),
             "total": progress_info.get("total", 0),
-            "progress": self.progress
+            "progress": self.progress,
         }
 
     async def _discover_devices_async(self, subnet, port, timeout):
         """Perform device discovery with progress tracking."""
         self.subnet = subnet
-        self.port = port 
+        self.port = port
         self.timeout = timeout
         self.discovered_devices = []
         self._discovery_progress = {}
-        
+
         # Parsing subnet per determinare il range di IPs
         subnet_base = parse_subnet_for_discovery(subnet)
-        
+
         # Reset progress tracking
         start_ip = 1
         end_ip = 254
         self.total_ips_scanned = end_ip - start_ip + 1
-        
+
         # Usa la funzione di discovery con progress indicator
         return await discover_vmc_devices_with_progress(
             subnet=subnet_base,
             port=self.port,
             timeout=self.timeout,
             progress_callback=self._update_discovery_progress,
-            interrupt_check=lambda: getattr(self, "_scan_interrupted", False)
+            interrupt_check=lambda: getattr(self, "_scan_interrupted", False),
         )
 
     async def async_step_import(self, import_info):

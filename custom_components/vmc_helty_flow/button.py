@@ -37,9 +37,6 @@ class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Reset filter counter."""
-        try:
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0417744")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0417744")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()

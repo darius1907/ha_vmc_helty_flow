@@ -251,7 +251,7 @@ async def discover_vmc_devices_with_progress(
     port: int = DEFAULT_PORT,
     timeout: int = TCP_TIMEOUT,
     progress_callback=None,
-    interrupt_check=None
+    interrupt_check=None,
 ) -> list[dict[str, str]]:
     """Scopre i dispositivi VMC sulla rete con callback di progresso.
 
@@ -285,13 +285,15 @@ async def discover_vmc_devices_with_progress(
 
         # Callback di progresso
         if progress_callback:
-            progress_callback({
-                "current_ip": ip,
-                "progress": current_progress,
-                "devices_found": len(devices),
-                "scanned": i - start_ip + 1,
-                "total": total_ips
-            })
+            progress_callback(
+                {
+                    "current_ip": ip,
+                    "progress": current_progress,
+                    "devices_found": len(devices),
+                    "scanned": i - start_ip + 1,
+                    "total": total_ips,
+                }
+            )
 
         try:
             device_info = await get_device_info(ip, port, timeout)
@@ -351,7 +353,6 @@ async def check_device_availability(
 
 def validate_subnet(subnet: str) -> bool:
     """Valida se la subnet è in formato CIDR valido (es. 192.168.1.0/24)."""
-    import ipaddress
     import re
 
     cidr_pattern = r"^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$"

@@ -1,7 +1,8 @@
 """Test del progress indicator durante discovery."""
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from custom_components.vmc_helty_flow.helpers import discover_vmc_devices_with_progress
 
@@ -33,12 +34,12 @@ class TestProgressIndicator:
                 port=5001,
                 timeout=1,
                 progress_callback=progress_callback,
-                interrupt_check=interrupt_check
+                interrupt_check=interrupt_check,
             )
 
             # Verifica che il callback sia stato chiamato
             assert len(progress_updates) > 0
-            
+
             # Verifica la struttura dei dati di progresso
             first_update = progress_updates[0]
             assert "current_ip" in first_update
@@ -46,7 +47,7 @@ class TestProgressIndicator:
             assert "devices_found" in first_update
             assert "scanned" in first_update
             assert "total" in first_update
-            
+
             # Verifica che il progresso aumenti
             last_update = progress_updates[-1]
             assert last_update["progress"] >= first_update["progress"]
@@ -76,12 +77,12 @@ class TestProgressIndicator:
                 port=5001,
                 timeout=1,
                 progress_callback=progress_callback,
-                interrupt_check=interrupt_check
+                interrupt_check=interrupt_check,
             )
 
             # Verifica che la scansione sia stata interrotta
             assert len(progress_updates) >= interrupt_after
-            
+
             # Verifica che non abbia scansionato tutti gli IP
             last_update = progress_updates[-1]
             assert last_update["progress"] < 100
@@ -103,7 +104,7 @@ class TestProgressIndicator:
             "name": "VMC Test",
             "model": "VMC Flow",
             "manufacturer": "Helty",
-            "available": True
+            "available": True,
         }
 
         with patch(
@@ -123,7 +124,7 @@ class TestProgressIndicator:
                 port=5001,
                 timeout=1,
                 progress_callback=progress_callback,
-                interrupt_check=None
+                interrupt_check=None,
             )
 
             # Verifica che il dispositivo sia stato trovato
@@ -148,7 +149,7 @@ class TestProgressIndicator:
                 port=5001,
                 timeout=1,
                 progress_callback=None,
-                interrupt_check=None
+                interrupt_check=None,
             )
 
             # Deve funzionare anche senza callback

@@ -3,7 +3,6 @@
 import logging
 from datetime import timedelta
 
-from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -14,8 +13,6 @@ from .device_action import async_setup_device_actions
 from .device_registry import async_get_or_create_device, async_remove_orphaned_devices
 from .helpers import (
     VMCConnectionError,
-    VMCProtocolError,
-    VMCResponseError,
     VMCTimeoutError,
     tcp_send_command,
 )
@@ -74,16 +71,19 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                     "Timeout durante l'acquisizione dello stato da %s: %s", self.ip, err
                 )
                 self._handle_error()
-                raise UpdateFailed(f"Timeout durante la comunicazione con {self.ip}")
+                raise UpdateFailed(
+                    f"Timeout durante la comunicazione con {self.ip}"
+                ) from err
             except VMCConnectionError as err:
-                _LOGGER.error("Errore di connessione a %s: %s", self.ip, err)
+                _LOGGER.exception("Errore di connessione a %s", self.ip)
                 self._handle_error()
-                raise UpdateFailed(f"Errore di connessione a {self.ip}: {err}")
+                raise UpdateFailed(f"Errore di connessione a {self.ip}: {err}") from err
 
             if not status_response or not status_response.startswith("VMGO"):
                 self._handle_error()
                 raise UpdateFailed(
-                    f"Dispositivo {self.ip} non risponde correttamente: {status_response}"
+                    f"Dispositivo {self.ip} non risponde correttamente: "
+                    f"{status_response}"
                 )
 
             # Ottieni dati aggiuntivi con gestione degli errori per ciascuna richiesta
@@ -144,11 +144,12 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         except Exception as err:
             self._handle_error()
             _LOGGER.exception(
-                "Errore imprevisto durante l'aggiornamento dei dati per %s: %s",
+                "Errore imprevisto durante l'aggiornamento dei dati per %s",
                 self.ip,
-                err,
             )
-            raise UpdateFailed(f"Errore durante la comunicazione con {self.ip}: {err}")
+            raise UpdateFailed(
+                f"Errore durante la comunicazione con {self.ip}: {err}"
+            ) from err
 
     def _handle_error(self):
         """Gestisce l'incremento degli errori consecutivi e la logica di ripristino."""
@@ -180,7 +181,8 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         ):
             self.update_interval = self._error_recovery_interval
             _LOGGER.info(
-                "Modificato intervallo di aggiornamento per %s a %d secondi (modalità ripristino)",
+                "Modificato intervallo di aggiornamento per %s a %d secondi "
+                "(modalità ripristino)",
                 self.ip,
                 self._error_recovery_interval.total_seconds(),
             )
@@ -200,7 +202,8 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                             new_name,
                         )
                         self.name = new_name
-                        # Se siamo in Home Assistant, aggiorna il titolo del config entry
+                        # Se siamo in Home Assistant, aggiorna il titolo
+                        # del config entry
                         if hasattr(self, "hass") and self.hass:
                             new_data = {**self.config_entry.data, "name": new_name}
                             self.hass.config_entries.async_update_entry(
@@ -263,10 +266,11 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 async def async_remove_config_entry_device(
-    hass: HomeAssistant, config_entry: ConfigEntry, device_entry
+    _hass: HomeAssistant, config_entry: ConfigEntry, device_entry
 ) -> bool:
     """Remove a config entry from a device."""
-    # Questo metodo viene chiamato quando un dispositivo viene rimosso dall'interfaccia utente
+    # Questo metodo viene chiamato quando un dispositivo viene rimosso
+    # dall'interfaccia utente
     _LOGGER.info(
         "Removing device %s from config entry %s",
         device_entry.id,
@@ -277,7 +281,7 @@ async def async_remove_config_entry_device(
     return True
 
 
-async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def async_remove_entry(hass: HomeAssistant, _entry: ConfigEntry) -> None:
     """Handle removal of an entry."""
     # Rimuovi dispositivi orfani dopo la rimozione dell'entry
     await async_remove_orphaned_devices(hass)
