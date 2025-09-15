@@ -1,0 +1,66 @@
+{
+  "name": "VMC Helty Flow Development",
+  "dockerFile": "../Dockerfile.dev",
+  "features": {},
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspaces/vmc_helty_flow,type=bind,consistency=cached"
+  ],
+  "workspaceFolder": "/workspaces/vmc_helty_flow",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "forwardPorts": [8123, 5683],
+  "portsAttributes": {
+    "8123": {
+      "label": "Home Assistant",
+      "requireLocalPort": true
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-python.mypy-type-checker",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff",
+        "ms-python.vscode-pylance",
+        "visualstudioexptteam.vscodeintellicode",
+        "kevinrose.vsc-python-indent",
+        "ms-python.isort",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        "GitHub.vscode-pull-request-github",
+        "GitHub.copilot",
+        "ms-python.pytest"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/home/vscode/.local/ha-venv/bin/python",
+        "python.pythonPath": "/home/vscode/.local/ha-venv/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        "python.linting.mypyEnabled": true,
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "tests",
+          "-v",
+          "--tb=short"
+        ],
+        "python.testing.autoTestDiscoverOnSaveEnabled": true,
+        "files.associations": {
+          "*.yaml": "home-assistant"
+        },
+        "yaml.schemas": {
+          "https://raw.githubusercontent.com/home-assistant/supervisor/main/supervisor/api/schema.json": [
+            "*.yaml"
+          ]
+        },
+        "pylint.args": ["--rcfile=.pylintrc"]
+      }
+    }
+  },
+  "remoteEnv": {
+    "PYTHONPATH": "/workspaces/vmc_helty_flow:/usr/src/homeassistant",
+    "HASSIO_TOKEN": "dev_token",
+    "SUPERVISOR_TOKEN": "dev_token"
+  }
+}

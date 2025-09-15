@@ -36,7 +36,7 @@ Durante la configurazione, la UI permette di:
 ### Esempio di configurazione
 
 1. Avvia la configurazione dall'interfaccia Home Assistant.
-2. Inserisci la subnet (es. `192.168.1.`), la porta (es. `5001`) e il timeout desiderato.
+2. Inserisci la subnet (es. `192.168.1.0/24`), la porta (es. `5001`) e il timeout desiderato.
 3. Avvia la scansione e osserva la barra di avanzamento.
 4. Se necessario, interrompi la scansione.
 5. Seleziona i dispositivi trovati e conferma.

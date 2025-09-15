@@ -1,0 +1,227 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurazione VMC Helty Flow",
+        "description": "Configura i tuoi dispositivi VMC Helty",
+        "data": {
+          "subnet": "Subnet (formato CIDR, es. 192.168.1.0/24)",
+          "port": "Porta TCP",
+          "timeout": "Timeout (secondi)",
+          "confirm": "Conferma nuova scansione"
+        },
+        "data_description": {
+          "subnet": "Inserisci la subnet della tua rete in formato CIDR per la ricerca dei dispositivi VMC",
+          "port": "Porta TCP utilizzata dai dispositivi VMC Helty (default: 5001)",
+          "timeout": "Timeout per le connessioni TCP in secondi (1-60)",
+          "confirm": "Sono già configurati alcuni dispositivi. Vuoi avviare una nuova scansione?"
+        }
+      },
+      "discovery": {
+        "title": "Selezione Dispositivi VMC",
+        "description": "Seleziona i dispositivi VMC da configurare",
+        "data": {
+          "selected_devices": "Dispositivi da configurare",
+          "interrupt_scan": "Interrompi scansione"
+        },
+        "data_description": {
+          "selected_devices": "Seleziona uno o più dispositivi VMC dalla lista per aggiungerli a Home Assistant",
+          "interrupt_scan": "Spunta per interrompere la scansione in corso"
+        }
+      }
+    },
+    "error": {
+      "subnet_non_valida": "Formato subnet non valido. Usa il formato CIDR (es. 192.168.1.0/24)",
+      "porta_non_valida": "La porta deve essere compresa tra 1 e 65535",
+      "timeout_non_valido": "Il timeout deve essere compreso tra 1 e 60 secondi",
+      "subnet_troppo_grande": "La subnet non può generare più di 254 indirizzi IP",
+      "discovery_failed": "Errore durante la ricerca dei dispositivi VMC",
+      "scan_interrotta": "Scansione interrotta dall'utente",
+      "no_devices_found": "Nessun dispositivo VMC trovato nella subnet specificata",
+      "scan_annullata": "Scansione annullata. Dispositivi esistenti mantenuti.",
+      "cannot_connect": "Impossibile connettersi al dispositivo VMC",
+      "invalid_response": "Risposta non valida dal dispositivo VMC",
+      "timeout": "Timeout durante la comunicazione con il dispositivo",
+      "unknown": "Errore sconosciuto"
+    },
+    "abort": {
+      "already_configured": "Questo dispositivo è già configurato",
+      "all_devices_already_configured": "Tutti i dispositivi selezionati sono già configurati",
+      "no_devices": "Nessun dispositivo trovato"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni VMC Helty Flow",
+        "description": "Configura le opzioni avanzate per l'integrazione",
+        "data": {
+          "scan_interval": "Intervallo di aggiornamento (secondi)",
+          "timeout": "Timeout connessioni (secondi)",
+          "retry_attempts": "Tentativi di riconnessione"
+        },
+        "data_description": {
+          "scan_interval": "Frequenza di aggiornamento dei dati dal dispositivo VMC (30-600 secondi)",
+          "timeout": "Timeout per le connessioni TCP al dispositivo (5-60 secondi)",
+          "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "fan": {
+      "vmc_helty_flow": {
+        "state_attributes": {
+          "night_mode": {
+            "name": "Modalità Notte"
+          },
+          "hyperventilation": {
+            "name": "Iperventilazione"
+          },
+          "free_cooling": {
+            "name": "Free Cooling"
+          },
+          "manual_speed": {
+            "name": "Velocità Manuale"
+          },
+          "panel_led": {
+            "name": "LED Pannello"
+          },
+          "sensors_active": {
+            "name": "Sensori Attivi"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "vmc_helty_flow": {
+        "temperature_internal": {
+          "name": "Temperatura Interna"
+        },
+        "temperature_external": {
+          "name": "Temperatura Esterna"
+        },
+        "humidity": {
+          "name": "Umidità"
+        },
+        "co2": {
+          "name": "CO2"
+        },
+        "voc": {
+          "name": "VOC"
+        },
+        "filter_hours": {
+          "name": "Ore Filtro"
+        },
+        "ip_address": {
+          "name": "Indirizzo IP"
+        },
+        "network_ssid": {
+          "name": "SSID Rete"
+        },
+        "network_password": {
+          "name": "Password Rete"
+        },
+        "last_response": {
+          "name": "Ultima Risposta"
+        }
+      }
+    },
+    "binary_sensor": {
+      "vmc_helty_flow": {
+        "online": {
+          "name": "Online"
+        }
+      }
+    },
+    "switch": {
+      "vmc_helty_flow": {
+        "hyperventilation": {
+          "name": "Iperventilazione"
+        },
+        "night": {
+          "name": "Modalità Notte"
+        },
+        "free_cooling": {
+          "name": "Free Cooling"
+        },
+        "panel_led": {
+          "name": "LED Pannello"
+        },
+        "sensors": {
+          "name": "Sensori"
+        }
+      }
+    },
+    "light": {
+      "vmc_helty_flow": {
+        "light": {
+          "name": "Luci"
+        },
+        "light_timer": {
+          "name": "Timer Luci"
+        }
+      }
+    },
+    "button": {
+      "vmc_helty_flow": {
+        "reset_filter": {
+          "name": "Reset Filtro"
+        }
+      }
+    },
+    "text": {
+      "vmc_helty_flow": {
+        "device_name": {
+          "name": "Nome Dispositivo"
+        },
+        "wifi_ssid": {
+          "name": "SSID WiFi"
+        },
+        "wifi_password": {
+          "name": "Password WiFi"
+        }
+      }
+    }
+  },
+  "services": {
+    "set_fan_speed": {
+      "name": "Imposta Velocità Ventola",
+      "description": "Imposta la velocità della ventola VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entità",
+          "description": "Ventola VMC da controllare"
+        },
+        "speed": {
+          "name": "Velocità",
+          "description": "Velocità della ventola (0-4)"
+        }
+      }
+    },
+    "set_mode": {
+      "name": "Imposta Modalità",
+      "description": "Imposta una modalità speciale del VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entità",
+          "description": "Dispositivo VMC da controllare"
+        },
+        "mode": {
+          "name": "Modalità",
+          "description": "Modalità da attivare"
+        }
+      }
+    },
+    "reset_filter": {
+      "name": "Reset Filtro",
+      "description": "Resetta il contatore del filtro del VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entità",
+          "description": "Dispositivo VMC da controllare"
+        }
+      }
+    }
+  }
+}
