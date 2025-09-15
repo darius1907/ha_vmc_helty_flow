@@ -1,7 +1,9 @@
 """Helper functions per l'integrazione VMC Helty Flow"""
 
 import asyncio
+import ipaddress
 import logging
+import re
 import socket
 
 from homeassistant.exceptions import HomeAssistantError
@@ -9,6 +11,9 @@ from homeassistant.exceptions import HomeAssistantError
 from .const import DEFAULT_PORT, IP_RANGE_END, IP_RANGE_START, TCP_TIMEOUT
 
 _LOGGER = logging.getLogger(__name__)
+
+# Constants
+MIN_RESPONSE_LENGTH = 64
 
 
 class VMCConnectionError(HomeAssistantError):
@@ -171,8 +176,6 @@ async def get_device_info(
                         ip, port, "VMCV?", timeout
                     )
                     if version_response:
-                        import re
-
                         # Cerca un pattern che assomigli a una versione
                         version_match = re.search(
                             r"(\d+\.\d+(\.\d+)?)", version_response
@@ -243,6 +246,67 @@ async def discover_vmc_devices(
     return devices
 
 
+async def discover_vmc_devices_with_progress(
+    subnet: str = "192.168.1.",
+    port: int = DEFAULT_PORT,
+    timeout: int = TCP_TIMEOUT,
+    progress_callback=None,
+    interrupt_check=None
+) -> list[dict[str, str]]:
+    """Scopre i dispositivi VMC sulla rete con callback di progresso.
+
+    Args:
+        subnet: Subnet da scansionare
+        port: Porta TCP da usare
+        timeout: Timeout per ogni connessione
+        progress_callback: Funzione da chiamare per aggiornare il progresso
+        interrupt_check: Funzione che ritorna True se la scansione deve essere
+            interrotta
+
+    Returns:
+        Lista dei dispositivi trovati
+    """
+    devices = []
+    if subnet.endswith("."):
+        subnet = subnet[:-1]
+
+    start_ip = IP_RANGE_START
+    end_ip = IP_RANGE_END
+    total_ips = end_ip - start_ip + 1
+
+    for i in range(start_ip, end_ip + 1):
+        # Controlla se la scansione deve essere interrotta
+        if interrupt_check and interrupt_check():
+            _LOGGER.info("Scansione VMC interrotta dall'utente")
+            break
+
+        ip = f"{subnet}.{i}"
+        current_progress = int((i - start_ip + 1) / total_ips * 100)
+
+        # Callback di progresso
+        if progress_callback:
+            progress_callback({
+                "current_ip": ip,
+                "progress": current_progress,
+                "devices_found": len(devices),
+                "scanned": i - start_ip + 1,
+                "total": total_ips
+            })
+
+        try:
+            device_info = await get_device_info(ip, port, timeout)
+            if device_info:
+                devices.append(device_info)
+                _LOGGER.info(
+                    "Dispositivo VMC trovato: %s (%s)", device_info["name"], ip
+                )
+        except Exception as err:
+            _LOGGER.debug("Errore scansionando IP %s: %s", ip, err)
+
+    _LOGGER.info("Scansione VMC completata: trovati %d dispositivi", len(devices))
+    return devices
+
+
 def get_device_name(ip: str) -> str:
     """Restituisce un nome di default per il dispositivo basato sull'IP."""
     return f"VMC Helty {ip.split('.')[-1]}"
@@ -250,7 +314,7 @@ def get_device_name(ip: str) -> str:
 
 def parse_vmsl_response(response: str):
     """Parsa la risposta VMSL? e restituisce SSID e password senza padding."""
-    if not response or len(response) < 64:
+    if not response or len(response) < MIN_RESPONSE_LENGTH:
         return "", ""
     ssid = response[:32].replace("*", "").strip()
     password = response[32:64].replace("*", "").strip()

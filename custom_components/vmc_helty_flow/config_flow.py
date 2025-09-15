@@ -1,5 +1,7 @@
-"""Config flow per l'integrazione VMC Helty Flow"""
+"""Config flow per l'integrazione VMC Helty Flow."""
 
+import asyncio
+import contextlib
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
@@ -10,15 +12,23 @@ from .const import DOMAIN
 from .helpers import (
     count_ips_in_subnet,
     discover_vmc_devices,
+    discover_vmc_devices_with_progress,
+    get_device_info,
     parse_subnet_for_discovery,
     validate_subnet,
 )
+
+# Costanti per i limiti di validazione
+MAX_PORT = 65535
+MAX_TIMEOUT = 60
+MAX_IPS_IN_SUBNET = 254
 
 STORAGE_KEY = f"{DOMAIN}.devices"
 STORAGE_VERSION = 1
 
 
 class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
 
     VERSION = 1
 
@@ -48,10 +58,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _save_devices(self, devices: list) -> None:
         """Salva la lista dei dispositivi nello storage di Home Assistant."""
-        try:
+        with contextlib.suppress(Exception):
             await self._get_store().async_save({"devices": devices})
-        except Exception:
-            pass  # Log error se necessario
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -100,12 +108,12 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if not validate_subnet(self.subnet):
             errors["subnet"] = "subnet_non_valida"
-        if not (1 <= self.port <= 65535):
+        if not (1 <= self.port <= MAX_PORT):
             errors["port"] = "porta_non_valida"
-        if not (1 <= self.timeout <= 60):
+        if not (1 <= self.timeout <= MAX_TIMEOUT):
             errors["timeout"] = "timeout_non_valido"
         ip_count = count_ips_in_subnet(self.subnet)
-        if ip_count > 254:
+        if ip_count > MAX_IPS_IN_SUBNET:
             errors["subnet"] = "subnet_troppo_grande"
         if errors:
             schema = vol.Schema(
@@ -176,53 +184,61 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if entries_created == 0:
                 return self.async_abort(reason="all_devices_already_configured")
 
-            # Ritorna la prima entry creata (Home Assistant gestisce le altre automaticamente)
+            # Ritorna la prima entry creata (Home Assistant gestisce le altre
+            # automaticamente)
             return first_entry
 
-        errors = {}
-        self.scan_interrupted = False
-        devices = []
-        try:
-            self.progress = 0
-            total_ips = count_ips_in_subnet(self.subnet)
-            # Converte la subnet CIDR nel formato richiesto dalla funzione discover_vmc_devices
-            subnet_base = parse_subnet_for_discovery(self.subnet)
-            discovered_devices = await discover_vmc_devices(
-                subnet=subnet_base, port=self.port, timeout=self.timeout
-            )
-
-            for idx, device in enumerate(discovered_devices):
-                if self.scan_interrupted or (
-                    user_input and user_input.get("interrupt_scan")
-                ):
-                    errors["base"] = "scan_interrotta"
-                    break
-                devices.append(device)
-                self.progress = int((idx + 1) / len(discovered_devices) * 100)
-
-            self.discovered_devices = devices
-        except Exception:
-            errors["base"] = "discovery_failed"
-
-        await self._save_devices(devices)
-
-        if not devices or len(devices) == 0:
-            errors["base"] = errors.get("base") or "no_devices_found"
-            schema = vol.Schema(
-                {
-                    vol.Required("subnet", default=self.subnet): str,
-                    vol.Required("port", default=self.port): int,
-                    vol.Required("timeout", default=self.timeout): int,
-                }
-            )
+        # Se c'è una richiesta di interruzione scansione
+        if user_input and user_input.get("interrupt_scan"):
+            self.scan_interrupted = True
             return self.async_show_form(
                 step_id="user",
-                data_schema=schema,
-                errors=errors,
-                description_placeholders={"help": "Errore nella scansione. Riprova."},
+                errors={"base": "scan_interrotta"},
+                description_placeholders={
+                    "help": "Scansione interrotta. Modifica i parametri se necessario."
+                },
             )
 
-        # Solo se ci sono dispositivi, mostra la selezione
+        # Esegui la scansione se non è già stata fatta
+        if not hasattr(self, 'discovered_devices'):
+            errors = {}
+            self.scan_interrupted = False
+            devices = []
+            
+            try:
+                # Avvia la scansione con indicatore di progresso
+                devices = await self._discover_devices_async(
+                    self.subnet, self.port, self.timeout
+                )
+                self.discovered_devices = devices
+            except Exception as err:
+                errors["base"] = "discovery_failed"
+                self.discovered_devices = []
+
+            await self._save_devices(devices)
+
+            # Se nessun dispositivo trovato, riproponi configurazione
+            if not devices or len(devices) == 0:
+                errors["base"] = errors.get("base") or "no_devices_found"
+                schema = vol.Schema(
+                    {
+                        vol.Required("subnet", default=self.subnet): str,
+                        vol.Required("port", default=self.port): int,
+                        vol.Required("timeout", default=self.timeout): int,
+                    }
+                )
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=schema,
+                    errors=errors,
+                    description_placeholders={
+                        "help": "Nessun dispositivo trovato. "
+                        "Modifica la configurazione e riprova."
+                    },
+                )
+
+        # Mostra il form di selezione dei dispositivi
+        devices = self.discovered_devices
         device_options = {d["ip"]: f"{d['name']} ({d['ip']})" for d in devices}
         schema = vol.Schema(
             {
@@ -230,13 +246,54 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional("interrupt_scan", default=False): bool,
             }
         )
+        
+        # Calcola statistiche per il messaggio
+        total_scanned = getattr(self, 'total_ips_scanned', 0)
+        progress_msg = f"Scansione completata ({total_scanned} IP scansionati). "
+        progress_msg += f"Trovati {len(devices)} dispositivi. "
+        progress_msg += "Seleziona i dispositivi da configurare:"
+        
         return self.async_show_form(
             step_id="discovery",
             data_schema=schema,
-            errors=errors,
-            description_placeholders={
-                "help": f"Scansione completata. Trovati {len(devices)} dispositivi. Seleziona i dispositivi da configurare:"
-            },
+            description_placeholders={"help": progress_msg},
+        )
+
+    def _update_discovery_progress(self, progress_info):
+        """Update discovery progress for UI feedback."""
+        self.progress = progress_info.get("progress", 0)
+        # Store current progress information for the UI
+        self._discovery_progress = {
+            "current_ip": progress_info.get("current_ip", ""),
+            "devices_found": progress_info.get("devices_found", 0),
+            "scanned": progress_info.get("scanned", 0),
+            "total": progress_info.get("total", 0),
+            "progress": self.progress
+        }
+
+    async def _discover_devices_async(self, subnet, port, timeout):
+        """Perform device discovery with progress tracking."""
+        self.subnet = subnet
+        self.port = port 
+        self.timeout = timeout
+        self.discovered_devices = []
+        self._discovery_progress = {}
+        
+        # Parsing subnet per determinare il range di IPs
+        subnet_base = parse_subnet_for_discovery(subnet)
+        
+        # Reset progress tracking
+        start_ip = 1
+        end_ip = 254
+        self.total_ips_scanned = end_ip - start_ip + 1
+        
+        # Usa la funzione di discovery con progress indicator
+        return await discover_vmc_devices_with_progress(
+            subnet=subnet_base,
+            port=self.port,
+            timeout=self.timeout,
+            progress_callback=self._update_discovery_progress,
+            interrupt_check=lambda: getattr(self, "_scan_interrupted", False)
         )
 
     async def async_step_import(self, import_info):

@@ -28,6 +28,20 @@
           "selected_devices": "Select one or more VMC devices from the list to add them to Home Assistant",
           "interrupt_scan": "Check to interrupt the ongoing scan"
         }
+      },
+      "progress": {
+        "title": "VMC Device Scanning",
+        "description": "Searching for VMC devices...",
+        "data": {
+          "interrupt_scan": "Interrupt scan"
+        },
+        "data_description": {
+          "interrupt_scan": "Check to interrupt the ongoing scan"
+        }
+      },
+      "discovery_results": {
+        "title": "Scan Results",
+        "description": "The scan has been completed"
       }
     },
     "error": {
@@ -42,7 +56,8 @@
       "cannot_connect": "Unable to connect to VMC device",
       "invalid_response": "Invalid response from VMC device",
       "timeout": "Timeout during communication with device",
-      "unknown": "Unknown error"
+      "unknown": "Unknown error",
+      "retry_configuration": "Modify network configuration and retry scan"
     },
     "abort": {
       "already_configured": "This device is already configured",

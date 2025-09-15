@@ -28,6 +28,20 @@
           "selected_devices": "Seleziona uno o più dispositivi VMC dalla lista per aggiungerli a Home Assistant",
           "interrupt_scan": "Spunta per interrompere la scansione in corso"
         }
+      },
+      "progress": {
+        "title": "Scansione Dispositivi VMC",
+        "description": "Ricerca dispositivi VMC in corso...",
+        "data": {
+          "interrupt_scan": "Interrompi scansione"
+        },
+        "data_description": {
+          "interrupt_scan": "Spunta per interrompere la scansione in corso"
+        }
+      },
+      "discovery_results": {
+        "title": "Risultati Scansione",
+        "description": "La scansione è stata completata"
       }
     },
     "error": {
@@ -42,7 +56,8 @@
       "cannot_connect": "Impossibile connettersi al dispositivo VMC",
       "invalid_response": "Risposta non valida dal dispositivo VMC",
       "timeout": "Timeout durante la comunicazione con il dispositivo",
-      "unknown": "Errore sconosciuto"
+      "unknown": "Errore sconosciuto",
+      "retry_configuration": "Modifica la configurazione di rete e riprova la scansione"
     },
     "abort": {
       "already_configured": "Questo dispositivo è già configurato",
