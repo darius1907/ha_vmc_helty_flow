@@ -94,7 +94,8 @@ class TestTcpSendCommand:
             result = await tcp_send_command("192.168.1.100", 5001, "TEST", timeout=10)
 
         assert result == "OK"
-        # Verifica che wait_for sia stato chiamato almeno due volte con il timeout corretto
+        # Verifica che wait_for sia stato chiamato almeno due volte
+        # con il timeout corretto
         assert mock_wait_for.call_count >= 2
         timeout_calls = [call[1]["timeout"] for call in mock_wait_for.call_args_list]
         assert timeout_calls[0] == 10  # timeout per la connessione
@@ -173,7 +174,8 @@ class TestTcpSendCommand:
             with pytest.raises(VMCConnectionError) as exc_info:
                 await tcp_send_command("192.168.1.100", 5001, "INVALID")
 
-            # L'errore di protocollo viene catturato e rilanciato come VMCConnectionError
+            # L'errore di protocollo viene catturato e rilanciato
+            # come VMCConnectionError
             assert "Errore durante la comunicazione" in str(exc_info.value)
             assert "Errore di protocollo" in str(exc_info.value)
 

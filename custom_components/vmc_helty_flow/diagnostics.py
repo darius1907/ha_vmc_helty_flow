@@ -5,11 +5,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    DIAG_LIGHTS_LEVEL_INDEX,
+    DIAG_LIGHTS_TIMER_INDEX,
+    DIAG_PANEL_LED_INDEX,
+    DIAG_SENSORS_INDEX,
     DOMAIN,
-    PART_INDEX_LIGHTS_LEVEL,
-    PART_INDEX_LIGHTS_TIMER,
-    PART_INDEX_PANEL_LED,
-    PART_INDEX_SENSORS,
 )
 
 # Campi sensibili da oscurare nei diagnostics
@@ -72,27 +72,28 @@ async def async_get_config_entry_diagnostics(
                 diagnostics_data["device_status"] = {
                     "fan_speed_raw": parts[1] if len(parts) > 1 else "unknown",
                     "panel_led_raw": (
-                        parts[PART_INDEX_PANEL_LED]
-                        if len(parts) > PART_INDEX_PANEL_LED
+                        parts[DIAG_PANEL_LED_INDEX]
+                        if len(parts) > DIAG_PANEL_LED_INDEX
                         else "unknown"
                     ),
                     "sensors_raw": (
-                        parts[PART_INDEX_SENSORS]
-                        if len(parts) > PART_INDEX_SENSORS
+                        parts[DIAG_SENSORS_INDEX]
+                        if len(parts) > DIAG_SENSORS_INDEX
                         else "unknown"
                     ),
                     "lights_level_raw": (
-                        parts[PART_INDEX_LIGHTS_LEVEL]
-                        if len(parts) > PART_INDEX_LIGHTS_LEVEL
+                        parts[DIAG_LIGHTS_LEVEL_INDEX]
+                        if len(parts) > DIAG_LIGHTS_LEVEL_INDEX
                         else "unknown"
                     ),
                     "lights_timer_raw": (
-                        parts[PART_INDEX_LIGHTS_TIMER]
-                        if len(parts) > PART_INDEX_LIGHTS_TIMER
+                        parts[DIAG_LIGHTS_TIMER_INDEX]
+                        if len(parts) > DIAG_LIGHTS_TIMER_INDEX
                         else "unknown"
                     ),
                     "response_parts_count": len(parts),
-                    # Non includere la risposta completa nei diagnostici, solo i valori rilevanti
+                                # Non includere la risposta completa nei diagnostici,
+            # solo i valori rilevanti
                     "full_response": "**REDACTED**",
                 }
         except Exception:

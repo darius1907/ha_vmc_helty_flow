@@ -57,7 +57,8 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
             try:
                 parts = status.split(",")
                 fan_speed = int(parts[1]) if len(parts) > 1 else 0
-                # Velocità 0 = off, 1-4 = on, 5-7 = modalità speciali (considerare come on)
+                # Velocità 0 = off, 1-4 = on, 5-7 = modalità speciali
+                # (considerare come on)
             except (ValueError, IndexError):
                 return False
             else:
