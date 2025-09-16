@@ -69,7 +69,10 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     step_id="user",
                     data_schema=schema,
                     description_placeholders={
-                        "help": f"Sono già configurati {len(existing_devices)} dispositivi. Vuoi avviare una nuova scansione?"
+                        "help": (
+                            f"Sono già configurati {len(existing_devices)} "
+                            "dispositivi. Vuoi avviare una nuova scansione?"
+                        )
                     },
                 )
             if not user_input["confirm"]:
@@ -96,7 +99,11 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="user",
                 data_schema=schema,
                 description_placeholders={
-                    "help": "Inserisci la subnet in formato CIDR (es. 192.168.1.0/24), la porta TCP e il timeout (secondi) per la ricerca dei dispositivi Helty."
+                    "help": (
+                        "Inserisci la subnet in formato CIDR (es. 192.168.1.0/24), "
+                        "la porta TCP e il timeout (secondi) per la ricerca dei "
+                        "dispositivi Helty."
+                    )
                 },
             )
         # Validazione subnet/porta
@@ -126,115 +133,149 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=schema,
                 errors=errors,
                 description_placeholders={
-                    "help": "Controlla i parametri inseriti. La subnet deve essere in formato CIDR (es. 192.168.1.0/24) e non deve generare più di 254 IP."
+                    "help": (
+                        "Controlla i parametri inseriti. La subnet deve essere in "
+                        "formato CIDR (es. 192.168.1.0/24) e non deve generare "
+                        "più di 254 IP."
+                    )
                 },
             )
         return await self.async_step_discovery()
 
     async def async_step_discovery(self, user_input=None):
         """Handle device discovery and selection."""
-        # Se l'utente ha selezionato i dispositivi, processa la selezione
-        if user_input and user_input.get("selected_devices"):
-            selected_ips = user_input["selected_devices"]
-            selected_devices = [
-                d for d in self.discovered_devices if d["ip"] in selected_ips
-            ]
+        if user_input:
+            return await self._handle_discovery_input(user_input)
+        
+        return await self._handle_discovery_display()
 
-            # Salva i dispositivi selezionati nello storage
-            await self._save_devices(selected_devices)
-
-            # Crea entry separate per ogni dispositivo selezionato
-            entries_created = 0
-            first_entry = None
-
-            for device in selected_devices:
-                # Verifica che non esista già una entry per questo dispositivo
-                existing_entries = [
-                    entry
-                    for entry in self._async_current_entries()
-                    if entry.data.get("ip") == device["ip"]
-                ]
-
-                if not existing_entries:
-                    await self.async_set_unique_id(device["ip"])
-                    try:
-                        self._abort_if_unique_id_configured()
-                    except Exception:
-                        # Se già configurato, salta questo dispositivo
-                        continue
-
-                    # Crea entry separata per ogni dispositivo
-                    entry = self.async_create_entry(
-                        title=device["name"],
-                        data={
-                            "ip": device["ip"],
-                            "name": device["name"],
-                            "model": device.get("model", "VMC Flow"),
-                            "manufacturer": device.get("manufacturer", "Helty"),
-                        },
-                    )
-
-                    entries_created += 1
-                    if first_entry is None:
-                        first_entry = entry
-
-            # Se tutti i dispositivi erano già configurati
-            if entries_created == 0:
-                return self.async_abort(reason="all_devices_already_configured")
-
-            # Ritorna la prima entry creata (Home Assistant gestisce le altre
-            # automaticamente)
-            return first_entry
+    async def _handle_discovery_input(self, user_input):
+        """Handle user input in discovery step."""
+        # Se l'utente ha selezionato i dispositivi
+        if user_input.get("selected_devices"):
+            return await self._process_device_selection(user_input)
 
         # Se c'è una richiesta di interruzione scansione
-        if user_input and user_input.get("interrupt_scan"):
-            self.scan_interrupted = True
-            return self.async_show_form(
-                step_id="user",
-                errors={"base": "scan_interrotta"},
-                description_placeholders={
-                    "help": "Scansione interrotta. Modifica i parametri se necessario."
-                },
-            )
+        if user_input.get("interrupt_scan"):
+            return self._handle_scan_interruption()
 
+        return await self._handle_discovery_display()
+
+    async def _handle_discovery_display(self):
+        """Handle the display logic for discovery step."""
         # Esegui la scansione se non è già stata fatta
         if not hasattr(self, "discovered_devices"):
-            errors = {}
-            self.scan_interrupted = False
-            devices = []
+            return await self._perform_device_discovery()
 
-            try:
-                # Avvia la scansione con indicatore di progresso
-                devices = await self._discover_devices_async(
-                    self.subnet, self.port, self.timeout
-                )
-                self.discovered_devices = devices
-            except Exception:
-                errors["base"] = "discovery_failed"
-                self.discovered_devices = []
+        # Mostra il form di selezione dei dispositivi
+        return self._show_device_selection_form()
 
-            await self._save_devices(devices)
+    async def _process_device_selection(self, user_input):
+        """Process the user's device selection."""
+        selected_ips = user_input["selected_devices"]
+        selected_devices = [
+            d for d in self.discovered_devices if d["ip"] in selected_ips
+        ]
 
-            # Se nessun dispositivo trovato, riproponi configurazione
-            if not devices or len(devices) == 0:
-                errors["base"] = errors.get("base") or "no_devices_found"
-                schema = vol.Schema(
-                    {
-                        vol.Required("subnet", default=self.subnet): str,
-                        vol.Required("port", default=self.port): int,
-                        vol.Required("timeout", default=self.timeout): int,
-                    }
-                )
-                return self.async_show_form(
-                    step_id="user",
-                    data_schema=schema,
-                    errors=errors,
-                    description_placeholders={
-                        "help": "Nessun dispositivo trovato. "
-                        "Modifica la configurazione e riprova."
+        # Salva i dispositivi selezionati nello storage
+        await self._save_devices(selected_devices)
+
+        # Crea entry separate per ogni dispositivo selezionato
+        entries_created = 0
+        first_entry = None
+
+        for device in selected_devices:
+            # Verifica che non esista già una entry per questo dispositivo
+            existing_entries = [
+                entry
+                for entry in self._async_current_entries()
+                if entry.data.get("ip") == device["ip"]
+            ]
+
+            if not existing_entries:
+                await self.async_set_unique_id(device["ip"])
+                try:
+                    self._abort_if_unique_id_configured()
+                except Exception:
+                    # Se già configurato, salta questo dispositivo
+                    continue
+
+                # Crea entry separata per ogni dispositivo
+                entry = self.async_create_entry(
+                    title=device["name"],
+                    data={
+                        "ip": device["ip"],
+                        "name": device["name"],
+                        "model": device.get("model", "VMC Flow"),
+                        "manufacturer": device.get("manufacturer", "Helty"),
                     },
                 )
 
+                entries_created += 1
+                if first_entry is None:
+                    first_entry = entry
+
+        # Se tutti i dispositivi erano già configurati
+        if entries_created == 0:
+            return self.async_abort(reason="all_devices_already_configured")
+
+        # Ritorna la prima entry creata (Home Assistant gestisce le altre
+        # automaticamente)
+        return first_entry
+
+    def _handle_scan_interruption(self):
+        """Handle scan interruption request."""
+        self.scan_interrupted = True
+        return self.async_show_form(
+            step_id="user",
+            errors={"base": "scan_interrotta"},
+            description_placeholders={
+                "help": "Scansione interrotta. Modifica i parametri se necessario."
+            },
+        )
+
+    async def _perform_device_discovery(self):
+        """Perform device discovery."""
+        errors = {}
+        self.scan_interrupted = False
+        devices = []
+
+        try:
+            # Avvia la scansione con indicatore di progresso
+            devices = await self._discover_devices_async(
+                self.subnet, self.port, self.timeout
+            )
+            self.discovered_devices = devices
+        except Exception:
+            errors["base"] = "discovery_failed"
+            self.discovered_devices = []
+
+        await self._save_devices(devices)
+
+        # Se nessun dispositivo trovato, riproponi configurazione
+        if not devices or len(devices) == 0:
+            errors["base"] = errors.get("base") or "no_devices_found"
+            schema = vol.Schema(
+                {
+                    vol.Required("subnet", default=self.subnet): str,
+                    vol.Required("port", default=self.port): int,
+                    vol.Required("timeout", default=self.timeout): int,
+                }
+            )
+            return self.async_show_form(
+                step_id="user",
+                data_schema=schema,
+                errors=errors,
+                description_placeholders={
+                    "help": "Nessun dispositivo trovato. "
+                    "Modifica la configurazione e riprova."
+                },
+            )
+
+        return None
+
+    def _show_device_selection_form(self):
+        """Show the device selection form."""
         # Mostra il form di selezione dei dispositivi
         devices = self.discovered_devices
         device_options = {d["ip"]: f"{d['name']} ({d['ip']})" for d in devices}
@@ -337,6 +378,8 @@ class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=options_schema,
             description_placeholders={
-                "help": "Configura le opzioni avanzate per l'integrazione VMC Helty Flow."
+                "help": (
+                    "Configura le opzioni avanzate per l'integrazione VMC Helty Flow."
+                )
             },
         )

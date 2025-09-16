@@ -59,44 +59,57 @@ async def async_get_device_unique_id(
     try:
         # Cerca di ottenere un identificatore dal dispositivo tramite protocollo
         network_info = await tcp_send_command(ip_address, 5001, "VMSL?")
-
+        
         if network_info and network_info.startswith("VMSL"):
-            # Prova a estrarre MAC address, serial number o altro identificatore stabile
-            parts = network_info.split(",")
-
-            # Il formato esatto dipende dal protocollo del dispositivo
-            # Qui assumiamo che ci sia un MAC o un ID univoco in uno dei campi
-            for part in parts:
-                # Cerca un pattern che sembra un MAC address
-                mac_match = re.search(r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})", part)
-                if mac_match:
-                    return mac_match.group(0).replace(":", "").replace("-", "").lower()
-
-                # Cerca un pattern che sembra un serial number
-                sn_match = re.search(r"S[:/]?N[:=]?\s*([A-Za-z0-9-]+)", part)
-                if sn_match:
-                    return sn_match.group(1)
-
-            # Se trovato un campo che sembra un ID univoco
-            for i, part in enumerate(parts):
-                if MIN_UNIQUE_ID_LENGTH <= len(
-                    part
-                ) <= MAX_UNIQUE_ID_LENGTH and re.match(r"^[A-Za-z0-9_-]+$", part):
-                    return f"helty_{part.lower()}"
+            unique_id = _extract_unique_id_from_network_info(network_info)
+            if unique_id:
+                return unique_id
 
         # In alternativa, prova a ottenere il nome dispositivo come parte dell'ID
-        device_name = await tcp_send_command(ip_address, 5001, "VMNM?")
-        if device_name and device_name.startswith("VMNM"):
-            parts = device_name.split(",")
-            if len(parts) > 1 and parts[1]:
-                # Normalizza il nome per l'uso come ID
-                normalized_name = re.sub(r"[^a-z0-9_]", "_", parts[1].lower())
-                return f"helty_{normalized_name}_{ip_address.replace('.', '_')}"
-    except Exception as err:
-        _LOGGER.error("Failed to get unique ID for device %s: %s", ip_address, err)
+        return await _get_device_name_based_id(ip_address)
+        
+    except Exception:
+        _LOGGER.exception("Failed to get unique ID for device %s", ip_address)
         return None
-    else:
-        return None
+
+
+def _extract_unique_id_from_network_info(network_info: str) -> str | None:
+    """Extract unique identifier from network info."""
+    parts = network_info.split(",")
+
+    # Il formato esatto dipende dal protocollo del dispositivo
+    # Cerca un pattern che sembra un MAC address
+    for part in parts:
+        mac_match = re.search(r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})", part)
+        if mac_match:
+            return mac_match.group(0).replace(":", "").replace("-", "").lower()
+
+    # Cerca un pattern che sembra un serial number
+    for part in parts:
+        sn_match = re.search(r"S[:/]?N[:=]?\s*([A-Za-z0-9-]+)", part)
+        if sn_match:
+            return sn_match.group(1)
+
+    # Se trovato un campo che sembra un ID univoco
+    for part in enumerate(parts):
+        if MIN_UNIQUE_ID_LENGTH <= len(
+            part
+        ) <= MAX_UNIQUE_ID_LENGTH and re.match(r"^[A-Za-z0-9_-]+$", part):
+            return f"helty_{part.lower()}"
+    
+    return None
+
+
+async def _get_device_name_based_id(ip_address: str) -> str | None:
+    """Get device ID based on device name."""
+    device_name = await tcp_send_command(ip_address, 5001, "VMNM?")
+    if device_name and device_name.startswith("VMNM"):
+        parts = device_name.split(",")
+        if len(parts) > 1 and parts[1]:
+            # Normalizza il nome per l'uso come ID
+            normalized_name = re.sub(r"[^a-z0-9_]", "_", parts[1].lower())
+            return f"helty_{normalized_name}_{ip_address.replace('.', '_')}"
+    return None
 
 
 async def async_get_device_info(hass: HomeAssistant, ip_address: str) -> dict[str, Any]:
