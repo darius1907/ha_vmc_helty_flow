@@ -146,7 +146,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle device discovery and selection."""
         if user_input:
             return await self._handle_discovery_input(user_input)
-        
+
         return await self._handle_discovery_display()
 
     async def _handle_discovery_input(self, user_input):

@@ -1,4 +1,4 @@
-"""Entità sensori per VMC Helty Flow"""
+"""Entità sensori per VMC Helty Flow."""
 
 from typing import Any
 
@@ -132,19 +132,22 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
             if len(parts) < MIN_RESPONSE_PARTS:
                 return None
 
-            if self._sensor_key == "temperature_internal":
-                return float(parts[1]) / 10 if parts[1] else None
-            if self._sensor_key == "temperature_external":
-                return float(parts[2]) / 10 if parts[2] else None
-            if self._sensor_key == "humidity":
-                return float(parts[3]) / 10 if parts[3] else None
-            if self._sensor_key == "co2":
-                return int(parts[4]) if parts[4] else None
-            if self._sensor_key == "voc":
-                return int(parts[14]) if parts[14] else None
+            # Mapping dei sensori con logica unificata
+            sensor_mapping = {
+                "temperature_internal": (1, lambda x: float(x) / 10),
+                "temperature_external": (2, lambda x: float(x) / 10),
+                "humidity": (3, lambda x: float(x) / 10),
+                "co2": (4, lambda x: int(x)),
+                "voc": (14, lambda x: int(x)),
+            }
+
+            if self._sensor_key in sensor_mapping:
+                index, converter = sensor_mapping[self._sensor_key]
+                if parts[index]:
+                    return converter(parts[index])
 
         except (ValueError, IndexError):
-            return None
+            pass
 
         return None
 

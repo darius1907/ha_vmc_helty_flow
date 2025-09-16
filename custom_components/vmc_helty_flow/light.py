@@ -1,4 +1,4 @@
-"""Entità Light per livello luci VMC Helty Flow"""
+"""Entità Light per livello luci VMC Helty Flow."""
 
 from homeassistant.components.light import ColorMode, LightEntity
 from homeassistant.config_entries import ConfigEntry
@@ -48,7 +48,11 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
             try:
                 parts = status.split(",")
                 # Il livello luci è nella posizione 11 (0-100)
-                light_level = int(parts[PART_INDEX_LIGHTS_LEVEL]) if len(parts) > PART_INDEX_LIGHTS_LEVEL else 0
+                light_level = (
+                    int(parts[PART_INDEX_LIGHTS_LEVEL])
+                    if len(parts) > PART_INDEX_LIGHTS_LEVEL
+                    else 0
+                )
                 # Converti da 0-100 a 0-255
                 return int(light_level * 2.55)
             except (ValueError, IndexError):

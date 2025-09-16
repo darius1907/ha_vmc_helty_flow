@@ -59,7 +59,7 @@ async def async_get_device_unique_id(
     try:
         # Cerca di ottenere un identificatore dal dispositivo tramite protocollo
         network_info = await tcp_send_command(ip_address, 5001, "VMSL?")
-        
+
         if network_info and network_info.startswith("VMSL"):
             unique_id = _extract_unique_id_from_network_info(network_info)
             if unique_id:
@@ -67,7 +67,7 @@ async def async_get_device_unique_id(
 
         # In alternativa, prova a ottenere il nome dispositivo come parte dell'ID
         return await _get_device_name_based_id(ip_address)
-        
+
     except Exception:
         _LOGGER.exception("Failed to get unique ID for device %s", ip_address)
         return None
@@ -92,11 +92,11 @@ def _extract_unique_id_from_network_info(network_info: str) -> str | None:
 
     # Se trovato un campo che sembra un ID univoco
     for part in enumerate(parts):
-        if MIN_UNIQUE_ID_LENGTH <= len(
-            part
-        ) <= MAX_UNIQUE_ID_LENGTH and re.match(r"^[A-Za-z0-9_-]+$", part):
+        if MIN_UNIQUE_ID_LENGTH <= len(part) <= MAX_UNIQUE_ID_LENGTH and re.match(
+            r"^[A-Za-z0-9_-]+$", part
+        ):
             return f"helty_{part.lower()}"
-    
+
     return None
 
 
@@ -148,8 +148,8 @@ async def async_get_device_info(
             elif any(room in name_lower for room in ["cucina", "kitchen"]):
                 device_info["suggested_area"] = "Cucina"
             # Aggiungi altre stanze se necessario
-    except Exception as err:
-        _LOGGER.error("Error retrieving device info for %s: %s", ip_address, err)
+    except Exception:
+        _LOGGER.exception("Error retrieving device info for %s", ip_address)
 
     return device_info
 
@@ -157,7 +157,7 @@ async def async_get_device_info(
 async def async_remove_orphaned_devices(hass: HomeAssistant) -> None:
     """Rimuovi i dispositivi orfani quando l'integrazione viene rimossa."""
     device_registry_instance = device_registry.async_get(hass)
-    entity_registry_instance = entity_registry.async_get(hass)
+    entity_registry.async_get(hass)
 
     # Trova tutti i dispositivi associati al dominio
     domain_devices = [

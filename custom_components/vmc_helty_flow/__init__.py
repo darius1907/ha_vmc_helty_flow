@@ -124,16 +124,21 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Fetch data from VMC device."""
+
+        def _raise_update_failed(status_response: str) -> None:
+            """Raise UpdateFailed after handling error."""
+            self._handle_error()
+            raise UpdateFailed(
+                f"Dispositivo {self.ip} non risponde correttamente: "
+                f"{status_response}"
+            )
+
         try:
             # Ottiene lo stato del dispositivo
             status_response = await self._get_status_data()
 
             if not status_response or not status_response.startswith("VMGO"):
-                self._handle_error()
-                raise UpdateFailed(
-                    f"Dispositivo {self.ip} non risponde correttamente: "
-                    f"{status_response}"
-                )
+                _raise_update_failed(status_response)
 
             # Ottieni dati aggiuntivi
             additional_data = await self._get_additional_data()

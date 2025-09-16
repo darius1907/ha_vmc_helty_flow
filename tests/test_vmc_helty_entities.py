@@ -85,8 +85,6 @@ def test_entity_instantiation(entity_cls, args, mock_coordinator):
         assert entity.name is not None
 
 
-
-
 IP = "192.168.1.100"
 NAME = "TestVMC"
 SSID = "TestSSID"
@@ -123,7 +121,7 @@ GATEWAY = "192.168.1.1"
         (VmcHeltyNetworkPasswordSensor, []),
     ],
 )
-def test_entity_instantiation(entity_cls, additional_args):
+def test_entity_instantiation_extended(entity_cls, additional_args):
     # Create mock coordinator
     mock_coordinator = Mock()
     mock_coordinator.ip = IP

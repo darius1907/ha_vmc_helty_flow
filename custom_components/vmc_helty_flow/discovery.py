@@ -67,8 +67,8 @@ async def _scan_network_for_devices(
                         "manufacturer": "Helty",
                     }
                 )
-            except Exception as err:
-                _LOGGER.exception("Error getting device info for %s: %s", ip, err)
+            except Exception:
+                _LOGGER.exception("Error getting device info for %s", ip)
 
     return devices
 

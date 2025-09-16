@@ -92,8 +92,8 @@ async def async_get_config_entry_diagnostics(
                         else "unknown"
                     ),
                     "response_parts_count": len(parts),
-                                # Non includere la risposta completa nei diagnostici,
-            # solo i valori rilevanti
+                    # Non includere la risposta completa nei diagnostici,
+                    # solo i valori rilevanti
                     "full_response": "**REDACTED**",
                 }
         except Exception:

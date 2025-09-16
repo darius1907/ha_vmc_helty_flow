@@ -1,4 +1,4 @@
-"""Entità Fan per VMC Helty Flow"""
+"""Entità Fan per VMC Helty Flow."""
 
 from typing import Any
 
@@ -150,12 +150,12 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
             if response == "OK":
                 # Forza aggiornamento del coordinatore
                 await self.coordinator.async_request_refresh()
-        except VMCConnectionError as err:
+        except VMCConnectionError:
             self._attr_available = False
-            raise err
-        except Exception as err:
+            raise
+        except Exception:
             self._attr_available = False
-            raise err
+            raise
 
     async def async_turn_on(
         self,

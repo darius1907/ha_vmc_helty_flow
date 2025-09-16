@@ -29,7 +29,7 @@ class TestProgressIndicator:
             mock_get_info.return_value = None  # Nessun dispositivo trovato
 
             # Esegui discovery con progress
-            devices = await discover_vmc_devices_with_progress(
+            await discover_vmc_devices_with_progress(
                 subnet="192.168.1",
                 port=5001,
                 timeout=1,
@@ -72,7 +72,7 @@ class TestProgressIndicator:
             mock_get_info.return_value = None
 
             # Esegui discovery con interruzione
-            devices = await discover_vmc_devices_with_progress(
+            await discover_vmc_devices_with_progress(
                 subnet="192.168.1",
                 port=5001,
                 timeout=1,
