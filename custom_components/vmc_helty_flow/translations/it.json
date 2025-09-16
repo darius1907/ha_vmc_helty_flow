@@ -42,6 +42,16 @@
       "discovery_results": {
         "title": "Risultati Scansione",
         "description": "La scansione è stata completata"
+      },
+      "scanning": {
+        "title": "Scansione in Corso",
+        "description": "Sto effettuando la ricerca dei dispositivi VMC sulla subnet {subnet}.0/24 porta {port}.\n\nTempo stimato: {estimated_time}\n\nPremi 'Invia' per procedere o attendi il completamento automatico.",
+        "data": {
+          "proceed": "Procedi con la scansione"
+        },
+        "data_description": {
+          "proceed": "Continua con il processo di ricerca dispositivi"
+        }
       }
     },
     "error": {
@@ -50,6 +60,8 @@
       "timeout_non_valido": "Il timeout deve essere compreso tra 1 e 60 secondi",
       "subnet_troppo_grande": "La subnet non può generare più di 254 indirizzi IP",
       "discovery_failed": "Errore durante la ricerca dei dispositivi VMC",
+      "errore_discovery": "Errore durante la ricerca dei dispositivi VMC",
+      "nessun_dispositivo_trovato": "Nessun dispositivo VMC trovato nella subnet specificata",
       "scan_interrotta": "Scansione interrotta dall'utente",
       "no_devices_found": "Nessun dispositivo VMC trovato nella subnet specificata",
       "scan_annullata": "Scansione annullata. Dispositivi esistenti mantenuti.",

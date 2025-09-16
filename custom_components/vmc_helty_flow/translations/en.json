@@ -42,6 +42,16 @@
       "discovery_results": {
         "title": "Scan Results",
         "description": "The scan has been completed"
+      },
+      "scanning": {
+        "title": "Scanning in Progress",
+        "description": "Scanning for VMC devices on subnet {subnet}.0/24 port {port}.\n\nEstimated time: {estimated_time}\n\nPress 'Submit' to proceed or wait for automatic completion.",
+        "data": {
+          "proceed": "Proceed with scan"
+        },
+        "data_description": {
+          "proceed": "Continue with the device discovery process"
+        }
       }
     },
     "error": {
@@ -50,6 +60,8 @@
       "timeout_non_valido": "Timeout must be between 1 and 60 seconds",
       "subnet_troppo_grande": "Subnet cannot generate more than 254 IP addresses",
       "discovery_failed": "Error during VMC device discovery",
+      "errore_discovery": "Error during VMC device discovery",
+      "nessun_dispositivo_trovato": "No VMC devices found in the specified subnet",
       "scan_interrotta": "Scan interrupted by user",
       "no_devices_found": "No VMC devices found in the specified subnet",
       "scan_annullata": "Scan cancelled. Existing devices kept.",

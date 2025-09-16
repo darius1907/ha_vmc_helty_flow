@@ -506,3 +506,35 @@ class TestVmcHeltyFlowConfigFlow:
         assert config_flow.subnet == "192.168.1.0/24"
         assert config_flow.port == 5001
         assert config_flow.timeout == 10
+
+    async def test_async_step_scanning_flow(self, config_flow):
+        """Test scanning step shows proper form and proceeds to discovery."""
+        # Setup flow state
+        config_flow.subnet = "192.168.1.0/24"
+        config_flow.port = 5001
+        config_flow.timeout = 10
+
+        # Step 1: Initial scanning step should show form
+        result1 = await config_flow.async_step_scanning(None)
+        assert result1["type"] == "form"
+        assert result1["step_id"] == "scanning"
+        assert "proceed" in str(result1["data_schema"])
+
+        # Verify placeholders
+        placeholders = result1.get("description_placeholders", {})
+        assert placeholders["subnet"] == "192.168.1.0/24"
+        assert placeholders["port"] == "5001"
+        assert "20-30 secondi" in placeholders["estimated_time"]
+
+        # Step 2: When user proceeds, should perform discovery
+        with patch.object(
+            config_flow, "_perform_device_discovery", return_value=[]
+        ) as mock_discovery:
+            result2 = await config_flow.async_step_scanning({"proceed": True})
+
+            # Should call discovery
+            mock_discovery.assert_called_once()
+
+            # Should return discovery results
+            assert result2["type"] == "form"
+            assert result2["step_id"] == "discovery"

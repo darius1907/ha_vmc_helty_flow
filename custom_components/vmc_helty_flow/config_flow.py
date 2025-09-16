@@ -1,6 +1,7 @@
 """Config flow per l'integrazione VMC Helty Flow."""
 
 import contextlib
+import logging
 from typing import Any, cast
 
 import homeassistant.helpers.config_validation as cv
@@ -24,6 +25,8 @@ MAX_IPS_IN_SUBNET = 254
 
 STORAGE_KEY = f"{DOMAIN}.devices"
 STORAGE_VERSION = 1
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -173,21 +176,98 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_discovery(self, user_input=None):
         """Handle device discovery and selection."""
         if user_input:
-            return await self._handle_discovery_input(user_input)
+            errors = {}
+            return await self._handle_discovery_input(user_input, errors)
 
         return await self._handle_discovery_display()
 
-    async def _handle_discovery_input(self, user_input):
-        """Handle user input in discovery step."""
-        # Se l'utente ha selezionato i dispositivi
-        if user_input.get("selected_devices"):
-            return await self._process_device_selection(user_input)
+    async def _handle_discovery_input(self, _user_input, errors):
+        """Handle discovery step input and perform device scan."""
+        try:
+            _LOGGER.info(
+                "Avvio discovery con subnet %s porta %s timeout %s",
+                self.subnet, self.port, self.timeout
+            )
 
-        # Se c'è una richiesta di interruzione scansione
-        if user_input.get("interrupt_scan"):
-            return self._handle_scan_interruption()
+            # Return a progress form to show scanning status
+            return await self.async_step_scanning()
 
-        return await self._handle_discovery_display()
+        except Exception:
+            _LOGGER.exception("Errore durante la discovery")
+            errors["base"] = "errore_discovery"
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({
+                    vol.Required("subnet", default="192.168.1.0/24"): str,
+                    vol.Required("port", default=5001): int,
+                    vol.Required("timeout", default=10): int,
+                }),
+                errors=errors
+            )
+
+    async def async_step_scanning(self, user_input=None):
+        """Show scanning progress and perform discovery."""
+        if user_input is None:
+            # Show scanning form first
+            return self.async_show_form(
+                step_id="scanning",
+                data_schema=vol.Schema({
+                    vol.Optional("proceed", default=True): bool
+                }),
+                description_placeholders={
+                    "subnet": self.subnet,
+                    "port": str(self.port),
+                    "estimated_time": "20-30 secondi"
+                }
+            )
+        
+        # When form is submitted, perform actual discovery
+        try:
+            _LOGGER.info(
+                "Esecuzione discovery su subnet %s porta %s",
+                self.subnet, self.port
+            )
+
+            # Perform device discovery
+            discovered_devices = await self._discover_devices_async(
+                self.subnet, self.port, self.timeout
+            )
+
+            _LOGGER.info(
+                "Discovery completata, trovati %d dispositivi",
+                len(discovered_devices)
+            )
+            
+            if not discovered_devices:
+                return self.async_show_form(
+                    step_id="scanning",
+                    data_schema=vol.Schema({}),
+                    errors={"base": "nessun_dispositivo_trovato"},
+                    description_placeholders={
+                        "subnet": self.subnet,
+                        "port": str(self.port),
+                        "timeout": str(self.timeout),
+                        "estimated_time": "20-30 secondi"
+                    }
+                )
+            
+            # Memorizza i dispositivi scoperti per il prossimo step
+            self.discovered_devices = discovered_devices
+            return await self.async_step_discovery()
+            
+        except Exception:
+            _LOGGER.exception("Errore durante la discovery")
+            return self.async_show_form(
+                step_id="scanning",
+                data_schema=vol.Schema({}),
+                errors={"base": "errore_discovery"},
+                description_placeholders={
+                    "subnet": self.subnet,
+                    "port": str(self.port),
+                    "timeout": str(self.timeout),
+                    "estimated_time": "20-30 secondi"
+                }
+            )
 
     async def _handle_discovery_display(self):
         """Handle the display logic for discovery step."""
