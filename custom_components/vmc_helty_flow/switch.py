@@ -5,11 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import (
-    DOMAIN,
-    PART_INDEX_PANEL_LED,
-    PART_INDEX_SENSORS,
-)
+from .const import DOMAIN
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -82,7 +78,7 @@ class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
                 return False
         return False
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **_kwargs) -> None:
         """Turn on the mode."""
         response = await tcp_send_command(
             self.coordinator.ip, 5001, MODES[self._mode_key]["cmd"]
@@ -90,7 +86,7 @@ class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **_kwargs) -> None:
         """Turn off the mode (set to manual speed 1)."""
         # Disattiva la modalità speciale impostando velocità manuale 1
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0000001")
@@ -118,22 +114,18 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
         if status and status.startswith("VMGO"):
             try:
                 parts = status.split(",")
-                return (
-                    parts[PART_INDEX_PANEL_LED] == "1"
-                    if len(parts) > PART_INDEX_PANEL_LED
-                    else False
-                )
+                return parts[2] == "1" if len(parts) > 2 else False
             except (ValueError, IndexError):
                 return False
         return False
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **_kwargs) -> None:
         """Turn on panel LED."""
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100010")
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **_kwargs) -> None:
         """Turn off panel LED."""
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100000")
         if response == "OK":
@@ -161,22 +153,18 @@ class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
             try:
                 parts = status.split(",")
                 # Sensori attivi se il valore è 0, inattivi se 1
-                return (
-                    parts[PART_INDEX_SENSORS] == "0"
-                    if len(parts) > PART_INDEX_SENSORS
-                    else True
-                )
+                return parts[4] == "0" if len(parts) > 4 else True
             except (ValueError, IndexError):
                 return True
         return True
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **_kwargs) -> None:
         """Turn on sensors."""
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0300000")
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **_kwargs) -> None:
         """Turn off sensors."""
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0300002")
         if response == "OK":

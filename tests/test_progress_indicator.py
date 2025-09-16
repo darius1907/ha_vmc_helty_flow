@@ -111,7 +111,7 @@ class TestProgressIndicator:
             "custom_components.vmc_helty_flow.helpers.get_device_info"
         ) as mock_get_info:
             # Simula un dispositivo trovato al 50° IP
-            def side_effect(ip, port, timeout):
+            def side_effect(ip, _port, _timeout):
                 if ip == "192.168.1.50":
                     return mock_device
                 return None

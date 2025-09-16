@@ -7,8 +7,8 @@ from homeassistant.helpers import device_registry as dr
 
 from .const import (
     DOMAIN,
-    FAN_SPEED_MAX_NORMAL,
     FAN_SPEED_OFF,
+    FAN_SPEED_MAX_NORMAL,
     MAX_DEVICE_NAME_LENGTH,
     MAX_PASSWORD_LENGTH,
     MAX_SSID_LENGTH,
@@ -145,7 +145,7 @@ async def _set_sensors(ip: str, parameters: dict) -> None:
         raise HomeAssistantError(f"Failed to set sensors: {response}")
 
 
-async def _reset_filter(ip: str, parameters: dict) -> None:
+async def _reset_filter(ip: str, _parameters: dict) -> None:
     """Reset filter counter."""
     response = await tcp_send_command(ip, 5001, "VMWH0417744")
     if response != "OK":
@@ -174,11 +174,7 @@ async def _set_network_config(ip: str, parameters: dict) -> None:
     if not ssid or len(ssid) > MAX_SSID_LENGTH:
         raise HomeAssistantError("SSID must be between 1 and 32 characters")
 
-    if (
-        not password
-        or len(password) < MIN_PASSWORD_LENGTH
-        or len(password) > MAX_PASSWORD_LENGTH
-    ):
+    if not password or len(password) < MIN_PASSWORD_LENGTH or len(password) > MAX_PASSWORD_LENGTH:
         raise HomeAssistantError("Password must be between 8 and 32 characters")
 
     # Formatta il comando con padding
@@ -195,12 +191,7 @@ DEVICE_ACTIONS = {
     "set_fan_speed": {
         "name": "Set Fan Speed",
         "parameters": {
-            "speed": {
-                "type": "integer",
-                "min": FAN_SPEED_OFF,
-                "max": FAN_SPEED_MAX_NORMAL,
-                "required": True,
-            }
+            "speed": {"type": "integer", "min": FAN_SPEED_OFF, "max": FAN_SPEED_MAX_NORMAL, "required": True}
         },
     },
     "set_hyperventilation": {

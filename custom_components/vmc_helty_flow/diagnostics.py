@@ -103,7 +103,7 @@ async def async_get_config_entry_diagnostics(
 
 
 async def async_get_device_diagnostics(
-    hass: HomeAssistant, config_entry: ConfigEntry, device
+    hass: HomeAssistant, config_entry: ConfigEntry, _device
 ) -> dict:
     """Return diagnostics for a device entry."""
     return await async_get_config_entry_diagnostics(hass, config_entry)

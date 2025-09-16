@@ -53,7 +53,7 @@ async def async_get_or_create_device(
 
 
 async def async_get_device_unique_id(
-    hass: HomeAssistant, ip_address: str
+    _hass: HomeAssistant, ip_address: str
 ) -> str | None:
     """Ottieni un identificatore univoco per il dispositivo."""
     try:
@@ -112,7 +112,9 @@ async def _get_device_name_based_id(ip_address: str) -> str | None:
     return None
 
 
-async def async_get_device_info(hass: HomeAssistant, ip_address: str) -> dict[str, Any]:
+async def async_get_device_info(
+    _hass: HomeAssistant, ip_address: str
+) -> dict[str, Any]:
     """Ottieni informazioni dettagliate sul dispositivo."""
     device_info = {
         "model": "Flow",

@@ -160,14 +160,14 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
     async def async_turn_on(
         self,
         percentage: int | None = None,
-        preset_mode: str | None = None,
-        **kwargs,
+        _preset_mode: str | None = None,
+        **_kwargs,
     ) -> None:
         """Turn on the fan."""
         if percentage is None:
             percentage = 25  # Default alla velocità minima
         await self.async_set_percentage(percentage)
 
-    async def async_turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **_kwargs) -> None:
         """Turn off the fan."""
         await self.async_set_percentage(0)
