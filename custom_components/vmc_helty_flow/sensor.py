@@ -23,7 +23,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, MIN_RESPONSE_PARTS
 from .device_info import VmcHeltyEntity
 from .helpers import parse_vmsl_response, tcp_send_command
 
@@ -129,7 +129,7 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
 
         try:
             parts = sensors_data.split(",")
-            if len(parts) < 15:
+            if len(parts) < MIN_RESPONSE_PARTS:
                 return None
 
             if self._sensor_key == "temperature_internal":

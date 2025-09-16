@@ -9,7 +9,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    FAN_PERCENTAGE_STEP,
+    FAN_SPEED_FREE_COOLING,
+    FAN_SPEED_HYPERVENTILATION,
+    FAN_SPEED_MAX_NORMAL,
+    FAN_SPEED_NIGHT_MODE,
+    PART_INDEX_PANEL_LED,
+    PART_INDEX_SENSORS,
+)
 from .device_info import VmcHeltyEntity
 from .helpers import VMCConnectionError, tcp_send_command
 
@@ -68,14 +77,16 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
                 fan_speed = int(parts[1]) if len(parts) > 1 else 0
 
                 # Gestione modalità speciali
-                if fan_speed == 5:  # Modalità notte -> velocità 1
-                    return 25
-                if fan_speed == 6:  # Iperventilazione -> velocità 4
+                if fan_speed == FAN_SPEED_NIGHT_MODE:  # Modalità notte -> velocità 1
+                    return FAN_PERCENTAGE_STEP
+                if (
+                    fan_speed == FAN_SPEED_HYPERVENTILATION
+                ):  # Iperventilazione -> velocità 4
                     return 100
-                if fan_speed == 7:  # Free cooling -> velocità 0
+                if fan_speed == FAN_SPEED_FREE_COOLING:  # Free cooling -> velocità 0
                     return 0
                 # Velocità normale 0-4
-                return min(fan_speed * 25, 100)
+                return min(fan_speed * FAN_PERCENTAGE_STEP, 100)
             except (ValueError, IndexError):
                 return 0
         return 0
@@ -95,19 +106,25 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
                 fan_speed = int(parts[1]) if len(parts) > 1 else 0
 
                 # Modalità speciali
-                attributes["night_mode"] = fan_speed == 5
-                attributes["hyperventilation"] = fan_speed == 6
-                attributes["free_cooling"] = fan_speed == 7
-                attributes["manual_speed"] = fan_speed if 0 <= fan_speed <= 4 else None
+                attributes["night_mode"] = fan_speed == FAN_SPEED_NIGHT_MODE
+                attributes["hyperventilation"] = fan_speed == FAN_SPEED_HYPERVENTILATION
+                attributes["free_cooling"] = fan_speed == FAN_SPEED_FREE_COOLING
+                attributes["manual_speed"] = (
+                    fan_speed if 0 <= fan_speed <= FAN_SPEED_MAX_NORMAL else None
+                )
 
                 # Altri stati dal dispositivo
-                if len(parts) > 2:
+                if len(parts) > PART_INDEX_PANEL_LED:
                     attributes["panel_led"] = (
-                        parts[2] == "1" if len(parts) > 2 else False
+                        parts[PART_INDEX_PANEL_LED] == "1"
+                        if len(parts) > PART_INDEX_PANEL_LED
+                        else False
                     )
-                if len(parts) > 4:
+                if len(parts) > PART_INDEX_SENSORS:
                     attributes["sensors_active"] = (
-                        parts[4] == "0" if len(parts) > 4 else True
+                        parts[PART_INDEX_SENSORS] == "0"
+                        if len(parts) > PART_INDEX_SENSORS
+                        else True
                     )
 
             except (ValueError, IndexError):
@@ -121,7 +138,9 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
             speed = 0
         else:
             # Converte percentuale in velocità (1-4)
-            speed = max(1, min(4, round(percentage / 25)))
+            speed = max(
+                1, min(FAN_SPEED_MAX_NORMAL, round(percentage / FAN_PERCENTAGE_STEP))
+            )
 
         try:
             response = await tcp_send_command(

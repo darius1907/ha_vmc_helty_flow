@@ -4,7 +4,13 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    PART_INDEX_LIGHTS_LEVEL,
+    PART_INDEX_LIGHTS_TIMER,
+    PART_INDEX_PANEL_LED,
+    PART_INDEX_SENSORS,
+)
 
 # Campi sensibili da oscurare nei diagnostics
 TO_REDACT = {
@@ -65,10 +71,26 @@ async def async_get_config_entry_diagnostics(
                 parts = status.split(",")
                 diagnostics_data["device_status"] = {
                     "fan_speed_raw": parts[1] if len(parts) > 1 else "unknown",
-                    "panel_led_raw": parts[2] if len(parts) > 2 else "unknown",
-                    "sensors_raw": parts[4] if len(parts) > 4 else "unknown",
-                    "lights_level_raw": parts[11] if len(parts) > 11 else "unknown",
-                    "lights_timer_raw": parts[15] if len(parts) > 15 else "unknown",
+                    "panel_led_raw": (
+                        parts[PART_INDEX_PANEL_LED]
+                        if len(parts) > PART_INDEX_PANEL_LED
+                        else "unknown"
+                    ),
+                    "sensors_raw": (
+                        parts[PART_INDEX_SENSORS]
+                        if len(parts) > PART_INDEX_SENSORS
+                        else "unknown"
+                    ),
+                    "lights_level_raw": (
+                        parts[PART_INDEX_LIGHTS_LEVEL]
+                        if len(parts) > PART_INDEX_LIGHTS_LEVEL
+                        else "unknown"
+                    ),
+                    "lights_timer_raw": (
+                        parts[PART_INDEX_LIGHTS_TIMER]
+                        if len(parts) > PART_INDEX_LIGHTS_TIMER
+                        else "unknown"
+                    ),
                     "response_parts_count": len(parts),
                     # Non includere la risposta completa nei diagnostici, solo i valori rilevanti
                     "full_response": "**REDACTED**",

@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, PART_INDEX_LIGHTS_LEVEL, PART_INDEX_LIGHTS_TIMER
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -48,7 +48,11 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
             try:
                 parts = status.split(",")
                 # Il livello luci è nella posizione 11 (0-100)
-                light_level = int(parts[11]) if len(parts) > 11 else 0
+                light_level = (
+                    int(parts[PART_INDEX_LIGHTS_LEVEL])
+                    if len(parts) > PART_INDEX_LIGHTS_LEVEL
+                    else 0
+                )
                 # Converti da 0-100 a 0-255
                 return int(light_level * 2.55)
             except (ValueError, IndexError):
@@ -104,7 +108,11 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
             try:
                 parts = status.split(",")
                 # Il timer luci è nella posizione 15 (in secondi)
-                timer_seconds = int(parts[15]) if len(parts) > 15 else 0
+                timer_seconds = (
+                    int(parts[PART_INDEX_LIGHTS_TIMER])
+                    if len(parts) > PART_INDEX_LIGHTS_TIMER
+                    else 0
+                )
             except (ValueError, IndexError):
                 return {}
             else:

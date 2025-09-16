@@ -5,7 +5,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    PART_INDEX_PANEL_LED,
+    PART_INDEX_SENSORS,
+)
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -114,7 +118,11 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
         if status and status.startswith("VMGO"):
             try:
                 parts = status.split(",")
-                return parts[2] == "1" if len(parts) > 2 else False
+                return (
+                    parts[PART_INDEX_PANEL_LED] == "1"
+                    if len(parts) > PART_INDEX_PANEL_LED
+                    else False
+                )
             except (ValueError, IndexError):
                 return False
         return False
@@ -153,7 +161,11 @@ class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
             try:
                 parts = status.split(",")
                 # Sensori attivi se il valore è 0, inattivi se 1
-                return parts[4] == "0" if len(parts) > 4 else True
+                return (
+                    parts[PART_INDEX_SENSORS] == "0"
+                    if len(parts) > PART_INDEX_SENSORS
+                    else True
+                )
             except (ValueError, IndexError):
                 return True
         return True

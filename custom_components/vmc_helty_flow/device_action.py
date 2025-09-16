@@ -5,7 +5,15 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    FAN_SPEED_MAX_NORMAL,
+    FAN_SPEED_OFF,
+    MAX_DEVICE_NAME_LENGTH,
+    MAX_PASSWORD_LENGTH,
+    MAX_SSID_LENGTH,
+    MIN_PASSWORD_LENGTH,
+)
 from .helpers import tcp_send_command
 
 # Schema di validazione per le azioni del dispositivo
@@ -79,7 +87,7 @@ async def _execute_device_action(ip: str, action: str, parameters: dict) -> None
 async def _set_fan_speed(ip: str, parameters: dict) -> None:
     """Set fan speed (0-4)."""
     speed = parameters.get("speed", 1)
-    if not 0 <= speed <= 4:
+    if not FAN_SPEED_OFF <= speed <= FAN_SPEED_MAX_NORMAL:
         raise HomeAssistantError("Speed must be between 0 and 4")
 
     response = await tcp_send_command(ip, 5001, f"VMWH000000{speed}")
@@ -147,7 +155,7 @@ async def _reset_filter(ip: str, parameters: dict) -> None:
 async def _set_device_name(ip: str, parameters: dict) -> None:
     """Set device name."""
     name = parameters.get("name", "")
-    if not name or len(name) > 32:
+    if not name or len(name) > MAX_DEVICE_NAME_LENGTH:
         raise HomeAssistantError("Name must be between 1 and 32 characters")
 
     # Rimuove caratteri non ASCII e spazi
@@ -163,10 +171,14 @@ async def _set_network_config(ip: str, parameters: dict) -> None:
     ssid = parameters.get("ssid", "")
     password = parameters.get("password", "")
 
-    if not ssid or len(ssid) > 32:
+    if not ssid or len(ssid) > MAX_SSID_LENGTH:
         raise HomeAssistantError("SSID must be between 1 and 32 characters")
 
-    if not password or len(password) < 8 or len(password) > 32:
+    if (
+        not password
+        or len(password) < MIN_PASSWORD_LENGTH
+        or len(password) > MAX_PASSWORD_LENGTH
+    ):
         raise HomeAssistantError("Password must be between 8 and 32 characters")
 
     # Formatta il comando con padding
@@ -183,7 +195,12 @@ DEVICE_ACTIONS = {
     "set_fan_speed": {
         "name": "Set Fan Speed",
         "parameters": {
-            "speed": {"type": "integer", "min": 0, "max": 4, "required": True}
+            "speed": {
+                "type": "integer",
+                "min": FAN_SPEED_OFF,
+                "max": FAN_SPEED_MAX_NORMAL,
+                "required": True,
+            }
         },
     },
     "set_hyperventilation": {

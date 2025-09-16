@@ -36,7 +36,7 @@ async def async_get_or_create_device(
     device_info = await async_get_device_info(hass, ip_address)
 
     # Crea o aggiorna il device nel registry
-    device_entry = device_registry_instance.async_get_or_create(
+    return device_registry_instance.async_get_or_create(
         config_entry_id=coordinator.config_entry.entry_id,
         # Usa sia MAC/identificatore univoco che IP come identificatori
         identifiers={(DOMAIN, unique_id), (DOMAIN, ip_address)},
@@ -50,8 +50,6 @@ async def async_get_or_create_device(
         suggested_area=device_info.get("suggested_area"),
         configuration_url=f"http://{ip_address}:5001",
     )
-
-    return device_entry
 
 
 async def async_get_device_unique_id(

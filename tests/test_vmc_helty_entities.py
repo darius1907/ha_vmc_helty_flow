@@ -85,28 +85,7 @@ def test_entity_instantiation(entity_cls, args, mock_coordinator):
         assert entity.name is not None
 
 
-import pytest
 
-from custom_components.vmc_helty_flow.fan import VmcHeltyFan
-from custom_components.vmc_helty_flow.light import VmcHeltyLight, VmcHeltyLightTimer
-from custom_components.vmc_helty_flow.sensor import (
-    VmcHeltyFilterHoursSensor,
-    VmcHeltyIPAddressSensor,
-    VmcHeltyLastResponseSensor,
-    VmcHeltyNameText,
-    VmcHeltyNetworkPasswordSensor,
-    VmcHeltyNetworkSSIDSensor,
-    VmcHeltyOnOffSensor,
-    VmcHeltyPasswordText,
-    VmcHeltyResetFilterButton,
-    VmcHeltySensor,
-    VmcHeltySSIDText,
-)
-from custom_components.vmc_helty_flow.switch import (
-    VmcHeltyModeSwitch,
-    VmcHeltyPanelLedSwitch,
-    VmcHeltySensorsSwitch,
-)
 
 IP = "192.168.1.100"
 NAME = "TestVMC"
