@@ -1,4 +1,4 @@
-"""Helper functions per l'integrazione VMC Helty Flow"""
+"""Helper functions per l'integrazione VMC Helty Flow."""
 
 import asyncio
 import ipaddress
@@ -32,8 +32,59 @@ class VMCProtocolError(VMCResponseError):
     """Errore di protocollo nella comunicazione con VMC."""
 
 
+async def _establish_connection(ip: str, port: int, timeout: int) -> tuple:
+    """Stabilisce una connessione TCP."""
+    try:
+        return await asyncio.wait_for(
+            asyncio.open_connection(ip, port), timeout=timeout
+        )
+    except TimeoutError:
+        raise VMCTimeoutError(f"Timeout durante la connessione a {ip}:{port}") from None
+    except ConnectionRefusedError:
+        raise VMCConnectionError(f"Connessione rifiutata da {ip}:{port}") from None
+    except (OSError, socket.gaierror) as err:
+        raise VMCConnectionError(f"Errore di connessione a {ip}:{port}: {err}") from err
+
+
+async def _send_and_receive(
+    reader, writer, command: str, ip: str, port: int, timeout: int
+) -> str:
+    """Invia un comando e legge la risposta."""
+    # Invia il comando
+    writer.write(command.encode("utf-8"))
+    await writer.drain()
+
+    # Leggi la risposta con timeout
+    try:
+        response = await asyncio.wait_for(reader.read(1024), timeout=timeout)
+    except TimeoutError:
+        raise VMCTimeoutError(
+            f"Timeout in attesa della risposta da {ip}:{port}"
+        ) from None
+
+    # Decodifica la risposta
+    try:
+        decoded_response = response.decode("utf-8").strip()
+    except UnicodeDecodeError:
+        # Se la decodifica UTF-8 fallisce,
+        # prova con latin-1 che non fallisce mai
+        decoded_response = response.decode("latin-1").strip()
+        _LOGGER.warning(
+            "Risposta decodificata con latin-1 invece di UTF-8: %s",
+            decoded_response,
+        )
+
+    _LOGGER.debug("Risposta da %s:%s: %s", ip, port, decoded_response)
+
+    # Controlla se la risposta contiene un errore di protocollo
+    if decoded_response.startswith("ERROR"):
+        raise VMCProtocolError(f"Errore di protocollo: {decoded_response}")
+
+    return decoded_response
+
+
 async def tcp_send_command(
-    ip: str, port: int, command: str, timeout: int = None
+    ip: str, port: int, command: str, timeout: int | None = None
 ) -> str:
     """Invia un comando TCP al dispositivo VMC e restituisce la risposta.
 
@@ -61,50 +112,10 @@ async def tcp_send_command(
     try:
         _LOGGER.debug("Connessione a %s:%s, comando: %s", ip, port, command.strip())
 
-        try:
-            # Crea la connessione con timeout
-            reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(ip, port), timeout=timeout
-            )
-        except TimeoutError:
-            raise VMCTimeoutError(f"Timeout durante la connessione a {ip}:{port}")
-        except ConnectionRefusedError:
-            raise VMCConnectionError(f"Connessione rifiutata da {ip}:{port}")
-        except (OSError, socket.gaierror) as err:
-            raise VMCConnectionError(f"Errore di connessione a {ip}:{port}: {err}")
+        reader, writer = await _establish_connection(ip, port, timeout)
 
         try:
-            # Invia il comando
-            writer.write(command.encode("utf-8"))
-            await writer.drain()
-
-            # Leggi la risposta con timeout
-            try:
-                response = await asyncio.wait_for(reader.read(1024), timeout=timeout)
-            except TimeoutError:
-                raise VMCTimeoutError(
-                    f"Timeout in attesa della risposta da {ip}:{port}"
-                )
-
-            # Decodifica la risposta
-            try:
-                decoded_response = response.decode("utf-8").strip()
-            except UnicodeDecodeError:
-                # Se la decodifica UTF-8 fallisce, prova con latin-1 che non fallisce mai
-                decoded_response = response.decode("latin-1").strip()
-                _LOGGER.warning(
-                    "Risposta decodificata con latin-1 invece di UTF-8: %s",
-                    decoded_response,
-                )
-
-            _LOGGER.debug("Risposta da %s:%s: %s", ip, port, decoded_response)
-
-            # Controlla se la risposta contiene un errore di protocollo
-            if decoded_response.startswith("ERROR"):
-                raise VMCProtocolError(f"Errore di protocollo: {decoded_response}")
-
-            return decoded_response
-
+            return await _send_and_receive(reader, writer, command, ip, port, timeout)
         finally:
             # Chiudi sempre la connessione
             try:
@@ -122,11 +133,45 @@ async def tcp_send_command(
     except Exception as err:
         # Cattura qualsiasi altra eccezione e convertila in un errore appropriato
         _LOGGER.exception(
-            "Errore imprevisto durante la comunicazione con %s:%s: %s", ip, port, err
+            "Errore imprevisto durante la comunicazione con %s:%s", ip, port
         )
         raise VMCConnectionError(
             f"Errore durante la comunicazione con {ip}:{port}: {err}"
+        ) from err
+
+
+async def _get_device_name(ip: str, port: int, timeout: int) -> str:
+    """Get device mnemonic name."""
+    try:
+        name_response = await tcp_send_command(ip, port, "VMNM?", timeout)
+        _LOGGER.debug(f"Risposta VMNM? da {ip}: {name_response}")
+        if name_response and name_response.startswith("VMNM"):
+            nome_parts = name_response.split(" ")
+            if len(nome_parts) > 1 and nome_parts[1].strip():
+                return nome_parts[1].strip()
+    except VMCConnectionError as err:
+        _LOGGER.warning(
+            "Impossibile recuperare il nome del dispositivo %s: %s", ip, err
         )
+
+    return f"VMC Helty {ip.split('.')[-1]}"
+
+
+async def _get_device_version(ip: str, port: int, timeout: int) -> str | None:
+    """Get device firmware version."""
+    try:
+        version_response = await tcp_send_command(ip, port, "VMCV?", timeout)
+        if version_response:
+            # Cerca un pattern che assomigli a una versione
+            version_match = re.search(r"(\d+\.\d+(\.\d+)?)", version_response)
+            if version_match:
+                return version_match.group(1)
+    except Exception:
+        _LOGGER.debug(
+            "Impossibile determinare la versione firmware del dispositivo %s", ip
+        )
+
+    return None
 
 
 async def get_device_info(
@@ -145,70 +190,7 @@ async def get_device_info(
     try:
         response = await tcp_send_command(ip, port, "VMGH?", timeout)
 
-        if response and response.startswith("VMGO"):
-            try:
-                parts = response.split(",")
-                modello = parts[1] if len(parts) > 1 else "VMC Flow"
-
-                # Recupera il nome mnemonico con VMNM?
-                try:
-                    name_response = await tcp_send_command(ip, port, "VMNM?", timeout)
-                    _LOGGER.debug(f"Risposta VMNM? da {ip}: {name_response}")
-                    if name_response and name_response.startswith("VMNM"):
-                        nome_parts = name_response.split(" ")
-                        nome = (
-                            nome_parts[1].strip()
-                            if len(nome_parts) > 1 and nome_parts[1].strip()
-                            else f"VMC Helty {ip.split('.')[-1]}"
-                        )
-                    else:
-                        nome = f"VMC Helty {ip.split('.')[-1]}"
-                except VMCConnectionError as err:
-                    _LOGGER.warning(
-                        "Impossibile recuperare il nome del dispositivo %s: %s", ip, err
-                    )
-                    nome = f"VMC Helty {ip.split('.')[-1]}"
-
-                # Recupera versione firmware se disponibile
-                sw_version = None
-                try:
-                    version_response = await tcp_send_command(
-                        ip, port, "VMCV?", timeout
-                    )
-                    if version_response:
-                        # Cerca un pattern che assomigli a una versione
-                        version_match = re.search(
-                            r"(\d+\.\d+(\.\d+)?)", version_response
-                        )
-                        if version_match:
-                            sw_version = version_match.group(1)
-                except Exception:
-                    _LOGGER.debug(
-                        "Impossibile determinare la versione firmware del dispositivo %s",
-                        ip,
-                    )
-
-                # Estendibile: aggiungi altri parametri qui (es. stato filtri)
-                return {
-                    "ip": ip,
-                    "name": nome,
-                    "model": modello,
-                    "manufacturer": "Helty",
-                    "sw_version": sw_version,
-                    "available": True,
-                }
-            except Exception as e:
-                _LOGGER.error("Errore parsing info dispositivo %s: %s", ip, e)
-                # Restituisci un set minimo di informazioni se il parsing fallisce
-                return {
-                    "ip": ip,
-                    "name": f"VMC Helty {ip.split('.')[-1]}",
-                    "model": "VMC Flow",
-                    "manufacturer": "Helty",
-                    "available": True,
-                    "parse_error": str(e),
-                }
-        else:
+        if not response or not response.startswith("VMGO"):
             _LOGGER.warning(
                 "Dispositivo %s ha risposto con un formato non riconosciuto: %s",
                 ip,
@@ -216,11 +198,41 @@ async def get_device_info(
             )
             return None
 
-    except VMCConnectionError as err:
-        _LOGGER.error("Errore di connessione al dispositivo %s: %s", ip, err)
+        try:
+            parts = response.split(",")
+            modello = parts[1] if len(parts) > 1 else "VMC Flow"
+
+            # Recupera nome e versione
+            nome = await _get_device_name(ip, port, timeout)
+            sw_version = await _get_device_version(ip, port, timeout)
+
+        except Exception:
+            _LOGGER.exception("Errore parsing info dispositivo %s", ip)
+            # Restituisci un set minimo di informazioni se il parsing fallisce
+            return {
+                "ip": ip,
+                "name": f"VMC Helty {ip.split('.')[-1]}",
+                "model": "VMC Flow",
+                "manufacturer": "Helty",
+                "available": True,
+                "parse_error": "Errore di parsing",
+            }
+        else:
+            # Parsing riuscito, restituisci le informazioni complete
+            return {
+                "ip": ip,
+                "name": nome,
+                "model": modello,
+                "manufacturer": "Helty",
+                "sw_version": sw_version,
+                "available": True,
+            }
+
+    except VMCConnectionError:
+        _LOGGER.exception("Errore di connessione al dispositivo %s", ip)
         return None
-    except Exception as err:
-        _LOGGER.exception("Errore imprevisto recuperando le info per %s: %s", ip, err)
+    except Exception:
+        _LOGGER.exception("Errore imprevisto recuperando le info per %s", ip)
         return None
 
 
@@ -239,10 +251,13 @@ async def discover_vmc_devices(
     # Filtra e deduplica i risultati validi per IP
     seen_ips = set()
     for result in results:
-        if isinstance(result, dict) and result is not None:
-            if result["ip"] not in seen_ips:
-                devices.append(result)
-                seen_ips.add(result["ip"])
+        if (
+            isinstance(result, dict)
+            and result is not None
+            and result["ip"] not in seen_ips
+        ):
+            devices.append(result)
+            seen_ips.add(result["ip"])
     return devices
 
 
@@ -353,8 +368,6 @@ async def check_device_availability(
 
 def validate_subnet(subnet: str) -> bool:
     """Valida se la subnet è in formato CIDR valido (es. 192.168.1.0/24)."""
-    import re
-
     cidr_pattern = r"^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$"
     if not re.match(cidr_pattern, subnet):
         return False
@@ -372,22 +385,18 @@ def validate_subnet(subnet: str) -> bool:
 def count_ips_in_subnet(subnet: str) -> int:
     """Conta quanti IP sono disponibili nella subnet CIDR."""
     try:
-        import ipaddress
-
         network = ipaddress.IPv4Network(subnet, strict=False)
         return network.num_addresses - 2
-    except:
+    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
         return 0
 
 
 def parse_subnet_for_discovery(subnet: str) -> str:
     """Converte la subnet CIDR in formato utilizzabile per la discovery."""
     try:
-        import ipaddress
-
         network = ipaddress.IPv4Network(subnet, strict=False)
         base_ip = str(network.network_address)
         parts = base_ip.split(".")
         return ".".join(parts[:3]) + "."
-    except:
+    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
         return "192.168.1."

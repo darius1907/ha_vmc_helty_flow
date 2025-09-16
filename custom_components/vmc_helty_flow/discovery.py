@@ -13,12 +13,8 @@ from .const import DEFAULT_PORT, TCP_TIMEOUT
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_discover_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
-    """Discover Helty Flow devices in the network."""
-    _LOGGER.debug("Starting discovery of Helty Flow devices")
-    devices = []
-
-    # Ottiene le interfacce di rete disponibili
+async def _get_network_adapters(hass: HomeAssistant) -> list[tuple[str, IPv4Network]]:
+    """Get valid IPv4 network adapters."""
     adapters = await network.async_get_adapters(hass)
     ipv4_addresses = []
 
@@ -35,48 +31,67 @@ async def async_discover_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
                     except ValueError:
                         continue
 
+    return ipv4_addresses
+
+
+async def _scan_network_for_devices(
+    adapter_name: str, network_obj: IPv4Network
+) -> list[dict[str, Any]]:
+    """Scan a network for Helty Flow devices."""
+    _LOGGER.debug("Scanning network %s on adapter %s", network_obj, adapter_name)
+    devices = []
+
+    # Limita la scansione a 254 host per evitare un uso eccessivo di risorse
+    hosts = list(network_obj.hosts())[:254]
+
+    # Usa asyncio.gather per eseguire le scansioni in parallelo
+    tasks = [check_helty_device(str(host)) for host in hosts]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            continue
+
+        if result:  # Device trovato
+            ip = str(hosts[i])
+            _LOGGER.info("Found Helty Flow device at IP: %s", ip)
+
+            # Ottieni il nome del dispositivo
+            try:
+                device_name = await get_device_name(ip)
+                devices.append(
+                    {
+                        "ip": ip,
+                        "name": device_name or f"Helty Flow {ip}",
+                        "model": "Flow",
+                        "manufacturer": "Helty",
+                    }
+                )
+            except Exception as err:
+                _LOGGER.exception("Error getting device info for %s: %s", ip, err)
+
+    return devices
+
+
+async def async_discover_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
+    """Discover Helty Flow devices in the network."""
+    _LOGGER.debug("Starting discovery of Helty Flow devices")
+
+    # Ottiene le interfacce di rete disponibili
+    ipv4_addresses = await _get_network_adapters(hass)
+
     if not ipv4_addresses:
         _LOGGER.warning("No valid IPv4 network interfaces found")
         return []
 
     # Esegue la scansione su tutte le interfacce di rete
+    all_devices = []
     for adapter_name, network_obj in ipv4_addresses:
-        _LOGGER.debug("Scanning network %s on adapter %s", network_obj, adapter_name)
+        devices = await _scan_network_for_devices(adapter_name, network_obj)
+        all_devices.extend(devices)
 
-        # Limita la scansione a 254 host per evitare un uso eccessivo di risorse
-        hosts = list(network_obj.hosts())[:254]
-
-        # Usa asyncio.gather per eseguire le scansioni in parallelo
-        tasks = []
-        for host in hosts:
-            tasks.append(check_helty_device(str(host)))
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                continue
-
-            if result:  # Device trovato
-                ip = str(hosts[i])
-                _LOGGER.info("Found Helty Flow device at IP: %s", ip)
-
-                # Ottieni il nome del dispositivo
-                try:
-                    device_name = await get_device_name(ip)
-                    devices.append(
-                        {
-                            "ip": ip,
-                            "name": device_name or f"Helty Flow {ip}",
-                            "model": "Flow",
-                            "manufacturer": "Helty",
-                        }
-                    )
-                except Exception as err:
-                    _LOGGER.error("Error getting device info for %s: %s", ip, err)
-
-    _LOGGER.debug("Discovery completed, found %d devices", len(devices))
-    return devices
+    _LOGGER.debug("Discovery completed, found %d devices", len(all_devices))
+    return all_devices
 
 
 async def check_helty_device(ip: str) -> bool:
@@ -116,7 +131,7 @@ async def get_device_name(ip: str) -> str:
             parts = response.decode("utf-8").strip().split(",")
             if len(parts) > 1:
                 return parts[1]
-
-        return ""
     except (TimeoutError, ConnectionRefusedError, OSError):
+        return ""
+    else:
         return ""

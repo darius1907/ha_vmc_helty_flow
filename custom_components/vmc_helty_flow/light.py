@@ -68,25 +68,19 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
         # Arrotonda ai livelli supportati (0, 25, 50, 75, 100)
         light_level = round(light_level / 25) * 25
 
-        try:
-            # Il comando per impostare le luci non è specificato nei requirements
-            # Placeholder per il comando - da implementare quando disponibile
-            response = await tcp_send_command(
-                self.coordinator.ip, 5001, f"VMWL{light_level:03d}"
-            )
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        # Il comando per impostare le luci non è specificato nei requirements
+        # Placeholder per il comando - da implementare quando disponibile
+        response = await tcp_send_command(
+            self.coordinator.ip, 5001, f"VMWL{light_level:03d}"
+        )
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the light."""
-        try:
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWL000")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWL000")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
 
 class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
@@ -111,9 +105,10 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
                 parts = status.split(",")
                 # Il timer luci è nella posizione 15 (in secondi)
                 timer_seconds = int(parts[15]) if len(parts) > 15 else 0
-                return {"timer_seconds": timer_seconds}
             except (ValueError, IndexError):
                 return {}
+            else:
+                return {"timer_seconds": timer_seconds}
         return {}
 
     @property
@@ -126,21 +121,15 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
         """Set light timer (default 300 seconds)."""
         timer_seconds = 300  # Default 5 minuti
 
-        try:
-            # Comando placeholder per impostare timer - da implementare
-            response = await tcp_send_command(
-                self.coordinator.ip, 5001, f"VMWT{timer_seconds:03d}"
-            )
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        # Comando placeholder per impostare timer - da implementare
+        response = await tcp_send_command(
+            self.coordinator.ip, 5001, f"VMWT{timer_seconds:03d}"
+        )
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Disable light timer."""
-        try:
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWT000")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWT000")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()

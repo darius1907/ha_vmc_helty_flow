@@ -8,7 +8,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN
+from .const import DEFAULT_PORT, DOMAIN
 from .device_action import async_setup_device_actions
 from .device_registry import async_get_or_create_device, async_remove_orphaned_devices
 from .helpers import (
@@ -39,6 +39,12 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
         """Initialize the coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=DEFAULT_SCAN_INTERVAL,
+        )
         self.config_entry = config_entry
         self.ip = config_entry.data["ip"]
         self.name = config_entry.data["name"]
@@ -46,38 +52,81 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self._consecutive_errors = 0
         self._max_consecutive_errors = 5
         self._error_recovery_interval = timedelta(seconds=30)
-        self._normal_update_interval = timedelta(
-            seconds=config_entry.options.get(
-                "scan_interval", DEFAULT_SCAN_INTERVAL.total_seconds()
-            )
-        )
+        self._normal_update_interval = DEFAULT_SCAN_INTERVAL
+        self._recovery_update_interval = timedelta(seconds=60)
 
-        # Inizia con l'intervallo normale
-        super().__init__(
-            hass,
-            _LOGGER,
-            name=f"{DOMAIN}_{self.ip}",
-            update_interval=self._normal_update_interval,
-        )
+    async def _get_status_data(self) -> str:
+        """Get device status data."""
+        try:
+            return await tcp_send_command(self.ip, DEFAULT_PORT, "VMGH?")
+        except VMCTimeoutError as err:
+            _LOGGER.warning(
+                "Timeout durante l'acquisizione dello stato da %s: %s", self.ip, err
+            )
+            self._handle_error()
+            raise UpdateFailed(
+                f"Timeout durante la comunicazione con {self.ip}"
+            ) from err
+        except VMCConnectionError as err:
+            _LOGGER.exception("Errore di connessione a %s", self.ip)
+            self._handle_error()
+            raise UpdateFailed(f"Errore di connessione a {self.ip}: {err}") from err
+
+    async def _get_additional_data(self) -> dict[str, str | None]:
+        """Get additional device data (sensors, name, network)."""
+        responses = {}
+
+        # Sensors data
+        try:
+            responses["sensors"] = await tcp_send_command(
+                self.ip, DEFAULT_PORT, "VMGI?"
+            )
+        except VMCConnectionError as err:
+            _LOGGER.warning("Impossibile leggere i sensori da %s: %s", self.ip, err)
+            responses["sensors"] = None
+
+        # Device name
+        try:
+            responses["name"] = await tcp_send_command(self.ip, DEFAULT_PORT, "VMNM?")
+        except VMCConnectionError as err:
+            _LOGGER.warning("Impossibile leggere il nome da %s: %s", self.ip, err)
+            responses["name"] = None
+
+        # Network info
+        try:
+            responses["network"] = await tcp_send_command(
+                self.ip, DEFAULT_PORT, "VMSL?"
+            )
+        except VMCConnectionError as err:
+            _LOGGER.warning(
+                "Impossibile leggere le info di rete da %s: %s", self.ip, err
+            )
+            responses["network"] = None
+
+        return responses
+
+    def _handle_successful_update(self) -> None:
+        """Handle successful data update."""
+        if self._consecutive_errors > 0:
+            _LOGGER.info(
+                "Ripristinata connessione con %s dopo %d errori consecutivi",
+                self.ip,
+                self._consecutive_errors,
+            )
+
+        self._consecutive_errors = 0
+        # Ripristina l'intervallo normale se eravamo in modalità recovery
+        if self.update_interval != self._normal_update_interval:
+            self.update_interval = self._normal_update_interval
+            _LOGGER.info(
+                "Ripristinato intervallo normale di aggiornamento per %s", self.ip
+            )
 
     async def _async_update_data(self):
         """Fetch data from VMC device."""
         try:
             # Ottiene lo stato del dispositivo
-            try:
-                status_response = await tcp_send_command(self.ip, 5001, "VMGH?")
-            except VMCTimeoutError as err:
-                _LOGGER.warning(
-                    "Timeout durante l'acquisizione dello stato da %s: %s", self.ip, err
-                )
-                self._handle_error()
-                raise UpdateFailed(
-                    f"Timeout durante la comunicazione con {self.ip}"
-                ) from err
-            except VMCConnectionError as err:
-                _LOGGER.exception("Errore di connessione a %s", self.ip)
-                self._handle_error()
-                raise UpdateFailed(f"Errore di connessione a {self.ip}: {err}") from err
+            status_response = await self._get_status_data()
 
             if not status_response or not status_response.startswith("VMGO"):
                 self._handle_error()
@@ -86,57 +135,23 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                     f"{status_response}"
                 )
 
-            # Ottieni dati aggiuntivi con gestione degli errori per ciascuna richiesta
-            sensors_response = None
-            name_response = None
-            network_response = None
+            # Ottieni dati aggiuntivi
+            additional_data = await self._get_additional_data()
 
-            try:
-                sensors_response = await tcp_send_command(self.ip, 5001, "VMGI?")
-            except VMCConnectionError as err:
-                _LOGGER.warning("Impossibile leggere i sensori da %s: %s", self.ip, err)
-
-            try:
-                name_response = await tcp_send_command(self.ip, 5001, "VMNM?")
-            except VMCConnectionError as err:
-                _LOGGER.warning("Impossibile leggere il nome da %s: %s", self.ip, err)
-
-            try:
-                network_response = await tcp_send_command(self.ip, 5001, "VMSL?")
-            except VMCConnectionError as err:
-                _LOGGER.warning(
-                    "Impossibile leggere le info di rete da %s: %s", self.ip, err
-                )
-
-            # Aggiornamento riuscito, reset del contatore errori
-            if self._consecutive_errors > 0:
-                _LOGGER.info(
-                    "Ripristinata connessione con %s dopo %d errori consecutivi",
-                    self.ip,
-                    self._consecutive_errors,
-                )
-
-            self._consecutive_errors = 0
-            # Ripristina l'intervallo normale se eravamo in modalità recovery
-            if self.update_interval != self._normal_update_interval:
-                self.update_interval = self._normal_update_interval
-                _LOGGER.info(
-                    "Ripristinato intervallo normale di aggiornamento per %s", self.ip
-                )
+            # Aggiornamento riuscito
+            self._handle_successful_update()
 
             data = {
                 "status": status_response,
-                "sensors": sensors_response,
-                "name": name_response,
-                "network": network_response,
+                "sensors": additional_data["sensors"],
+                "name": additional_data["name"],
+                "network": additional_data["network"],
                 "available": True,
                 "last_update": self.hass.loop.time(),
             }
 
             # Aggiorna il nome del dispositivo se necessario
-            self._maybe_update_device_name(name_response)
-
-            return data
+            self._maybe_update_device_name(additional_data["name"])
 
         except UpdateFailed:
             # Rilancia le eccezioni UpdateFailed per gestione errori a monte
@@ -150,6 +165,8 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(
                 f"Errore durante la comunicazione con {self.ip}: {err}"
             ) from err
+        else:
+            return data
 
     def _handle_error(self):
         """Gestisce l'incremento degli errori consecutivi e la logica di ripristino."""

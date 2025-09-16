@@ -9,7 +9,7 @@ from homeassistant.helpers import device_registry, entity_registry
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN
+from .const import DOMAIN, MAX_UNIQUE_ID_LENGTH, MIN_UNIQUE_ID_LENGTH
 from .helpers import tcp_send_command
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,7 +81,9 @@ async def async_get_device_unique_id(
 
             # Se trovato un campo che sembra un ID univoco
             for i, part in enumerate(parts):
-                if 8 <= len(part) <= 24 and re.match(r"^[A-Za-z0-9_-]+$", part):
+                if MIN_UNIQUE_ID_LENGTH <= len(
+                    part
+                ) <= MAX_UNIQUE_ID_LENGTH and re.match(r"^[A-Za-z0-9_-]+$", part):
                     return f"helty_{part.lower()}"
 
         # In alternativa, prova a ottenere il nome dispositivo come parte dell'ID
@@ -92,10 +94,10 @@ async def async_get_device_unique_id(
                 # Normalizza il nome per l'uso come ID
                 normalized_name = re.sub(r"[^a-z0-9_]", "_", parts[1].lower())
                 return f"helty_{normalized_name}_{ip_address.replace('.', '_')}"
-
-        return None
     except Exception as err:
         _LOGGER.error("Failed to get unique ID for device %s: %s", ip_address, err)
+        return None
+    else:
         return None
 
 

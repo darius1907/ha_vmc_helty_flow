@@ -80,24 +80,18 @@ class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on the mode."""
-        try:
-            response = await tcp_send_command(
-                self.coordinator.ip, 5001, MODES[self._mode_key]["cmd"]
-            )
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(
+            self.coordinator.ip, 5001, MODES[self._mode_key]["cmd"]
+        )
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off the mode (set to manual speed 1)."""
-        try:
-            # Disattiva la modalità speciale impostando velocità manuale 1
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0000001")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        # Disattiva la modalità speciale impostando velocità manuale 1
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0000001")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
 
 class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
@@ -127,21 +121,15 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on panel LED."""
-        try:
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100010")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100010")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off panel LED."""
-        try:
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100000")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100000")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
 
 class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
@@ -172,18 +160,12 @@ class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs) -> None:
         """Turn on sensors."""
-        try:
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0300000")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0300000")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Turn off sensors."""
-        try:
-            response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0300002")
-            if response == "OK":
-                await self.coordinator.async_request_refresh()
-        except Exception as err:
-            raise err
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0300002")
+        if response == "OK":
+            await self.coordinator.async_request_refresh()
