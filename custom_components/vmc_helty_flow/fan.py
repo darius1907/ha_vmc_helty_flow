@@ -4,6 +4,7 @@ from typing import Any
 
 from homeassistant.components.fan import (
     FanEntity,
+    FanEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -43,7 +44,7 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
         self._attr_unique_id = f"{coordinator.ip}_fan"
         self._attr_name = f"{coordinator.name} Fan"
         self._attr_speed_count = 4  # 4 velocità (1-4)
-        self._attr_supported_features = 0  # Nessuna feature speciale per ora
+        self._attr_supported_features = FanEntityFeature(0)  # Nessuna feature speciale
 
     @property
     def is_on(self) -> bool:
@@ -68,29 +69,27 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
     @property
     def percentage(self) -> int:
         """Return current speed percentage."""
-        if not self.coordinator.data:
-            return 0
+        result = 0
+        if self.coordinator.data:
+            status = self.coordinator.data.get("status", "")
+            if status and status.startswith("VMGO"):
+                try:
+                    parts = status.split(",")
+                    fan_speed = int(parts[1]) if len(parts) > 1 else 0
 
-        status = self.coordinator.data.get("status", "")
-        if status and status.startswith("VMGO"):
-            try:
-                parts = status.split(",")
-                fan_speed = int(parts[1]) if len(parts) > 1 else 0
-
-                # Gestione modalità speciali
-                if fan_speed == FAN_SPEED_NIGHT_MODE:  # Modalità notte -> velocità 1
-                    return FAN_PERCENTAGE_STEP
-                if (
-                    fan_speed == FAN_SPEED_HYPERVENTILATION
-                ):  # Iperventilazione -> velocità 4
-                    return 100
-                if fan_speed == FAN_SPEED_FREE_COOLING:  # Free cooling -> velocità 0
-                    return 0
-                # Velocità normale 0-4
-                return min(fan_speed * FAN_PERCENTAGE_STEP, 100)
-            except (ValueError, IndexError):
-                return 0
-        return 0
+                    # Gestione modalità speciali
+                    if fan_speed == FAN_SPEED_NIGHT_MODE:  # Modalità notte
+                        result = FAN_PERCENTAGE_STEP
+                    elif fan_speed == FAN_SPEED_HYPERVENTILATION:  # Iperventilazione
+                        result = 100
+                    elif fan_speed == FAN_SPEED_FREE_COOLING:  # Free cooling
+                        result = 0
+                    else:
+                        # Velocità normale 0-4
+                        result = min(fan_speed * FAN_PERCENTAGE_STEP, 100)
+                except (ValueError, IndexError):
+                    result = 0
+        return result
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -160,8 +159,8 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
     async def async_turn_on(
         self,
         percentage: int | None = None,
-        _preset_mode: str | None = None,
-        **_kwargs,
+        preset_mode: str | None = None,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
     ) -> None:
         """Turn on the fan."""
         if percentage is None:
