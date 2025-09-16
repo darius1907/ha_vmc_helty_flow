@@ -1,6 +1,7 @@
 """Config flow per l'integrazione VMC Helty Flow."""
 
 import contextlib
+from typing import Any, cast
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -41,71 +42,98 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._store = None
 
     def _get_store(self) -> Store:
-        """Get the storage instance."""
+        """Ottieni l'istanza del store per i dispositivi."""
         if self._store is None:
             self._store = Store(self.hass, STORAGE_VERSION, STORAGE_KEY)
-        return self._store
+        return cast(Store, self._store)
 
-    async def _load_devices(self) -> list:
+    async def _load_devices(self) -> list[dict[str, Any]]:
         """Carica la lista dei dispositivi dallo storage di Home Assistant."""
         try:
             data = await self._get_store().async_load()
-            return data.get("devices", []) if data else []
         except Exception:
             return []
+        else:
+            devices: list[dict[str, Any]] = data.get("devices", []) if data else []
+            return devices
 
     async def _save_devices(self, devices: list) -> None:
         """Salva la lista dei dispositivi nello storage di Home Assistant."""
         with contextlib.suppress(Exception):
             await self._get_store().async_save({"devices": devices})
 
-    async def async_step_user(self, user_input=None):
-        """Handle the initial step."""
-        existing_devices = await self._load_devices()
+    def _create_config_form(self, help_text=None):
+        """Create the configuration form for subnet, port, and timeout."""
+        schema = vol.Schema(
+            {
+                vol.Required("subnet", default="192.168.1.0/24"): str,
+                vol.Required("port", default=5001): int,
+                vol.Required("timeout", default=10): int,
+            }
+        )
+        return self.async_show_form(
+            step_id="user",
+            data_schema=schema,
+            description_placeholders={
+                "help": help_text
+                or (
+                    "Inserisci la subnet in formato CIDR (es. 192.168.1.0/24), "
+                    "la porta TCP e il timeout (secondi) per la ricerca dei "
+                    "dispositivi Helty."
+                )
+            },
+        )
+
+    def _create_confirmation_form(self, existing_devices):
+        """Create the confirmation form for new scan."""
+        schema = vol.Schema({vol.Required("confirm", default=False): bool})
+        return self.async_show_form(
+            step_id="user",
+            data_schema=schema,
+            description_placeholders={
+                "help": (
+                    f"Sono già configurati {len(existing_devices)} "
+                    "dispositivi. Vuoi avviare una nuova scansione?"
+                )
+            },
+        )
+
+    async def _handle_first_request(self, existing_devices):
+        """Handle the first request without user input."""
         if existing_devices:
-            if user_input is None or user_input.get("confirm") is None:
-                schema = vol.Schema({vol.Required("confirm", default=False): bool})
-                return self.async_show_form(
-                    step_id="user",
-                    data_schema=schema,
-                    description_placeholders={
-                        "help": (
-                            f"Sono già configurati {len(existing_devices)} "
-                            "dispositivi. Vuoi avviare una nuova scansione?"
-                        )
-                    },
-                )
-            if not user_input["confirm"]:
-                device_list = "\n".join(
-                    [f"{d['name']} ({d['ip']})" for d in existing_devices]
-                )
-                return self.async_show_form(
-                    step_id="user",
-                    description_placeholders={
-                        "help": f"Dispositivi configurati:\n{device_list}"
-                    },
-                    errors={"base": "scan_annullata"},
-                )
-        # Se confermato o nessun dispositivo, chiedi subnet, porta e timeout
-        if user_input is None or user_input.get("subnet") is None:
-            schema = vol.Schema(
-                {
-                    vol.Required("subnet", default="192.168.1.0/24"): str,
-                    vol.Required("port", default=5001): int,
-                    vol.Required("timeout", default=10): int,
-                }
+            return self._create_confirmation_form(existing_devices)
+        return self._create_config_form()
+
+    async def _handle_confirmation_input(self, user_input, existing_devices):
+        """Handle confirmation input when devices exist."""
+        if not user_input["confirm"]:
+            device_list = "\n".join(
+                [f"{d['name']} ({d['ip']})" for d in existing_devices]
             )
             return self.async_show_form(
                 step_id="user",
-                data_schema=schema,
                 description_placeholders={
-                    "help": (
-                        "Inserisci la subnet in formato CIDR (es. 192.168.1.0/24), "
-                        "la porta TCP e il timeout (secondi) per la ricerca dei "
-                        "dispositivi Helty."
-                    )
+                    "help": f"Dispositivi configurati:\n{device_list}"
                 },
+                errors={"base": "scan_annullata"},
             )
+        return self._create_config_form()
+
+    async def async_step_user(self, user_input=None):
+        """Handle the initial step."""
+        existing_devices = await self._load_devices()
+
+        # Prima richiesta senza input
+        if user_input is None:
+            return await self._handle_first_request(existing_devices)
+
+        # Gestione conferma se ci sono dispositivi esistenti
+        if existing_devices and "confirm" in user_input:
+            return await self._handle_confirmation_input(user_input, existing_devices)
+
+        # Validazione dati di configurazione
+        if "subnet" not in user_input:
+            return self._create_config_form()
         # Validazione subnet/porta
         self.subnet = user_input["subnet"]
         self.port = user_input["port"]

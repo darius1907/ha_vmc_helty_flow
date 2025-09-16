@@ -462,3 +462,47 @@ class TestVmcHeltyFlowConfigFlow:
         with patch.object(config_flow, "async_step_user") as mock_user:
             await config_flow.async_step_import(import_info)
             mock_user.assert_called_once_with(import_info)
+
+    async def test_complete_flow_no_loop(self, config_flow):
+        """Test complete flow from confirmation to discovery without loops."""
+        # Setup: existing devices
+        existing_devices = [{"name": "Test Device", "ip": "192.168.1.100"}]
+        config_flow._store = AsyncMock()
+        config_flow._store.async_load = AsyncMock(
+            return_value={"devices": existing_devices}
+        )
+
+        # Step 1: First request - should show confirmation form
+        result1 = await config_flow.async_step_user(None)
+        assert result1["type"] == "form"
+        assert result1["step_id"] == "user"
+        assert "confirm" in str(result1["data_schema"])
+        assert "subnet" not in str(result1["data_schema"])
+
+        # Step 2: User confirms new scan - should show config form
+        result2 = await config_flow.async_step_user({"confirm": True})
+        assert result2["type"] == "form"
+        assert result2["step_id"] == "user"
+        assert "subnet" in str(result2["data_schema"])
+        assert "port" in str(result2["data_schema"])
+        assert "timeout" in str(result2["data_schema"])
+        assert "confirm" not in str(result2["data_schema"])
+
+        # Step 3: User submits config - should proceed to discovery (no loop!)
+        mock_discovery_result = {"type": "form", "step_id": "discovery"}
+        with patch.object(
+            config_flow, "async_step_discovery", return_value=mock_discovery_result
+        ) as mock_discovery:
+            result3 = await config_flow.async_step_user(
+                {"subnet": "192.168.1.0/24", "port": 5001, "timeout": 10}
+            )
+
+            # Verify it calls discovery and doesn't loop back to user step
+            mock_discovery.assert_called_once()
+            assert result3["type"] == "form"
+            assert result3["step_id"] == "discovery"
+
+        # Verify flow state is set correctly
+        assert config_flow.subnet == "192.168.1.0/24"
+        assert config_flow.port == 5001
+        assert config_flow.timeout == 10
