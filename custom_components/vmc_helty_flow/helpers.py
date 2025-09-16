@@ -281,6 +281,11 @@ async def discover_vmc_devices_with_progress(
     Returns:
         Lista dei dispositivi trovati
     """
+    _LOGGER.info("=== DISCOVER VMC START ===")
+    _LOGGER.info("subnet: %s, port: %s, timeout: %s", subnet, port, timeout)
+    _LOGGER.info("progress_callback: %s", progress_callback is not None)
+    _LOGGER.info("interrupt_check: %s", interrupt_check is not None)
+
     devices = []
     if subnet.endswith("."):
         subnet = subnet[:-1]
