@@ -21,12 +21,10 @@
         "title": "VMC Device Selection",
         "description": "Select VMC devices to configure",
         "data": {
-          "selected_devices": "Devices to configure",
-          "interrupt_scan": "Interrupt scan"
+          "selected_devices": "Devices to configure"
         },
         "data_description": {
-          "selected_devices": "Select one or more VMC devices from the list to add them to Home Assistant",
-          "interrupt_scan": "Check to interrupt the ongoing scan"
+          "selected_devices": "Select one or more VMC devices from the list to add them to Home Assistant"
         }
       },
       "progress": {

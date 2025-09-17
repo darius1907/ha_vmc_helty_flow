@@ -102,6 +102,13 @@ async def tcp_send_command(
         VMCTimeoutError: Se la comunicazione ha un timeout
         VMCResponseError: Se c'è un errore nella risposta
     """
+    _LOGGER.info(
+        "tcp_send_command-> ip: %s, port: %s, command: %s, timeout: %s",
+        ip,
+        port,
+        command,
+        timeout,
+    )
     if timeout is None:
         timeout = TCP_TIMEOUT
 
@@ -127,9 +134,6 @@ async def tcp_send_command(
     except VMCConnectionError:
         # Rilancia le eccezioni specifiche
         raise
-    except asyncio.CancelledError:
-        # Non catturare le cancellazioni di task
-        raise
     except Exception as err:
         # Cattura qualsiasi altra eccezione e convertila in un errore appropriato
         _LOGGER.exception(
@@ -142,9 +146,10 @@ async def tcp_send_command(
 
 async def _get_device_name(ip: str, port: int, timeout: int) -> str:
     """Get device mnemonic name."""
+    _LOGGER.info("_get_device_name-> ip: %s, port: %s, timeout: %s", ip, port, timeout)
     try:
         name_response = await tcp_send_command(ip, port, "VMNM?", timeout)
-        _LOGGER.debug(f"Risposta VMNM? da {ip}: {name_response}")
+        _LOGGER.debug("Risposta VMNM? da %s: %s", ip, name_response)
         if name_response and name_response.startswith("VMNM"):
             nome_parts = name_response.split(" ")
             if len(nome_parts) > 1 and nome_parts[1].strip():
@@ -155,23 +160,6 @@ async def _get_device_name(ip: str, port: int, timeout: int) -> str:
         )
 
     return f"VMC Helty {ip.split('.')[-1]}"
-
-
-async def _get_device_version(ip: str, port: int, timeout: int) -> str | None:
-    """Get device firmware version."""
-    try:
-        version_response = await tcp_send_command(ip, port, "VMCV?", timeout)
-        if version_response:
-            # Cerca un pattern che assomigli a una versione
-            version_match = re.search(r"(\d+\.\d+(\.\d+)?)", version_response)
-            if version_match:
-                return version_match.group(1)
-    except Exception:
-        _LOGGER.debug(
-            "Impossibile determinare la versione firmware del dispositivo %s", ip
-        )
-
-    return None
 
 
 async def get_device_info(
@@ -187,9 +175,10 @@ async def get_device_info(
     Returns:
         Dizionario con le informazioni del dispositivo o None se non disponibile
     """
+    _LOGGER.info("get_device_info-> ip: %s, port: %s, timeout: %s", ip, port, timeout)
     try:
         response = await tcp_send_command(ip, port, "VMGH?", timeout)
-
+        _LOGGER.debug("get_device_info-> response: [%s]", response)
         if not response or not response.startswith("VMGO"):
             _LOGGER.warning(
                 "Dispositivo %s ha risposto con un formato non riconosciuto: %s",
@@ -204,7 +193,6 @@ async def get_device_info(
 
             # Recupera nome e versione
             nome = await _get_device_name(ip, port, timeout)
-            sw_version = await _get_device_version(ip, port, timeout)
 
         except Exception:
             _LOGGER.exception("Errore parsing info dispositivo %s", ip)
@@ -224,7 +212,6 @@ async def get_device_info(
                 "name": nome,
                 "model": modello,
                 "manufacturer": "Helty",
-                "sw_version": sw_version,
                 "available": True,
             }
 

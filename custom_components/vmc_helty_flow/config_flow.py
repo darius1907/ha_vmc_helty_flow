@@ -13,7 +13,7 @@ from homeassistant.helpers.storage import Store
 from .const import DOMAIN
 from .helpers import (
     count_ips_in_subnet,
-    discover_vmc_devices_with_progress,
+    discover_vmc_devices,
     parse_subnet_for_discovery,
     validate_subnet,
 )
@@ -172,7 +172,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        # Se non ci sono errori, procedi con la discovery
+        # Se non ci sono errori, procedi direttamente con la discovery
         _LOGGER.info(
             "Parametri validati: subnet=%s, port=%s, timeout=%s",
             self.subnet,
@@ -180,33 +180,87 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.timeout,
         )
 
-        # Avvia direttamente lo step scanning invece di passare per discovery
-        return await self.async_step_scanning()
+        # Avvia direttamente la discovery senza step intermedio
+        return await self._perform_device_discovery_directly()
 
     async def async_step_discovery(self, user_input=None):
         """Handle device discovery and selection."""
         if user_input:
-            errors = {}
+            errors: dict[str, str] = {}
             return await self._handle_discovery_input(user_input, errors)
 
         return await self._handle_discovery_display()
 
-    async def _handle_discovery_input(self, user_input, errors):
+    async def _handle_discovery_input(self, user_input, _errors):
         """Handle discovery step input."""
         if "selected_devices" in user_input:
             return await self._process_device_selection(user_input)
-        
-        if "interrupt_scan" in user_input:
-            return self._handle_scan_interruption()
-        
-        # Se non è nessuno dei casi sopra, richiesta di nuova scansione
-        _LOGGER.info(
-            "Avvio discovery con subnet %s porta %s timeout %s",
-            self.subnet,
-            self.port,
-            self.timeout,
-        )
-        return await self.async_step_scanning()
+
+        # Se non ci sono dispositivi selezionati, torna al form
+        return self._show_device_selection_form()
+
+    async def _perform_device_discovery_directly(self):
+        """Esegue la discovery direttamente senza step intermedio."""
+        _LOGGER.info("Inizio discovery diretta...")
+
+        try:
+            # Esegui la discovery con callback di progresso
+            discovered_devices = await self._discover_devices_async(
+                self.subnet, self.port, self.timeout
+            )
+
+            _LOGGER.info(
+                "Discovery completata, trovati %d dispositivi", len(discovered_devices)
+            )
+
+            if not discovered_devices:
+                # Nessun dispositivo trovato, torna alla configurazione
+                schema = vol.Schema(
+                    {
+                        vol.Required("subnet", default=self.subnet): str,
+                        vol.Required("port", default=self.port): int,
+                        vol.Required("timeout", default=self.timeout): int,
+                    }
+                )
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=schema,
+                    errors={"base": "nessun_dispositivo_trovato"},
+                    description_placeholders={
+                        "help": (
+                            "Nessun dispositivo VMC Helty trovato nella rete. "
+                            "Verifica la subnet, porta e timeout, poi riprova."
+                        )
+                    },
+                )
+
+            # Salva i dispositivi scoperti
+            self.discovered_devices = discovered_devices
+            await self._save_devices(discovered_devices)
+
+            # Vai direttamente al form di selezione dispositivi
+            return self._show_device_selection_form()
+
+        except Exception:
+            _LOGGER.exception("Errore durante la discovery")
+            schema = vol.Schema(
+                {
+                    vol.Required("subnet", default=self.subnet): str,
+                    vol.Required("port", default=self.port): int,
+                    vol.Required("timeout", default=self.timeout): int,
+                }
+            )
+            return self.async_show_form(
+                step_id="user",
+                data_schema=schema,
+                errors={"base": "errore_discovery"},
+                description_placeholders={
+                    "help": (
+                        "Errore durante la scansione della rete. "
+                        "Verifica i parametri e riprova."
+                    )
+                },
+            )
 
     async def async_step_scanning(self, user_input=None):
         """Show scanning progress and perform discovery."""
@@ -394,21 +448,22 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def _show_device_selection_form(self):
         """Show the device selection form."""
-        # Mostra il form di selezione dei dispositivi
         devices = self.discovered_devices
         device_options = {d["ip"]: f"{d['name']} ({d['ip']})" for d in devices}
+
         schema = vol.Schema(
             {
                 vol.Required("selected_devices"): cv.multi_select(device_options),
-                vol.Optional("interrupt_scan", default=False): bool,
             }
         )
 
         # Calcola statistiche per il messaggio
         total_scanned = getattr(self, "total_ips_scanned", 0)
-        progress_msg = f"Scansione completata ({total_scanned} IP scansionati). "
-        progress_msg += f"Trovati {len(devices)} dispositivi. "
-        progress_msg += "Seleziona i dispositivi da configurare:"
+        progress_msg = (
+            f"Scansione completata! Analizzati {total_scanned} indirizzi IP. "
+            f"Trovati {len(devices)} dispositivi VMC Helty. "
+            "Seleziona i dispositivi da aggiungere a Home Assistant:"
+        )
 
         return self.async_show_form(
             step_id="discovery",
@@ -444,13 +499,12 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         end_ip = 254
         self.total_ips_scanned = end_ip - start_ip + 1
 
-        # Usa la funzione di discovery con progress indicator
-        return await discover_vmc_devices_with_progress(
+        # Usa la funzione di discovery standard per velocizzare
+        _LOGGER.info("Usando discovery standard")
+        return await discover_vmc_devices(
             subnet=subnet_base,
             port=self.port,
             timeout=self.timeout,
-            progress_callback=self._update_discovery_progress,
-            interrupt_check=lambda: getattr(self, "_scan_interrupted", False),
         )
 
     async def async_step_import(self, import_info):
