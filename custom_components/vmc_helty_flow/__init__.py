@@ -6,6 +6,7 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DEFAULT_PORT, DOMAIN
@@ -27,7 +28,6 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.LIGHT,
     Platform.BUTTON,
-    Platform.TEXT,
 ]
 
 # Intervallo di aggiornamento predefinito
@@ -48,7 +48,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self.config_entry = config_entry
         self.ip = config_entry.data["ip"]
         self.name = config_entry.data["name"]
-        self.device_entry = None
+        self.device_entry: DeviceEntry | None = None
         self._consecutive_errors = 0
         self._max_consecutive_errors = 5
         self._error_recovery_interval = timedelta(seconds=30)
@@ -74,7 +74,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
     async def _get_additional_data(self) -> dict[str, str | None]:
         """Get additional device data (sensors, name, network)."""
-        responses = {}
+        responses: dict[str, str | None] = {}
 
         # Sensors data
         try:
@@ -214,23 +214,24 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         if name_response and name_response.startswith("VMNM"):
             try:
                 parts = name_response.split(",")
-                if len(parts) > 1 and parts[1].strip():
-                    new_name = parts[1].strip()
-                    # Verifica se il nome è cambiato
-                    if new_name != self.name:
-                        _LOGGER.info(
-                            "Nome dispositivo cambiato da '%s' a '%s'",
-                            self.name,
-                            new_name,
+                if (
+                    len(parts) > 1
+                    and (new_name := parts[1].strip())
+                    and new_name != self.name
+                ):
+                    _LOGGER.info(
+                        "Nome dispositivo cambiato da '%s' a '%s'",
+                        self.name,
+                        new_name,
+                    )
+                    self.name = new_name
+                    # Se siamo in Home Assistant, aggiorna il titolo
+                    # del config entry
+                    if hasattr(self, "hass") and self.hass and self.config_entry:
+                        new_data = {**self.config_entry.data, "name": new_name}
+                        self.hass.config_entries.async_update_entry(
+                            self.config_entry, data=new_data
                         )
-                        self.name = new_name
-                        # Se siamo in Home Assistant, aggiorna il titolo
-                        # del config entry
-                        if hasattr(self, "hass") and self.hass:
-                            new_data = {**self.config_entry.data, "name": new_name}
-                            self.hass.config_entries.async_update_entry(
-                                self.config_entry, data=new_data
-                            )
             except Exception as err:
                 _LOGGER.warning(
                     "Errore durante l'aggiornamento del nome dispositivo: %s", err
