@@ -1,9 +1,7 @@
 """Helper functions per l'integrazione VMC Helty Flow."""
 
 import asyncio
-import ipaddress
 import logging
-import re
 import socket
 
 from homeassistant.exceptions import HomeAssistantError
@@ -63,16 +61,14 @@ async def _send_and_receive(
         ) from None
 
     # Decodifica la risposta
+    decoded_response: str
     try:
         decoded_response = response.decode("utf-8").strip()
     except UnicodeDecodeError:
         # Se la decodifica UTF-8 fallisce,
         # prova con latin-1 che non fallisce mai
         decoded_response = response.decode("latin-1").strip()
-        _LOGGER.warning(
-            "Risposta decodificata con latin-1 invece di UTF-8: %s",
-            decoded_response,
-        )
+        _LOGGER.warning("Risposta da %s:%s non era in UTF-8, usato latin-1", ip, port)
 
     _LOGGER.debug("Risposta da %s:%s: %s", ip, port, decoded_response)
 
@@ -202,7 +198,7 @@ async def get_device_info(
                 "name": f"VMC Helty {ip.split('.')[-1]}",
                 "model": "VMC Flow",
                 "manufacturer": "Helty",
-                "available": True,
+                "available": "True",
                 "parse_error": "Errore di parsing",
             }
         else:
@@ -212,7 +208,7 @@ async def get_device_info(
                 "name": nome,
                 "model": modello,
                 "manufacturer": "Helty",
-                "available": True,
+                "available": "True",
             }
 
     except VMCConnectionError:
@@ -248,74 +244,6 @@ async def discover_vmc_devices(
     return devices
 
 
-async def discover_vmc_devices_with_progress(
-    subnet: str = "192.168.1.",
-    port: int = DEFAULT_PORT,
-    timeout: int = TCP_TIMEOUT,
-    progress_callback=None,
-    interrupt_check=None,
-) -> list[dict[str, str]]:
-    """Scopre i dispositivi VMC sulla rete con callback di progresso.
-
-    Args:
-        subnet: Subnet da scansionare
-        port: Porta TCP da usare
-        timeout: Timeout per ogni connessione
-        progress_callback: Funzione da chiamare per aggiornare il progresso
-        interrupt_check: Funzione che ritorna True se la scansione deve essere
-            interrotta
-
-    Returns:
-        Lista dei dispositivi trovati
-    """
-    _LOGGER.info("=== DISCOVER VMC START ===")
-    _LOGGER.info("subnet: %s, port: %s, timeout: %s", subnet, port, timeout)
-    _LOGGER.info("progress_callback: %s", progress_callback is not None)
-    _LOGGER.info("interrupt_check: %s", interrupt_check is not None)
-
-    devices = []
-    if subnet.endswith("."):
-        subnet = subnet[:-1]
-
-    start_ip = IP_RANGE_START
-    end_ip = IP_RANGE_END
-    total_ips = end_ip - start_ip + 1
-
-    for i in range(start_ip, end_ip + 1):
-        # Controlla se la scansione deve essere interrotta
-        if interrupt_check and interrupt_check():
-            _LOGGER.info("Scansione VMC interrotta dall'utente")
-            break
-
-        ip = f"{subnet}.{i}"
-        current_progress = int((i - start_ip + 1) / total_ips * 100)
-
-        # Callback di progresso
-        if progress_callback:
-            progress_callback(
-                {
-                    "current_ip": ip,
-                    "progress": current_progress,
-                    "devices_found": len(devices),
-                    "scanned": i - start_ip + 1,
-                    "total": total_ips,
-                }
-            )
-
-        try:
-            device_info = await get_device_info(ip, port, timeout)
-            if device_info:
-                devices.append(device_info)
-                _LOGGER.info(
-                    "Dispositivo VMC trovato: %s (%s)", device_info["name"], ip
-                )
-        except Exception as err:
-            _LOGGER.debug("Errore scansionando IP %s: %s", ip, err)
-
-    _LOGGER.info("Scansione VMC completata: trovati %d dispositivi", len(devices))
-    return devices
-
-
 def get_device_name(ip: str) -> str:
     """Restituisce un nome di default per il dispositivo basato sull'IP."""
     return f"VMC Helty {ip.split('.')[-1]}"
@@ -328,67 +256,3 @@ def parse_vmsl_response(response: str):
     ssid = response[:32].replace("*", "").strip()
     password = response[32:64].replace("*", "").strip()
     return ssid, password
-
-
-async def check_device_availability(
-    ip: str, port: int = DEFAULT_PORT, retries: int = 2
-) -> tuple[bool, dict | None]:
-    """Verifica la disponibilità di un dispositivo con tentativi multipli.
-
-    Args:
-        ip: Indirizzo IP del dispositivo
-        port: Porta TCP del dispositivo
-        retries: Numero di tentativi prima di considerare il dispositivo non disponibile
-
-    Returns:
-        Tupla (disponibilità, info_dispositivo)
-    """
-    for attempt in range(retries):
-        try:
-            # Usa un timeout più breve per i controlli di disponibilità
-            device_info = await get_device_info(ip, port, timeout=TCP_TIMEOUT / 2)
-            if device_info:
-                return True, device_info
-        except Exception as err:
-            _LOGGER.debug("Tentativo %d fallito per %s: %s", attempt + 1, ip, err)
-            # Breve attesa tra i tentativi
-            if attempt < retries - 1:
-                await asyncio.sleep(0.5)
-
-    return False, None
-
-
-def validate_subnet(subnet: str) -> bool:
-    """Valida se la subnet è in formato CIDR valido (es. 192.168.1.0/24)."""
-    cidr_pattern = r"^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$"
-    if not re.match(cidr_pattern, subnet):
-        return False
-    try:
-        network = ipaddress.IPv4Network(subnet, strict=False)
-        return (
-            network.is_private
-            or str(network.network_address).startswith("127.")
-            or str(network.network_address).startswith("169.254.")
-        )
-    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError):
-        return False
-
-
-def count_ips_in_subnet(subnet: str) -> int:
-    """Conta quanti IP sono disponibili nella subnet CIDR."""
-    try:
-        network = ipaddress.IPv4Network(subnet, strict=False)
-        return network.num_addresses - 2
-    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
-        return 0
-
-
-def parse_subnet_for_discovery(subnet: str) -> str:
-    """Converte la subnet CIDR in formato utilizzabile per la discovery."""
-    try:
-        network = ipaddress.IPv4Network(subnet, strict=False)
-        base_ip = str(network.network_address)
-        parts = base_ip.split(".")
-        return ".".join(parts[:3]) + "."
-    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
-        return "192.168.1."

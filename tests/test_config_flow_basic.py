@@ -14,8 +14,6 @@ def test_config_flow_init():
     assert flow.port is None
     assert flow.timeout == 10
     assert flow.discovered_devices == []
-    assert flow.scan_interrupted is False
-    assert flow.progress == 0
     assert flow._store is None
 
 

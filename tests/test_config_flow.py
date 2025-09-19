@@ -46,8 +46,6 @@ class TestVmcHeltyFlowConfigFlow:
         assert config_flow.port is None
         assert config_flow.timeout == 10
         assert config_flow.discovered_devices == []
-        assert config_flow.scan_interrupted is False
-        assert config_flow.progress == 0
         assert config_flow._store is None
 
     def test_get_store(self, config_flow):
@@ -305,7 +303,7 @@ class TestVmcHeltyFlowConfigFlow:
         user_input = {"new_scan": True}  # Input che non contiene selected_devices
         errors = {}
 
-        # Ora non c'è più async_step_scanning, va direttamente al discovery
+        # Va direttamente al discovery
         result = await config_flow._handle_discovery_input(user_input, errors)
         assert result["type"] == "form"
         assert result["step_id"] == "discovery"
@@ -316,7 +314,9 @@ class TestVmcHeltyFlowConfigFlow:
         if hasattr(config_flow, "discovered_devices"):
             delattr(config_flow, "discovered_devices")
 
-        with patch.object(config_flow, "_perform_device_discovery") as mock_discovery:
+        with patch.object(
+            config_flow, "_perform_device_discovery_directly"
+        ) as mock_discovery:
             await config_flow._handle_discovery_display()
             mock_discovery.assert_called_once()
 
@@ -371,71 +371,6 @@ class TestVmcHeltyFlowConfigFlow:
             await config_flow._process_device_selection(user_input)
             mock_abort.assert_called_once_with(reason="all_devices_already_configured")
 
-    async def test_handle_scan_interruption_direct(self, config_flow):
-        """Test scan interruption handling directly."""
-        with patch.object(config_flow, "async_show_form") as mock_show:
-            mock_show.return_value = {"type": "form", "step_id": "user"}
-
-            result = config_flow._handle_scan_interruption()
-
-            assert config_flow.scan_interrupted is True
-            mock_show.assert_called_once()
-            assert result["step_id"] == "user"
-
-    async def test_perform_device_discovery_success(self, config_flow):
-        """Test successful device discovery."""
-        config_flow.subnet = "192.168.1.0/24"
-        config_flow.port = 5001
-        config_flow.timeout = 10
-
-        devices = [{"ip": "192.168.1.100", "name": "Test"}]
-
-        with (
-            patch.object(config_flow, "_discover_devices_async", return_value=devices),
-            patch.object(config_flow, "_save_devices") as mock_save,
-        ):
-            result = await config_flow._perform_device_discovery()
-
-            assert config_flow.discovered_devices == devices
-            mock_save.assert_called_once_with(devices)
-            assert result is None
-
-    async def test_perform_device_discovery_no_devices(self, config_flow):
-        """Test device discovery with no devices found."""
-        config_flow.subnet = "192.168.1.0/24"
-        config_flow.port = 5001
-        config_flow.timeout = 10
-
-        with (
-            patch.object(config_flow, "_discover_devices_async", return_value=[]),
-            patch.object(config_flow, "_save_devices"),
-            patch.object(config_flow, "async_show_form") as mock_show,
-        ):
-            await config_flow._perform_device_discovery()
-
-            mock_show.assert_called_once()
-            assert "errors" in mock_show.call_args[1]
-
-    async def test_perform_device_discovery_exception(self, config_flow):
-        """Test device discovery with exception."""
-        config_flow.subnet = "192.168.1.0/24"
-        config_flow.port = 5001
-        config_flow.timeout = 10
-
-        with (
-            patch.object(
-                config_flow,
-                "_discover_devices_async",
-                side_effect=Exception("Discovery error"),
-            ),
-            patch.object(config_flow, "_save_devices"),
-            patch.object(config_flow, "async_show_form") as mock_show,
-        ):
-            await config_flow._perform_device_discovery()
-
-            assert config_flow.discovered_devices == []
-            mock_show.assert_called_once()
-
     def test_show_device_selection_form(self, config_flow):
         """Test device selection form display."""
         config_flow.discovered_devices = [
@@ -449,22 +384,6 @@ class TestVmcHeltyFlowConfigFlow:
 
             mock_show.assert_called_once()
             assert mock_show.call_args[1]["step_id"] == "discovery"
-
-    def test_update_discovery_progress(self, config_flow):
-        """Test discovery progress update."""
-        progress_info = {
-            "progress": 50,
-            "current_ip": "192.168.1.100",
-            "devices_found": 2,
-            "scanned": 100,
-            "total": 254,
-        }
-
-        config_flow._update_discovery_progress(progress_info)
-
-        assert config_flow.progress == 50
-        assert config_flow._discovery_progress["current_ip"] == "192.168.1.100"
-        assert config_flow._discovery_progress["devices_found"] == 2
 
     async def test_discover_devices_async(self, config_flow):
         """Test async device discovery."""
@@ -537,68 +456,3 @@ class TestVmcHeltyFlowConfigFlow:
         assert config_flow.subnet == "192.168.1.0/24"
         assert config_flow.port == 5001
         assert config_flow.timeout == 10
-
-    async def test_async_step_scanning_flow(self, config_flow):
-        """Test scanning step shows proper form and proceeds to discovery."""
-        # Setup flow state
-        config_flow.subnet = "192.168.1.0/24"
-        config_flow.port = 5001
-        config_flow.timeout = 10
-
-        # Step 1: Initial scanning step should show form
-        result1 = await config_flow.async_step_scanning(None)
-        assert result1["type"] == "form"
-        assert result1["step_id"] == "scanning"
-        assert "proceed" in str(result1["data_schema"])
-
-        # Verify placeholders
-        placeholders = result1.get("description_placeholders", {})
-        assert placeholders["subnet"] == "192.168.1.0/24"
-        assert placeholders["port"] == "5001"
-        assert "20-30 secondi" in placeholders["estimated_time"]
-
-        # Step 2: When user proceeds, should perform discovery
-        with patch.object(
-            config_flow, "_discover_devices_async", return_value=[]
-        ) as mock_discovery:
-            result2 = await config_flow.async_step_scanning({"proceed": True})
-
-            # Should call discovery
-            mock_discovery.assert_called_once()
-
-            # When no devices found, should stay in scanning with error
-            assert result2["type"] == "form"
-            assert result2["step_id"] == "scanning"
-            assert "nessun_dispositivo_trovato" in result2.get("errors", {}).get(
-                "base", ""
-            )
-
-    async def test_async_step_scanning_flow_success(self, config_flow):
-        """Test scanning step when devices are found."""
-        # Setup flow state
-        config_flow.subnet = "192.168.1.0/24"
-        config_flow.port = 5001
-        config_flow.timeout = 10
-
-        # Mock discovered devices
-        mock_devices = [
-            {"ip": "192.168.1.100", "name": "VMC Device 1"},
-            {"ip": "192.168.1.101", "name": "VMC Device 2"},
-        ]
-
-        # Test when devices are found, should proceed to discovery
-        with patch.object(
-            config_flow, "_discover_devices_async", return_value=mock_devices
-        ) as mock_discovery:
-            result = await config_flow.async_step_scanning({"proceed": True})
-
-            # Should call discovery
-            mock_discovery.assert_called_once()
-
-            # Should proceed to discovery step
-            assert result["type"] == "form"
-            assert result["step_id"] == "discovery"
-
-            # Devices should be stored
-            assert hasattr(config_flow, "discovered_devices")
-            assert config_flow.discovered_devices == mock_devices

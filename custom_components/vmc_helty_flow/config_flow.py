@@ -2,7 +2,7 @@
 
 import contextlib
 import logging
-from typing import Any, cast
+from typing import Any
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -11,9 +11,9 @@ from homeassistant.core import callback
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
-from .helpers import (
+from .helpers import discover_vmc_devices
+from .helpers_net import (
     count_ips_in_subnet,
-    discover_vmc_devices,
     parse_subnet_for_discovery,
     validate_subnet,
 )
@@ -40,15 +40,13 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.port = None
         self.timeout = 10
         self.discovered_devices = []
-        self.scan_interrupted = False
-        self.progress = 0
         self._store = None
 
     def _get_store(self) -> Store:
         """Ottieni l'istanza del store per i dispositivi."""
         if self._store is None:
             self._store = Store(self.hass, STORAGE_VERSION, STORAGE_KEY)
-        return cast(Store, self._store)
+        return self._store
 
     async def _load_devices(self) -> list[dict[str, Any]]:
         """Carica la lista dei dispositivi dallo storage di Home Assistant."""
@@ -262,82 +260,11 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
-    async def async_step_scanning(self, user_input=None):
-        """Show scanning progress and perform discovery."""
-        _LOGGER.info("=== STEP SCANNING START ===")
-        _LOGGER.info("user_input: %s", user_input)
-        _LOGGER.info(
-            "subnet: %s, port: %s, timeout: %s",
-            getattr(self, "subnet", "NOT_SET"),
-            getattr(self, "port", "NOT_SET"),
-            getattr(self, "timeout", "NOT_SET"),
-        )
-
-        if user_input is None:
-            _LOGGER.info("Mostra form scanning iniziale")
-            # Show scanning form first
-            return self.async_show_form(
-                step_id="scanning",
-                data_schema=vol.Schema({vol.Optional("proceed", default=True): bool}),
-                description_placeholders={
-                    "subnet": getattr(self, "subnet", "unknown"),
-                    "port": str(getattr(self, "port", "unknown")),
-                    "estimated_time": "20-30 secondi",
-                },
-            )
-
-        # When form is submitted, perform actual discovery
-        _LOGGER.info("Form scanning submitted, avvio discovery...")
-        try:
-            _LOGGER.info(
-                "Esecuzione discovery su subnet %s porta %s", self.subnet, self.port
-            )
-
-            # Perform device discovery
-            discovered_devices = await self._discover_devices_async(
-                self.subnet, self.port, self.timeout
-            )
-
-            _LOGGER.info(
-                "Discovery completata, trovati %d dispositivi", len(discovered_devices)
-            )
-
-            if not discovered_devices:
-                return self.async_show_form(
-                    step_id="scanning",
-                    data_schema=vol.Schema({}),
-                    errors={"base": "nessun_dispositivo_trovato"},
-                    description_placeholders={
-                        "subnet": self.subnet,
-                        "port": str(self.port),
-                        "timeout": str(self.timeout),
-                        "estimated_time": "20-30 secondi",
-                    },
-                )
-
-            # Memorizza i dispositivi scoperti per il prossimo step
-            self.discovered_devices = discovered_devices
-            return await self.async_step_discovery()
-
-        except Exception:
-            _LOGGER.exception("Errore durante la discovery")
-            return self.async_show_form(
-                step_id="scanning",
-                data_schema=vol.Schema({}),
-                errors={"base": "errore_discovery"},
-                description_placeholders={
-                    "subnet": self.subnet,
-                    "port": str(self.port),
-                    "timeout": str(self.timeout),
-                    "estimated_time": "20-30 secondi",
-                },
-            )
-
     async def _handle_discovery_display(self):
         """Handle the display logic for discovery step."""
         # Esegui la scansione se non è già stata fatta
-        if not hasattr(self, "discovered_devices"):
-            return await self._perform_device_discovery()
+        if not hasattr(self, "discovered_devices") or not self.discovered_devices:
+            return await self._perform_device_discovery_directly()
 
         # Mostra il form di selezione dei dispositivi
         return self._show_device_selection_form()
@@ -395,57 +322,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # automaticamente)
         return first_entry
 
-    def _handle_scan_interruption(self):
-        """Handle scan interruption request."""
-        self.scan_interrupted = True
-        return self.async_show_form(
-            step_id="user",
-            errors={"base": "scan_interrotta"},
-            description_placeholders={
-                "help": "Scansione interrotta. Modifica i parametri se necessario."
-            },
-        )
-
-    async def _perform_device_discovery(self):
-        """Perform device discovery."""
-        errors = {}
-        self.scan_interrupted = False
-        devices = []
-
-        try:
-            # Avvia la scansione con indicatore di progresso
-            devices = await self._discover_devices_async(
-                self.subnet, self.port, self.timeout
-            )
-            self.discovered_devices = devices
-        except Exception:
-            errors["base"] = "discovery_failed"
-            self.discovered_devices = []
-
-        await self._save_devices(devices)
-
-        # Se nessun dispositivo trovato, riproponi configurazione
-        if not devices or len(devices) == 0:
-            errors["base"] = errors.get("base") or "no_devices_found"
-            schema = vol.Schema(
-                {
-                    vol.Required("subnet", default=self.subnet): str,
-                    vol.Required("port", default=self.port): int,
-                    vol.Required("timeout", default=self.timeout): int,
-                }
-            )
-            return self.async_show_form(
-                step_id="user",
-                data_schema=schema,
-                errors=errors,
-                description_placeholders={
-                    "help": "Nessun dispositivo trovato. "
-                    "Modifica la configurazione e riprova."
-                },
-            )
-
-        return None
-
     def _show_device_selection_form(self):
         """Show the device selection form."""
         devices = self.discovered_devices
@@ -471,25 +347,12 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={"help": progress_msg},
         )
 
-    def _update_discovery_progress(self, progress_info):
-        """Update discovery progress for UI feedback."""
-        self.progress = progress_info.get("progress", 0)
-        # Store current progress information for the UI
-        self._discovery_progress = {
-            "current_ip": progress_info.get("current_ip", ""),
-            "devices_found": progress_info.get("devices_found", 0),
-            "scanned": progress_info.get("scanned", 0),
-            "total": progress_info.get("total", 0),
-            "progress": self.progress,
-        }
-
     async def _discover_devices_async(self, subnet, port, timeout):
         """Perform device discovery with progress tracking."""
         self.subnet = subnet
         self.port = port
         self.timeout = timeout
         self.discovered_devices = []
-        self._discovery_progress = {}
 
         # Parsing subnet per determinare il range di IPs
         subnet_base = parse_subnet_for_discovery(subnet)
