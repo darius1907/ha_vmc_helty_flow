@@ -31,10 +31,9 @@ class TestConstants:
             Platform.SWITCH,
             Platform.LIGHT,
             Platform.BUTTON,
-            Platform.TEXT,
         ]
         assert expected_platforms == PLATFORMS
-        assert len(PLATFORMS) == 6
+        assert len(PLATFORMS) == 5
 
     def test_default_scan_interval_constant(self):
         """Test che la costante DEFAULT_SCAN_INTERVAL sia corretta."""
