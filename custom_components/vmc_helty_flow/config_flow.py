@@ -512,14 +512,10 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             device = self.current_found_device
 
             # Calculate progress
-            progress_percentage = round((self.current_ip_index / self.total_ips_to_scan) * 100, 1)
             # Include current device in count
             current_found_count = len(self.found_devices_session) + 1
-            # Progress string
-            progress_str = (
-                f"{self.current_ip_index}/{self.total_ips_to_scan} "
-                f"({progress_percentage}%)"
-            )
+            # Progress string without percentage (static info)
+            progress_str = f"IP {self.current_ip_index} di {self.total_ips_to_scan}"
 
             schema = vol.Schema({
                 vol.Required("action"): vol.In([

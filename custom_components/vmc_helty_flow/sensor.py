@@ -1,5 +1,6 @@
 """Entità sensori per VMC Helty Flow."""
 
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
@@ -22,6 +23,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, MIN_RESPONSE_PARTS
 from .device_info import VmcHeltyEntity
@@ -179,11 +181,17 @@ class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):
         self._attr_device_class = SensorDeviceClass.TIMESTAMP
 
     @property
-    def native_value(self) -> float | None:
+    def native_value(self) -> datetime | None:
         """Return last update time."""
         if not self.coordinator.data:
             return None
-        return self.coordinator.data.get("last_update")
+        
+        timestamp = self.coordinator.data.get("last_update")
+        if timestamp is None:
+            return None
+            
+        # Converti timestamp Unix in datetime UTC
+        return datetime.fromtimestamp(timestamp, tz=dt_util.UTC)
 
 
 class VmcHeltyFilterHoursSensor(VmcHeltyEntity, SensorEntity):

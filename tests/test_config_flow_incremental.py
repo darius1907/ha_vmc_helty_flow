@@ -206,7 +206,7 @@ class TestIncrementalScan:
         assert placeholders["device_name"] == "VMC Test Device"
         assert placeholders["device_ip"] == "192.168.1.100"
         assert placeholders["device_model"] == "VMC Flow Pro"
-        assert "50/254" in placeholders["progress"]
+        assert "IP 50 di 254" in placeholders["progress"]  # Updated format
         assert placeholders["found_count"] == "1"  # Include current device in count
 
     async def test_device_found_step_display_with_existing_devices(self, mock_config_flow, mock_device_data):

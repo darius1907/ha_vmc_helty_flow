@@ -55,7 +55,7 @@
       },
       "device_found": {
         "title": "Device Found",
-        "description": "Found VMC device: {device_name} ({device_ip})\nModel: {device_model}\n\nProgress: {progress}\nDevices found: {found_count}\n\nWhat do you want to do?",
+        "description": "Found VMC device: {device_name} ({device_ip})\nModel: {device_model}\n\nScanning: {progress}\nDevices found so far: {found_count}\n\nWhat do you want to do?",
         "data": {
           "action": "Action to perform"
         },
