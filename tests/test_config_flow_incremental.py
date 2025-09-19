@@ -207,7 +207,29 @@ class TestIncrementalScan:
         assert placeholders["device_ip"] == "192.168.1.100"
         assert placeholders["device_model"] == "VMC Flow Pro"
         assert "50/254" in placeholders["progress"]
-        assert placeholders["found_count"] == "0"
+        assert placeholders["found_count"] == "1"  # Include current device in count
+
+    async def test_device_found_step_display_with_existing_devices(self, mock_config_flow, mock_device_data):
+        """Test device found step display when other devices already found."""
+        # Setup - simulate 2 devices already found
+        mock_config_flow.current_found_device = mock_device_data
+        mock_config_flow.current_ip_index = 100
+        mock_config_flow.total_ips_to_scan = 254
+        mock_config_flow.found_devices_session = [
+            {"ip": "192.168.1.101", "name": "Device 1"},
+            {"ip": "192.168.1.102", "name": "Device 2"}
+        ]
+
+        # Execute
+        result = await mock_config_flow.async_step_device_found()
+
+        # Verify
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "device_found"
+
+        # Check that found_count includes current device (2 existing + 1 current = 3)
+        placeholders = result["description_placeholders"]
+        assert placeholders["found_count"] == "3"
 
     async def test_device_found_action_add_continue(self, mock_config_flow, mock_device_data):
         """Test add device and continue action."""

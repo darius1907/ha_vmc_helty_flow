@@ -513,11 +513,18 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Calculate progress
             progress_percentage = round((self.current_ip_index / self.total_ips_to_scan) * 100, 1)
+            # Include current device in count
+            current_found_count = len(self.found_devices_session) + 1
+            # Progress string
+            progress_str = (
+                f"{self.current_ip_index}/{self.total_ips_to_scan} "
+                f"({progress_percentage}%)"
+            )
 
             schema = vol.Schema({
                 vol.Required("action"): vol.In([
                     "add_continue",    # Add device and continue scanning
-                    "skip_continue",   # Skip device and continue scanning  
+                    "skip_continue",   # Skip device and continue scanning
                     "add_stop",        # Add device and stop scanning
                     "stop_scan"        # Stop scanning without adding
                 ])
@@ -530,8 +537,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "device_name": device.get("name", "Dispositivo sconosciuto"),
                     "device_ip": device["ip"],
                     "device_model": device.get("model", "VMC Flow"),
-                    "progress": f"{self.current_ip_index}/{self.total_ips_to_scan} ({progress_percentage}%)",
-                    "found_count": str(len(self.found_devices_session)),
+                    "progress": progress_str,
+                    "found_count": str(current_found_count),
                 },
             )
 
