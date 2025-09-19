@@ -8,12 +8,14 @@
           "subnet": "Subnet (CIDR format, e.g. 192.168.1.0/24)",
           "port": "TCP Port",
           "timeout": "Timeout (seconds)",
+          "scan_mode": "Scan mode",
           "confirm": "Confirm new scan"
         },
         "data_description": {
           "subnet": "Enter your network subnet in CIDR format to search for VMC devices",
           "port": "TCP port used by VMC Helty devices (default: 5001)",
           "timeout": "TCP connection timeout in seconds (1-60)",
+          "scan_mode": "Choose the device scanning mode",
           "confirm": "Some devices are already configured. Do you want to start a new scan?"
         }
       },
@@ -49,6 +51,16 @@
         },
         "data_description": {
           "proceed": "Continue with the device discovery process"
+        }
+      },
+      "device_found": {
+        "title": "Device Found",
+        "description": "Found VMC device: {device_name} ({device_ip})\nModel: {device_model}\n\nProgress: {progress}\nDevices found: {found_count}\n\nWhat do you want to do?",
+        "data": {
+          "action": "Action to perform"
+        },
+        "data_description": {
+          "action": "Choose the action to perform for this device"
         }
       }
     },
@@ -90,6 +102,22 @@
           "timeout": "TCP connection timeout to device (5-60 seconds)",
           "retry_attempts": "Number of attempts in case of communication error (1-10)"
         }
+      }
+    }
+  },
+  "selector": {
+    "scan_mode": {
+      "options": {
+        "full": "Full scan",
+        "incremental": "Incremental scan"
+      }
+    },
+    "action": {
+      "options": {
+        "add_continue": "Add and continue",
+        "skip_continue": "Skip and continue", 
+        "add_stop": "Add and stop",
+        "stop_scan": "Stop scan"
       }
     }
   }

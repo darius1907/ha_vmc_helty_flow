@@ -1,6 +1,7 @@
 """Config flow per l'integrazione VMC Helty Flow."""
 
 import contextlib
+import ipaddress
 import logging
 from typing import Any
 
@@ -11,7 +12,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
-from .helpers import discover_vmc_devices
+from .helpers import discover_vmc_devices, get_device_info
 from .helpers_net import (
     count_ips_in_subnet,
     parse_subnet_for_discovery,
@@ -42,6 +43,15 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.discovered_devices = []
         self._store = None
 
+        # New attributes for incremental scan
+        self.scan_mode = "full"  # "full" or "incremental"
+        self.current_ip_index = 0
+        self.ip_range = []  # List of IPs to scan
+        self.scan_in_progress = False
+        self.found_devices_session = []  # Devices found in current session
+        self.total_ips_to_scan = 0
+        self.current_found_device = None
+
     def _get_store(self) -> Store:
         """Ottieni l'istanza del store per i dispositivi."""
         if self._store is None:
@@ -70,6 +80,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("subnet", default="192.168.1.0/24"): str,
                 vol.Required("port", default=5001): int,
                 vol.Required("timeout", default=10): int,
+                vol.Required("scan_mode", default="full"): vol.In(["full", "incremental"]),
             }
         )
         return self.async_show_form(
@@ -139,6 +150,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.subnet = user_input["subnet"]
         self.port = user_input["port"]
         self.timeout = user_input.get("timeout", 10)
+        self.scan_mode = user_input.get("scan_mode", "full")
         errors = {}
         if not validate_subnet(self.subnet):
             errors["subnet"] = "subnet_non_valida"
@@ -155,6 +167,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required("subnet", default=self.subnet): str,
                     vol.Required("port", default=self.port): int,
                     vol.Required("timeout", default=self.timeout): int,
+                    vol.Required("scan_mode", default=self.scan_mode): vol.In(
+                        ["full", "incremental"]
+                    ),
                 }
             )
             return self.async_show_form(
@@ -172,14 +187,18 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Se non ci sono errori, procedi direttamente con la discovery
         _LOGGER.info(
-            "Parametri validati: subnet=%s, port=%s, timeout=%s",
+            "Parametri validati: subnet=%s, port=%s, timeout=%s, scan_mode=%s",
             self.subnet,
             self.port,
             self.timeout,
+            self.scan_mode,
         )
 
-        # Avvia direttamente la discovery senza step intermedio
-        return await self._perform_device_discovery_directly()
+        # Route to appropriate scan method based on scan_mode
+        if self.scan_mode == "incremental":
+            return await self._start_incremental_scan()
+        # Default to full scan
+        return await self._perform_device_discovery()
 
     async def async_step_discovery(self, user_input=None):
         """Handle device discovery and selection."""
@@ -197,7 +216,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Se non ci sono dispositivi selezionati, torna al form
         return self._show_device_selection_form()
 
-    async def _perform_device_discovery_directly(self):
+    async def _perform_device_discovery(self):
         """Esegue la discovery direttamente senza step intermedio."""
         _LOGGER.info("Inizio discovery diretta...")
 
@@ -264,7 +283,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the display logic for discovery step."""
         # Esegui la scansione se non è già stata fatta
         if not hasattr(self, "discovered_devices") or not self.discovered_devices:
-            return await self._perform_device_discovery_directly()
+            return await self._perform_device_discovery()
 
         # Mostra il form di selezione dei dispositivi
         return self._show_device_selection_form()
@@ -369,6 +388,169 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             port=self.port,
             timeout=self.timeout,
         )
+
+    def _generate_ip_range(self, subnet: str) -> list[str]:
+        """Generate list of IP addresses to scan from subnet."""
+        try:
+            network = ipaddress.IPv4Network(subnet, strict=False)
+            # Skip network and broadcast addresses for /24 networks
+            if network.prefixlen >= 24:
+                return [str(ip) for ip in network.hosts()]
+            # For larger networks, scan a reasonable range
+            return [str(ip) for ip in list(network.hosts())[:254]]
+        except ValueError:
+            _LOGGER.exception("Invalid subnet format: %s", subnet)
+            return []
+
+    async def _start_incremental_scan(self) -> dict[str, Any]:
+        """Start incremental device scanning."""
+        _LOGGER.info("Starting incremental scan on subnet %s", self.subnet)
+        
+        # Generate IP range to scan
+        self.ip_range = self._generate_ip_range(self.subnet)
+        self.total_ips_to_scan = len(self.ip_range)
+        self.current_ip_index = 0
+        self.scan_in_progress = True
+        self.found_devices_session = []
+        
+        if not self.ip_range:
+            return self.async_show_form(
+                step_id="user",
+                errors={"subnet": "subnet_non_valida"},
+                description_placeholders={
+                    "help": "Impossibile generare il range di IP dalla subnet fornita."
+                },
+            )
+        
+        _LOGGER.info("Generated %d IPs to scan", self.total_ips_to_scan)
+        
+        # Start scanning
+        return await self._scan_next_ip()
+
+    async def _scan_next_ip(self) -> dict[str, Any] | None:
+        """Scan the next IP in the range. Returns device info if found."""
+        while self.current_ip_index < len(self.ip_range):
+            current_ip = self.ip_range[self.current_ip_index]
+            _LOGGER.debug(
+                "Scanning IP %s (%d/%d)",
+                current_ip, self.current_ip_index + 1, self.total_ips_to_scan
+            )
+
+            try:
+                # Try to get device info from this IP
+                device_info = await get_device_info(
+                    current_ip, self.port, self.timeout
+                )
+
+                if device_info:
+                    _LOGGER.info(
+                        "Device found at %s: %s",
+                        current_ip, device_info.get("name", "Unknown")
+                    )
+                    self.current_found_device = device_info
+
+                    # Move to next IP for next scan
+                    self.current_ip_index += 1
+
+                    # Go to device found step
+                    return await self.async_step_device_found()
+
+            except Exception as err:
+                _LOGGER.debug("No device at %s: %s", current_ip, err)
+
+            # Move to next IP
+            self.current_ip_index += 1
+
+        # Scan completed - no more IPs to scan
+        _LOGGER.info(
+            "Incremental scan completed. Found %d devices.",
+            len(self.found_devices_session)
+        )
+        return await self._finalize_incremental_scan()
+
+    async def _finalize_incremental_scan(self) -> dict[str, Any]:
+        """Finalize incremental scan and proceed to device selection or completion."""
+        self.scan_in_progress = False
+        
+        if not self.found_devices_session:
+            # No devices found during incremental scan
+            return self.async_show_form(
+                step_id="user",
+                errors={"base": "nessun_dispositivo_trovato"},
+                description_placeholders={
+                    "help": (
+                        f"Scansione completata. Nessun dispositivo VMC Helty "
+                        f"trovato su {self.total_ips_to_scan} indirizzi IP."
+                    )
+                },
+            )
+        
+        # Save found devices and proceed to completion
+        self.discovered_devices = self.found_devices_session
+        await self._save_devices(self.discovered_devices)
+        
+        # Create entries for all found devices
+        return await self._create_entries_for_devices(self.discovered_devices)
+
+    async def _create_entries_for_devices(self, devices: list[dict[str, Any]]) -> dict[str, Any]:
+        """Create config entries for multiple devices."""
+        if len(devices) == 1:
+            # Single device - create entry directly
+            device = devices[0]
+            return self.async_create_entry(
+                title=device.get("name", f"VMC Helty {device['ip']}"),
+                data={"ip": device["ip"], "port": self.port, "timeout": self.timeout},
+            )
+        else:
+            # Multiple devices - show selection form
+            return self._show_device_selection_form()
+
+    async def async_step_device_found(self, user_input=None):
+        """Handle when a device is found during incremental scan."""
+        if user_input is None:
+            # Show device info and options
+            device = self.current_found_device
+            
+            # Calculate progress
+            progress_percentage = round((self.current_ip_index / self.total_ips_to_scan) * 100, 1)
+            
+            schema = vol.Schema({
+                vol.Required("action"): vol.In([
+                    "add_continue",    # Add device and continue scanning
+                    "skip_continue",   # Skip device and continue scanning  
+                    "add_stop",        # Add device and stop scanning
+                    "stop_scan"        # Stop scanning without adding
+                ])
+            })
+            
+            return self.async_show_form(
+                step_id="device_found",
+                data_schema=schema,
+                description_placeholders={
+                    "device_name": device.get("name", "Dispositivo sconosciuto"),
+                    "device_ip": device["ip"],
+                    "device_model": device.get("model", "VMC Flow"),
+                    "progress": f"{self.current_ip_index}/{self.total_ips_to_scan} ({progress_percentage}%)",
+                    "found_count": str(len(self.found_devices_session)),
+                },
+            )
+        
+        # Handle user choice
+        action = user_input["action"]
+        device = self.current_found_device
+        
+        if action in ["add_continue", "add_stop"]:
+            # Add device to found devices
+            self.found_devices_session.append(device)
+            _LOGGER.info("Device %s added to session", device["ip"])
+        
+        if action in ["add_stop", "stop_scan"]:
+            # Stop scanning
+            _LOGGER.info("Scan stopped by user choice: %s", action)
+            return await self._finalize_incremental_scan()
+        
+        # Continue scanning
+        return await self._scan_next_ip()
 
     async def async_step_import(self, import_info):
         """Handle import from configuration.yaml (se supportato)."""

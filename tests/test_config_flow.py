@@ -315,7 +315,7 @@ class TestVmcHeltyFlowConfigFlow:
             delattr(config_flow, "discovered_devices")
 
         with patch.object(
-            config_flow, "_perform_device_discovery_directly"
+            config_flow, "_perform_device_discovery"
         ) as mock_discovery:
             await config_flow._handle_discovery_display()
             mock_discovery.assert_called_once()
@@ -443,7 +443,7 @@ class TestVmcHeltyFlowConfigFlow:
 
         # Step 3: User inputs valid config - should proceed directly to discovery
         with patch.object(
-            config_flow, "_perform_device_discovery_directly"
+            config_flow, "_perform_device_discovery"
         ) as mock_discovery:
             mock_discovery.return_value = {"type": "form", "step_id": "discovery"}
             result3 = await config_flow.async_step_user(

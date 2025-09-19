@@ -8,12 +8,14 @@
           "subnet": "Subnet (formato CIDR, es. 192.168.1.0/24)",
           "port": "Porta TCP",
           "timeout": "Timeout (secondi)",
+          "scan_mode": "Modalità di scansione",
           "confirm": "Conferma nuova scansione"
         },
         "data_description": {
           "subnet": "Inserisci la subnet della tua rete in formato CIDR per la ricerca dei dispositivi VMC",
           "port": "Porta TCP utilizzata dai dispositivi VMC Helty (default: 5001)",
           "timeout": "Timeout per le connessioni TCP in secondi (1-60)",
+          "scan_mode": "Scegli la modalità di scansione dei dispositivi",
           "confirm": "Sono già configurati alcuni dispositivi. Vuoi avviare una nuova scansione?"
         }
       },
@@ -51,6 +53,16 @@
         },
         "data_description": {
           "proceed": "Continua con il processo di ricerca dispositivi"
+        }
+      },
+      "device_found": {
+        "title": "Dispositivo Trovato",
+        "description": "Trovato dispositivo VMC: {device_name} ({device_ip})\nModello: {device_model}\n\nProgresso: {progress}\nDispositivi trovati: {found_count}\n\nCosa vuoi fare?",
+        "data": {
+          "action": "Azione da eseguire"
+        },
+        "data_description": {
+          "action": "Scegli l'azione da eseguire per questo dispositivo"
         }
       }
     },
@@ -92,6 +104,22 @@
           "timeout": "Timeout per le connessioni TCP al dispositivo (5-60 secondi)",
           "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)"
         }
+      }
+    }
+  },
+  "selector": {
+    "scan_mode": {
+      "options": {
+        "full": "Scansione completa",
+        "incremental": "Scansione incrementale"
+      }
+    },
+    "action": {
+      "options": {
+        "add_continue": "Aggiungi e continua",
+        "skip_continue": "Salta e continua", 
+        "add_stop": "Aggiungi e termina",
+        "stop_scan": "Termina scansione"
       }
     }
   },
