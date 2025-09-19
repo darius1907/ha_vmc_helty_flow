@@ -405,14 +405,14 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _start_incremental_scan(self) -> dict[str, Any]:
         """Start incremental device scanning."""
         _LOGGER.info("Starting incremental scan on subnet %s", self.subnet)
-        
+
         # Generate IP range to scan
         self.ip_range = self._generate_ip_range(self.subnet)
         self.total_ips_to_scan = len(self.ip_range)
         self.current_ip_index = 0
         self.scan_in_progress = True
         self.found_devices_session = []
-        
+
         if not self.ip_range:
             return self.async_show_form(
                 step_id="user",
@@ -421,9 +421,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "help": "Impossibile generare il range di IP dalla subnet fornita."
                 },
             )
-        
+
         _LOGGER.info("Generated %d IPs to scan", self.total_ips_to_scan)
-        
+
         # Start scanning
         return await self._scan_next_ip()
 
@@ -471,7 +471,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _finalize_incremental_scan(self) -> dict[str, Any]:
         """Finalize incremental scan and proceed to device selection or completion."""
         self.scan_in_progress = False
-        
+
         if not self.found_devices_session:
             # No devices found during incremental scan
             return self.async_show_form(
@@ -484,11 +484,11 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 },
             )
-        
+
         # Save found devices and proceed to completion
         self.discovered_devices = self.found_devices_session
         await self._save_devices(self.discovered_devices)
-        
+
         # Create entries for all found devices
         return await self._create_entries_for_devices(self.discovered_devices)
 
@@ -510,10 +510,10 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             # Show device info and options
             device = self.current_found_device
-            
+
             # Calculate progress
             progress_percentage = round((self.current_ip_index / self.total_ips_to_scan) * 100, 1)
-            
+
             schema = vol.Schema({
                 vol.Required("action"): vol.In([
                     "add_continue",    # Add device and continue scanning
@@ -522,7 +522,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "stop_scan"        # Stop scanning without adding
                 ])
             })
-            
+
             return self.async_show_form(
                 step_id="device_found",
                 data_schema=schema,
@@ -534,21 +534,21 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "found_count": str(len(self.found_devices_session)),
                 },
             )
-        
+
         # Handle user choice
         action = user_input["action"]
         device = self.current_found_device
-        
+
         if action in ["add_continue", "add_stop"]:
             # Add device to found devices
             self.found_devices_session.append(device)
             _LOGGER.info("Device %s added to session", device["ip"])
-        
+
         if action in ["add_stop", "stop_scan"]:
             # Stop scanning
             _LOGGER.info("Scan stopped by user choice: %s", action)
             return await self._finalize_incremental_scan()
-        
+
         # Continue scanning
         return await self._scan_next_ip()
 
