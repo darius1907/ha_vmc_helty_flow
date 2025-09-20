@@ -4,11 +4,12 @@ on: [push]
 
 jobs:
   deploy-vmc-helty-flow-integration:
-    runs-on: ubuntu-latest:docker://node:20-bullseye
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Clone repository
+        run: |
+          git clone --depth 1 https://gitea-service.git.svc.cluster.local/username/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
 
       - name: Set up kubectl
         run: |
