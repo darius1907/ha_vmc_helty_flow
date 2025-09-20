@@ -1,16 +1,9 @@
----
 name: Deploy Home Assistant Integration
-
-on:
-  workflow_dispatch: true
-  push:
-    branches:
-      - develop
-    paths:
-      - "components/vmc_helty_flow/**"
+run-name: ${{ gitea.actor }} is deploying vmc_helty_flow integration 🚀
+on: [push]
 
 jobs:
-  deploy:
+  deploy-vmc-helty-flow-integration:
     runs-on: ubuntu-latest
 
     steps:
