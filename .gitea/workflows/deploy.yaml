@@ -9,6 +9,9 @@ jobs:
     steps:
       - name: Clone repository
         run: |
+          rm -rf /tmp/ha_vmc_helty_flow
+      - name: Clone repository
+        run: |
           git clone --depth 1 https://gitea-service.git.svc.cluster.local/username/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
 
       - name: Set up kubectl
@@ -28,7 +31,7 @@ jobs:
 
       - name: Copy integration to Home Assistant
         run: |
-          kubectl cp components/vmc_helty_flow \
+          kubectl cp /tmp/ha_vmc_helty_flow/components/vmc_helty_flow \
             $POD_NAME:/config/custom_components/ -n home-assistant
 
       - name: Rollout restart Home Assistant
