@@ -11,7 +11,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.storage import Store
 
-from .const import DOMAIN
+from .const import DOMAIN, IP_NETWORK_PREFIX
 from .helpers import discover_vmc_devices, get_device_info
 from .helpers_net import (
     count_ips_in_subnet,
@@ -44,7 +44,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._store = None
 
         # New attributes for incremental scan
-        self.scan_mode = "full"  # "full" or "incremental"
+        self.scan_mode = "incremental"  # Always incremental for better UX
         self.current_ip_index = 0
         self.ip_range = []  # List of IPs to scan
         self.scan_in_progress = False
@@ -80,7 +80,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("subnet", default="192.168.1.0/24"): str,
                 vol.Required("port", default=5001): int,
                 vol.Required("timeout", default=10): int,
-                vol.Required("scan_mode", default="full"): vol.In(["full", "incremental"]),
             }
         )
         return self.async_show_form(
@@ -150,7 +149,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.subnet = user_input["subnet"]
         self.port = user_input["port"]
         self.timeout = user_input.get("timeout", 10)
-        self.scan_mode = user_input.get("scan_mode", "full")
+        self.scan_mode = "incremental"  # Always incremental
         errors = {}
         if not validate_subnet(self.subnet):
             errors["subnet"] = "subnet_non_valida"
@@ -194,11 +193,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.scan_mode,
         )
 
-        # Route to appropriate scan method based on scan_mode
-        if self.scan_mode == "incremental":
-            return await self._start_incremental_scan()
-        # Default to full scan
-        return await self._perform_device_discovery()
+        # Always use incremental scan for better UX
+        return await self._start_incremental_scan()
 
     async def async_step_discovery(self, user_input=None):
         """Handle device discovery and selection."""
@@ -394,7 +390,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             network = ipaddress.IPv4Network(subnet, strict=False)
             # Skip network and broadcast addresses for /24 networks
-            if network.prefixlen >= 24:
+            if network.prefixlen >= IP_NETWORK_PREFIX:
                 return [str(ip) for ip in network.hosts()]
             # For larger networks, scan a reasonable range
             return [str(ip) for ip in list(network.hosts())[:254]]
@@ -433,19 +429,20 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             current_ip = self.ip_range[self.current_ip_index]
             _LOGGER.debug(
                 "Scanning IP %s (%d/%d)",
-                current_ip, self.current_ip_index + 1, self.total_ips_to_scan
+                current_ip,
+                self.current_ip_index + 1,
+                self.total_ips_to_scan,
             )
 
             try:
                 # Try to get device info from this IP
-                device_info = await get_device_info(
-                    current_ip, self.port, self.timeout
-                )
+                device_info = await get_device_info(current_ip, self.port, self.timeout)
 
                 if device_info:
                     _LOGGER.info(
                         "Device found at %s: %s",
-                        current_ip, device_info.get("name", "Unknown")
+                        current_ip,
+                        device_info.get("name", "Unknown"),
                     )
                     self.current_found_device = device_info
 
@@ -464,12 +461,12 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Scan completed - no more IPs to scan
         _LOGGER.info(
             "Incremental scan completed. Found %d devices.",
-            len(self.found_devices_session)
+            len(self.found_devices_session),
         )
         return await self._finalize_incremental_scan()
 
     async def _finalize_incremental_scan(self) -> dict[str, Any]:
-        """Finalize incremental scan and proceed to device selection or completion."""
+        """Finalize incremental scan and proceed to completion."""
         self.scan_in_progress = False
 
         if not self.found_devices_session:
@@ -485,25 +482,23 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        # Save found devices and proceed to completion
+        # Save found devices for reference
         self.discovered_devices = self.found_devices_session
         await self._save_devices(self.discovered_devices)
 
-        # Create entries for all found devices
-        return await self._create_entries_for_devices(self.discovered_devices)
-
-    async def _create_entries_for_devices(self, devices: list[dict[str, Any]]) -> dict[str, Any]:
-        """Create config entries for multiple devices."""
-        if len(devices) == 1:
-            # Single device - create entry directly
-            device = devices[0]
-            return self.async_create_entry(
-                title=device.get("name", f"VMC Helty {device['ip']}"),
-                data={"ip": device["ip"], "port": self.port, "timeout": self.timeout},
-            )
-        else:
-            # Multiple devices - show selection form
-            return self._show_device_selection_form()
+        # All devices should have been created during scan
+        # Complete the flow by aborting with success message
+        device_count = len(self.found_devices_session)
+        return self.async_abort(
+            reason="devices_configured_successfully",
+            description_placeholders={
+                "device_count": str(device_count),
+                "help": (
+                    f"Scansione completata! {device_count} dispositivo/i "
+                    "VMC Helty configurato/i con successo."
+                ),
+            },
+        )
 
     async def async_step_device_found(self, user_input=None):
         """Handle when a device is found during incremental scan."""
@@ -517,14 +512,18 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Progress string without percentage (static info)
             progress_str = f"IP {self.current_ip_index} di {self.total_ips_to_scan}"
 
-            schema = vol.Schema({
-                vol.Required("action"): vol.In([
-                    "add_continue",    # Add device and continue scanning
-                    "skip_continue",   # Skip device and continue scanning
-                    "add_stop",        # Add device and stop scanning
-                    "stop_scan"        # Stop scanning without adding
-                ])
-            })
+            schema = vol.Schema(
+                {
+                    vol.Required("action"): vol.In(
+                        [
+                            "add_continue",  # Add device and continue scanning
+                            "skip_continue",  # Skip device and continue scanning
+                            "add_stop",  # Add device and stop scanning
+                            "stop_scan",  # Stop scanning without adding
+                        ]
+                    )
+                }
+            )
 
             return self.async_show_form(
                 step_id="device_found",
@@ -543,9 +542,54 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         device = self.current_found_device
 
         if action in ["add_continue", "add_stop"]:
-            # Add device to found devices
+            # Create entry immediately for instant feedback
+            _LOGGER.info("Creating immediate entry for device %s", device["ip"])
+
+            # Check if device is already configured
+            existing_entries = [
+                entry
+                for entry in self._async_current_entries()
+                if entry.data.get("ip") == device["ip"]
+            ]
+
+            if not existing_entries:
+                # Create the entry using discovery pattern for additional devices
+                if action == "add_continue":
+                    # Use discovery flow for additional devices
+                    await self.hass.config_entries.flow.async_init(
+                        DOMAIN,
+                        context={"source": "discovered_device"},
+                        data={
+                            "ip": device["ip"],
+                            "name": device["name"],
+                            "model": device.get("model", "VMC Flow"),
+                            "manufacturer": device.get("manufacturer", "Helty"),
+                            "port": self.port,
+                            "timeout": self.timeout,
+                        },
+                    )
+                else:  # add_stop
+                    # For the last device, create entry in this flow
+                    await self.async_set_unique_id(device["ip"])
+                    try:
+                        self._abort_if_unique_id_configured()
+                    except Exception:
+                        _LOGGER.warning("Device %s already configured", device["ip"])
+
+                    return self.async_create_entry(
+                        title=device["name"],
+                        data={
+                            "ip": device["ip"],
+                            "name": device["name"],
+                            "model": device.get("model", "VMC Flow"),
+                            "manufacturer": device.get("manufacturer", "Helty"),
+                            "port": self.port,
+                            "timeout": self.timeout,
+                        },
+                    )
+
+            # Add to session for tracking
             self.found_devices_session.append(device)
-            _LOGGER.info("Device %s added to session", device["ip"])
 
         if action in ["add_stop", "stop_scan"]:
             # Stop scanning
@@ -554,6 +598,28 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Continue scanning
         return await self._scan_next_ip()
+
+    async def async_step_discovered_device(self, discovery_info):
+        """Handle automatic device discovery from incremental scan."""
+        if not discovery_info:
+            return self.async_abort(reason="invalid_discovery_info")
+
+        # Set unique_id for this device
+        await self.async_set_unique_id(discovery_info["ip"])
+        self._abort_if_unique_id_configured()
+
+        # Create entry for this device
+        return self.async_create_entry(
+            title=discovery_info["name"],
+            data={
+                "ip": discovery_info["ip"],
+                "name": discovery_info["name"],
+                "model": discovery_info.get("model", "VMC Flow"),
+                "manufacturer": discovery_info.get("manufacturer", "Helty"),
+                "port": discovery_info.get("port", 5001),
+                "timeout": discovery_info.get("timeout", 10),
+            },
+        )
 
     async def async_step_import(self, import_info):
         """Handle import from configuration.yaml (se supportato)."""

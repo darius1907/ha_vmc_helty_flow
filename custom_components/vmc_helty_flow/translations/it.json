@@ -115,7 +115,7 @@
     "action": {
       "options": {
         "add_continue": "Aggiungi e continua",
-        "skip_continue": "Salta e continua", 
+        "skip_continue": "Salta e continua",
         "add_stop": "Aggiungi e termina",
         "stop_scan": "Termina scansione"
       }

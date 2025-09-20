@@ -156,24 +156,16 @@ class TestVmcHeltyFlowConfigFlow:
             assert result["errors"]["base"] == "scan_annullata"
 
     async def test_async_step_user_valid_input(self, config_flow):
-        """Test user step with valid input."""
+        """Test user step with valid input - starts incremental scan."""
         user_input = {"subnet": "192.168.1.0/24", "port": 5001, "timeout": 10}
-
-        # Mock devices to be discovered
-        mock_devices = [
-            {
-                "ip": "192.168.1.100",
-                "name": "VMC Test Device",
-                "model": "Test Model",
-                "serial": "TEST123",
-            }
-        ]
 
         with (
             patch.object(config_flow, "_load_devices", return_value=[]),
             patch.object(
-                config_flow, "_discover_devices_async", return_value=mock_devices
-            ) as mock_discovery,
+                config_flow,
+                "_scan_next_ip",
+                return_value={"type": "form", "step_id": "scanning"},
+            ) as mock_scan,
             patch(
                 "custom_components.vmc_helty_flow.config_flow.validate_subnet",
                 return_value=True,
@@ -188,11 +180,13 @@ class TestVmcHeltyFlowConfigFlow:
             assert config_flow.subnet == "192.168.1.0/24"
             assert config_flow.port == 5001
             assert config_flow.timeout == 10
-            mock_discovery.assert_called_once()
+            assert config_flow.scan_in_progress is True
 
-            # Verifica che venga mostrata la form di selezione dispositivi
+            # Con la nuova logica incrementale, dovrebbe iniziare la scansione
+            mock_scan.assert_called_once()
+
+            # Verifica che venga mostrata la form di scansione incrementale
             assert result["type"] == "form"
-            assert result["step_id"] == "discovery"
 
     async def test_async_step_user_invalid_subnet(self, config_flow):
         """Test user step with invalid subnet."""
@@ -314,9 +308,7 @@ class TestVmcHeltyFlowConfigFlow:
         if hasattr(config_flow, "discovered_devices"):
             delattr(config_flow, "discovered_devices")
 
-        with patch.object(
-            config_flow, "_perform_device_discovery"
-        ) as mock_discovery:
+        with patch.object(config_flow, "_perform_device_discovery") as mock_discovery:
             await config_flow._handle_discovery_display()
             mock_discovery.assert_called_once()
 
@@ -417,7 +409,7 @@ class TestVmcHeltyFlowConfigFlow:
             mock_user.assert_called_once_with(import_info)
 
     async def test_complete_flow_no_loop(self, config_flow):
-        """Test complete flow from confirmation to discovery without loops."""
+        """Test complete flow from confirmation to incremental scan without loops."""
         # Setup: existing devices
         existing_devices = [{"name": "Test Device", "ip": "192.168.1.100"}]
         config_flow._store = AsyncMock()
@@ -441,18 +433,96 @@ class TestVmcHeltyFlowConfigFlow:
         assert "timeout" in str(result2["data_schema"])
         assert "confirm" not in str(result2["data_schema"])
 
-        # Step 3: User inputs valid config - should proceed directly to discovery
-        with patch.object(
-            config_flow, "_perform_device_discovery"
-        ) as mock_discovery:
-            mock_discovery.return_value = {"type": "form", "step_id": "discovery"}
-            result3 = await config_flow.async_step_user(
+        # Step 3: User inputs valid config - should start incremental scan
+        with patch.object(config_flow, "_scan_next_ip") as mock_scan:
+            mock_scan.return_value = {"type": "form", "step_id": "scanning"}
+            await config_flow.async_step_user(
                 {"subnet": "192.168.1.0/24", "port": 5001, "timeout": 10}
             )
-            mock_discovery.assert_called_once()
-            assert result3["step_id"] == "discovery"
+            mock_scan.assert_called_once()
+            assert config_flow.scan_in_progress is True
 
         # Verify flow state is set correctly
         assert config_flow.subnet == "192.168.1.0/24"
         assert config_flow.port == 5001
         assert config_flow.timeout == 10
+
+    async def test_incremental_scan_device_found(self, config_flow):
+        """Test incremental scan when device is found."""
+        # Setup flow state
+        config_flow.scan_in_progress = True
+        config_flow.current_found_device = {
+            "ip": "192.168.1.100",
+            "name": "VMC Test Device",
+            "model": "Test Model",
+        }
+        config_flow.current_ip_index = 5
+        config_flow.total_ips_to_scan = 254
+        config_flow.found_devices_session = []
+
+        # Test the device_found step
+        result = await config_flow.async_step_device_found(None)
+
+        assert result["type"] == "form"
+        assert result["step_id"] == "device_found"
+        assert "action" in str(result["data_schema"])
+        assert "VMC Test Device" in result["description_placeholders"]["device_name"]
+        assert "192.168.1.100" in result["description_placeholders"]["device_ip"]
+
+    async def test_incremental_scan_add_continue(self, config_flow):
+        """Test adding device and continuing scan."""
+        # Setup flow state
+        config_flow.scan_in_progress = True
+        config_flow.current_found_device = {
+            "ip": "192.168.1.100",
+            "name": "VMC Test Device",
+        }
+        config_flow.found_devices_session = []
+        config_flow.port = 5001
+        config_flow.timeout = 10
+
+        with (
+            patch.object(config_flow, "_scan_next_ip") as mock_scan,
+            patch.object(
+                config_flow.hass.config_entries.flow,
+                "async_init",
+                new_callable=AsyncMock,
+            ) as mock_init,
+        ):
+            mock_scan.return_value = {"type": "form", "step_id": "scanning"}
+
+            await config_flow.async_step_device_found({"action": "add_continue"})
+
+            # Should create entry via discovery flow
+            mock_init.assert_called_once()
+            assert mock_init.call_args[1]["context"]["source"] == "discovered_device"
+
+            # Should continue scanning
+            mock_scan.assert_called_once()
+
+            # Device should be added to session
+            assert len(config_flow.found_devices_session) == 1
+            assert config_flow.found_devices_session[0]["ip"] == "192.168.1.100"
+
+    async def test_incremental_scan_add_stop(self, config_flow):
+        """Test adding device and stopping scan."""
+        # Setup flow state
+        config_flow.scan_in_progress = True
+        config_flow.current_found_device = {
+            "ip": "192.168.1.100",
+            "name": "VMC Test Device",
+        }
+        config_flow.found_devices_session = []
+        config_flow.port = 5001
+        config_flow.timeout = 10
+
+        with (
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
+        ):
+            result = await config_flow.async_step_device_found({"action": "add_stop"})
+
+            # Should create entry directly
+            assert result["type"] == "create_entry"
+            assert result["title"] == "VMC Test Device"
+            assert result["data"]["ip"] == "192.168.1.100"

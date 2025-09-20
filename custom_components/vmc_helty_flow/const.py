@@ -10,6 +10,7 @@ TCP_TIMEOUT = 3
 # Range di scansione IP
 IP_RANGE_START = 1
 IP_RANGE_END = 254
+IP_NETWORK_PREFIX = 24
 
 # Indici delle parti nel response del dispositivo VMC
 PART_INDEX_FAN_SPEED = 1

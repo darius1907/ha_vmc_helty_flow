@@ -185,11 +185,11 @@ class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):
         """Return last update time."""
         if not self.coordinator.data:
             return None
-        
+
         timestamp = self.coordinator.data.get("last_update")
         if timestamp is None:
             return None
-            
+
         # Converti timestamp Unix in datetime UTC
         return datetime.fromtimestamp(timestamp, tz=dt_util.UTC)
 

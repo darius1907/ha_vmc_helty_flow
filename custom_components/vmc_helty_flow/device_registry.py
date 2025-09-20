@@ -91,7 +91,7 @@ def _extract_unique_id_from_network_info(network_info: str) -> str | None:
             return sn_match.group(1)
 
     # Se trovato un campo che sembra un ID univoco
-    for part in enumerate(parts):
+    for part in parts:
         if MIN_UNIQUE_ID_LENGTH <= len(part) <= MAX_UNIQUE_ID_LENGTH and re.match(
             r"^[A-Za-z0-9_-]+$", part
         ):

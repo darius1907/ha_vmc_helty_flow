@@ -209,6 +209,6 @@ Per problemi, richieste di funzionalità o contributi:
 
 ---
 
-**Versione**: 2.0.0  
-**Compatibilità**: Home Assistant 2024.1+  
+**Versione**: 2.0.0
+**Compatibilità**: Home Assistant 2024.1+
 **Licenza**: MIT
