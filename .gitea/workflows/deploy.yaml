@@ -1,7 +1,8 @@
+---
 name: Deploy Home Assistant Integration
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: true
   push:
     branches:
       - develop
@@ -11,9 +12,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up kubectl
         run: |
@@ -25,17 +27,21 @@ jobs:
       - name: Get Home Assistant pod name
         id: getpod
         run: |
-          POD_NAME=$(kubectl get pod -n home-assistant -l app.kubernetes.io/name=home-assistant -o jsonpath="{.items[0].metadata.name}")
+          POD_NAME=$(kubectl get pod -n home-assistant \
+            -l app.kubernetes.io/name=home-assistant \
+            -o jsonpath="{.items[0].metadata.name}")
           echo "POD_NAME=$POD_NAME" >> $GITHUB_ENV
 
       - name: Copy integration to Home Assistant
         run: |
-          kubectl cp components/vmc_helty_flow $POD_NAME:/config/custom_components/ -n home-assistant
-      
+          kubectl cp components/vmc_helty_flow \
+            $POD_NAME:/config/custom_components/ -n home-assistant
+
       - name: Rollout restart Home Assistant
         run: |
           kubectl rollout restart deployment -n home-assistant home-assistant
 
       - name: Wait for Home Assistant to become ready
         run: |
-          kubectl rollout status deployment -n home-assistant home-assistant --timeout=120s
+          kubectl rollout status deployment -n home-assistant home-assistant \
+            --timeout=120s
