@@ -7,12 +7,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone repository
+      - name: Clean temporary folder
         run: |
           rm -rf /tmp/ha_vmc_helty_flow
       - name: Clone repository
         run: |
-          git clone --depth 1 https://gitea-service.git.svc.cluster.local/username/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
+          git clone --depth 1 http://gitea-service.git.svc.cluster.local:3000/dpezzoli/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
 
       - name: Set up kubectl
         run: |
