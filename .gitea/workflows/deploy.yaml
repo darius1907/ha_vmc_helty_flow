@@ -7,18 +7,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup SSH key
+      - name: Clone repository
         run: |
-          mkdir -p ~/.ssh
-          echo "$GITEA_SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan gitea-service.git.svc.cluster.local >> ~/.ssh/known_hosts
+          git clone --depth 1 http://$GITEA_USER:$GITEA_TOKEN@gitea-service.git.svc.cluster.local:3000/dpezzoli/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
         env:
-          GITEA_SSH_KEY: ${{ secrets.GITEA_SSH_KEY }}
-
-      - name: Clone repository via SSH
-        run: |
-          git clone --depth 1 git@gitea-service.git.svc.cluster.local:dpezzoli/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
+          GITEA_USER: dpezzoli
+          GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
       - name: Set up kubectl
         run: |
           mkdir -p $HOME/.kube
