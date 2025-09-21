@@ -49,7 +49,7 @@ jobs:
 
       - name: Copy integration to Home Assistant
         run: |
-          kubectl cp /tmp/ha_vmc_helty_flow/components/vmc_helty_flow \
+          kubectl cp /tmp/ha_vmc_helty_flow/custom_components/vmc_helty_flow/ \
             $POD_NAME:/config/custom_components/ -n home-assistant
 
       - name: Rollout restart Home Assistant
