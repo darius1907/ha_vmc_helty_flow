@@ -13,6 +13,19 @@ jobs:
         env:
           GITEA_USER: dpezzoli
           GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
+      - name: Install kubectl (ARM64)
+        run: |
+          if command -v kubectl >/dev/null 2>&1; then
+            echo "✅ kubectl già presente, salto l'installazione"
+          else
+            echo "⬇️ Scarico kubectl per ARM64"
+            KUBE_VER=$(curl -s https://dl.k8s.io/release/stable.txt)
+            curl -LO "https://dl.k8s.io/release/${KUBE_VER}/bin/linux/arm64/kubectl"
+            chmod +x kubectl
+            mv kubectl /usr/local/bin/kubectl
+          fi
+      - name: Verify kubectl
+        run: kubectl version --client=true --output=yaml
       - name: Set up kubectl
         run: |
           mkdir -p $HOME/.kube
