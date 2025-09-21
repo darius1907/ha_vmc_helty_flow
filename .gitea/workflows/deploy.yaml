@@ -1,6 +1,12 @@
 name: Deploy Home Assistant Integration
 run-name: ${{ gitea.actor }} is deploying vmc_helty_flow integration 🚀
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/**
+      - hotfix/**
 
 jobs:
   deploy-vmc-helty-flow-integration:
@@ -12,7 +18,7 @@ jobs:
           rm -rf /tmp/ha_vmc_helty_flow
       - name: Clone repository
         run: |
-          git clone --depth 1 http://$GITEA_USER:$GITEA_TOKEN@gitea-service.git.svc.cluster.local:3000/dpezzoli/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
+          git clone --depth 1 --branch ${{ gitea.ref_name }} http://$GITEA_USER:$GITEA_TOKEN@gitea-service.git.svc.cluster.local:3000/dpezzoli/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
         env:
           GITEA_USER: dpezzoli
           GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
