@@ -22,8 +22,8 @@ jobs:
             echo "✅ kubectl già presente, salto l'installazione"
           else
             echo "⬇️ Scarico kubectl per ARM64"
-            KUBE_VER=$(curl -s https://dl.k8s.io/release/stable.txt)
-            curl -LO "https://dl.k8s.io/release/${KUBE_VER}/bin/linux/arm64/kubectl"
+            KUBE_VER=$(wget -qO- https://dl.k8s.io/release/stable.txt)
+            wget -q "https://dl.k8s.io/release/${KUBE_VER}/bin/linux/arm64/kubectl" -O kubectl
             chmod +x kubectl
             mv kubectl /usr/local/bin/kubectl
           fi
