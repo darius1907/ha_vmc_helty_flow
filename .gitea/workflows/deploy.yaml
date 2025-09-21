@@ -1,0 +1,62 @@
+name: Deploy Home Assistant Integration
+run-name: ${{ gitea.actor }} is deploying vmc_helty_flow integration  🚀
+
+on: 
+  push
+
+jobs:
+  deploy-vmc-helty-flow-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clean working directory
+        run: |
+          rm -rf /tmp/ha_vmc_helty_flow
+      - name: Clone repository
+        run: |
+          echo "✅ Clono il branch ${{ gitea.ref_name }}"
+          git clone --depth 1 --branch ${{ gitea.ref_name }} http://$GITEA_USER:$GITEA_TOKEN@gitea-service.git.svc.cluster.local:3000/dpezzoli/ha_vmc_helty_flow.git /tmp/ha_vmc_helty_flow
+        env:
+          GITEA_USER: dpezzoli
+          GITEA_TOKEN: ${{ secrets.GITEATOKEN }}
+      - name: Install kubectl (ARM64)
+        run: |
+          if command -v kubectl >/dev/null 2>&1; then
+            echo "✅ kubectl già presente, salto l'installazione"
+          else
+            echo "⬇️ Scarico kubectl per ARM64"
+            KUBE_VER=$(wget -qO- https://dl.k8s.io/release/stable.txt)
+            wget -q "https://dl.k8s.io/release/${KUBE_VER}/bin/linux/arm64/kubectl" -O kubectl
+            chmod +x kubectl
+            mv kubectl /usr/local/bin/kubectl
+          fi
+      - name: Verify kubectl
+        run: kubectl version --client=true --output=yaml
+      - name: Set up kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${KUBECONFIG_FILE}" > $HOME/.kube/config
+        env:
+          KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
+
+      - name: Get Home Assistant pod name
+        id: getpod
+        run: |
+          POD_NAME=$(kubectl get pod -n home-assistant \
+            -l app.kubernetes.io/name=home-assistant \
+            -o jsonpath="{.items[0].metadata.name}")
+          echo "POD_NAME=$POD_NAME" >> $GITHUB_ENV
+
+      - name: Copy integration to Home Assistant
+        run: |
+          kubectl cp /tmp/ha_vmc_helty_flow/custom_components/vmc_helty_flow/ \
+            $POD_NAME:/config/custom_components/ -n home-assistant
+
+      - name: Rollout restart Home Assistant
+        run: |
+          kubectl rollout restart deployment -n home-assistant home-assistant
+
+      - name: Wait for Home Assistant to become ready
+        run: |
+          kubectl rollout status deployment -n home-assistant home-assistant \
+            --timeout=120s

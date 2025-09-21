@@ -1,0 +1,45 @@
+[MASTER]
+load-plugins=pylint.extensions.code_style,
+             pylint.extensions.typing
+
+[MESSAGES CONTROL]
+disable=
+    format,
+    duplicate-code,
+    locally-disabled,
+    suppressed-message,
+    unused-wildcard-import,
+    wildcard-import,
+    too-few-public-methods,
+    too-many-ancestors,
+    too-many-arguments,
+    too-many-branches,
+    too-many-instance-attributes,
+    too-many-locals,
+    too-many-public-methods,
+    too-many-return-statements,
+    too-many-statements
+
+[REPORTS]
+output-format=colorized
+
+[DESIGN]
+max-attributes=20
+max-locals=25
+max-branches=25
+max-statements=50
+
+[FORMAT]
+max-line-length=88
+
+[VARIABLES]
+additional-builtins=_
+
+[CLASSES]
+valid-metaclass-classmethod-first-arg=mcs
+
+[IMPORTS]
+known-third-party=homeassistant
+
+[EXCEPTIONS]
+overgeneral-exceptions=Exception

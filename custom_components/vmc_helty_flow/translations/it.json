@@ -1,0 +1,124 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurazione VMC Helty Flow",
+        "description": "Configura i tuoi dispositivi VMC Helty",
+        "data": {
+          "subnet": "Subnet (formato CIDR, es. 192.168.1.0/24)",
+          "port": "Porta TCP",
+          "timeout": "Timeout (secondi)",
+          "scan_mode": "Modalità di scansione",
+          "confirm": "Conferma nuova scansione"
+        },
+        "data_description": {
+          "subnet": "Inserisci la subnet della tua rete in formato CIDR per la ricerca dei dispositivi VMC",
+          "port": "Porta TCP utilizzata dai dispositivi VMC Helty (default: 5001)",
+          "timeout": "Timeout per le connessioni TCP in secondi (1-60)",
+          "scan_mode": "Scegli la modalità di scansione dei dispositivi",
+          "confirm": "Sono già configurati alcuni dispositivi. Vuoi avviare una nuova scansione?"
+        }
+      },
+      "discovery": {
+        "title": "Selezione Dispositivi VMC",
+        "description": "Seleziona i dispositivi VMC da configurare",
+        "data": {
+          "selected_devices": "Dispositivi da configurare"
+        },
+        "data_description": {
+          "selected_devices": "Seleziona uno o più dispositivi VMC dalla lista per aggiungerli a Home Assistant"
+        }
+      },
+      "progress": {
+        "title": "Scansione Dispositivi VMC",
+        "description": "Ricerca dispositivi VMC in corso...",
+        "data": {
+          "interrupt_scan": "Interrompi scansione"
+        },
+        "data_description": {
+          "interrupt_scan": "Spunta per interrompere la scansione in corso"
+        }
+      },
+      "discovery_results": {
+        "title": "Risultati Scansione",
+        "description": "La scansione è stata completata"
+      },
+      "scanning": {
+        "title": "Scansione in Corso",
+        "description": "Sto effettuando la ricerca dei dispositivi VMC sulla subnet {subnet}.0/24 porta {port}.\n\nTempo stimato: {estimated_time}\n\nPremi 'Invia' per procedere o attendi il completamento automatico.",
+        "data": {
+          "proceed": "Procedi con la scansione"
+        },
+        "data_description": {
+          "proceed": "Continua con il processo di ricerca dispositivi"
+        }
+      },
+      "device_found": {
+        "title": "Dispositivo Trovato",
+        "description": "Trovato dispositivo VMC: {device_name} ({device_ip})\nModello: {device_model}\n\nScansione: {progress}\nDispositivi trovati finora: {found_count}\n\nCosa vuoi fare?",
+        "data": {
+          "action": "Azione da eseguire"
+        },
+        "data_description": {
+          "action": "Scegli l'azione da eseguire per questo dispositivo"
+        }
+      }
+    },
+    "error": {
+      "subnet_non_valida": "Formato subnet non valido. Usa il formato CIDR (es. 192.168.1.0/24)",
+      "porta_non_valida": "La porta deve essere compresa tra 1 e 65535",
+      "timeout_non_valido": "Il timeout deve essere compreso tra 1 e 60 secondi",
+      "subnet_troppo_grande": "La subnet non può generare più di 254 indirizzi IP",
+      "discovery_failed": "Errore durante la ricerca dei dispositivi VMC",
+      "errore_discovery": "Errore durante la ricerca dei dispositivi VMC",
+      "nessun_dispositivo_trovato": "Nessun dispositivo VMC trovato nella subnet specificata",
+      "scan_interrotta": "Scansione interrotta dall'utente",
+      "no_devices_found": "Nessun dispositivo VMC trovato nella subnet specificata",
+      "scan_annullata": "Scansione annullata. Dispositivi esistenti mantenuti.",
+      "cannot_connect": "Impossibile connettersi al dispositivo VMC",
+      "invalid_response": "Risposta non valida dal dispositivo VMC",
+      "timeout": "Timeout durante la comunicazione con il dispositivo",
+      "unknown": "Errore sconosciuto",
+      "retry_configuration": "Modifica la configurazione di rete e riprova la scansione"
+    },
+    "abort": {
+      "already_configured": "Questo dispositivo è già configurato",
+      "all_devices_already_configured": "Tutti i dispositivi selezionati sono già configurati",
+      "no_devices": "Nessun dispositivo trovato"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni VMC Helty Flow",
+        "description": "Configura le opzioni avanzate per l'integrazione",
+        "data": {
+          "scan_interval": "Intervallo di aggiornamento (secondi)",
+          "timeout": "Timeout connessioni (secondi)",
+          "retry_attempts": "Tentativi di riconnessione"
+        },
+        "data_description": {
+          "scan_interval": "Frequenza di aggiornamento dei dati dal dispositivo VMC (30-600 secondi)",
+          "timeout": "Timeout per le connessioni TCP al dispositivo (5-60 secondi)",
+          "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)"
+        }
+      }
+    }
+  },
+  "selector": {
+    "scan_mode": {
+      "options": {
+        "full": "Scansione completa",
+        "incremental": "Scansione incrementale"
+      }
+    },
+    "action": {
+      "options": {
+        "add_continue": "Aggiungi e continua",
+        "skip_continue": "Salta e continua",
+        "add_stop": "Aggiungi e termina",
+        "stop_scan": "Termina scansione"
+      }
+    }
+  }
+}

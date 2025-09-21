@@ -1,0 +1,111 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--disable-warnings",
+    "-ra",
+    "--cov=custom_components.vmc_helty_flow",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-fail-under=65"
+]
+markers = [
+    "asyncio: marks tests as async",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
+
+[tool.coverage.run]
+source = ["custom_components/vmc_helty_flow"]
+omit = [
+    "tests/*",
+    "*/tests/*",
+    "*/__pycache__/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:"
+]
+
+[tool.mypy]
+python_version = "3.13"
+show_error_codes = true
+follow_imports = "silent"
+ignore_missing_imports = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+no_implicit_reexport = true
+warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = "custom_components.vmc_helty_flow.*"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "UP",      # pyupgrade
+    "C90",     # mccabe
+    "I",       # isort
+    "N",       # pep8-naming
+    "D",       # pydocstyle
+    "B",       # flake8-bugbear
+    "A",       # flake8-builtins
+    "C4",      # flake8-comprehensions
+    "ISC",     # flake8-implicit-str-concat
+    "ICN",     # flake8-import-conventions
+    "PIE",     # flake8-pie
+    "T20",     # flake8-print
+    "PT",      # flake8-pytest-style
+    "Q",       # flake8-quotes
+    "RSE",     # flake8-raise
+    "RET",     # flake8-return
+    "SIM",     # flake8-simplify
+    "TID",     # flake8-tidy-imports
+    "ARG",     # flake8-unused-arguments
+    "ERA",     # eradicate
+    "PL",      # pylint
+    "TRY",     # tryceratops
+    "RUF",     # ruff-specific rules
+]
+ignore = [
+    "D107",    # Missing docstring in __init__
+    "D203",    # 1 blank line required before class docstring
+    "D213",    # Multi-line docstring summary should start at the second line
+    "PLR0913", # Too many arguments to function call
+    "TRY003",  # Avoid specifying long messages outside the exception class
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "S101", "PLR2004"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.black]
+target-version = ['py312']
+line-length = 88
