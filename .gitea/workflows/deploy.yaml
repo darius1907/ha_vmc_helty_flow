@@ -1,13 +1,7 @@
 name: Deploy Home Assistant Integration
 run-name: ${{ gitea.actor }} is deploying vmc_helty_flow integration on  ${{ gitea.ref_name }} 🚀
 
-on:
-  push:
-    branches:
-      - main
-      - develop
-      - feature/**
-      - hotfix/**
+on: [push]
 
 jobs:
   deploy-vmc-helty-flow-integration:
