@@ -483,6 +483,8 @@ class TestVmcHeltyFlowConfigFlow:
 
         with (
             patch.object(config_flow, "_scan_next_ip") as mock_scan,
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
             patch.object(
                 config_flow.hass.config_entries.flow,
                 "async_init",
@@ -519,10 +521,23 @@ class TestVmcHeltyFlowConfigFlow:
         with (
             patch.object(config_flow, "async_set_unique_id"),
             patch.object(config_flow, "_abort_if_unique_id_configured"),
+            patch.object(
+                config_flow.hass.config_entries.flow,
+                "async_init",
+                new_callable=AsyncMock,
+            ) as mock_init,
+            patch.object(config_flow, "_save_devices", new_callable=AsyncMock),
         ):
             result = await config_flow.async_step_device_found({"action": "add_stop"})
 
-            # Should create entry directly
-            assert result["type"] == "create_entry"
-            assert result["title"] == "VMC Test Device"
-            assert result["data"]["ip"] == "192.168.1.100"
+            # Should create entry via discovery flow in background
+            mock_init.assert_called_once()
+            assert mock_init.call_args[1]["context"]["source"] == "discovered_device"
+
+            # Should abort with success message after stopping scan
+            assert result["type"] == "abort"
+            assert result["reason"] == "devices_configured_successfully"
+
+            # Device should be added to session
+            assert len(config_flow.found_devices_session) == 1
+            assert config_flow.found_devices_session[0]["ip"] == "192.168.1.100"
