@@ -51,7 +51,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.found_devices_session = []  # Devices found in current session
         self.total_ips_to_scan = 0
         self.current_found_device = None
-        self.pending_continue = False  # Track if continue after entry creation
 
     def _get_store(self) -> Store:
         """Ottieni l'istanza del store per i dispositivi."""
@@ -543,8 +542,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         device = self.current_found_device
 
         if action in ["add_continue", "add_stop"]:
-            # Create entry and show popup for both actions
-            _LOGGER.info("Creating entry for device %s", device["ip"])
+            # Create entry in background for both actions - no popup
+            _LOGGER.info("Creating background entry for device %s", device["ip"])
 
             # Check if device is already configured
             existing_entries = [
@@ -554,19 +553,10 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ]
 
             if not existing_entries:
-                # Set unique ID for this device
-                await self.async_set_unique_id(device["ip"])
-                try:
-                    self._abort_if_unique_id_configured()
-                except Exception:
-                    _LOGGER.warning("Device %s already configured", device["ip"])
-
-                # Store the action for post-creation logic
-                self.pending_continue = (action == "add_continue")
-                
-                # Create entry in this flow - this will show the popup for both actions
-                return self.async_create_entry(
-                    title=device["name"],
+                # Use discovery flow for both actions - creates entry in background
+                await self.hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": "discovered_device"},
                     data={
                         "ip": device["ip"],
                         "name": device["name"],
