@@ -7,6 +7,10 @@ DEFAULT_SUBNET = "192.168.1."
 # Timeout per le connessioni TCP
 TCP_TIMEOUT = 3
 
+# Intervalli di aggiornamento (in secondi)
+SENSORS_UPDATE_INTERVAL = 60  # Sensori e stato
+NETWORK_INFO_UPDATE_INTERVAL = 900  # Nome e info rete (15 minuti)
+
 # Range di scansione IP
 IP_RANGE_START = 1
 IP_RANGE_END = 254
@@ -29,8 +33,20 @@ FAN_SPEED_OFF = 0
 # Numero minimo di parti nel response per essere valido
 MIN_RESPONSE_PARTS = 15
 
+# Numero minimo di parti nello status data per calcoli
+MIN_STATUS_PARTS = 2
+
 # Percentuali velocità ventola
 FAN_PERCENTAGE_STEP = 25  # 100% / 4 velocità = 25% per step
+
+# Mappatura portata d'aria per velocità ventola (M³/h)
+AIRFLOW_MAPPING = {
+    0: 0,  # Spenta
+    1: 10,  # Velocità 1
+    2: 17,  # Velocità 2
+    3: 26,  # Velocità 3
+    4: 37,  # Velocità 4
+}
 
 # Validazione lunghezza campi
 MAX_DEVICE_NAME_LENGTH = 32

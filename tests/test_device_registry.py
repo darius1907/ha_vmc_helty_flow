@@ -7,12 +7,12 @@ from homeassistant.core import HomeAssistant
 
 from custom_components.vmc_helty_flow.const import DOMAIN
 from custom_components.vmc_helty_flow.device_registry import (
-    async_get_or_create_device,
-    async_get_device_unique_id,
-    async_get_device_info,
-    async_remove_orphaned_devices,
     _extract_unique_id_from_network_info,
     _get_device_name_based_id,
+    async_get_device_info,
+    async_get_device_unique_id,
+    async_get_or_create_device,
+    async_remove_orphaned_devices,
 )
 
 
@@ -283,7 +283,7 @@ class TestAsyncGetDeviceUniqueId:
             return_value="VMSL192.168.1.100,aa:bb:cc:dd:ee:ff,Device1",
         ) as mock_tcp:
             result = await async_get_device_unique_id(self.hass, "192.168.1.100")
-            
+
             assert result == "aabbccddeeff"
             mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMSL?")
 
@@ -293,15 +293,16 @@ class TestAsyncGetDeviceUniqueId:
         with (
             patch(
                 "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-                return_value="VMSL192.168.1.100,short,@#$"  # Prima chiamata senza nessun ID valido
+                # No valid ID in first call
+                return_value="VMSL192.168.1.100,short,@#$",
             ) as mock_tcp,
             patch(
                 "custom_components.vmc_helty_flow.device_registry._get_device_name_based_id",
-                return_value="helty_test_device_192_168_1_100"
-            ) as mock_name_id
+                return_value="helty_test_device_192_168_1_100",
+            ) as mock_name_id,
         ):
             result = await async_get_device_unique_id(self.hass, "192.168.1.100")
-            
+
             assert result == "helty_test_device_192_168_1_100"
             mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMSL?")
             mock_name_id.assert_called_once_with("192.168.1.100")
@@ -311,7 +312,7 @@ class TestAsyncGetDeviceUniqueId:
         """Test gestione eccezioni."""
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-            side_effect=Exception("Network error")
+            side_effect=Exception("Network error"),
         ):
             result = await async_get_device_unique_id(self.hass, "192.168.1.100")
             assert result is None
@@ -344,7 +345,7 @@ class TestExtractUniqueIdFromNetworkInfo:
             ("VMSL192.168.1.100,SN=DEF789012,Device1", "DEF789012"),
             ("VMSL192.168.1.100,SN JKL901234,Device1", "JKL901234"),
         ]
-        
+
         for network_info, expected in test_cases:
             result = _extract_unique_id_from_network_info(network_info)
             assert result == expected
@@ -370,7 +371,7 @@ class TestGetDeviceNameBasedId:
         """Test ottenimento ID basato su nome dispositivo."""
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-            return_value="VMNM,My Test Device"
+            return_value="VMNM,My Test Device",
         ):
             result = await _get_device_name_based_id("192.168.1.100")
             assert result == "helty_my_test_device_192_168_1_100"
@@ -380,7 +381,7 @@ class TestGetDeviceNameBasedId:
         """Test normalizzazione nome con caratteri speciali."""
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-            return_value="VMNM,Device-Name@123!"
+            return_value="VMNM,Device-Name@123!",
         ):
             result = await _get_device_name_based_id("192.168.1.100")
             assert result == "helty_device_name_123__192_168_1_100"
@@ -390,7 +391,7 @@ class TestGetDeviceNameBasedId:
         """Test quando il nome non è disponibile."""
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-            return_value="VMNM,"
+            return_value="VMNM,",
         ):
             result = await _get_device_name_based_id("192.168.1.100")
             assert result is None
@@ -400,7 +401,7 @@ class TestGetDeviceNameBasedId:
         """Test con risposta invalida."""
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-            return_value="ERROR"
+            return_value="ERROR",
         ):
             result = await _get_device_name_based_id("192.168.1.100")
             assert result is None
@@ -419,18 +420,18 @@ class TestAsyncGetDeviceInfo:
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
             side_effect=[
-                "VMNM,Living Room VMC",      # Nome dispositivo
-                "VMCV,Firmware v2.1.0"      # Versione firmware
-            ]
+                "VMNM,Living Room VMC",  # Nome dispositivo
+                "VMCV,Firmware v2.1.0",  # Versione firmware
+            ],
         ):
             result = await async_get_device_info(self.hass, "192.168.1.100")
-            
+
             expected = {
                 "model": "Flow",
                 "manufacturer": "Helty",
                 "name": "Living Room VMC",
                 "sw_version": "2.1.0",
-                "suggested_area": "Soggiorno"
+                "suggested_area": "Soggiorno",
             }
             assert result == expected
 
@@ -440,16 +441,13 @@ class TestAsyncGetDeviceInfo:
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
             side_effect=[
-                "ERROR",      # Nome non disponibile
-                "ERROR"       # Versione non disponibile  
-            ]
+                "ERROR",  # Nome non disponibile
+                "ERROR",  # Versione non disponibile
+            ],
         ):
             result = await async_get_device_info(self.hass, "192.168.1.100")
-            
-            expected = {
-                "model": "Flow", 
-                "manufacturer": "Helty"
-            }
+
+            expected = {"model": "Flow", "manufacturer": "Helty"}
             assert result == expected
 
     @pytest.mark.asyncio
@@ -460,16 +458,16 @@ class TestAsyncGetDeviceInfo:
             ("VMNM,Cucina Principale", "Cucina"),
             ("VMNM,Bedroom Device", "Camera da letto"),
             ("VMNM,Kitchen VMC", "Cucina"),
-            ("VMNM,Generic Device", None)  # Nessuna area rilevata
+            ("VMNM,Generic Device", None),  # Nessuna area rilevata
         ]
-        
+
         for response, expected_area in test_cases:
             with patch(
                 "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-                side_effect=[response, "ERROR"]
+                side_effect=[response, "ERROR"],
             ):
                 result = await async_get_device_info(self.hass, "192.168.1.100")
-                
+
                 if expected_area:
                     assert result["suggested_area"] == expected_area
                 else:
@@ -482,33 +480,30 @@ class TestAsyncGetDeviceInfo:
             ("VMCV,v1.2.3", "1.2.3"),
             ("VMCV,Version 2.0.1", "2.0.1"),
             ("VMCV,FW 3.1.4 Build", "3.1.4"),
-            ("VMCV,No version here", None)
+            ("VMCV,No version here", None),
         ]
-        
+
         for response, expected_version in test_cases:
             with patch(
                 "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-                side_effect=["ERROR", response]  # Nome error, versione custom
+                side_effect=["ERROR", response],  # Nome error, versione custom
             ):
                 result = await async_get_device_info(self.hass, "192.168.1.100")
-                
+
                 if expected_version:
                     assert result["sw_version"] == expected_version
                 else:
                     assert "sw_version" not in result
 
-    @pytest.mark.asyncio  
+    @pytest.mark.asyncio
     async def test_get_device_info_exception_handling(self):
         """Test gestione eccezioni."""
         with patch(
             "custom_components.vmc_helty_flow.device_registry.tcp_send_command",
-            side_effect=Exception("Network error")
+            side_effect=Exception("Network error"),
         ):
             result = await async_get_device_info(self.hass, "192.168.1.100")
-            
+
             # Dovrebbe restituire le informazioni di base
-            expected = {
-                "model": "Flow",
-                "manufacturer": "Helty"
-            }
+            expected = {"model": "Flow", "manufacturer": "Helty"}
             assert result == expected

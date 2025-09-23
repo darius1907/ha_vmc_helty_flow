@@ -25,7 +25,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, MIN_RESPONSE_PARTS
+from .const import (
+    AIRFLOW_MAPPING,
+    DOMAIN,
+    FAN_SPEED_FREE_COOLING,
+    FAN_SPEED_HYPERVENTILATION,
+    FAN_SPEED_NIGHT_MODE,
+    MIN_RESPONSE_PARTS,
+    MIN_STATUS_PARTS,
+)
 from .device_info import VmcHeltyEntity
 from .helpers import parse_vmsl_response, tcp_send_command
 
@@ -80,6 +88,8 @@ async def async_setup_entry(
             None,
             SensorStateClass.MEASUREMENT,
         ),
+        # Sensore portata d'aria
+        VmcHeltyAirflowSensor(coordinator),
         # Sensori di stato
         VmcHeltyOnOffSensor(coordinator),
         VmcHeltyLastResponseSensor(coordinator),
@@ -142,7 +152,7 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
                 "co2": (4, lambda x: int(x)),
                 "voc": (
                     11,  # VOC is at position 11 based on real data analysis
-                    lambda x: int(x) if int(x) > 0 else None  # VOC = 0 means no data
+                    lambda x: int(x) if int(x) > 0 else None,  # VOC = 0 means no data
                 ),
             }
 
@@ -155,6 +165,57 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
             pass
 
         return None
+
+
+class VmcHeltyAirflowSensor(VmcHeltyEntity, SensorEntity):
+    """VMC Helty airflow sensor based on fan speed."""
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.ip}_airflow"
+        self._attr_name = f"{coordinator.name} Portata d'Aria"
+        self._attr_native_unit_of_measurement = "m³/h"
+        self._attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self) -> int | None:
+        """Return airflow value based on fan speed."""
+        if not self.coordinator.data:
+            return None
+
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:  # Need at least VMGO and fan_speed
+                return None
+
+            # Ottieni la velocità della ventola (posizione 1)
+            fan_speed_raw = int(parts[1])
+
+            # Gestisci le modalità speciali (come da documentazione)
+            # 5 = modalità notte (velocità effettiva 1)
+            # 6 = iperventilazione (velocità effettiva 4)
+            # 7 = free cooling (velocità effettiva 0)
+            if fan_speed_raw == FAN_SPEED_NIGHT_MODE:  # Night mode
+                effective_speed = 1
+            elif fan_speed_raw == FAN_SPEED_HYPERVENTILATION:  # Hyperventilation
+                effective_speed = 4
+            elif fan_speed_raw == FAN_SPEED_FREE_COOLING:  # Free cooling
+                effective_speed = 0
+            else:
+                # Velocità normale (0-4)
+                effective_speed = min(fan_speed_raw, 4)
+
+            # Mappa la velocità alla portata d'aria
+            return AIRFLOW_MAPPING.get(effective_speed, 0)
+
+        except (ValueError, IndexError):
+            return None
 
 
 class VmcHeltyOnOffSensor(VmcHeltyEntity, BinarySensorEntity):

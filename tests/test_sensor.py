@@ -60,8 +60,8 @@ async def test_async_setup_entry(mock_hass, mock_config_entry, mock_coordinator)
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
 
-    # Should have 15 entities total
-    assert len(entities) == 15
+    # Should have 16 entities total
+    assert len(entities) == 16
 
     # Check some entity types
     sensor_entities = [e for e in entities if isinstance(e, VmcHeltySensor)]

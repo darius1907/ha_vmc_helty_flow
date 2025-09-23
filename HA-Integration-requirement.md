@@ -277,7 +277,7 @@ Il comando `VMGI?` restituisce una stringa con 16 valori:
 Esempio: `VMGI,00251,00254,00510,00510,16384,05839,00249,00112,04354,00140,00203,00249,00510,00000,00001`
 
 - temp_int: 251 (25.1°C)
-- temp_ext: 254 (25.4°C) 
+- temp_ext: 254 (25.4°C)
 - humidity: 510 (51.0%)
 - co2: 510 ppm
 - voc: 203 ppb (posizione 11)

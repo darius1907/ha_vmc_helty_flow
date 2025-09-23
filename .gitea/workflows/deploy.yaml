@@ -1,7 +1,7 @@
 name: Deploy Home Assistant Integration
 run-name: ${{ gitea.actor }} is deploying vmc_helty_flow integration  🚀
 
-on: 
+on:
   push
 
 jobs:
