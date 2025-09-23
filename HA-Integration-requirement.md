@@ -262,7 +262,7 @@ Esempio: `VMGO,00001,00000,00004,00002,00000,00010,00000,01200,00200,00220,09000
 
 ### 3.5 Dettaglio campi output VMGI? (Dati sensori)
 
-Il comando `VMGI?` restituisce una stringa con 15 valori:
+Il comando `VMGI?` restituisce una stringa con 16 valori:
 
 | Posizione | Campo         | Significato                                      | Unità/Range         |
 |-----------|--------------|--------------------------------------------------|---------------------|
@@ -270,16 +270,17 @@ Il comando `VMGI?` restituisce una stringa con 15 valori:
 | 2         | temp_ext     | Temperatura esterna                              | decimi di °C        |
 | 3         | humidity     | Umidità relativa                                 | decimi di %         |
 | 4         | co2          | Livello CO2                                      | ppm                 |
-| 5-13      | reserved_1-9 | Riservato (non utilizzato)                       | -                   |
-| 14        | voc          | Livello VOC                                      | ppb                 |
+| 5-10      | reserved_1-6 | Riservato (non utilizzato)                       | -                   |
+| 11        | voc          | Livello VOC                                      | ppb                 |
+| 12-15     | reserved_7-10| Riservato (non utilizzato)                       | -                   |
 
-Esempio: `VMGI,00260,00257,00469,00320,16384,06043,00247,00112,04354,00125,00015,00247,00468,00000,00001`
+Esempio: `VMGI,00251,00254,00510,00510,16384,05839,00249,00112,04354,00140,00203,00249,00510,00000,00001`
 
-- temp_int: 225 (22.5°C)
-- temp_ext: 183 (18.3°C)
-- humidity: 650 (65.0%)
-- co2: 850 ppm
-- voc: 120 ppb
+- temp_int: 251 (25.1°C)
+- temp_ext: 254 (25.4°C) 
+- humidity: 510 (51.0%)
+- co2: 510 ppm
+- voc: 203 ppb (posizione 11)
 
 ### 3.6 Protocollo di Comunicazione VMC
 - **Tipo di Protocollo**: TCP/IP su porta 5001.

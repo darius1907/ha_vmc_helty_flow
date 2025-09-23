@@ -140,7 +140,10 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
                 "temperature_external": (2, lambda x: float(x) / 10),
                 "humidity": (3, lambda x: float(x) / 10),
                 "co2": (4, lambda x: int(x)),
-                "voc": (14, lambda x: int(x)),
+                "voc": (
+                    11,  # VOC is at position 11 based on real data analysis
+                    lambda x: int(x) if int(x) > 0 else None  # VOC = 0 means no data
+                ),
             }
 
             if self._sensor_key in sensor_mapping:
