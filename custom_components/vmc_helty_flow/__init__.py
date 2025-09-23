@@ -1,6 +1,7 @@
 """Integrazione VMC Helty Flow per Home Assistant."""
 
 import logging
+import time
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
@@ -152,7 +153,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                 "name": additional_data["name"],
                 "network": additional_data["network"],
                 "available": True,
-                "last_update": self.hass.loop.time(),
+                "last_update": time.time(),
             }
 
             # Aggiorna il nome del dispositivo se necessario
