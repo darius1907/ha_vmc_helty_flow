@@ -51,6 +51,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.found_devices_session = []  # Devices found in current session
         self.total_ips_to_scan = 0
         self.current_found_device = None
+        self.pending_continue = False  # Track if continue after entry creation
 
     def _get_store(self) -> Store:
         """Ottieni l'istanza del store per i dispositivi."""
@@ -542,8 +543,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         device = self.current_found_device
 
         if action in ["add_continue", "add_stop"]:
-            # Create entry immediately for instant feedback
-            _LOGGER.info("Creating immediate entry for device %s", device["ip"])
+            # Create entry and show popup for both actions
+            _LOGGER.info("Creating entry for device %s", device["ip"])
 
             # Check if device is already configured
             existing_entries = [
@@ -553,40 +554,28 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ]
 
             if not existing_entries:
-                # Create the entry using discovery pattern for additional devices
-                if action == "add_continue":
-                    # Use discovery flow for additional devices
-                    await self.hass.config_entries.flow.async_init(
-                        DOMAIN,
-                        context={"source": "discovered_device"},
-                        data={
-                            "ip": device["ip"],
-                            "name": device["name"],
-                            "model": device.get("model", "VMC Flow"),
-                            "manufacturer": device.get("manufacturer", "Helty"),
-                            "port": self.port,
-                            "timeout": self.timeout,
-                        },
-                    )
-                else:  # add_stop
-                    # For the last device, create entry in this flow
-                    await self.async_set_unique_id(device["ip"])
-                    try:
-                        self._abort_if_unique_id_configured()
-                    except Exception:
-                        _LOGGER.warning("Device %s already configured", device["ip"])
+                # Set unique ID for this device
+                await self.async_set_unique_id(device["ip"])
+                try:
+                    self._abort_if_unique_id_configured()
+                except Exception:
+                    _LOGGER.warning("Device %s already configured", device["ip"])
 
-                    return self.async_create_entry(
-                        title=device["name"],
-                        data={
-                            "ip": device["ip"],
-                            "name": device["name"],
-                            "model": device.get("model", "VMC Flow"),
-                            "manufacturer": device.get("manufacturer", "Helty"),
-                            "port": self.port,
-                            "timeout": self.timeout,
-                        },
-                    )
+                # Store the action for post-creation logic
+                self.pending_continue = (action == "add_continue")
+                
+                # Create entry in this flow - this will show the popup for both actions
+                return self.async_create_entry(
+                    title=device["name"],
+                    data={
+                        "ip": device["ip"],
+                        "name": device["name"],
+                        "model": device.get("model", "VMC Flow"),
+                        "manufacturer": device.get("manufacturer", "Helty"),
+                        "port": self.port,
+                        "timeout": self.timeout,
+                    },
+                )
 
             # Add to session for tracking
             self.found_devices_session.append(device)
