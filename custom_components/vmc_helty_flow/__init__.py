@@ -1,6 +1,7 @@
 """Integrazione VMC Helty Flow per Home Assistant."""
 
 import logging
+import re
 import time
 from datetime import timedelta
 
@@ -73,6 +74,16 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             "name": None,
             "network": None,
         }
+
+    @property
+    def name_slug(self) -> str:
+        """Return device name as a slug (lowercase, no spaces, safe for entity IDs)."""
+        # Convert to lowercase and replace non-alphanumeric characters with underscores
+        slug = re.sub(r"[^a-z0-9]+", "_", self.name.lower())
+        # Remove leading/trailing underscores and multiple consecutive underscores
+        slug = re.sub(r"^_+|_+$", "", slug)
+        slug = re.sub(r"_+", "_", slug)
+        return slug or "vmc_device"  # Fallback se il nome è vuoto
 
     async def _get_status_data(self) -> str:
         """Get device status data."""
