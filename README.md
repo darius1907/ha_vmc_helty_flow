@@ -1,6 +1,42 @@
 # 🌬️ VMC Helty Flow - Integrazione Home Assistant
 
+[![hacs][hacsbadge]][hacs]
+[![GitHub Release][releases-shield]][releases]
+[![GitHub Activity][commits-shield]][commits]
+[![License][license-shield]][license]
+
+[![Project Maintenance][maintenance-shield]][user_profile]
+[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
+
+[![Discord][discord-shield]][discord]
+[![Community Forum][forum-shield]][forum]
+
 Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) Helty Flow con Home Assistant.
+
+## 🚀 Installazione Rapida
+
+### Via HACS (Consigliato)
+
+1. **Aggiungi Repository Personalizzato**:
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dpezzoli&repository=ha_vmc_helty_flow&category=integration)
+
+2. **Installa l'Integrazione**:
+   - Vai in HACS → Integrazioni
+   - Cerca "VMC Helty Flow"
+   - Clicca "Scarica"
+   - Riavvia Home Assistant
+
+3. **Configura l'Integrazione**:
+   - Vai in Impostazioni → Dispositivi e Servizi
+   - Clicca "Aggiungi Integrazione"
+   - Cerca "VMC Helty Flow"
+   - Segui la procedura guidata
+
+### Installazione Manuale
+
+1. Copia la cartella `custom_components/vmc_helty_flow` nella tua directory `custom_components/`
+2. Riavvia Home Assistant
+3. Aggiungi l'integrazione dall'interfaccia
 
 ## ✨ Caratteristiche Principali
 
@@ -252,12 +288,52 @@ logger:
 ## 📞 **Supporto**
 
 Per problemi, richieste di funzionalità o contributi:
-- Apri una issue su GitHub
-- Fornisci log dettagliati per problemi di connessione
-- Includi informazioni sul modello VMC e configurazione di rete
+- 🐛 [Apri una issue](https://github.com/dpezzoli/ha_vmc_helty_flow/issues) su GitHub
+- 💬 Unisciti alla [discussione della community](https://community.home-assistant.io/)
+- 📖 Consulta la [documentazione completa](https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md)
+
+### Come Contribuire
+
+1. 🍴 Fork del repository
+2. 🌱 Crea un branch per la feature
+3. ✅ Aggiungi test per le modifiche
+4. 📝 Aggiorna la documentazione
+5. 🔄 Invia una pull request
 
 ---
 
-**Versione**: 2.0.0
+## 📊 **Stato del Progetto**
+
+![GitHub release (latest by date)][releases-shield]
+![GitHub Release Date][release-date-shield]
+![GitHub commits since latest release][commits-since-shield]
+![GitHub last commit][last-commit-shield]
+
+**Versione**: 1.0.0
 **Compatibilità**: Home Assistant 2024.1+
 **Licenza**: MIT
+**Stato HACS**: ✅ Pronto per distribuzione
+
+---
+
+**⭐ Se questa integrazione ti è utile, metti una stella al repository!**
+
+[hacs]: https://github.com/hacs/integration
+[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
+[discord]: https://discord.gg/Qa5fW2R
+[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
+[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
+[forum]: https://community.home-assistant.io/
+[license]: https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/LICENSE
+[license-shield]: https://img.shields.io/github/license/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
+[maintenance-shield]: https://img.shields.io/badge/maintainer-%40dpezzoli-blue.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
+[releases]: https://github.com/dpezzoli/ha_vmc_helty_flow/releases
+[commits-shield]: https://img.shields.io/github/commit-activity/y/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
+[commits]: https://github.com/dpezzoli/ha_vmc_helty_flow/commits/main
+[user_profile]: https://github.com/dpezzoli
+[buymecoffee]: https://www.buymeacoffee.com/dpezzoli
+[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
+[release-date-shield]: https://img.shields.io/github/release-date/dpezzoli/ha_vmc_helty_flow?style=for-the-badge
+[commits-since-shield]: https://img.shields.io/github/commits-since/dpezzoli/ha_vmc_helty_flow/latest?style=for-the-badge
+[last-commit-shield]: https://img.shields.io/github/last-commit/dpezzoli/ha_vmc_helty_flow?style=for-the-badge
