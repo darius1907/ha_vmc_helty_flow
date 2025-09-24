@@ -86,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-**Note**: This integration follows [Semantic Versioning](https://semver.org/). 
+**Note**: This integration follows [Semantic Versioning](https://semver.org/).
 - **Major** version changes may include breaking changes
-- **Minor** version changes add functionality in a backwards compatible manner  
+- **Minor** version changes add functionality in a backwards compatible manner
 - **Patch** version changes include backwards compatible bug fixes

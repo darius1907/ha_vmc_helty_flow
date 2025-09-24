@@ -59,9 +59,7 @@ class TestUpdateIntervals:
             "00112,04354,00140,00203,00249,00510,00000,00001"
         )
 
-        with patch(
-            "custom_components.vmc_helty_flow.tcp_send_command"
-        ) as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
             mock_tcp.return_value = sensors_response
 
             result = await coordinator._get_additional_data()
@@ -80,7 +78,7 @@ class TestUpdateIntervals:
         coordinator._last_network_update = current_time - 60  # 1 minuto fa
         coordinator._cached_data = {
             "name": "VMNM cached_device",
-            "network": "cached_network_data"
+            "network": "cached_network_data",
         }
 
         sensors_response = (
@@ -88,9 +86,7 @@ class TestUpdateIntervals:
             "00112,04354,00140,00203,00249,00510,00000,00001"
         )
 
-        with patch(
-            "custom_components.vmc_helty_flow.tcp_send_command"
-        ) as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
             mock_tcp.return_value = sensors_response
 
             with patch("time.time", return_value=current_time):
@@ -124,9 +120,7 @@ class TestUpdateIntervals:
             "new_network_data",
         ]
 
-        with patch(
-            "custom_components.vmc_helty_flow.tcp_send_command"
-        ) as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
             mock_tcp.side_effect = responses
 
             with patch("time.time", return_value=current_time):
@@ -153,7 +147,7 @@ class TestUpdateIntervals:
 
         coordinator._cached_data = {
             "name": old_cached_name,
-            "network": old_cached_network
+            "network": old_cached_network,
         }
 
         responses = [
@@ -165,9 +159,7 @@ class TestUpdateIntervals:
             VMCConnectionError("Error getting network"),
         ]
 
-        with patch(
-            "custom_components.vmc_helty_flow.tcp_send_command"
-        ) as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
             mock_tcp.side_effect = responses
 
             with patch("time.time", return_value=current_time):

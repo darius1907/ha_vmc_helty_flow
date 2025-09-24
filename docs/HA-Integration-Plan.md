@@ -6,7 +6,7 @@
 
 ### ✅ **IMPLEMENTATO E TESTATO (Settembre 2025)**
 - ✅ **Auto-discovery automatico** con scansione TCP porta 5001
-- ✅ **20+ entità native HA** per ogni sensore e controllo VMC 
+- ✅ **20+ entità native HA** per ogni sensore e controllo VMC
 - ✅ **Config flow** completo con UI setup wizard
 - ✅ **Protocollo VMC** completo (VMGH?, VMGI?, VMWH, VMNM, VMSL)
 - ✅ **Modalità speciali** gestite (iperventilazione, notte, free cooling)
@@ -16,7 +16,7 @@
 
 ### 🚧 **ROADMAP FUTURA**
 - 🔄 **Dashboard Lovelace** personalizzata per controllo VMC
-- 🔄 **Dashboard broadcast** per controllo simultaneo multiple VMC  
+- 🔄 **Dashboard broadcast** per controllo simultaneo multiple VMC
 - 🔄 **Sensori qualità aria** avanzati (indice benessere, rischio muffa)
 - 🔄 **Blueprint automazioni** per gestione automatica
 
@@ -129,7 +129,7 @@ custom_components/vmc_helty_flow/
 ├── discovery.py               # ✅ Auto-discovery TCP/IP
 ├── diagnostics.py             # ✅ Diagnostic data collection
 ├── device_action.py           # ✅ Custom device actions
-├── helpers.py                 # ✅ TCP communication utilities  
+├── helpers.py                 # ✅ TCP communication utilities
 ├── helpers_net.py             # ✅ Network utilities
 │
 ├── platforms/
@@ -233,7 +233,7 @@ Ogni dispositivo VMC rilevato crea **20+ entità** in Home Assistant:
 - Fallback intelligente su modalità manuale
 
 #### **Entità Select/Number**
-- Livello luci (0-100% a step 25%) 
+- Livello luci (0-100% a step 25%)
 - Timer luci (0-300s a step 5s)
 - Nome dispositivo e configurazione Wi-Fi
             self._attr_options = ["0", "1", "2", "3", "4"]
@@ -370,7 +370,7 @@ sections:
 
 ### **Network Discovery Multi-Method**
 1. **mDNS Discovery**: Ricerca automatica su rete locale (_vmc._tcp.local)
-2. **TCP Port Scanning**: Fallback su porta 5001 con probe intelligente  
+2. **TCP Port Scanning**: Fallback su porta 5001 con probe intelligente
 3. **UPnP Detection**: Integrazione con dispositivi UPnP compatibili
 4. **Manual Entry**: Input manuale IP con validazione avanzata
 
@@ -453,7 +453,7 @@ async def test_config_flow_discovery(hass):
 
 **Test Categories Implementati:**
 - **Config Flow Tests**: Auto-discovery, manual setup, error handling
-- **Coordinator Tests**: Data refresh, error recovery, rate limiting  
+- **Coordinator Tests**: Data refresh, error recovery, rate limiting
 - **Entity Tests**: Fan, sensor, switch, select, button entities
 - **Device Tests**: TCP communication, protocol parsing, diagnostics
 - **Integration Tests**: Setup, unload, service registration
@@ -484,7 +484,7 @@ async def test_config_flow_discovery(hass):
 - 🔄 **Dashboard broadcast** per controllo simultaneo multi-device
 - 🔄 **Sensori avanzati** qualità aria:
   - Indice di benessere
-  - Indicatore rischio muffa  
+  - Indicatore rischio muffa
   - Tempo ricambio aria
   - Totale aria scambiata al giorno
   - Punto di rugiada
@@ -494,7 +494,7 @@ async def test_config_flow_discovery(hass):
 - 🔄 **Services broadcast** per controllo gruppo
 - 🔄 **Integrazioni avanzate** con altri sistemi HA
 
-### 🔄 Fase 4: Certification & Distribution (FUTURO)  
+### 🔄 Fase 4: Certification & Distribution (FUTURO)
 - 🔄 **Code quality** miglioramenti (MyPy warnings)
 - 🔄 **HACS integration** setup
 - 🔄 **Home Assistant brand** submission per Silver/Gold
@@ -574,7 +574,7 @@ Ho integrato le **specifiche complete** del tuo `HA-Integration-requirement.md` 
 
 Il progetto **base è completamente implementato e funzionante**:
 
-✅ **Integrazione funzionante** - 20+ entità, config flow, discovery  
+✅ **Integrazione funzionante** - 20+ entità, config flow, discovery
 ✅ **Architecture HA-compliant** - Coordinator, entities, device registry
 ✅ **Protocollo VMC implementato** - VMGH?, VMGI?, VMWH completi
 ✅ **Testing robusto** - 433/433 test passati, coverage 82.69%
@@ -584,7 +584,7 @@ Il progetto **base è completamente implementato e funzionante**:
 ### 🚀 PROSSIMI SVILUPPI PRIORITARI
 
 1. **UI/UX Lovelace** - Card personalizzata VMC controllo
-2. **Sensori Avanzati** - Qualità aria, benessere, automazioni  
+2. **Sensori Avanzati** - Qualità aria, benessere, automazioni
 3. **Blueprint** - Automazioni predefinite per VMC
 4. **Certification** - Submission HA brand per Silver/Gold level
 
@@ -606,7 +606,7 @@ Il progetto **base è completamente implementato e funzionante**:
 | Tipo | Entità | Status | Descrizione |
 |------|--------|---------|-------------|
 | **Fan** | `fan.vmc_*` | ✅ | Controllo velocità 0-4, modalità speciali |
-| **Sensor** | `sensor.vmc_*_temperature_*` | ✅ | Temperatura interna/esterna |  
+| **Sensor** | `sensor.vmc_*_temperature_*` | ✅ | Temperatura interna/esterna |
 | **Sensor** | `sensor.vmc_*_humidity` | ✅ | Umidità relativa |
 | **Sensor** | `sensor.vmc_*_co2` | ✅ | Livello CO2 (ppm) |
 | **Sensor** | `sensor.vmc_*_voc` | ✅ | Livello VOC (ppb) - **FIX applicato** |
@@ -624,7 +624,7 @@ Il progetto **base è completamente implementato e funzionante**:
 
 #### **Protocollo VMC Implementato**
 - **VMGH?**: Lettura stato generale (15 campi)
-- **VMGI?**: Lettura sensori ambientali (15 campi)  
+- **VMGI?**: Lettura sensori ambientali (15 campi)
 - **VMWH**: Controlli velocità e modalità
 - **VMNM**: Gestione nome dispositivo
 - **VMSL**: Configurazione rete WiFi
@@ -642,7 +642,7 @@ Il progetto **base è completamente implementato e funzionante**:
 
 #### **Step 1: Sensori Avanzati Qualità Aria**
 - Indice di benessere (algoritmo multi-parametro)
-- Indicatore rischio muffa (temperatura + umidità)  
+- Indicatore rischio muffa (temperatura + umidità)
 - Tempo ricambio aria (portata vs volume ambiente)
 - Totale aria scambiata giornaliero (integrazione dati)
 - Punto di rugiada (calcolo da temp + umidità)

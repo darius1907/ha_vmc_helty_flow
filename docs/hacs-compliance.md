@@ -30,7 +30,7 @@ custom_components/vmc_helty_flow/
 #### 3. Manifest.json Requirements
 Required fields present:
 - ✅ `domain`: "vmc_helty_flow"
-- ✅ `name`: "VMC Helty Flow" 
+- ✅ `name`: "VMC Helty Flow"
 - ✅ `codeowners`: ["@dpezzoli"]
 - ✅ `documentation`: GitHub repository URL
 - ✅ `issue_tracker`: GitHub issues URL

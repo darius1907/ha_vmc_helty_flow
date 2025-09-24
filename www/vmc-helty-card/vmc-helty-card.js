@@ -1,11 +1,11 @@
 /**
  * VMC Helty Flow Control Card v2.0 - LitElement Implementation
  * Advanced Lovelace card for VMC Helty Flow Plus/Elite control
- * 
+ *
  * ✅ Fully compliant with Home Assistant development guidelines:
  * - LitElement-based architecture for maximum compatibility
  * - Mobile-first responsive design
- * - HA theme system integration  
+ * - HA theme system integration
  * - Complete accessibility (ARIA) support
  * - Material Design Icons (MDI) only
  * - CSP compliance (no inline styles/scripts)
@@ -13,14 +13,14 @@
  * - Configurable device selection
  * - Custom sensor selection for advanced calculations
  * - Room volume configuration for accurate air exchange calculations
- * 
+ *
  * @version 2.0.0
  * @author VMC Helty Integration Team
  */
 
 console.info(
   `%c VMC HELTY CARD v2.0 LitElement %c
-   🌀 Advanced VMC Helty Flow control with device & sensor selection  
+   🌀 Advanced VMC Helty Flow control with device & sensor selection
    📱 LitElement-based, Full HA Guidelines compliance`,
   "color: orange; font-weight: bold; background: black",
   "color: white; font-weight: normal;"
@@ -312,7 +312,7 @@ class VmcHeltyCard extends LitElement {
         .sensors-grid {
           grid-template-columns: repeat(2, 1fr);
         }
-        
+
         .fan-controls {
           grid-template-columns: repeat(5, 1fr);
         }
@@ -322,15 +322,15 @@ class VmcHeltyCard extends LitElement {
         :host {
           padding: 12px;
         }
-        
+
         .sensors-grid {
           grid-template-columns: 1fr;
         }
-        
+
         .fan-controls {
           grid-template-columns: repeat(3, 1fr);
         }
-        
+
         .card-title {
           font-size: 20px;
         }
@@ -341,7 +341,7 @@ class VmcHeltyCard extends LitElement {
         .fan-speed-button {
           border-width: 3px;
         }
-        
+
         .sensor-card {
           border-width: 2px;
         }
@@ -353,7 +353,7 @@ class VmcHeltyCard extends LitElement {
         .sensor-card {
           transition: none;
         }
-        
+
         .fan-icon.spinning {
           animation: none;
         }
@@ -371,7 +371,7 @@ class VmcHeltyCard extends LitElement {
       entity: config.entity || "",
       name: config.name || "VMC Helty Flow",
       temperature_entity: config.temperature_entity || "",
-      humidity_entity: config.humidity_entity || "", 
+      humidity_entity: config.humidity_entity || "",
       room_volume: this._validateRoomVolume(config.room_volume),
       show_temperature: config.show_temperature !== false,
       show_humidity: config.show_humidity !== false,
@@ -396,7 +396,7 @@ class VmcHeltyCard extends LitElement {
   // Lifecycle methods
   willUpdate(changedProps) {
     super.willUpdate(changedProps);
-    
+
     if (changedProps.has('hass') && this.hass) {
       this._updateEntityStates();
     }
@@ -405,7 +405,7 @@ class VmcHeltyCard extends LitElement {
   // Validation and sanitization methods
   _sanitizeString(input) {
     if (typeof input !== "string") return "";
-    
+
     // Basic XSS prevention
     return input
       .replace(/<script[^>]*>.*?<\/script>/gi, "")
@@ -417,35 +417,35 @@ class VmcHeltyCard extends LitElement {
 
   _validateRoomVolume(volume) {
     const numVolume = parseFloat(volume);
-    
+
     if (isNaN(numVolume) || numVolume < 1 || numVolume > 10000) {
       return 60; // Default room volume
     }
-    
+
     return Math.round(numVolume * 10) / 10;
   }
 
   _setupEntityReferences() {
     const entities = new Set();
-    
+
     if (this.config.entity) {
       entities.add(this.config.entity);
     }
-    
+
     if (this.config.temperature_entity) {
       entities.add(this.config.temperature_entity);
     }
-    
+
     if (this.config.humidity_entity) {
       entities.add(this.config.humidity_entity);
     }
-    
+
     this._entityIds = Array.from(entities);
   }
 
   _updateEntityStates() {
     if (!this.hass) return;
-    
+
     const newStates = {};
     this._entityIds.forEach(entityId => {
       const state = this.hass.states[entityId];
@@ -453,7 +453,7 @@ class VmcHeltyCard extends LitElement {
         newStates[entityId] = state;
       }
     });
-    
+
     if (JSON.stringify(newStates) !== JSON.stringify(this._entityStates)) {
       this._entityStates = newStates;
     }
@@ -493,19 +493,19 @@ class VmcHeltyCard extends LitElement {
 
     try {
       this._loading = true;
-      
+
       const serviceData = {
         entity_id: this.config.entity,
         percentage: speed * 25 // Convert 0-4 to percentage (0,25,50,75,100)
       };
 
       await this.hass.callService("fan", "set_percentage", serviceData);
-      
+
       // Provide haptic feedback on mobile
       if ('vibrate' in navigator) {
         navigator.vibrate(50);
       }
-      
+
     } catch (error) {
       console.error("Error setting fan speed:", error);
       this._error = `Failed to set fan speed: ${error.message}`;
@@ -517,20 +517,20 @@ class VmcHeltyCard extends LitElement {
   // Calculation methods
   _calculateDewPoint(temp, humidity) {
     if (temp == null || humidity == null || humidity <= 0) return null;
-    
+
     const a = 17.27;
     const b = 237.7;
-    
+
     const alpha = ((a * temp) / (b + temp)) + Math.log(humidity / 100.0);
     return (b * alpha) / (a - alpha);
   }
 
   _calculateComfortIndex(temp, humidity) {
     if (temp == null || humidity == null) return null;
-    
+
     const tempComfort = this._calculateTemperatureComfort(temp);
     const humidityComfort = this._calculateHumidityComfort(humidity);
-    
+
     return Math.round((tempComfort * 0.6 + humidityComfort * 0.4) * 100);
   }
 
@@ -555,15 +555,15 @@ class VmcHeltyCard extends LitElement {
   _calculateAirExchangeTime() {
     const vmcState = this._getVmcState();
     if (!vmcState || vmcState.state === 'off') return null;
-    
+
     const percentage = parseFloat(vmcState.attributes.percentage || 0);
     const speed = Math.round(percentage / 25); // Convert percentage to speed (0-4)
-    
+
     const airflowRates = {0: 0, 1: 10, 2: 17, 3: 26, 4: 37}; // m³/h
     const airflow = airflowRates[speed] || 0;
-    
+
     if (airflow === 0) return null;
-    
+
     const roomVolume = this.config.room_volume || 60;
     return Math.round((roomVolume / airflow) * 60 * 10) / 10; // minutes
   }
@@ -577,12 +577,12 @@ class VmcHeltyCard extends LitElement {
 
   _formatSensorValue(value, unit) {
     if (value == null || value === undefined) return '--';
-    
+
     if (typeof value === 'number') {
       if (unit === '°C' || unit === 'min') return value.toFixed(1);
       if (unit === '%' || unit === 'ppm' || unit === 'ppb') return Math.round(value);
     }
-    
+
     return value.toString();
   }
 
@@ -604,8 +604,8 @@ class VmcHeltyCard extends LitElement {
     return html`
       <div class="card-header">
         <h2 class="card-title">
-          <ha-icon 
-            icon="mdi:air-conditioner" 
+          <ha-icon
+            icon="mdi:air-conditioner"
             class="fan-icon ${vmcState.state === 'on' ? 'spinning' : ''}"
           ></ha-icon>
           ${this.config.name}
@@ -671,7 +671,7 @@ class VmcHeltyCard extends LitElement {
     const icons = {
       0: 'mdi:fan-off',
       1: 'mdi:fan-speed-1',
-      2: 'mdi:fan-speed-2', 
+      2: 'mdi:fan-speed-2',
       3: 'mdi:fan-speed-3',
       4: 'mdi:fan'
     };
@@ -871,6 +871,6 @@ window.customCards.push({
   documentationURL: 'https://github.com/your-repo/vmc-helty-card',
 });
 
-console.info(`%c VMC HELTY CARD v2.0 LitElement %c Loaded successfully! 🌀`, 
+console.info(`%c VMC HELTY CARD v2.0 LitElement %c Loaded successfully! 🌀`,
   "color: white; background: green; font-weight: bold;",
   "color: green; font-weight: normal;");

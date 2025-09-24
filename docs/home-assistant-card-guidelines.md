@@ -15,14 +15,14 @@ class VmcHeltyCard extends LitElement {
         padding: 16px;
         box-sizing: border-box;
       }
-      
+
       /* Mobile first (default) */
       .card-content {
         display: flex;
         flex-direction: column;
         gap: 12px;
       }
-      
+
       /* Tablet e desktop */
       @media (min-width: 768px) {
         .card-content {
@@ -42,13 +42,13 @@ class VmcHeltyCard extends LitElement {
 class VmcHeltyCard extends LitElement {
   connectedCallback() {
     super.connectedCallback();
-    
+
     // Registra service worker se disponibile
     if ('serviceWorker' in navigator) {
       this._registerServiceWorker();
     }
   }
-  
+
   _registerServiceWorker() {
     // Gestione service worker per funzionalità offline
   }
@@ -69,17 +69,17 @@ static get styles() {
       --text-primary-color: var(--text-primary-color);
       --card-background-color: var(--card-background-color);
       --divider-color: var(--divider-color);
-      
+
       /* Stati di attivazione */
       --state-active-color: var(--state-active-color);
       --state-inactive-color: var(--state-inactive-color);
-      
+
       /* Errori e warning */
       --error-color: var(--error-color);
       --warning-color: var(--warning-color);
       --success-color: var(--success-color);
     }
-    
+
     .card {
       background: var(--card-background-color);
       border-radius: var(--ha-card-border-radius, 12px);
@@ -97,11 +97,11 @@ render() {
   return html`
     <ha-card>
       <div class="card-content">
-        <ha-icon 
+        <ha-icon
           icon="mdi:fan"
           class="fan-icon ${this._fanState === 'on' ? 'active' : ''}"
         ></ha-icon>
-        
+
         <!-- Stati con icone appropriate -->
         <div class="status-indicators">
           <ha-icon icon="mdi:thermometer"></ha-icon>
@@ -151,10 +151,10 @@ class VmcHeltyCard extends LitElement {
       this._advancedFeaturesLoaded = true;
     }
   }
-  
+
   connectedCallback() {
     super.connectedCallback();
-    
+
     // Carica solo se necessario
     if (this.config.show_advanced_controls) {
       this._loadAdvancedFeatures();
@@ -172,7 +172,7 @@ shouldUpdate(changedProps) {
     const oldHass = changedProps.get('hass');
     if (oldHass) {
       // Controlla solo le entità che ci interessano
-      return this._entityIds.some(entityId => 
+      return this._entityIds.some(entityId =>
         oldHass.states[entityId] !== this.hass.states[entityId]
       );
     }
@@ -186,12 +186,12 @@ shouldUpdate(changedProps) {
 // ✅ Pulizia delle risorse
 disconnectedCallback() {
   super.disconnectedCallback();
-  
+
   // Rimuovi event listeners
   if (this._resizeObserver) {
     this._resizeObserver.disconnect();
   }
-  
+
   // Cancella timer
   if (this._updateTimer) {
     clearInterval(this._updateTimer);
@@ -208,13 +208,13 @@ _getEntityState(entityId) {
   if (!this.hass || !entityId) {
     return null;
   }
-  
+
   const state = this.hass.states[entityId];
   if (!state) {
     console.warn(`Entity ${entityId} not found`);
     return null;
   }
-  
+
   return state;
 }
 
@@ -232,7 +232,7 @@ async _callService(domain, service, serviceData = {}) {
     await this.hass.callService(domain, service, serviceData);
   } catch (error) {
     console.error(`Failed to call ${domain}.${service}:`, error);
-    
+
     // Mostra notifica di errore all'utente
     this._showError(`Failed to ${service.replace('_', ' ')}`);
   }
@@ -255,17 +255,17 @@ setConfig(config) {
   if (!config) {
     throw new Error('Invalid configuration');
   }
-  
+
   // Validazione entità richieste
   if (!config.entity) {
     throw new Error('You need to define an entity');
   }
-  
+
   // Validazione tipo entità
   if (!config.entity.startsWith('fan.')) {
     throw new Error('Entity must be a fan');
   }
-  
+
   // Configurazione con defaults
   this.config = {
     show_temperature: true,
@@ -284,13 +284,13 @@ setConfig(config) {
 // ✅ Supporto completo per accessibilità
 render() {
   return html`
-    <ha-card 
+    <ha-card
       role="region"
       aria-label="VMC Helty Flow Control"
     >
       <div class="card-content">
         <!-- Controlli con ARIA labels -->
-        <button 
+        <button
           class="fan-button"
           @click=${this._toggleFan}
           aria-label="Toggle fan ${this._fanState === 'on' ? 'off' : 'on'}"
@@ -298,7 +298,7 @@ render() {
         >
           <ha-icon icon="mdi:fan"></ha-icon>
         </button>
-        
+
         <!-- Slider con ARIA -->
         <ha-slider
           min="0"
@@ -322,7 +322,7 @@ render() {
   min-width: 44px;
   padding: var(--spacing-s);
   border-radius: var(--ha-card-border-radius);
-  
+
   /* Feedback visivo per touch */
   transition: transform 0.1s ease;
 }
@@ -384,16 +384,16 @@ class VmcHeltyCardEditor extends LitElement {
   setConfig(config) {
     this._config = config;
   }
-  
+
   _entityChanged(ev) {
     const newConfig = {
       ...this._config,
       entity: ev.detail.value
     };
-    
+
     // Validazione real-time
     this._validateConfig(newConfig);
-    
+
     // Dispatch evento di cambiamento
     const changeEvent = new CustomEvent('config-changed', {
       detail: { config: newConfig },
@@ -402,7 +402,7 @@ class VmcHeltyCardEditor extends LitElement {
     });
     this.dispatchEvent(changeEvent);
   }
-  
+
   _validateConfig(config) {
     // Validazione e feedback visivo
     const entitySelect = this.shadowRoot.querySelector('#entity-select');
@@ -476,7 +476,7 @@ _sanitizeInput(input) {
   if (typeof input !== 'string') {
     return '';
   }
-  
+
   // Rimuovi HTML/script tags
   return input
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
@@ -490,7 +490,7 @@ _sanitizeInput(input) {
 // ✅ Gestione errori robusta
 updated(changedProps) {
   super.updated(changedProps);
-  
+
   try {
     this._updateEntityStates();
   } catch (error) {
@@ -563,10 +563,10 @@ static get styles() {
 ```javascript
 /**
  * Advanced Lovelace card for VMC Helty Flow control
- * 
+ *
  * @class VmcHeltyCard
  * @extends {LitElement}
- * 
+ *
  * @example
  * ```yaml
  * type: custom:vmc-helty-card

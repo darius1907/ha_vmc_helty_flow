@@ -1,16 +1,14 @@
 """Test per VmcHeltyDailyAirChangesSensor."""
+
 import unittest
 from unittest.mock import Mock
 
 from custom_components.vmc_helty_flow.const import (
-    DEFAULT_ROOM_VOLUME,
+    DAILY_AIR_CHANGES_ADEQUATE,
     DAILY_AIR_CHANGES_EXCELLENT,
     DAILY_AIR_CHANGES_GOOD,
-    DAILY_AIR_CHANGES_ADEQUATE,
     DAILY_AIR_CHANGES_POOR,
-    DAILY_AIR_CHANGES_EXCELLENT_MIN,
-    DAILY_AIR_CHANGES_GOOD_MIN,
-    DAILY_AIR_CHANGES_ADEQUATE_MIN,
+    DEFAULT_ROOM_VOLUME,
 )
 from custom_components.vmc_helty_flow.sensor import VmcHeltyDailyAirChangesSensor
 
@@ -128,29 +126,31 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}
 
         for speed in fan_speeds:
-            self.coordinator.data = {"status": f"VMGO,{speed},1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
-            
+            self.coordinator.data = {
+                "status": f"VMGO,{speed},1,0,0,0,0,0,0,0,0,50,0,0,0,60"
+            }
+
             calculated_value = self.sensor.native_value
             expected_value = round((airflow_rates[speed] / DEFAULT_ROOM_VOLUME) * 24, 1)
-            
+
             assert calculated_value == expected_value
 
     def test_extra_state_attributes_no_data(self):
         """Test extra_state_attributes senza dati."""
         self.coordinator.data = None
         attrs = self.sensor.extra_state_attributes
-        
+
         assert attrs == {}
 
     def test_extra_state_attributes_complete(self):
         """Test extra_state_attributes con dati validi."""
         self.coordinator.data = {"status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
-        
+
         # Velocità 2 -> 100 m³/h -> 16.0 ricambi/giorno
         expected_daily_changes = 16.0
         expected_hourly_changes = round(expected_daily_changes / 24, 2)
-        
+
         # 16.0 ricambi > DAILY_AIR_CHANGES_GOOD_MIN (12) -> DAILY_AIR_CHANGES_GOOD
         assert attrs["category"] == DAILY_AIR_CHANGES_GOOD
         assert attrs["assessment"] == "Ricambio d'aria buono"
@@ -162,7 +162,7 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         """Test categoria eccellente (≥24 ricambi/giorno)."""
         self.coordinator.data = {"status": "VMGO,3,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
-        
+
         # Velocità 3 -> 150 m³/h -> 24.0 ricambi/giorno = eccellente
         assert attrs["category"] == DAILY_AIR_CHANGES_EXCELLENT
         assert attrs["assessment"] == "Ricambio d'aria ottimale"
@@ -171,7 +171,7 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         """Test categoria buona (12-24 ricambi/giorno)."""
         self.coordinator.data = {"status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
-        
+
         # Velocità 2 -> 100 m³/h -> 16.0 ricambi/giorno = buono
         assert attrs["category"] == DAILY_AIR_CHANGES_GOOD
         assert attrs["assessment"] == "Ricambio d'aria buono"
@@ -180,7 +180,7 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         """Test categoria adeguata (6-12 ricambi/giorno)."""
         self.coordinator.data = {"status": "VMGO,1,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
-        
+
         # Velocità 1 -> 50 m³/h -> 8.0 ricambi/giorno = adeguato
         assert attrs["category"] == DAILY_AIR_CHANGES_ADEQUATE
         assert attrs["assessment"] == "Ricambio d'aria adeguato"
@@ -190,11 +190,11 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         # Simula una portata molto bassa modificando temporaneamente il volume
         original_volume = DEFAULT_ROOM_VOLUME
         # Con volume 300 m³ e velocità 1 (50 m³/h): 50/300*24 = 4.0 ricambi/giorno
-        
+
         # Non posso modificare la costante, quindi uso un test diverso
         # Testo con velocità 0 (off) che dovrebbe sempre essere "Poor"
         self.coordinator.data = {"status": "VMGO,0,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
-        
+
         # Con velocità 0, daily_changes sarà 0.0 che è < DAILY_AIR_CHANGES_ADEQUATE_MIN (6)
         attrs = self.sensor.extra_state_attributes
         assert attrs["category"] == DAILY_AIR_CHANGES_POOR
@@ -204,7 +204,7 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         """Test raccomandazione per ricambio eccellente."""
         self.coordinator.data = {"status": "VMGO,4,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
-        
+
         # Velocità 4 -> 200 m³/h -> 32.0 ricambi/giorno = eccellente
         recommendation = attrs["recommendation"]
         assert "eccellente" in recommendation.lower()
@@ -213,7 +213,7 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         """Test raccomandazione per ricambio insufficiente con velocità bassa."""
         self.coordinator.data = {"status": "VMGO,1,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
-        
+
         # Velocità 1 -> insufficiente -> dovrebbe suggerire aumento velocità
         recommendation = attrs["recommendation"]
         assert "aumentare" in recommendation.lower()
@@ -225,19 +225,19 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         # Questo potrebbe succedere con un volume ambiente molto grande
         # Per ora testo solo che la logica funzioni
         self.coordinator.data = {"status": "VMGO,4,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
-        
+
         # Con le portate standard, velocità 4 dovrebbe dare sempre un buon ricambio
         # Ma il test verifica che la logica del metodo _get_recommendation funzioni
         daily_changes = self.sensor.native_value
         recommendation = self.sensor._get_recommendation(daily_changes)
-        
+
         # Con 32.0 ricambi/giorno dovrebbe essere eccellente
         assert "eccellente" in recommendation.lower()
 
     def test_precision_and_rounding(self):
         """Test precisione e arrotondamento dei valori calcolati."""
         self.coordinator.data = {"status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
-        
+
         # Velocità 2 -> 100 m³/h -> (100/150)*24 = 16.0 ricambi/giorno
         expected = round((100 / DEFAULT_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected

@@ -1,7 +1,7 @@
 /**
  * VMC Helty Flow Control Card Editor v2.0 - LitElement Implementation
  * Visual configuration editor for VMC Helty Flow Control Card
- * 
+ *
  * ✅ Fully compliant with Home Assistant development guidelines:
  * - LitElement-based architecture for maximum compatibility
  * - Device selection dropdown with auto-discovery
@@ -9,7 +9,7 @@
  * - Room volume calculator with visual interface
  * - Real-time configuration validation
  * - Accessible form controls with proper labels
- * 
+ *
  * @version 2.0.0
  * @author VMC Helty Integration Team
  */
@@ -228,7 +228,7 @@ class VmcHeltyCardEditor extends LitElement {
         .dimensions-grid {
           grid-template-columns: 1fr;
         }
-        
+
         .toggle-grid {
           grid-template-columns: 1fr;
         }
@@ -243,7 +243,7 @@ class VmcHeltyCardEditor extends LitElement {
 
   willUpdate(changedProps) {
     super.willUpdate(changedProps);
-    
+
     if (changedProps.has('hass') && this.hass) {
       this._discoverEntities();
     }
@@ -254,8 +254,8 @@ class VmcHeltyCardEditor extends LitElement {
 
     // Discover VMC entities
     this._vmcEntities = Object.keys(this.hass.states)
-      .filter(entityId => 
-        entityId.startsWith('fan.') && 
+      .filter(entityId =>
+        entityId.startsWith('fan.') &&
         entityId.includes('vmc_helty')
       )
       .map(entityId => ({
@@ -299,11 +299,11 @@ class VmcHeltyCardEditor extends LitElement {
   _valueChanged(ev) {
     const target = ev.target;
     const key = target.configValue;
-    
+
     if (!key) return;
 
     let value = target.value;
-    
+
     // Handle different input types
     if (target.type === 'checkbox' || target.tagName === 'HA-SWITCH') {
       value = target.checked;
@@ -388,7 +388,7 @@ class VmcHeltyCardEditor extends LitElement {
           <ha-icon icon="mdi:air-conditioner"></ha-icon>
           Device Selection
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">VMC Device</label>
           <div class="form-description">
@@ -432,7 +432,7 @@ class VmcHeltyCardEditor extends LitElement {
           <ha-icon icon="mdi:thermometer"></ha-icon>
           Custom Sensor Selection
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">Temperature Sensor</label>
           <div class="form-description">
@@ -503,7 +503,7 @@ class VmcHeltyCardEditor extends LitElement {
           <ha-icon icon="mdi:cube-outline"></ha-icon>
           Room Configuration
         </div>
-        
+
         <div class="form-group">
           <label class="form-label">Room Volume</label>
           <div class="form-description">
@@ -527,7 +527,7 @@ class VmcHeltyCardEditor extends LitElement {
             <ha-icon icon="mdi:calculator"></ha-icon>
             Room Volume Calculator
           </div>
-          
+
           <div class="dimensions-grid">
             <ha-textfield
               .label=${"Length (m)"}
@@ -537,7 +537,7 @@ class VmcHeltyCardEditor extends LitElement {
               step="0.1"
               @input=${(ev) => this._updateDimension('length', ev.target.value)}
             ></ha-textfield>
-            
+
             <ha-textfield
               .label=${"Width (m)"}
               .value=${this._roomDimensions.width}
@@ -546,7 +546,7 @@ class VmcHeltyCardEditor extends LitElement {
               step="0.1"
               @input=${(ev) => this._updateDimension('width', ev.target.value)}
             ></ha-textfield>
-            
+
             <ha-textfield
               .label=${"Height (m)"}
               .value=${this._roomDimensions.height}
@@ -577,7 +577,7 @@ class VmcHeltyCardEditor extends LitElement {
           <ha-icon icon="mdi:eye"></ha-icon>
           Display Options
         </div>
-        
+
         <div class="toggle-grid">
           <div class="toggle-item">
             <span class="toggle-label">Show Temperature</span>
@@ -587,7 +587,7 @@ class VmcHeltyCardEditor extends LitElement {
               @change=${this._valueChanged}
             ></ha-switch>
           </div>
-          
+
           <div class="toggle-item">
             <span class="toggle-label">Show Humidity</span>
             <ha-switch
@@ -596,7 +596,7 @@ class VmcHeltyCardEditor extends LitElement {
               @change=${this._valueChanged}
             ></ha-switch>
           </div>
-          
+
           <div class="toggle-item">
             <span class="toggle-label">Show CO₂</span>
             <ha-switch
@@ -605,7 +605,7 @@ class VmcHeltyCardEditor extends LitElement {
               @change=${this._valueChanged}
             ></ha-switch>
           </div>
-          
+
           <div class="toggle-item">
             <span class="toggle-label">Show VOC</span>
             <ha-switch
@@ -614,7 +614,7 @@ class VmcHeltyCardEditor extends LitElement {
               @change=${this._valueChanged}
             ></ha-switch>
           </div>
-          
+
           <div class="toggle-item">
             <span class="toggle-label">Show Advanced Sensors</span>
             <ha-switch
@@ -635,7 +635,7 @@ class VmcHeltyCardEditor extends LitElement {
           <ha-icon icon="mdi:cog"></ha-icon>
           Advanced Features
         </div>
-        
+
         <div class="toggle-grid">
           <div class="toggle-item">
             <span class="toggle-label">Enable Comfort Calculations</span>
@@ -645,7 +645,7 @@ class VmcHeltyCardEditor extends LitElement {
               @change=${this._valueChanged}
             ></ha-switch>
           </div>
-          
+
           <div class="toggle-item">
             <span class="toggle-label">Enable Air Exchange Calculations</span>
             <ha-switch
@@ -655,7 +655,7 @@ class VmcHeltyCardEditor extends LitElement {
             ></ha-switch>
           </div>
         </div>
-        
+
         <div class="form-description" style="margin-top: 12px;">
           <strong>Comfort Calculations:</strong> Calculate dew point and comfort index using selected temperature/humidity sensors<br>
           <strong>Air Exchange Calculations:</strong> Calculate air exchange time based on room volume and fan speed
@@ -668,6 +668,6 @@ class VmcHeltyCardEditor extends LitElement {
 // Register the editor
 customElements.define('vmc-helty-card-editor', VmcHeltyCardEditor);
 
-console.info(`%c VMC HELTY CARD EDITOR v2.0 LitElement %c Loaded successfully! 🛠️`, 
+console.info(`%c VMC HELTY CARD EDITOR v2.0 LitElement %c Loaded successfully! 🛠️`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; font-weight: normal;");

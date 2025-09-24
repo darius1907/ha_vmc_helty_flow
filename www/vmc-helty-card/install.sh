@@ -38,73 +38,73 @@ log_error() {
 # Check if running in Home Assistant environment
 check_environment() {
     log_info "Checking Home Assistant environment..."
-    
+
     if [ ! -d "$HA_CONFIG_DIR" ]; then
         log_error "Home Assistant config directory not found: $HA_CONFIG_DIR"
         log_info "Please run this script from within Home Assistant or update HA_CONFIG_DIR variable"
         exit 1
     fi
-    
+
     log_success "Home Assistant environment detected"
 }
 
 # Create directories
 create_directories() {
     log_info "Creating directories..."
-    
+
     mkdir -p "$WWW_DIR"
     mkdir -p "$CARD_DIR"
-    
+
     log_success "Directories created successfully"
 }
 
 # Copy card files
 install_files() {
     log_info "Installing VMC Helty Card files..."
-    
+
     # Check if files exist in current directory
     if [ ! -f "vmc-helty-card.js" ]; then
         log_error "vmc-helty-card.js not found in current directory"
         exit 1
     fi
-    
+
     if [ ! -f "vmc-helty-card-editor.js" ]; then
         log_error "vmc-helty-card-editor.js not found in current directory"
         exit 1
     fi
-    
+
     # Copy files
     cp vmc-helty-card.js "$CARD_DIR/"
     cp vmc-helty-card-editor.js "$CARD_DIR/"
-    
+
     # Copy documentation (optional)
     [ -f "README.md" ] && cp README.md "$CARD_DIR/"
     [ -f "QUICK-START.md" ] && cp QUICK-START.md "$CARD_DIR/"
     [ -f "examples.yaml" ] && cp examples.yaml "$CARD_DIR/"
     [ -f "LICENSE" ] && cp LICENSE "$CARD_DIR/"
-    
+
     log_success "Files installed successfully to $CARD_DIR"
 }
 
 # Add resource to Lovelace
 add_lovelace_resource() {
     log_info "Checking Lovelace configuration..."
-    
+
     RESOURCE_URL="/local/$CARD_NAME/vmc-helty-card.js"
-    
+
     # Check if resource already exists
     if [ -f "$LOVELACE_CONFIG" ]; then
         if grep -q "$RESOURCE_URL" "$LOVELACE_CONFIG"; then
             log_warning "Resource already exists in $LOVELACE_CONFIG"
             return
         fi
-        
+
         # Add resource to existing file
         log_info "Adding resource to existing Lovelace configuration..."
-        
+
         # Create backup
         cp "$LOVELACE_CONFIG" "$LOVELACE_CONFIG.backup.$(date +%Y%m%d_%H%M%S)"
-        
+
         # Check if resources section exists
         if grep -q "^resources:" "$LOVELACE_CONFIG"; then
             # Add to existing resources section
@@ -119,7 +119,7 @@ add_lovelace_resource() {
                 cat "$LOVELACE_CONFIG"
             } > "$LOVELACE_CONFIG.tmp" && mv "$LOVELACE_CONFIG.tmp" "$LOVELACE_CONFIG"
         fi
-        
+
         log_success "Resource added to Lovelace configuration"
     else
         log_warning "Lovelace configuration file not found"
@@ -135,27 +135,27 @@ add_lovelace_resource() {
 # Set correct permissions
 set_permissions() {
     log_info "Setting file permissions..."
-    
+
     chmod 644 "$CARD_DIR"/*.js
     [ -f "$CARD_DIR/README.md" ] && chmod 644 "$CARD_DIR/README.md"
     [ -f "$CARD_DIR/QUICK-START.md" ] && chmod 644 "$CARD_DIR/QUICK-START.md"
     [ -f "$CARD_DIR/examples.yaml" ] && chmod 644 "$CARD_DIR/examples.yaml"
-    
+
     log_success "Permissions set successfully"
 }
 
 # Verify installation
 verify_installation() {
     log_info "Verifying installation..."
-    
+
     # Check files exist
     [ -f "$CARD_DIR/vmc-helty-card.js" ] || { log_error "vmc-helty-card.js not found"; exit 1; }
     [ -f "$CARD_DIR/vmc-helty-card-editor.js" ] || { log_error "vmc-helty-card-editor.js not found"; exit 1; }
-    
+
     # Check file sizes (basic sanity check)
     [ -s "$CARD_DIR/vmc-helty-card.js" ] || { log_error "vmc-helty-card.js is empty"; exit 1; }
     [ -s "$CARD_DIR/vmc-helty-card-editor.js" ] || { log_error "vmc-helty-card-editor.js is empty"; exit 1; }
-    
+
     log_success "Installation verified successfully"
 }
 
@@ -165,14 +165,14 @@ main() {
     log_info "🌀 VMC Helty Card Installation Script"
     log_info "======================================"
     echo ""
-    
+
     check_environment
     create_directories
     install_files
     add_lovelace_resource
     set_permissions
     verify_installation
-    
+
     echo ""
     log_success "🎉 VMC Helty Card installed successfully!"
     echo ""

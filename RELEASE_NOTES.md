@@ -37,7 +37,7 @@ We follow [Semantic Versioning](https://semver.org/):
 ### Version Format: `MAJOR.MINOR.PATCH`
 
 - **MAJOR**: Breaking changes, API changes, major architecture updates
-- **MINOR**: New features, entity additions, backward-compatible changes  
+- **MINOR**: New features, entity additions, backward-compatible changes
 - **PATCH**: Bug fixes, documentation updates, minor improvements
 
 ### Examples:
@@ -54,7 +54,7 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ### Major Release (x.0.0)
 **Frequency**: 6-12 months
-**Contents**: 
+**Contents**:
 - New major features
 - Architecture improvements
 - Breaking changes (with migration guide)
@@ -110,7 +110,7 @@ We follow [Keep a Changelog](https://keepachangelog.com/) format:
 - Support for VMC Model XYZ
 - Configuration validation improvements
 
-### Changed  
+### Changed
 - Improved sensor update frequency
 - Enhanced error messages in config flow
 
@@ -144,7 +144,7 @@ We follow [Keep a Changelog](https://keepachangelog.com/) format:
 
 ### Release Titles
 - Major: "VMC Helty Flow v2.0.0 - Major Update with Climate Control"
-- Minor: "VMC Helty Flow v1.2.0 - Enhanced Sensors and Model Support"  
+- Minor: "VMC Helty Flow v1.2.0 - Enhanced Sensors and Model Support"
 - Patch: "VMC Helty Flow v1.1.1 - Bug Fixes and Improvements"
 
 ### Release Notes Template
@@ -158,7 +158,7 @@ We follow [Keep a Changelog](https://keepachangelog.com/) format:
 - **Enhanced Error Reporting**: Better diagnostics for troubleshooting
 - **Model XYZ Support**: Full support for new VMC models
 
-### 🔧 Improvements  
+### 🔧 Improvements
 - **Performance**: Faster sensor updates and reduced memory usage
 - **Reliability**: Improved connection handling and retry logic
 - **User Experience**: Better error messages and setup wizard
@@ -185,7 +185,7 @@ None in this release - fully backward compatible!
 
 ## 🔧 Technical Details
 - **Home Assistant**: 2024.1.0+ required
-- **Python**: 3.11+ required  
+- **Python**: 3.11+ required
 - **New Dependencies**: None
 - **Configuration**: No changes needed
 
@@ -202,7 +202,7 @@ Special thanks to community contributors:
 
 ---
 
-**Need Help?** 
+**Need Help?**
 - 📖 [Documentation](README.md)
 - 🐛 [Report Issues](https://github.com/dpezzoli/ha_vmc_helty_flow/issues)
 - 💬 [Community Discussion](https://community.home-assistant.io/)
@@ -219,7 +219,7 @@ Special thanks to community contributors:
 
 ### Test Environments
 - **Development**: Latest HA development version
-- **Stable**: Current HA stable release  
+- **Stable**: Current HA stable release
 - **Previous**: Previous HA stable release (when possible)
 
 ### Device Testing

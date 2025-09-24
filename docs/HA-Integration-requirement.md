@@ -191,7 +191,7 @@ L'applicazione supporta i seguenti comandi per interagire con i dispositivi VMC:
         - **Feedback utente**: `LED pannello disattivato`
     - `set_lights`: Imposta il livello delle luci (0-100).
         - Permette di regolare l'illuminazione dell'ambiente.
-        - **Formato comando**: 
+        - **Formato comando**:
             - `VMWH0600000` Luci ambientali disattivato
             - `VMWH06nnn.000` Luci ambientali disattivato
             - `nnn`: Intensità dell'illuminazione (0-100, con step di 1)
@@ -381,7 +381,7 @@ L'interfaccia utente è progettata per essere intuitiva e facile da usare.
 
 **Sensori Primari VMC:**
 - **Temperatura Interna**: Range -40°C / +85°C, precisione ±0.5°C
-- **Temperatura Esterna**: Range -40°C / +85°C, precisione ±0.5°C  
+- **Temperatura Esterna**: Range -40°C / +85°C, precisione ±0.5°C
 - **Umidità Relativa Interna**: Range 0-100% RH, precisione ±3% RH
 - **CO₂ Interno**: Range 400-5000 ppm (solo ELITE), precisione ±50 ppm
 - **VOC**: Range 0-500 IAQ index (solo ELITE), precisione ±15 IAQ
@@ -470,12 +470,12 @@ def calcola_umidita_assoluta(temp_celsius, rh_percent):
     # Costanti Magnus-Tetens per acqua
     a = 17.27
     b = 237.7
-    
+
     # Pressione vapore saturo (hPa)
     gamma = (a * temp_celsius) / (b + temp_celsius) + math.log(rh_percent / 100.0)
     es = 6.112 * math.exp(gamma)
-    
-    # Umidità assoluta (g/m³)  
+
+    # Umidità assoluta (g/m³)
     abs_humidity = (es * 2.1674) / (temp_celsius + 273.15)
     return round(abs_humidity, 2)
 
@@ -537,7 +537,7 @@ def calcola_tempo_ricambio(volume_ambiente, portata_mc_h):
     """
     if portata_mc_h == 0:
         return float('inf')
-    
+
     tempo_ore = volume_ambiente / portata_mc_h
     tempo_minuti = tempo_ore * 60
     return round(tempo_minuti, 1)
@@ -548,7 +548,7 @@ def calcola_ricambi_giornalieri(volume_ambiente, portata_mc_h):
     """
     if portata_mc_h == 0:
         return 0
-    
+
     volume_giornaliero = portata_mc_h * 24
     ricambi = volume_giornaliero / volume_ambiente
     return round(ricambi, 1)
@@ -563,11 +563,11 @@ class MoldGrowthPredictor:
     Implementazione algoritmo Hukka-Viitanen (1999)
     Per predizione rischio crescita muffa in ambienti interni
     """
-    
+
     def __init__(self):
         self.history_days = 7  # Giorni di storico per calcolo
         self.mold_index = 0    # Indice crescita muffa (0-6)
-        
+
     def calculate_critical_humidity(self, temperature):
         """
         Calcola umidità critica per temperatura data
@@ -579,26 +579,26 @@ class MoldGrowthPredictor:
             return 80.0 - (temperature - 20) * 0.5
         else:
             return 75.0
-    
+
     def update_mold_risk(self, temperature, humidity, hours_elapsed=1):
         """
         Aggiorna indice rischio muffa
         """
         critical_rh = self.calculate_critical_humidity(temperature)
-        
+
         if humidity > critical_rh and temperature > 5:
             # Condizioni favorevoli crescita
             if temperature >= 20:
                 growth_rate = 0.1 * hours_elapsed
             else:
                 growth_rate = 0.05 * hours_elapsed
-                
+
             self.mold_index = min(6.0, self.mold_index + growth_rate)
         else:
             # Condizioni sfavorevoli - decrescita lenta
             decline_rate = 0.02 * hours_elapsed
             self.mold_index = max(0.0, self.mold_index - decline_rate)
-    
+
     def get_risk_level(self):
         """
         Classificazione rischio muffa

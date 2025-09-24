@@ -21,7 +21,7 @@ Thank you for your interest in contributing to the VMC Helty Flow Home Assistant
    ```bash
    # Install development dependencies
    pip install -r requirements_test.txt
-   
+
    # Install pre-commit hooks
    pre-commit install
    ```
@@ -74,7 +74,7 @@ pre-commit run --all-files
 Use conventional commits format:
 ```
 feat: add new sensor for air quality index
-fix: resolve config flow validation issue  
+fix: resolve config flow validation issue
 docs: update installation instructions
 test: add coverage for device discovery
 ```
@@ -101,7 +101,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ### Testing Requirements
 - **Unit Tests**: All new code must have tests
-- **Integration Tests**: Test end-to-end functionality  
+- **Integration Tests**: Test end-to-end functionality
 - **Coverage**: Maintain >95% test coverage
 - **Mock External**: Mock all external API calls
 
@@ -122,7 +122,7 @@ Clear description of the issue.
 2. Click on...
 3. See error...
 
-**Expected Behavior** 
+**Expected Behavior**
 What you expected to happen.
 
 **Screenshots/Logs**
@@ -142,7 +142,7 @@ Add logs or screenshots if applicable.
 **Feature Description**
 Clear description of the requested feature.
 
-**Use Case** 
+**Use Case**
 Why this feature would be useful.
 
 **Proposed Implementation**
@@ -235,7 +235,7 @@ custom_components/vmc_helty_flow/
 
 Contributors will be recognized in:
 - **CHANGELOG.md**: Feature credits
-- **README.md**: Contributor list  
+- **README.md**: Contributor list
 - **GitHub**: Contributor statistics
 - **Release Notes**: Acknowledgments
 
@@ -274,7 +274,7 @@ Contributors will be recognized in:
 # Start Home Assistant with integration
 hass --config /path/to/config --debug
 
-# Watch log for integration messages  
+# Watch log for integration messages
 tail -f /path/to/config/home-assistant.log | grep vmc_helty_flow
 
 # Validate manifest

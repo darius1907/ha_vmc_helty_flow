@@ -26,7 +26,7 @@ resources:
 
 ### 3. Configurazione con Editor Visuale
 
-1. **Modalità Modifica** → **Aggiungi Carta** 
+1. **Modalità Modifica** → **Aggiungi Carta**
 2. **Cerca "VMC Helty"** → Seleziona la carta
 3. **Configura con l'editor**:
    - 🎯 **Seleziona VMC**: Scegli il dispositivo VMC dal menu
@@ -42,7 +42,7 @@ type: custom:vmc-helty-card
 entity: fan.vmc_helty_flow_cucina
 name: "VMC Cucina"
 temperature_entity: sensor.cucina_temperatura_accurata
-humidity_entity: sensor.cucina_umidita_accurata  
+humidity_entity: sensor.cucina_umidita_accurata
 room_volume: 32.4  # 4.5m × 3.6m × 2.0m
 show_advanced: true
 enable_comfort_calculations: true
@@ -81,7 +81,7 @@ Nell'editor visuale:
 
 ### Volumi Standard
 - **Bagno piccolo**: 10-20 m³
-- **Camera**: 30-50 m³  
+- **Camera**: 30-50 m³
 - **Cucina**: 25-45 m³
 - **Soggiorno**: 60-120 m³
 - **Open space**: 100-300 m³
@@ -102,7 +102,7 @@ Nell'editor visuale:
 
 ### Indice Comfort
 - **Algoritmo**: Punteggio comfort basato su temperatura + umidità
-- **Categorie**: 
+- **Categorie**:
   - Eccellente: 85-100%
   - Buono: 70-84%
   - Discreto: 55-69%
@@ -114,7 +114,7 @@ Nell'editor visuale:
   - Velocità 0: 0 m³/h (Spento)
   - Velocità 1: 10 m³/h
   - Velocità 2: 17 m³/h
-  - Velocità 3: 26 m³/h  
+  - Velocità 3: 26 m³/h
   - Velocità 4: 37 m³/h
 - **Valutazioni**:
   - Eccellente: ≤20 minuti

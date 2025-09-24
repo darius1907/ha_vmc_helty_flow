@@ -78,7 +78,7 @@ jobs:
           kubectl exec $POD_NAME -n home-assistant -- bash -c '
             LOVELACE_CONFIG="/config/ui-lovelace.yaml"
             RESOURCE_URL="/local/vmc-helty-card/vmc-helty-card.js"
-            
+
             # Create ui-lovelace.yaml if it does not exist
             if [ ! -f "$LOVELACE_CONFIG" ]; then
               echo "📝 Creating new ui-lovelace.yaml"
@@ -96,7 +96,7 @@ jobs:
                 echo "➕ Adding VMC Helty Card resource to existing configuration"
                 # Create backup
                 cp "$LOVELACE_CONFIG" "$LOVELACE_CONFIG.backup.$(date +%Y%m%d_%H%M%S)"
-                
+
                 # Check if resources section exists
                 if grep -q "^resources:" "$LOVELACE_CONFIG"; then
                   # Add to existing resources section
@@ -121,7 +121,7 @@ jobs:
         run: |
           kubectl exec $POD_NAME -n home-assistant -- sh -c '
             echo "🔍 Verifying VMC Helty Card installation..."
-            
+
             # Check files exist
             if [ -f "/config/www/vmc-helty-card/vmc-helty-card.js" ]; then
               echo "✅ vmc-helty-card.js installed"
@@ -131,7 +131,7 @@ jobs:
               echo "❌ vmc-helty-card.js missing"
               exit 1
             fi
-            
+
             if [ -f "/config/www/vmc-helty-card/vmc-helty-card-editor.js" ]; then
               echo "✅ vmc-helty-card-editor.js installed"
               FILE_SIZE=$(wc -c < /config/www/vmc-helty-card/vmc-helty-card-editor.js)
@@ -140,14 +140,14 @@ jobs:
               echo "❌ vmc-helty-card-editor.js missing"
               exit 1
             fi
-            
+
             # Check Lovelace configuration
             if grep -q "/local/vmc-helty-card/vmc-helty-card.js" /config/ui-lovelace.yaml; then
               echo "✅ Lovelace resource configured"
             else
               echo "⚠️ Lovelace resource not found in configuration"
             fi
-            
+
             echo "🎉 VMC Helty Card installation verified successfully!"
           '
 

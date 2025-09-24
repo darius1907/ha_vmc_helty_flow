@@ -47,7 +47,7 @@ Please include the following information in your report:
 - **No External Connections**: No data sent to external servers
 - **Encryption**: Supports secure communication protocols where available
 
-#### Data Privacy  
+#### Data Privacy
 - **Local Processing**: All data processing happens locally
 - **No Cloud Storage**: No user data stored in cloud services
 - **Minimal Data**: Only necessary device data is collected
@@ -81,7 +81,7 @@ Please include the following information in your report:
 3. **Update Regularly**: Keep integration updated to latest version
 4. **Review Permissions**: Understand what permissions the integration needs
 
-#### Network Security  
+#### Network Security
 1. **Isolate VMC Network**: Consider network isolation for IoT devices
 2. **Firewall Rules**: Configure appropriate firewall rules
 3. **Monitor Traffic**: Monitor network traffic for unusual activity
@@ -120,7 +120,7 @@ Security updates will be:
 This security policy applies to:
 
 - ✅ VMC Helty Flow integration code
-- ✅ Configuration and setup processes  
+- ✅ Configuration and setup processes
 - ✅ Network communication protocols
 - ✅ Data handling and storage
 - ✅ Authentication and authorization

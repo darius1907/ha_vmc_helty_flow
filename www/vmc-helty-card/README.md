@@ -1,46 +1,42 @@
 # VMC Helty Flow Control Card# VMC Helty Flow Control Card
 
+Advanced Lovelace card for VMC Helty Flow Plus/Elite ventilation systems in Home Assistant with **device selection**, **custom sensor support**, and **room volume configuration**.
 
 
-Advanced Lovelace card for VMC Helty Flow Plus/Elite ventilation systems in Home Assistant with **device selection**, **custom sensor support**, and **room volume configuration**.Advanced Lovelace card for VMC Helty Flow Plus/Elite ventilation systems in Home Assistant with **device selection**, **custom sensor support**, and **room volume configuration**.
+## 🚀 **Key Features**##
 
 
+### 🎯 **Device Selection**
 
-## 🚀 **Key Features**## 🚀 **Key Features**
+- **Multiple VMC Support**: Choose specific VMC device from available entities
 
+- **Auto-Discovery**: Automatically finds VMC Helty Flow devices in your system
 
-
-### 🎯 **Device Selection**### 🎯 **Device Selection**
-
-- **Multiple VMC Support**: Choose specific VMC device from available entities- **Multiple VMC Support**: Choose specific VMC device from available entities
-
-- **Auto-Discovery**: Automatically finds VMC Helty Flow devices in your system- **Auto-Discovery**: Automatically finds VMC Helty Flow devices in your system
-
-- **Device Status**: Real-time connection status and availability monitoring- **Device Status**: Real-time connection status and availability monitoring
+- **Device Status**: Real-time connection status and availability monitoring
 
 
 
-### 🌡️ **Custom Sensor Selection** ### 🌡️ **Custom Sensor Selection** 
+### 🌡️ **Custom Sensor Selection** ### 🌡️ **Custom Sensor Selection**
 
-- **Temperature Override**: Use any temperature sensor instead of VMC internal sensor- **Temperature Override**: Use any temperature sensor instead of VMC internal sensor
+- **Temperature Override**: Use any temperature sensor instead of VMC internal sensor
 
-- **Humidity Override**: Use any humidity sensor instead of VMC internal sensor  - **Humidity Override**: Use any humidity sensor instead of VMC internal sensor  
+- **Humidity Override**: Use any humidity sensor instead of VMC internal sensor
 
-- **Smart Calculations**: Advanced sensors use your selected sensors for accurate results- **Smart Calculations**: Advanced sensors use your selected sensors for accurate results
+- **Smart Calculations**: Advanced sensors use your selected sensors for accurate results
 
-- **Source Indicators**: Clear display of which sensors are being used- **Source Indicators**: Clear display of which sensors are being used
+- **Source Indicators**: Clear display of which sensors are being used
 
 
 
 ### 📏 **Room Volume Configuration**### � **Room Volume Configuration**
 
-- **Accurate Air Exchange**: Calculate precise air exchange times based on actual room size- **Accurate Air Exchange**: Calculate precise air exchange times based on actual room size
+- **Accurate Air Exchange**: Calculate precise air exchange times based on actual room size
 
-- **Volume Calculator**: Built-in calculator for room dimensions (L×W×H)- **Volume Calculator**: Built-in calculator for room dimensions (L×W×H)
+- **Volume Calculator**: Built-in calculator for room dimensions (L×W×H)
 
-- **Efficiency Analysis**: Determine if ventilation is adequate for your space- **Efficiency Analysis**: Determine if ventilation is adequate for your space
+- **Efficiency Analysis**: Determine if ventilation is adequate for your space
 
-- **Custom Units**: Support for different room sizes (1-10,000 m³)- **Custom Units**: Support for different room sizes (1-10,000 m³)
+- **Custom Units**: Support for different room sizes (1-10,000 m³)
 
 ## ✅ Home Assistant Guidelines Compliance
 
@@ -49,7 +45,7 @@ This card is **100% compliant** with Home Assistant development guidelines:
 - ✅ **LitElement Architecture** - Built with LitElement for maximum compatibility
 - ✅ **Mobile-First Design** - Responsive layout optimized for all devices
 - ✅ **HA Theme Integration** - Uses only Home Assistant CSS variables
-- ✅ **Complete Accessibility** - Full ARIA support and keyboard navigation  
+- ✅ **Complete Accessibility** - Full ARIA support and keyboard navigation
 - ✅ **Material Design Icons** - MDI icons through ha-icon components
 - ✅ **CSP Compliance** - No inline styles or scripts
 - ✅ **Performance Optimized** - Efficient rendering and updates
@@ -63,7 +59,7 @@ This card is **100% compliant** with Home Assistant development guidelines:
 - **Connection status indicator** with WiFi icon
 - **Special modes**: Night Mode, Boost, Free Cooling with visual feedback
 
-### 📊 **Environmental Monitoring** 
+### 📊 **Environmental Monitoring**
 - **Flexible Sensor Sources**: VMC internal OR custom external sensors
 - **Temperature monitoring** with configurable source (VMC/Custom)
 - **Humidity monitoring** with configurable source (VMC/Custom)
@@ -169,7 +165,7 @@ type: custom:vmc-helty-card
 entity: fan.vmc_helty_flow_kitchen
 name: "Kitchen Ventilation"
 temperature_entity: sensor.kitchen_temperature_accurate
-humidity_entity: sensor.kitchen_humidity_accurate  
+humidity_entity: sensor.kitchen_humidity_accurate
 room_volume: 32.4  # 4.5m × 3.6m × 2.0m
 show_advanced: true
 enable_comfort_calculations: true
@@ -195,7 +191,7 @@ entity: fan.vmc_helty_flow_bathroom
 name: "Bathroom Fan"
 room_volume: 15.75  # 2.5m × 3.5m × 1.8m
 show_co2: false
-show_voc: false  
+show_voc: false
 show_advanced: false
 ```
 
@@ -249,7 +245,7 @@ In the visual editor:
 
 ### Standard Room Volumes
 - **Small bathroom**: 10-20 m³
-- **Bedroom**: 30-50 m³  
+- **Bedroom**: 30-50 m³
 - **Kitchen**: 25-45 m³
 - **Living room**: 60-120 m³
 - **Open plan**: 100-300 m³
@@ -288,7 +284,7 @@ When custom sensors are selected:
 
 ### Comfort Index
 - **Algorithm**: Temperature + humidity comfort scoring
-- **Ranges**: 
+- **Ranges**:
   - Excellent: 85-100%
   - Good: 70-84%
   - Fair: 55-69%
@@ -301,7 +297,7 @@ When custom sensors are selected:
   - Speed 0: 0 m³/h (Off)
   - Speed 1: 10 m³/h
   - Speed 2: 17 m³/h
-  - Speed 3: 26 m³/h  
+  - Speed 3: 26 m³/h
   - Speed 4: 37 m³/h
 - **Categories**:
   - Excellent: ≤20 minutes
@@ -364,7 +360,7 @@ Air exchange showing "Poor" category
 
 ### Recommended Upgrades
 1. **Add custom sensors** for more accurate readings
-2. **Set room volume** for proper air exchange calculations  
+2. **Set room volume** for proper air exchange calculations
 3. **Review display options** to show relevant sensors
 4. **Enable advanced features** for detailed analysis
 

@@ -326,6 +326,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "name": device["name"],
                         "model": device.get("model", "VMC Flow"),
                         "manufacturer": device.get("manufacturer", "Helty"),
+                        "port": device.get("port", 5001),
+                        "timeout": device.get("timeout", 10),
                     },
                 )
 

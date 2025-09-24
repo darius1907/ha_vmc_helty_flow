@@ -16,7 +16,7 @@ name: "Kitchen VMC"type: custom:vmc-helty-card
 
 
 
-## Configuration with Custom Sensors# =====================================================  
+## Configuration with Custom Sensors# =====================================================
 
 ```yaml# STANDARD CONFIGURATION (Recommended)
 
@@ -158,9 +158,9 @@ layout: autoshow_advanced: false
 
   humidity_entity: sensor.kitchen_humidity              show_advanced: false
 
-  room_volume: 32.4            
+  room_volume: 32.4
 
-  show_co2: true          # Bedroom VMC (Plus)  
+  show_co2: true          # Bedroom VMC (Plus)
 
   show_voc: false          - type: custom:vmc-helty-card
 
@@ -318,7 +318,7 @@ show_advanced: true
 enable_comfort_calculations: true
 ```
 
-### With Xiaomi Mi Sensors  
+### With Xiaomi Mi Sensors
 ```yaml
 type: custom:vmc-helty-card
 entity: fan.vmc_helty_flow_bedroom
@@ -333,7 +333,7 @@ show_advanced: true
 ```yaml
 type: custom:vmc-helty-card
 entity: fan.vmc_helty_flow_kitchen
-name: "Kitchen VMC" 
+name: "Kitchen VMC"
 temperature_entity: sensor.sonoff_kitchen_temperature
 humidity_entity: sensor.sonoff_kitchen_humidity
 room_volume: 32.4
@@ -350,7 +350,7 @@ entity: fan.vmc_helty_flow_bathroom
 name: "Bathroom"
 room_volume: 15.75
 show_temperature: true
-show_humidity: true  
+show_humidity: true
 show_co2: false
 show_voc: false
 show_advanced: false  # Disable calculations

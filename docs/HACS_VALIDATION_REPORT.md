@@ -10,7 +10,7 @@
 
 ## 📋 **HACS Requirements Checklist**
 
-### ✅ **Repository Structure** 
+### ✅ **Repository Structure**
 | Requirement | Status | Location |
 |-------------|--------|----------|
 | Single integration per repo | ✅ | `custom_components/vmc_helty_flow/` |
@@ -108,7 +108,7 @@ Category: Integration
 ### **GitHub Actions Workflows**
 ```yaml
 ✅ HACS Validation: .github/workflows/hacs.yaml
-✅ Release Automation: .github/workflows/release.yaml  
+✅ Release Automation: .github/workflows/release.yaml
 ✅ Quality Checks: Pre-commit hooks and testing
 ✅ Deployment: Custom deployment pipeline
 ```
@@ -198,7 +198,7 @@ mypy custom_components/vmc_helty_flow/
 
 ### **Compliance Score: 100%**
 - ✅ Repository Structure: Perfect
-- ✅ Required Files: Complete  
+- ✅ Required Files: Complete
 - ✅ Manifest Configuration: Valid
 - ✅ Documentation: Comprehensive
 - ✅ Code Quality: Excellent

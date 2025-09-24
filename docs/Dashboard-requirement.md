@@ -13,7 +13,7 @@
 - Monitoraggio ambientale avanzato con prevenzione rischi
 - Automazione intelligente basata su parametri ambientali
 - Gestione multi-unità con clonazione automatica
-- Integrazione nativa con ecosistema Home Assistant  
+- Integrazione nativa con ecosistema Home Assistant
 
 ### 2. ARCHITETTURA DEL SISTEMA
 
@@ -29,7 +29,7 @@
 
 **Sensori Primari VMC:**
 - **Temperatura Interna**: Range -40°C / +85°C, precisione ±0.5°C
-- **Temperatura Esterna**: Range -40°C / +85°C, precisione ±0.5°C  
+- **Temperatura Esterna**: Range -40°C / +85°C, precisione ±0.5°C
 - **Umidità Relativa Interna**: Range 0-100% RH, precisione ±3% RH
 - **CO₂ Interno**: Range 400-5000 ppm (solo ELITE), precisione ±50 ppm
 - **VOC**: Range 0-500 IAQ index (solo ELITE), precisione ±15 IAQ
@@ -62,7 +62,7 @@ VELOCITÀ STANDARD:
 - Velocità 0: OFF (0 m³/h)
 - Velocità 1: Minima (10 m³/h) - Mantenimento base
 - Velocità 2: Media-Bassa (17 m³/h) - Uso normale
-- Velocità 3: Media-Alta (26 m³/h) - Comfort standard  
+- Velocità 3: Media-Alta (26 m³/h) - Comfort standard
 - Velocità 4: Massima (37 m³/h) - Massima efficienza
 
 MODALITÀ SPECIALI:
@@ -105,13 +105,13 @@ MODALITÀ SPECIALI:
 
 **Controllo CO₂ Adattivo:**
 - Soglia normale: 800 ppm (velocità 1)
-- Soglia attenzione: 1000 ppm (velocità 2) 
+- Soglia attenzione: 1000 ppm (velocità 2)
 - Soglia critica: 1200 ppm (velocità 3)
 - Emergenza: 1500 ppm (iperventilazione)
 - Isteresi programmabile per evitare oscillazioni
 
 **Gestione VOC Intelligente:**
-- Baseline automatico: Calibrazione ambiente 
+- Baseline automatico: Calibrazione ambiente
 - Spike detection: Rilevamento picchi anomali
 - Ventilazione proporzionale: Velocità basata su VOC level
 - Correlazione CO₂-VOC: Algoritmo combinato per massima efficacia
@@ -159,14 +159,14 @@ LIVELLO INFO (Verde):
 - Manutenzione programmata preventiva
 - Report efficienza settimanale
 
-LIVELLO WARNING (Giallo):  
+LIVELLO WARNING (Giallo):
 - Avvicinamento soglie critiche
 - Filtro da sostituire entro 7 giorni
 - Efficienza ridotta rilevata
 
 LIVELLO CRITICAL (Rosso):
 - Rischio congelamento imminente
-- Qualità aria pericolosa 
+- Qualità aria pericolosa
 - Malfunzionamento VMC
 - Perdita comunicazione
 ```
@@ -198,22 +198,22 @@ LIVELLO CRITICAL (Rosso):
 :root {
   /* Status Colors */
   --success: #28a745;      /* Funzionamento normale */
-  --warning: #ffc107;      /* Attenzione/Warning */  
+  --warning: #ffc107;      /* Attenzione/Warning */
   --danger: #dc3545;       /* Allarme/Errore critico */
   --info: #17a2b8;         /* Modalità speciali */
   --primary: #007bff;      /* Azioni primarie */
-  
+
   /* Environmental Colors */
   --temp-cold: #6cb4ee;    /* Temperature basse */
   --temp-optimal: #50c878; /* Temperature ottimali */
   --temp-hot: #ff6b47;     /* Temperature elevate */
-  
+
   /* Air Quality Colors */
   --co2-good: #90ee90;     /* CO₂ < 800 ppm */
   --co2-moderate: #ffeb3b; /* CO₂ 800-1000 ppm */
   --co2-poor: #ff9800;     /* CO₂ 1000-1200 ppm */
   --co2-critical: #f44336; /* CO₂ > 1200 ppm */
-  
+
   /* Humidity Colors */
   --humidity-low: #ffcccb; /* RH < 30% */
   --humidity-optimal: #90ee90; /* RH 40-60% */
@@ -224,11 +224,11 @@ LIVELLO CRITICAL (Rosso):
 ```
 Controlli Ventilazione:
   - mdi:fan → Controlli generali ventilazione
-  - mdi:fan-speed-1/2/3 → Velocità specifiche  
+  - mdi:fan-speed-1/2/3 → Velocità specifiche
   - mdi:fan-off → VMC spenta
   - mdi:sleep → Modalità notturna
   - mdi:fast-forward → Iperventilazione
-  
+
 Monitoraggio Ambientale:
   - mdi:thermometer → Temperatura
   - mdi:thermometer-chevron-up → Temperatura alta
@@ -237,7 +237,7 @@ Monitoraggio Ambientale:
   - mdi:water → Punto di rugiada
   - mdi:molecule-co2 → Anidride carbonica
   - mdi:chart-line-variant → VOC trend
-  
+
 Sistema e Allerte:
   - mdi:air-filter → Stato filtro
   - mdi:alarm-light-outline → Allerte attive
@@ -257,7 +257,7 @@ Funzionalità:
   - Min/Max indicators con timestamp
   - Trend arrows con percentuali di variazione
   - Export data CSV/JSON
-  
+
 Layout:
   - Grid responsive 2x3 per sensori principali
   - Grafici a linee per trend temporali
@@ -273,7 +273,7 @@ Funzionalità:
   - Quick presets (Home/Away/Sleep/Boost)
   - Timer programmabile per modalità temporanee
   - Confirmations per azioni critiche (OFF)
-  
+
 Layout:
   - Circular control come iPod wheel
   - Central display con velocità e modalità corrente
@@ -289,7 +289,7 @@ Funzionalità:
   - Logic flowchart per automazioni complesse
   - Manual override controls
   - Schedule preview prossime 24h
-  
+
 Layout:
   - Expandable sections per categoria
   - Timeline view per automazioni programmate
@@ -305,7 +305,7 @@ Funzionalità:
   - Alert history con filtri
   - Sound/vibration notifications
   - Custom alert rules configuration
-  
+
 Layout:
   - Stack verticale con priority ordering
   - Swipe actions per gestione veloce
@@ -321,7 +321,7 @@ Funzionalità:
   - System health indicators
   - Performance metrics (CPU, Memory, Disk)
   - Backup/Restore configurations
-  
+
 Layout:
   - Dashboard style con KPI widgets
   - Progress bars per utilizzo risorse
@@ -337,7 +337,7 @@ Funzionalità:
   - Predictive maintenance alerts
   - Usage patterns analysis
   - ROI calculations per automazioni
-  
+
 Layout:
   - Chart.js integration per grafici avanzati
   - Heatmaps per pattern temporali
@@ -353,17 +353,17 @@ Layout:
 .dashboard {
   /* Mobile: 320px-767px */
   grid-template-columns: 1fr;
-  
+
   /* Tablet: 768px-1023px */
   @media (min-width: 768px) {
     grid-template-columns: 1fr 1fr;
   }
-  
+
   /* Desktop: 1024px-1439px */
   @media (min-width: 1024px) {
     grid-template-columns: 2fr 1fr 1fr;
   }
-  
+
   /* Large Desktop: ≥1440px */
   @media (min-width: 1440px) {
     grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -388,15 +388,15 @@ CRITICAL_SENSORS (Real-time):
   - Velocità ventola: 3 secondi
   - Status connessione VMC: 5 secondi
   - Comandi utente: Immediato (< 1 secondo)
-  
+
 ENVIRONMENTAL_SENSORS (Moderate):
   - Sensori ambientali (temp/umidità/CO₂/VOC): 1227 secondi (20 min 27 sec)
   - Calcoli derivati (punto rugiada, umidità assoluta): 1230 secondi
   - Alert evaluations: 300 secondi (5 minuti)
-  
+
 SYSTEM_INFO (Low frequency):
   - Nome VMC: 43227 secondi (12 ore 7 min)
-  - Dati LAN/Network: 57641 secondi (16 ore 1 min)  
+  - Dati LAN/Network: 57641 secondi (16 ore 1 min)
   - Version check updates: 86400 secondi (24 ore)
   - Health check sistema: 3600 secondi (1 ora)
 
@@ -407,7 +407,7 @@ ADAPTIVE_POLLING:
 ```
 
 **Performance Benchmarks:**
-- **Command Response Time**: 
+- **Command Response Time**:
   - Locale: < 500ms (95th percentile)
   - Remoto: < 2 secondi (95th percentile)
   - Timeout: 10 secondi con retry automatico
@@ -456,16 +456,16 @@ SCALABILITY:
 **Caching Strategy:**
 ```yaml
 MULTI_LEVEL_CACHE:
-  L1_Browser: 
+  L1_Browser:
     - Static assets: 7 giorni
     - API responses: 5 minuti
     - User preferences: Session
-    
+
   L2_Home_Assistant:
     - Sensor history: 30 giorni (configurable)
     - System logs: 7 giorni
     - Automation states: Persistent
-    
+
   L3_Database:
     - Historical data: 1 anno (with compression)
     - Configuration backup: 30 versioni
@@ -491,7 +491,7 @@ AUTO_DISCOVERY:
   - Verifica compatibilità con comando VMGN?
   - Validazione modello (PLUS vs ELITE)
   - Test comunicazione bidirezionale
-  
+
 MANUAL_SETUP:
   - Input IP address con validazione
   - Test connettività automatico
@@ -506,7 +506,7 @@ SENSOR_INTEGRATION:
   - Mapping automatico per tipo (temp/umidità/CO₂)
   - Calibrazione offset automatica vs sensori VMC
   - Validazione precisione con test comparativi
-  
+
 EXTERNAL_SENSORS:
   - Integrazione Weather Underground
   - Supporto sensori Zigbee/Z-Wave
@@ -521,7 +521,7 @@ ROOM_CONFIGURATION:
   - Tipo edificio (residential/commercial)
   - Numero occupanti e pattern presenza
   - Preferenze comfort personalizzate
-  
+
 AUTOMATION_TEMPLATES:
   - Profili predefiniti (Family/Senior/Energy-Saver)
   - Import configurazioni da file esistenti
@@ -531,7 +531,7 @@ AUTOMATION_TEMPLATES:
 
 **Gestione Centralizzata:**
 - **Dashboard unificata**: Vista aggregata tutte le VMC
-- **Policy Management**: Regole globali + eccezioni locali  
+- **Policy Management**: Regole globali + eccezioni locali
 - **Bulk Updates**: Aggiornamenti simultanei configurazioni
 - **Performance Analytics**: Confronto efficienza tra unità
 
@@ -545,19 +545,19 @@ USER_PROFILES:
     - Gestione presenza bambini (protezioni extra)
     - Schedulazione scuola/lavoro automatica
     - Override manuale limitato per sicurezza
-    
+
   Senior_Mode:
     - Interface semplificata con controlli essenziali
     - Allerte sanitarie personalizzate
     - Controllo vocale integrato (Alexa/Google)
     - Notifiche famiglia per anomalie critiche
-    
+
   Energy_Saver:
     - Massima efficienza energetica
     - Machine learning per pattern ottimali
     - Dynamic pricing integration (tariffe elettriche)
     - ROI tracking automazioni
-    
+
   Professional_Mode:
     - Controllo granulare tutti i parametri
     - API access per integrazioni custom
@@ -573,13 +573,13 @@ ADAPTIVE_THRESHOLDS:
     - Learning storico per ottimizzazione
     - Weather API integration per predizioni
     - Gradual transition tra profili stagionali
-    
+
   Occupancy_Based:
     - Detection presenza automatica
     - Scaling automazioni per numero persone
     - Override per eventi speciali (feste/ospiti)
     - Privacy mode per disabilitare tracking
-    
+
   Building_Learning:
     - Thermal mass caratterizzazione automatica
     - Air exchange rate calibrazione
@@ -595,13 +595,13 @@ ADVANCED_AUTOMATION:
     - If-Then-Else logic con nesting
     - Time-based conditions con astronomy
     - Cross-device triggers (termostati/luci/etc)
-    
+
   Script_Support:
     - Python scripting per logiche avanzate
     - Node-RED integration nativa
     - YAML templates per power users
     - Git versioning per automazioni complesse
-    
+
   Machine_Learning:
     - Pattern recognition per ottimizzazione automatica
     - Anomaly detection per manutenzione predittiva
@@ -623,12 +623,12 @@ def calcola_umidita_assoluta(temp_celsius, rh_percent):
     # Costanti Magnus-Tetens per acqua
     a = 17.27
     b = 237.7
-    
+
     # Pressione vapore saturo (hPa)
     gamma = (a * temp_celsius) / (b + temp_celsius) + math.log(rh_percent / 100.0)
     es = 6.112 * math.exp(gamma)
-    
-    # Umidità assoluta (g/m³)  
+
+    # Umidità assoluta (g/m³)
     abs_humidity = (es * 2.1674) / (temp_celsius + 273.15)
     return round(abs_humidity, 2)
 
@@ -690,7 +690,7 @@ def calcola_tempo_ricambio(volume_ambiente, portata_mc_h):
     """
     if portata_mc_h == 0:
         return float('inf')
-    
+
     tempo_ore = volume_ambiente / portata_mc_h
     tempo_minuti = tempo_ore * 60
     return round(tempo_minuti, 1)
@@ -701,7 +701,7 @@ def calcola_ricambi_giornalieri(volume_ambiente, portata_mc_h):
     """
     if portata_mc_h == 0:
         return 0
-    
+
     volume_giornaliero = portata_mc_h * 24
     ricambi = volume_giornaliero / volume_ambiente
     return round(ricambi, 1)
@@ -716,11 +716,11 @@ class MoldGrowthPredictor:
     Implementazione algoritmo Hukka-Viitanen (1999)
     Per predizione rischio crescita muffa in ambienti interni
     """
-    
+
     def __init__(self):
         self.history_days = 7  # Giorni di storico per calcolo
         self.mold_index = 0    # Indice crescita muffa (0-6)
-        
+
     def calculate_critical_humidity(self, temperature):
         """
         Calcola umidità critica per temperatura data
@@ -732,26 +732,26 @@ class MoldGrowthPredictor:
             return 80.0 - (temperature - 20) * 0.5
         else:
             return 75.0
-    
+
     def update_mold_risk(self, temperature, humidity, hours_elapsed=1):
         """
         Aggiorna indice rischio muffa
         """
         critical_rh = self.calculate_critical_humidity(temperature)
-        
+
         if humidity > critical_rh and temperature > 5:
             # Condizioni favorevoli crescita
             if temperature >= 20:
                 growth_rate = 0.1 * hours_elapsed
             else:
                 growth_rate = 0.05 * hours_elapsed
-                
+
             self.mold_index = min(6.0, self.mold_index + growth_rate)
         else:
             # Condizioni sfavorevoli - decrescita lenta
             decline_rate = 0.02 * hours_elapsed
             self.mold_index = max(0.0, self.mold_index - decline_rate)
-    
+
     def get_risk_level(self):
         """
         Classificazione rischio muffa
@@ -776,36 +776,36 @@ class AirQualityPIDController:
     """
     Controllo PID per mantenimento qualità aria ottimale
     """
-    
+
     def __init__(self, kp=1.0, ki=0.1, kd=0.05):
         self.kp = kp  # Proporzionale
-        self.ki = ki  # Integrale  
+        self.ki = ki  # Integrale
         self.kd = kd  # Derivativo
-        
+
         self.setpoint = 800  # CO₂ target (ppm)
         self.integral = 0
         self.previous_error = 0
-        
+
     def update(self, current_co2, dt=1.0):
         """
         Calcola velocità VMC ottimale basata su errore CO₂
         """
         error = current_co2 - self.setpoint
-        
+
         # Termine proporzionale
         proportional = self.kp * error
-        
+
         # Termine integrale
         self.integral += error * dt
         integral = self.ki * self.integral
-        
+
         # Termine derivativo
         derivative = self.kd * (error - self.previous_error) / dt
         self.previous_error = error
-        
+
         # Output PID
         output = proportional + integral + derivative
-        
+
         # Conversione in velocità VMC (0-4)
         if output <= 0:
             return 0
@@ -825,44 +825,44 @@ class EnergyOptimizer:
     """
     Algoritmo ottimizzazione energetica con machine learning
     """
-    
+
     def __init__(self):
         self.weather_forecast = None
         self.occupancy_pattern = {}
         self.energy_prices = {}
-        
+
     def calculate_cop_dynamic(self, temp_in, temp_out, humidity_in):
         """
         Calcolo COP dinamico per heat recovery
         """
         delta_t = abs(temp_in - temp_out)
         humidity_factor = 1.0 + (humidity_in - 50) * 0.01
-        
+
         base_cop = 0.85  # Efficienza base heat exchanger
         temp_efficiency = min(1.0, delta_t / 20.0)
-        
+
         cop = base_cop * temp_efficiency * humidity_factor
         return max(0.3, min(0.95, cop))
-    
+
     def predict_optimal_schedule(self, forecast_hours=24):
         """
         Predizione schedule ottimale per prossime 24h
         """
         optimal_schedule = []
-        
+
         for hour in range(forecast_hours):
             # Factors per ottimizzazione
             weather = self.get_weather_forecast(hour)
             occupancy = self.get_occupancy_prediction(hour)
             energy_cost = self.get_energy_price(hour)
-            
+
             # Algoritmo decisionale multi-fattore
             comfort_weight = occupancy * 0.4
             energy_weight = (1 - energy_cost) * 0.3
             weather_weight = self.calculate_weather_advantage(weather) * 0.3
-            
+
             total_score = comfort_weight + energy_weight + weather_weight
-            
+
             # Conversione score in velocità VMC
             if total_score < 0.2:
                 speed = 0
@@ -874,18 +874,18 @@ class EnergyOptimizer:
                 speed = 3
             else:
                 speed = 4
-                
+
             optimal_schedule.append({
                 "hour": hour,
                 "speed": speed,
                 "reasoning": {
                     "comfort": comfort_weight,
-                    "energy": energy_weight, 
+                    "energy": energy_weight,
                     "weather": weather_weight,
                     "total": total_score
                 }
             })
-            
+
         return optimal_schedule
 ```
 
@@ -897,13 +897,13 @@ FAULT_TOLERANCE_SYSTEM:
     - Circuit breaker dopo 5 tentativi falliti consecutivi
     - Fallback su ultimo stato valido known
     - User notification dopo 30 secondi disconnessione
-    
+
   System_Errors:
     - Graceful degradation funzionalità non critiche
     - Emergency stop per comandi critici falliti
     - Automatic recovery tentativi ogni 5 minuti
     - Sistema logging completo per debugging
-    
+
   Data_Corruption:
     - Checksum validation per configuration files
     - Automatic backup restoration se corruption detected
@@ -921,19 +921,19 @@ PLUGIN_MARKETPLACE:
     - Security audit completato
     - Compatibility testing su versions multiple
     - Professional support disponibile
-    
+
   Community_Plugins:
     - Open source contributions
     - Community testing e feedback
     - Basic compatibility verification
     - Community support forum
-    
+
   Enterprise_Plugins:
     - Commercial licensing model
     - Professional development services
     - Custom plugin development
     - Enterprise support contracts
-    
+
   Distribution_System:
     - Automated plugin installation
     - Dependency management automatico
@@ -951,19 +951,19 @@ CI_CD_PIPELINE:
     - Code quality checks (SonarQube/CodeQL)
     - Security vulnerability scanning
     - Performance regression testing
-    
+
   Staging_Environment:
     - Feature branch testing automatico
     - User acceptance testing platform
     - Load testing con simulated VMC units
     - Security penetration testing
-    
+
   Production_Deployment:
     - Blue-green deployment strategy
     - Automatic rollback su failure detection
     - Health checks post-deployment
     - User notification sistema per updates
-    
+
   Release_Management:
     - Semantic versioning (MAJOR.MINOR.PATCH)
     - Release notes generation automatica
@@ -977,21 +977,21 @@ class UpdateManager:
     """
     Gestione aggiornamenti sistema con safety checks
     """
-    
+
     def __init__(self):
         self.update_channels = {
             'stable': {'auto_update': True, 'rollback_time': 24},
             'beta': {'auto_update': False, 'rollback_time': 72},
             'dev': {'auto_update': False, 'rollback_time': 168}
         }
-    
+
     def check_for_updates(self, channel='stable'):
         """
         Check updates disponibili con changelog preview
         """
         remote_version = self.fetch_remote_version(channel)
         current_version = self.get_current_version()
-        
+
         if self.is_newer_version(remote_version, current_version):
             return {
                 'available': True,
@@ -1002,7 +1002,7 @@ class UpdateManager:
                 'rollback_available': True
             }
         return {'available': False}
-    
+
     def perform_update(self, version, user_confirmed=False):
         """
         Update execution con safety checks
@@ -1011,18 +1011,18 @@ class UpdateManager:
         self.validate_system_health()
         self.create_backup_point()
         self.check_disk_space()
-        
+
         # Update execution
         try:
             self.download_update(version)
             self.verify_update_integrity()
             self.apply_update()
             self.run_post_update_tests()
-            
+
         except UpdateException as e:
             self.rollback_to_backup()
             raise e
-    
+
     def schedule_automatic_update(self, maintenance_window):
         """
         Scheduling updates durante maintenance windows
@@ -1044,13 +1044,13 @@ CORE_REQUIREMENTS:
     - Recommended: ≥2025.12.0 (per feature avanzate)
     - Python version: ≥3.11 (per performance optimization)
     - SQLite/PostgreSQL: Per historical data storage
-    
+
   Add-ons_Essenziali:
     - File Editor: Configurazione files via web interface
     - Terminal & SSH: Access system per troubleshooting
     - Samba Share: File access da network per backup
     - Visual Studio Code: Development environment avanzato
-    
+
   Add-ons_Raccomandati:
     - Node-RED: Visual automation building
     - InfluxDB: Time-series database per analytics
@@ -1066,17 +1066,17 @@ EXTERNAL_INTEGRATIONS:
     - Notification permissions configurate
     - Device tracker enabled per presence detection
     - Location services per geofencing automations
-    
+
   Weather_Data_Sources:
     - OpenWeatherMap API (free tier sufficient)
     - WeatherUnderground personal stations
     - Local weather stations via API/MQTT
     - National weather services integration
-    
+
   Optional_Services:
     - Dynamic DNS service per remote access
     - VPN solution per secure remote connection
-    - Cloud backup service (encrypted) 
+    - Cloud backup service (encrypted)
     - Time sync service (NTP) per accuracy
 ```
 
@@ -1092,12 +1092,12 @@ HELTY_FLOW_SUPPORT:
       - Humidity sensor (internal)
       - LED panel control
       - Filter reset
-    
+
     Limitations:
       - No CO₂ sensor
-      - No VOC sensor  
+      - No VOC sensor
       - Limited automation capabilities
-      
+
   FLOW_ELITE:
     Full_Feature_Set:
       - All FLOW_PLUS features
@@ -1105,7 +1105,7 @@ HELTY_FLOW_SUPPORT:
       - VOC sensor (0-500 IAQ)
       - Advanced automation support
       - Predictive maintenance alerts
-    
+
     Elite_Exclusive:
       - Air quality based automation
       - Advanced mold prevention
@@ -1122,25 +1122,25 @@ SUPPORT_FRAMEWORK:
       - Feature overview con screenshots
       - Troubleshooting common issues
       - Video tutorials per setup
-    
+
     Technical_Documentation:
       - API reference completa
       - Architecture diagrams
       - Database schema documentation
       - Integration examples
-    
+
     Developer_Documentation:
       - Plugin development guide
       - Contribution guidelines
       - Code style standards
       - Testing frameworks
-    
+
   Community_Support:
     - GitHub issues tracking
     - Community forum per discussions
     - FAQ database searchable
     - User-contributed tutorials
-    
+
   Professional_Support:
     - Email support per critical issues
     - Remote assistance capability
