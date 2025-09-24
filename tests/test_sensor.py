@@ -60,10 +60,8 @@ async def test_async_setup_entry(mock_hass, mock_config_entry, mock_coordinator)
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
 
-    # Should have 16 entities total
-    assert len(entities) == 16
-
-    # Check some entity types
+    # Should have 20 entities total (rimosse VmcHeltyNetworkPasswordSensor e VmcHeltyNetworkSSIDSensor)
+    assert len(entities) == 20
     sensor_entities = [e for e in entities if isinstance(e, VmcHeltySensor)]
     assert len(sensor_entities) >= 5  # At least the 5 main sensors
 

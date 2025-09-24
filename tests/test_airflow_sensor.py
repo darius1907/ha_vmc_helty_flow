@@ -72,32 +72,32 @@ class TestVmcHeltyAirflowSensor:
 
     def test_native_value_night_mode(self, airflow_sensor, mock_coordinator):
         """Test native_value for night mode."""
-        # Night mode (fan_speed = 5) should map to effective speed 1
+        # Night mode (fan_speed = 5) has its own mapping
         mock_coordinator.data = {
             "status": "VMGO,5,1,25,0,24"  # fan_speed = 5 = night mode
         }
-        # In night mode, effective speed is 1
-        expected = AIRFLOW_MAPPING[1]  # 10
+        # In night mode, airflow is 7 m³/h according to AIRFLOW_MAPPING
+        expected = AIRFLOW_MAPPING[5]  # 7
         assert airflow_sensor.native_value == expected
 
     def test_native_value_hyperventilation(self, airflow_sensor, mock_coordinator):
         """Test native_value for hyperventilation mode."""
-        # Hyperventilation mode (fan_speed = 6) should map to effective speed 4
+        # Hyperventilation mode (fan_speed = 6) has higher airflow
         mock_coordinator.data = {
             "status": "VMGO,6,1,25,0,24"  # fan_speed = 6 = hyperventilation
         }
-        # In hyperventilation mode, effective speed is 4
-        expected = AIRFLOW_MAPPING[4]  # 37
+        # In hyperventilation mode, airflow is 42 m³/h according to AIRFLOW_MAPPING
+        expected = AIRFLOW_MAPPING[6]  # 42
         assert airflow_sensor.native_value == expected
 
     def test_native_value_free_cooling(self, airflow_sensor, mock_coordinator):
         """Test native_value for free cooling mode."""
-        # Free cooling mode (fan_speed = 7) should map to effective speed 0
+        # Free cooling mode (fan_speed = 7) uses moderate airflow
         mock_coordinator.data = {
             "status": "VMGO,7,1,25,0,24"  # fan_speed = 7 = free cooling
         }
-        # In free cooling mode, effective speed is 0
-        expected = AIRFLOW_MAPPING[0]  # 0
+        # In free cooling mode, airflow is 26 m³/h according to AIRFLOW_MAPPING
+        expected = AIRFLOW_MAPPING[7]  # 26
         assert airflow_sensor.native_value == expected
 
     def test_native_value_invalid_response_parts(
@@ -119,10 +119,10 @@ class TestVmcHeltyAirflowSensor:
     ):
         """Test native_value with fan speed above maximum."""
         mock_coordinator.data = {
-            "status": "VMGO,10,1,25,0,24"  # Fan speed 10 (above max 4)
+            "status": "VMGO,10,1,25,0,24"  # Fan speed 10 (not in mapping)
         }
-        # Should clamp to max speed and use its airflow
-        expected = AIRFLOW_MAPPING[4]  # 37
+        # Unknown fan speeds return 0 (default value from .get())
+        expected = 0
         assert airflow_sensor.native_value == expected
 
     def test_airflow_mapping_constants(self):
