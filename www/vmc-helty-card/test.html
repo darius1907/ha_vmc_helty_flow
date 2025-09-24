@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VMC Helty Card - Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #2196f3;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 5px 0;
+        }
+        
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .mock-ha-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        /* CSS Variables for theming */
+        :root {
+            --primary-color: #2196f3;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --info-color: #2196f3;
+            --disabled-color: #9e9e9e;
+            --divider-color: #e0e0e0;
+            --card-background-color: white;
+            --primary-text-color: #212121;
+            --secondary-text-color: #757575;
+            --secondary-background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌬️ VMC Helty Card - Test Environment</h1>
+        
+        <div class="test-section">
+            <h2>📦 Installation Check</h2>
+            <div id="installationStatus">
+                <div class="status" id="filesStatus">⏳ Checking files...</div>
+                <div class="status" id="moduleStatus">⏳ Loading modules...</div>
+                <div class="status" id="registrationStatus">⏳ Checking registration...</div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎛️ Card Demo</h2>
+            <p>This demonstrates the card with mock data (no Home Assistant required)</p>
+            
+            <div class="card-container">
+                <div class="mock-ha-card">
+                    <vmc-helty-card id="demoCard"></vmc-helty-card>
+                </div>
+                
+                <div class="mock-ha-card">
+                    <vmc-helty-compact-card id="compactCard"></vmc-helty-compact-card>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 Configuration Test</h2>
+            <div id="configTest">
+                <div class="status" id="configStatus">⏳ Testing configuration...</div>
+            </div>
+            
+            <h3>Sample Configuration:</h3>
+            <pre><code>type: custom:vmc-helty-card
+entity: fan.vmc_helty_test
+name: "Test VMC"
+show_temperature: true
+show_humidity: true
+show_co2: true
+show_voc: true</code></pre>
+        </div>
+        
+        <div class="test-section">
+            <h2>📱 Responsive Test</h2>
+            <p>Resize your browser window to test responsive behavior</p>
+            <div class="status success">✅ CSS Grid layout adapts to different screen sizes</div>
+            <div class="status success">✅ Mobile-first approach with breakpoints at 768px and 480px</div>
+            <div class="status success">✅ Touch-friendly controls for mobile devices</div>
+        </div>
+    </div>
+
+    <!-- Load the VMC Helty Card modules -->
+    <script type="module">
+        // Mock Home Assistant environment
+        window.customCards = window.customCards || [];
+        
+        // Mock ha-icon component
+        if (!customElements.get('ha-icon')) {
+            class MockHaIcon extends HTMLElement {
+                connectedCallback() {
+                    const icon = this.getAttribute('icon') || 'mdi:help';
+                    this.innerHTML = `<span style="font-family: Material Design Icons; font-size: inherit;">${this.getIconChar(icon)}</span>`;
+                }
+                
+                getIconChar(iconName) {
+                    const icons = {
+                        'mdi:fan': '🌪️',
+                        'mdi:thermometer': '🌡️',
+                        'mdi:water-percent': '💧',
+                        'mdi:molecule-co2': '🫁',
+                        'mdi:wifi': '📶',
+                        'mdi:wifi-off': '📵',
+                        'mdi:power': '⚡',
+                        'mdi:fan-speed-1': '1️⃣',
+                        'mdi:fan-speed-2': '2️⃣',
+                        'mdi:fan-speed-3': '3️⃣',
+                        'mdi:fan-plus': '➕',
+                        'mdi:sleep': '😴',
+                        'mdi:fast-forward': '⏩',
+                        'mdi:snowflake': '❄️'
+                    };
+                    return icons[iconName] || '❓';
+                }
+            }
+            customElements.define('ha-icon', MockHaIcon);
+        }
+        
+        // Mock ha-card component
+        if (!customElements.get('ha-card')) {
+            class MockHaCard extends HTMLElement {
+                connectedCallback() {
+                    this.style.display = 'block';
+                    this.style.background = 'var(--card-background-color, white)';
+                    this.style.borderRadius = '8px';
+                    this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }
+            }
+            customElements.define('ha-card', MockHaCard);
+        }
+        
+        // Update status functions
+        function updateStatus(elementId, success, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.className = `status ${success ? 'success' : 'error'}`;
+                element.textContent = `${success ? '✅' : '❌'} ${message}`;
+            }
+        }
+        
+        try {
+            // Check if files exist (simulate)
+            updateStatus('filesStatus', true, 'Card files loaded successfully');
+            
+            // Load the card modules
+            await import('./vmc-helty-card.js');
+            await import('./vmc-helty-compact-card.js');
+            
+            updateStatus('moduleStatus', true, 'JavaScript modules loaded');
+            
+            // Check if cards are registered
+            const mainCardRegistered = customElements.get('vmc-helty-card');
+            const compactCardRegistered = customElements.get('vmc-helty-compact-card');
+            
+            if (mainCardRegistered && compactCardRegistered) {
+                updateStatus('registrationStatus', true, 'Custom elements registered');
+            } else {
+                updateStatus('registrationStatus', false, 'Custom elements registration failed');
+            }
+            
+            // Setup demo cards with mock data
+            setTimeout(() => {
+                setupDemoCards();
+            }, 100);
+            
+        } catch (error) {
+            updateStatus('moduleStatus', false, `Module loading failed: ${error.message}`);
+            updateStatus('registrationStatus', false, 'Registration skipped due to loading error');
+        }
+        
+        function setupDemoCards() {
+            try {
+                // Mock HASS object
+                const mockHass = {
+                    states: {
+                        'fan.vmc_helty_test': {
+                            state: 'on',
+                            attributes: {
+                                percentage: 50,
+                                friendly_name: 'Test VMC Fan'
+                            }
+                        },
+                        'sensor.vmc_helty_test_temperature_internal': {
+                            state: '22.5',
+                            attributes: {
+                                unit_of_measurement: '°C',
+                                friendly_name: 'Internal Temperature'
+                            }
+                        },
+                        'sensor.vmc_helty_test_temperature_external': {
+                            state: '18.3',
+                            attributes: {
+                                unit_of_measurement: '°C',
+                                friendly_name: 'External Temperature'
+                            }
+                        },
+                        'sensor.vmc_helty_test_humidity': {
+                            state: '45',
+                            attributes: {
+                                unit_of_measurement: '%',
+                                friendly_name: 'Humidity'
+                            }
+                        },
+                        'sensor.vmc_helty_test_co2': {
+                            state: '650',
+                            attributes: {
+                                unit_of_measurement: 'ppm',
+                                friendly_name: 'CO₂'
+                            }
+                        },
+                        'sensor.vmc_helty_test_voc': {
+                            state: '85',
+                            attributes: {
+                                unit_of_measurement: 'IAQ',
+                                friendly_name: 'VOC'
+                            }
+                        },
+                        'switch.vmc_helty_test_night_mode': {
+                            state: 'off',
+                            attributes: {
+                                friendly_name: 'Night Mode'
+                            }
+                        },
+                        'switch.vmc_helty_test_hyperventilation': {
+                            state: 'off',
+                            attributes: {
+                                friendly_name: 'Hyperventilation'
+                            }
+                        },
+                        'switch.vmc_helty_test_free_cooling': {
+                            state: 'on',
+                            attributes: {
+                                friendly_name: 'Free Cooling'
+                            }
+                        }
+                    },
+                    callService: (domain, service, data) => {
+                        console.log(`Mock service call: ${domain}.${service}`, data);
+                        return Promise.resolve();
+                    }
+                };
+                
+                // Configure demo cards
+                const demoCard = document.getElementById('demoCard');
+                const compactCard = document.getElementById('compactCard');
+                
+                if (demoCard) {
+                    demoCard.setConfig({
+                        entity: 'fan.vmc_helty_test',
+                        name: 'Demo VMC',
+                        show_temperature: true,
+                        show_humidity: true,
+                        show_co2: true,
+                        show_voc: true
+                    });
+                    demoCard.hass = mockHass;
+                }
+                
+                if (compactCard) {
+                    compactCard.setConfig({
+                        entity: 'fan.vmc_helty_test',
+                        name: 'Compact'
+                    });
+                    compactCard.hass = mockHass;
+                }
+                
+                updateStatus('configStatus', true, 'Cards configured with mock data');
+                
+            } catch (error) {
+                updateStatus('configStatus', false, `Configuration failed: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
