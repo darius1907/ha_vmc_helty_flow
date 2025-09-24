@@ -52,6 +52,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name=DOMAIN,
             update_interval=DEFAULT_SCAN_INTERVAL,
+            config_entry=config_entry,
         )
         self.config_entry = config_entry
         self.ip = config_entry.data["ip"]

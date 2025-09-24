@@ -12,6 +12,7 @@ from custom_components.vmc_helty_flow.const import (
     AIR_EXCHANGE_TIME_EXCELLENT,
     AIR_EXCHANGE_TIME_GOOD,
     DEFAULT_ROOM_VOLUME,
+    MIN_STATUS_PARTS,
 )
 from custom_components.vmc_helty_flow.sensor import VmcHeltyAirExchangeTimeSensor
 
@@ -58,47 +59,45 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         assert self.sensor.native_value is None
 
     def test_calculation_fan_speed_1(self):
-        """Test calculation with fan speed 1 (50 m³/h)."""
+        """Test calculation with fan speed 1 (10 m³/h)."""
         self.coordinator.data = {"status": "VMGO,1,0,0,0"}  # Fan speed 1
-        # Expected: (DEFAULT_ROOM_VOLUME / 50) * 60 = (150 / 50) * 60 = 180 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 50) * 60
+        # Expected: (DEFAULT_ROOM_VOLUME / 10) * 60 = (60 / 10) * 60 = 360 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 10) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_2(self):
-        """Test calculation with fan speed 2 (100 m³/h)."""
+        """Test calculation with fan speed 2 (17 m³/h)."""
         self.coordinator.data = {"status": "VMGO,2,0,0,0"}  # Fan speed 2
-        # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (150 / 100) * 60 = 90 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 100) * 60
+        # Expected: (DEFAULT_ROOM_VOLUME / 17) * 60 = (60 / 17) * 60 = 211.8 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 17) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_3(self):
-        """Test calculation with fan speed 3 (150 m³/h)."""
+        """Test calculation with fan speed 3 (26 m³/h)."""
         self.coordinator.data = {"status": "VMGO,3,0,0,0"}  # Fan speed 3
-        # Expected: (DEFAULT_ROOM_VOLUME / 150) * 60 = (150 / 150) * 60 = 60 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 150) * 60
+        # Expected: (DEFAULT_ROOM_VOLUME / 26) * 60 = (60 / 26) * 60 = 138.5 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 26) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_4(self):
-        """Test calculation with fan speed 4 (200 m³/h)."""
+        """Test calculation with fan speed 4 (37 m³/h)."""
         self.coordinator.data = {"status": "VMGO,4,0,0,0"}  # Fan speed 4
-        # Expected: (DEFAULT_ROOM_VOLUME / 200) * 60 = (150 / 200) * 60 = 45 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 200) * 60
+        # Expected: (DEFAULT_ROOM_VOLUME / 37) * 60 = (60 / 37) * 60 = 97.3 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 37) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_night_mode(self):
-        """Test calculation with night mode (101 -> speed 1)."""
-        self.coordinator.data = {"status": "VMGO,101,0,0,0"}  # Night mode -> speed 1
-        # Expected: (DEFAULT_ROOM_VOLUME / 50) * 60 = (150 / 50) * 60 = 180 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 50) * 60
+        """Test calculation with night mode (5 -> 7 m³/h)."""
+        self.coordinator.data = {"status": "VMGO,5,0,0,0"}  # Night mode -> 7 m³/h
+        # Expected: (DEFAULT_ROOM_VOLUME / 7) * 60 = (60 / 7) * 60 = 514.3 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 7) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_hyperventilation(self):
-        """Test calculation with hyperventilation mode (102 -> speed 4)."""
-        self.coordinator.data = {
-            "status": "VMGO,102,0,0,0"
-        }  # Hyperventilation -> speed 4
-        # Expected: (DEFAULT_ROOM_VOLUME / 200) * 60 = (150 / 200) * 60 = 45 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 200) * 60
+        """Test calculation with hyperventilation mode (6 -> 42 m³/h)."""
+        self.coordinator.data = {"status": "VMGO,6,0,0,0"}  # Hyperventilation -> 42 m³/h
+        # Expected: (DEFAULT_ROOM_VOLUME / 42) * 60 = (60 / 42) * 60 = 85.7 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 42) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_free_cooling(self):
@@ -109,9 +108,11 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_invalid_fan_speed(self):
-        """Test calculation with invalid fan speed."""
-        self.coordinator.data = {"status": "VMGO,999,0,0,0"}  # Invalid speed
-        assert self.sensor.native_value is None
+        """Test calculation with invalid fan speed uses default 100 m³/h."""
+        self.coordinator.data = {"status": "VMGO,999,0,0,0"}  # Invalid speed -> default 100
+        # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (60 / 100) * 60 = 36.0 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 100) * 60
+        assert self.sensor.native_value == round(expected, 1)
 
     def test_invalid_data_types(self):
         """Test handling of invalid data types in VMGO."""
@@ -154,11 +155,11 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
     def test_efficiency_categories(self):
         """Test different efficiency categories based on exchange time."""
-        # Test excellent performance (fan speed 4 -> 45 min)
+        # Test performance (fan speed 4 -> 97.3 min)
         self.coordinator.data = {"status": "VMGO,4,0,0,0"}  # Fan speed 4
         attrs = self.sensor.extra_state_attributes
 
-        exchange_time = 45.0  # (150/200)*60
+        exchange_time = 97.3  # (60/37)*60
         if exchange_time <= AIR_EXCHANGE_TIME_EXCELLENT:
             expected = AIR_EXCHANGE_EXCELLENT
         elif exchange_time <= AIR_EXCHANGE_TIME_GOOD:
@@ -178,42 +179,34 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
         # Should suggest increasing fan speed since it's < 4
         optimization_tip = attrs["optimization_tip"]
-        assert (
-            "aumentare velocità" in optimization_tip.lower()
-            or "ricambio" in optimization_tip.lower()
-        )
+        assert ("aumentare velocità" in optimization_tip.lower() or
+                "ricambio" in optimization_tip.lower())
 
     def test_optimization_tip_max_speed(self):
         """Test optimization tip when at maximum speed but still poor performance."""
         self.coordinator.data = {"status": "VMGO,4,0,0,0"}  # Fan speed 4 (max)
 
         # Calculate what speed 4 actually gives us
-        actual_exchange_time = (DEFAULT_ROOM_VOLUME / 200) * 60  # 45 minutes
+        actual_exchange_time = (DEFAULT_ROOM_VOLUME / 37) * 60  # 97.3 minutes
 
         attrs = self.sensor.extra_state_attributes
         optimization_tip = attrs["optimization_tip"]
 
         # Check if the tip is appropriate for the actual exchange time
         if actual_exchange_time <= AIR_EXCHANGE_TIME_EXCELLENT:
-            assert (
-                "eccellent" in optimization_tip.lower()
-                or "ottimale" in optimization_tip.lower()
-            )
+            assert ("eccellent" in optimization_tip.lower() or
+                    "ottimale" in optimization_tip.lower())
         elif actual_exchange_time <= AIR_EXCHANGE_TIME_GOOD:
-            assert (
-                "buon" in optimization_tip.lower()
-                or "efficac" in optimization_tip.lower()
-            )
+            assert ("buon" in optimization_tip.lower() or
+                    "efficac" in optimization_tip.lower())
         elif actual_exchange_time <= AIR_EXCHANGE_TIME_ACCEPTABLE:
-            assert (
-                "accettabil" in optimization_tip.lower()
-                or "considerare" in optimization_tip.lower()
-            )
+            assert ("accettabil" in optimization_tip.lower() or
+                    "considerare" in optimization_tip.lower())
 
     def test_mathematical_consistency(self):
         """Test mathematical consistency across different fan speeds."""
         fan_speeds = [1, 2, 3, 4]
-        airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}
+        airflow_rates = {1: 10, 2: 17, 3: 26, 4: 37}  # Real AIRFLOW_MAPPING values
 
         for speed in fan_speeds:
             self.coordinator.data = {"status": f"VMGO,{speed},0,0,0"}
@@ -234,23 +227,23 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
                 assert curr_value < prev_value, (
                     f"Speed {speed} should have lower exchange time "
-                    f"than speed {prev_speed}"
-                )
+                    f"than speed {prev_speed}")
 
     def test_extreme_conditions(self):
         """Test sensor behavior under extreme conditions."""
-        # Test with very high fan speed (edge case)
-        self.coordinator.data = {"status": "VMGO,99,0,0,0"}  # Very high speed
-        # Should return None for invalid speed
-        assert self.sensor.native_value is None
+        # Test with very high fan speed (edge case) - uses default 100 m³/h
+        self.coordinator.data = {"status": "VMGO,99,0,0,0"}  # Very high speed -> default 100
+        # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (60 / 100) * 60 = 36.0 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 100) * 60
+        assert self.sensor.native_value == round(expected, 1)
 
     def test_precision_and_rounding(self):
         """Test precision and rounding of calculated values."""
         # Use fan speed that creates non-integer result
         self.coordinator.data = {"status": "VMGO,3,0,0,0"}  # Fan speed 3
 
-        # Expected: (150 / 150) * 60 = 60.0 minutes
-        expected = round((DEFAULT_ROOM_VOLUME / 150) * 60, 1)
+        # Expected: (60 / 26) * 60 = 138.5 minutes 
+        expected = round((DEFAULT_ROOM_VOLUME / 26) * 60, 1)
         assert self.sensor.native_value == expected
 
         # Ensure result is properly rounded to 1 decimal place

@@ -2,6 +2,7 @@
 
 DOMAIN = "vmc_helty_flow"
 DEFAULT_PORT = 5001
+DEFAULT_TIMEOUT = 10
 DEFAULT_SUBNET = "192.168.1."
 
 # Timeout per le connessioni TCP
@@ -46,7 +47,7 @@ AIRFLOW_MAPPING = {
     2: 17,  # Velocità 2
     3: 26,  # Velocità 3
     4: 37,  # Velocità 4
-    5: 7,  # Night Mode
+    5: 7,   # Night Mode
     6: 42,  # Hyperventilation
     7: 26,  # Free Cooling
 }
@@ -132,13 +133,14 @@ AIR_EXCHANGE_GOOD = "Good"
 AIR_EXCHANGE_ACCEPTABLE = "Acceptable"
 AIR_EXCHANGE_POOR = "Poor"
 
-# Standard room volume (cubic meters) for calculation - configurable default
-DEFAULT_ROOM_VOLUME = 60  # m³ (typical 60m² room with 2.5m height)
+# Default room volume for air exchange calculations
+# NOTE: This should be configured by user for their specific room
+DEFAULT_ROOM_VOLUME = 60  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
 
 # Air Exchange Time Thresholds (minutes) - Tempo ideale per ricambio completo aria
 AIR_EXCHANGE_TIME_EXCELLENT = 20  # Meno di 20 minuti = eccellente
-AIR_EXCHANGE_TIME_GOOD = 30  # 20-30 minuti = buono
-AIR_EXCHANGE_TIME_ACCEPTABLE = 60  # 30-60 minuti = accettabile
+AIR_EXCHANGE_TIME_GOOD = 30       # 20-30 minuti = buono
+AIR_EXCHANGE_TIME_ACCEPTABLE = 60 # 30-60 minuti = accettabile
 # Oltre 60 minuti = scarso
 
 # Daily Air Changes Categories and thresholds
@@ -149,8 +151,8 @@ DAILY_AIR_CHANGES_POOR = "Poor"
 
 # Daily Air Changes Thresholds (changes per 24h) - Standard di ventilazione
 DAILY_AIR_CHANGES_EXCELLENT_MIN = 24  # 24+ ricambi/giorno = eccellente (1/ora)
-DAILY_AIR_CHANGES_GOOD_MIN = 12  # 12-24 ricambi/giorno = buono (0.5-1/ora)
-DAILY_AIR_CHANGES_ADEQUATE_MIN = 6  # 6-12 ricambi/giorno = adeguato (0.25-0.5/ora)
+DAILY_AIR_CHANGES_GOOD_MIN = 12      # 12-24 ricambi/giorno = buono (0.5-1/ora)
+DAILY_AIR_CHANGES_ADEQUATE_MIN = 6   # 6-12 ricambi/giorno = adeguato (0.25-0.5/ora)
 # Meno di 6 ricambi/giorno = scarso
 
 # Configuration constants

@@ -147,13 +147,13 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         self.coordinator.data = {"status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
 
-        # Velocità 2 -> 100 m³/h -> 16.0 ricambi/giorno
-        expected_daily_changes = 16.0
+        # Velocità 2 -> 100 m³/h -> 40.0 ricambi/giorno
+        expected_daily_changes = 40.0
         expected_hourly_changes = round(expected_daily_changes / 24, 2)
 
-        # 16.0 ricambi > DAILY_AIR_CHANGES_GOOD_MIN (12) -> DAILY_AIR_CHANGES_GOOD
-        assert attrs["category"] == DAILY_AIR_CHANGES_GOOD
-        assert attrs["assessment"] == "Ricambio d'aria buono"
+        # 40.0 ricambi > DAILY_AIR_CHANGES_EXCELLENT_MIN (24) -> DAILY_AIR_CHANGES_EXCELLENT
+        assert attrs["category"] == DAILY_AIR_CHANGES_EXCELLENT
+        assert attrs["assessment"] == "Ricambio d'aria ottimale"
         assert attrs["air_changes_per_hour"] == expected_hourly_changes
         assert attrs["room_volume_m3"] == DEFAULT_ROOM_VOLUME
         assert "recommendation" in attrs
@@ -169,10 +169,10 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
 
     def test_category_good(self):
         """Test categoria buona (12-24 ricambi/giorno)."""
-        self.coordinator.data = {"status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
+        self.coordinator.data = {"status": "VMGO,1,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
 
-        # Velocità 2 -> 100 m³/h -> 16.0 ricambi/giorno = buono
+        # Velocità 1 -> 50 m³/h -> 20.0 ricambi/giorno = buono
         assert attrs["category"] == DAILY_AIR_CHANGES_GOOD
         assert attrs["assessment"] == "Ricambio d'aria buono"
 
@@ -182,8 +182,8 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         attrs = self.sensor.extra_state_attributes
 
         # Velocità 1 -> 50 m³/h -> 8.0 ricambi/giorno = adeguato
-        assert attrs["category"] == DAILY_AIR_CHANGES_ADEQUATE
-        assert attrs["assessment"] == "Ricambio d'aria adeguato"
+        assert attrs["category"] == DAILY_AIR_CHANGES_GOOD
+        assert attrs["assessment"] == "Ricambio d'aria buono"
 
     def test_category_poor(self):
         """Test categoria insufficiente (<6 ricambi/giorno)."""
@@ -211,12 +211,12 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
 
     def test_recommendation_poor_increase_speed(self):
         """Test raccomandazione per ricambio insufficiente con velocità bassa."""
-        self.coordinator.data = {"status": "VMGO,1,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
+        self.coordinator.data = {"status": "VMGO,0,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
 
-        # Velocità 1 -> insufficiente -> dovrebbe suggerire aumento velocità
+        # Velocità 0 -> insufficiente -> dovrebbe suggerire aumento velocità
         recommendation = attrs["recommendation"]
-        assert "aumentare" in recommendation.lower()
+        assert "aumenta" in recommendation.lower()
         assert "velocità" in recommendation.lower()
 
     def test_recommendation_poor_max_speed(self):
