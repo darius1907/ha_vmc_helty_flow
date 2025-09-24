@@ -252,16 +252,38 @@ class VmcHeltyCardEditor extends LitElement {
   _discoverEntities() {
     if (!this.hass) return;
 
-    // Discover VMC entities
+    // Discover VMC entities - look for all fan entities first, then filter by integration
     this._vmcEntities = Object.keys(this.hass.states)
-      .filter(entityId =>
-        entityId.startsWith('fan.') &&
-        entityId.includes('vmc_helty')
-      )
+      .filter(entityId => {
+        if (!entityId.startsWith('fan.')) return false;
+        
+        const state = this.hass.states[entityId];
+        // Check if it's from our VMC Helty integration by looking at attributes
+        return (
+          entityId.includes('vmc_helty') ||
+          entityId.includes('helty') ||
+          entityId.includes('soggiorno') || // Add common room names
+          entityId.includes('cucina') ||
+          entityId.includes('bagno') ||
+          entityId.includes('camera') ||
+          state?.attributes?.integration === 'vmc_helty_flow' ||
+          state?.entity_id?.includes('_fan')
+        );
+      })
       .map(entityId => ({
         value: entityId,
         label: this.hass.states[entityId]?.attributes?.friendly_name || entityId
       }));
+
+    // If no VMC-specific entities found, show all fan entities as fallback
+    if (this._vmcEntities.length === 0) {
+      this._vmcEntities = Object.keys(this.hass.states)
+        .filter(entityId => entityId.startsWith('fan.'))
+        .map(entityId => ({
+          value: entityId,
+          label: this.hass.states[entityId]?.attributes?.friendly_name || entityId
+        }));
+    }
 
     // Discover temperature sensors
     this._temperatureSensors = Object.keys(this.hass.states)
@@ -377,7 +399,7 @@ class VmcHeltyCardEditor extends LitElement {
       return html`
         <div class="error-message">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <span>No VMC Helty Flow devices found. Please ensure your integration is properly configured.</span>
+          <span>No fan entities found. Please ensure your VMC Helty Flow integration is running and has created the fan entities.</span>
         </div>
       `;
     }

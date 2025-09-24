@@ -874,3 +874,15 @@ window.customCards.push({
 console.info(`%c VMC HELTY CARD v2.0 LitElement %c Loaded successfully! 🌀`,
   "color: white; background: green; font-weight: bold;",
   "color: green; font-weight: normal;");
+
+// Dynamically load the editor if available
+try {
+  // Check if we're in edit mode and need the editor
+  if (window.customCards) {
+    import('./vmc-helty-card-editor.js').catch(() => {
+      console.warn('VMC Helty Card Editor not found - visual editor not available');
+    });
+  }
+} catch (error) {
+  console.debug('VMC Helty Card Editor import failed:', error);
+}
