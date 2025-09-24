@@ -47,7 +47,56 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 - **SSID/Password**: Configurazione WiFi
 - **Network Settings**: Gestione completa parametri di rete
 
-## 🚀 Configurazione Guidata
+### 📈 **Sensori Avanzati**
+- **Dew Point**: Calcolo punto di rugiada per prevenzione condensa
+- **Comfort Index**: Indice di comfort basato su temperatura e umidità
+- **Dew Point Delta**: Differenza tra temperatura esterna e punto rugiada
+- **Air Exchange Time**: Tempo di ricambio aria basato su velocità ventola
+- **Daily Air Changes**: Numero ricambi d'aria giornalieri
+
+## 🎨 **Dashboard Personalizzata**
+
+### 📱 **VMC Helty Control Card**
+Card Lovelace personalizzata per controllo completo del sistema VMC:
+
+- **🎛️ Controllo Ventola**: Interfaccia intuitiva con pulsanti velocità (0-4)
+- **📊 Monitor Ambientale**: Visualizzazione sensori con indicatori colorati
+- **🔄 Aggiornamenti Real-time**: Stato ventola e sensori in tempo reale
+- **� Design Responsive**: Ottimizzato per mobile, tablet e desktop
+- **🎨 Temi Multipli**: Default, Compact, Minimal
+- **⚙️ Configurazione Visuale**: Editor grafico integrato in Lovelace
+
+#### Installazione Card
+```bash
+# Copia i file della card in www/
+/config/www/vmc-helty-card/
+├── vmc-helty-card.js              # Card principale
+├── vmc-helty-card-editor.js       # Editor configurazione
+├── vmc-helty-compact-card.js      # Versione compatta
+└── examples.yaml                  # Esempi configurazione
+```
+
+Aggiungi alle risorse Lovelace:
+```yaml
+resources:
+  - url: /local/vmc-helty-card/vmc-helty-card.js
+    type: module
+```
+
+Configurazione card:
+```yaml
+type: custom:vmc-helty-card
+entity: fan.vmc_helty
+name: "VMC Living Room"
+show_temperature: true
+show_humidity: true
+show_co2: true
+show_voc: true
+```
+
+## �🚀 Configurazione Guidata
+
+```
 
 L'integrazione offre due modalità di configurazione per adattarsi alle diverse esigenze:
 

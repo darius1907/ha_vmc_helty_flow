@@ -1,0 +1,151 @@
+# VMC Helty Card Configuration Examples
+# Copy and paste these examples into your Lovelace dashboard
+
+# =====================================================
+# BASIC CONFIGURATION (Minimum required)
+# =====================================================
+type: custom:vmc-helty-card
+entity: fan.vmc_helty  # Replace with your actual fan entity
+
+# =====================================================  
+# STANDARD CONFIGURATION (Recommended)
+# =====================================================
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_living_room
+name: "Living Room VMC"
+show_temperature: true
+show_humidity: true
+show_co2: true
+show_voc: true
+
+# =====================================================
+# FULL CONFIGURATION (All options)
+# =====================================================
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_master_bedroom
+name: "Master Bedroom VMC"
+show_temperature: true
+show_humidity: true
+show_co2: true
+show_voc: true
+show_lights: true
+show_advanced: true
+theme: default
+volume_m3: 45  # Bedroom volume for air exchange calculations
+
+# =====================================================
+# COMPACT CONFIGURATION (Minimal display)
+# =====================================================
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_bathroom
+name: "Bathroom VMC"
+show_temperature: false
+show_humidity: true
+show_co2: false
+show_voc: false
+show_lights: false
+show_advanced: false
+theme: compact
+
+# =====================================================
+# FLOW PLUS CONFIGURATION (No CO2/VOC sensors)
+# =====================================================
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_kitchen
+name: "Kitchen VMC (Plus)"
+show_temperature: true
+show_humidity: true
+show_co2: false        # Plus model doesn't have CO2
+show_voc: false        # Plus model doesn't have VOC
+show_lights: true
+show_advanced: false
+theme: default
+
+# =====================================================
+# MULTIPLE CARDS LAYOUT (Dashboard example)
+# =====================================================
+views:
+  - title: Ventilation
+    cards:
+      - type: horizontal-stack
+        cards:
+          # Living Room VMC (Elite)
+          - type: custom:vmc-helty-card
+            entity: fan.vmc_helty_living_room
+            name: "Living Room"
+            show_temperature: true
+            show_humidity: true
+            show_co2: true
+            show_voc: true
+            show_advanced: false
+            
+          # Bedroom VMC (Plus)  
+          - type: custom:vmc-helty-card
+            entity: fan.vmc_helty_bedroom
+            name: "Bedroom"
+            show_temperature: true
+            show_humidity: true
+            show_co2: false
+            show_voc: false
+            theme: compact
+
+      # Full-width advanced card
+      - type: custom:vmc-helty-card
+        entity: fan.vmc_helty_main
+        name: "Main VMC System"
+        show_temperature: true
+        show_humidity: true
+        show_co2: true
+        show_voc: true
+        show_lights: true
+        show_advanced: true
+        volume_m3: 250
+
+# =====================================================
+# CONDITIONAL DISPLAY (Show based on device model)
+# =====================================================
+type: conditional
+conditions:
+  - entity: sensor.vmc_helty_model
+    state: "Flow Elite"
+card:
+  type: custom:vmc-helty-card
+  entity: fan.vmc_helty
+  name: "VMC Helty Elite"
+  show_temperature: true
+  show_humidity: true
+  show_co2: true        # Only show for Elite
+  show_voc: true        # Only show for Elite
+  show_advanced: true
+
+# =====================================================
+# MOBILE-OPTIMIZED LAYOUT
+# =====================================================
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_mobile
+name: "VMC"
+show_temperature: true
+show_humidity: true
+show_co2: true
+show_voc: false        # Hide VOC on mobile to save space
+show_lights: false     # Hide lights on mobile
+show_advanced: false   # Hide advanced on mobile
+theme: compact
+
+# =====================================================
+# ADVANCED WITH CUSTOM ENTITIES (Override auto-discovery)
+# =====================================================
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_custom
+name: "Custom VMC Setup"
+# Override entity auto-discovery
+entities:
+  temperature_internal: sensor.custom_temp_inside
+  temperature_external: sensor.weather_temp  # Use weather service
+  humidity: sensor.custom_humidity
+  co2: sensor.custom_co2_sensor
+  # VMC entities will still use auto-discovery
+show_temperature: true
+show_humidity: true
+show_co2: true
+show_voc: true

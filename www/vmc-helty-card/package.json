@@ -1,0 +1,17 @@
+{
+  "type": "module",
+  "name": "VMC Helty Card",
+  "description": "Advanced control card for VMC Helty Flow Plus/Elite ventilation systems",
+  "version": "1.0.0",
+  "author": "VMC Helty Integration Team",
+  "keywords": ["lovelace", "custom-card", "vmc", "helty", "ventilation"],
+  "main": "vmc-helty-card.js",
+  "dependencies": {
+    "home-assistant": ">=2024.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-repo/vmc-helty-card"
+  },
+  "license": "MIT"
+}
