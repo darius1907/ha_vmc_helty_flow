@@ -75,23 +75,21 @@ jobs:
 
       - name: Add Lovelace resource configuration
         run: |
-          kubectl exec $POD_NAME -n home-assistant -- sh -c '
+          kubectl exec $POD_NAME -n home-assistant -- bash -c '
             LOVELACE_CONFIG="/config/ui-lovelace.yaml"
             RESOURCE_URL="/local/vmc-helty-card/vmc-helty-card.js"
             
-            # Create ui-lovelace.yaml if it doesnt exist
+            # Create ui-lovelace.yaml if it does not exist
             if [ ! -f "$LOVELACE_CONFIG" ]; then
               echo "📝 Creating new ui-lovelace.yaml"
-              cat > "$LOVELACE_CONFIG" << EOF
-              resources:
-                - url: $RESOURCE_URL
-                  type: module
-
-              title: Home Assistant
-              views:
-                - title: Home
-                  cards: []
-              EOF
+              echo "resources:" > "$LOVELACE_CONFIG"
+              echo "  - url: /local/vmc-helty-card/vmc-helty-card.js" >> "$LOVELACE_CONFIG"
+              echo "    type: module" >> "$LOVELACE_CONFIG"
+              echo "" >> "$LOVELACE_CONFIG"
+              echo "title: Home Assistant" >> "$LOVELACE_CONFIG"
+              echo "views:" >> "$LOVELACE_CONFIG"
+              echo "  - title: Home" >> "$LOVELACE_CONFIG"
+              echo "    cards: []" >> "$LOVELACE_CONFIG"
             else
               # Check if resource already exists
               if ! grep -q "$RESOURCE_URL" "$LOVELACE_CONFIG"; then
