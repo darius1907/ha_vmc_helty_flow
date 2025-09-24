@@ -46,6 +46,9 @@ AIRFLOW_MAPPING = {
     2: 17,  # Velocità 2
     3: 26,  # Velocità 3
     4: 37,  # Velocità 4
+    5: 7,   # Night Mode
+    6: 42,  # Hyperventilation
+    7: 26,  # Free Cooling
 }
 
 # Validazione lunghezza campi

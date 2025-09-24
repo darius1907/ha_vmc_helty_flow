@@ -197,22 +197,8 @@ class VmcHeltyAirflowSensor(VmcHeltyEntity, SensorEntity):
             # Ottieni la velocità della ventola (posizione 1)
             fan_speed_raw = int(parts[1])
 
-            # Gestisci le modalità speciali (come da documentazione)
-            # 5 = modalità notte (velocità effettiva 1)
-            # 6 = iperventilazione (velocità effettiva 4)
-            # 7 = free cooling (velocità effettiva 0)
-            if fan_speed_raw == FAN_SPEED_NIGHT_MODE:  # Night mode
-                effective_speed = 1
-            elif fan_speed_raw == FAN_SPEED_HYPERVENTILATION:  # Hyperventilation
-                effective_speed = 4
-            elif fan_speed_raw == FAN_SPEED_FREE_COOLING:  # Free cooling
-                effective_speed = 0
-            else:
-                # Velocità normale (0-4)
-                effective_speed = min(fan_speed_raw, 4)
-
             # Mappa la velocità alla portata d'aria
-            return AIRFLOW_MAPPING.get(effective_speed, 0)
+            return AIRFLOW_MAPPING.get(fan_speed_raw, 0)
 
         except (ValueError, IndexError):
             return None

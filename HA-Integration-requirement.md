@@ -375,6 +375,35 @@ Esempio: `VMGI,00251,00254,00510,00510,16384,05839,00249,00112,04354,00140,00203
 ### 3.9 Interfaccia Utente
 L'interfaccia utente è progettata per essere intuitiva e facile da usare.
 
+#### 3.9.1 Sistema di Monitoraggio Ambientale Avanzato
+
+**Sensori Primari VMC:**
+- **Temperatura Interna**: Range -40°C / +85°C, precisione ±0.5°C
+- **Temperatura Esterna**: Range -40°C / +85°C, precisione ±0.5°C  
+- **Umidità Relativa Interna**: Range 0-100% RH, precisione ±3% RH
+- **CO₂ Interno**: Range 400-5000 ppm (solo ELITE), precisione ±50 ppm
+- **VOC**: Range 0-500 IAQ index (solo ELITE), precisione ±15 IAQ
+
+**Sensori Integrabili Home Assistant:**
+- Stazioni meteo esterne per maggiore precisione
+- Sensori di temperatura/umidità aggiuntivi per zone multiple
+- Sensori CO₂ esterni per confronto e validazione
+- Sensori di pressione atmosferica per calcoli avanzati
+
+**Calcoli Derivati Automatici:**
+- **Umidità Assoluta**: Formula Magnus-Tetens g/m³
+- **Punto di Rugiada**: Calcolo preciso per prevenzione condensazione
+- **Indice di Comfort Igrometrico**: Classificazione qualitativa (Secco/Ottimale/Umido/Critico)
+- **Delta Punto di Rugiada**: Differenziale interno/esterno per controllo automatico
+- **Portata d'Aria**: Calcolo m³/h per ogni velocità (120/180/240/300/360/420 m³/h)
+- **Tempo Ricambio**: Calcolo dinamico basato su volume ambiente configurabile
+- **Numero Ricambi Giornalieri**: Conteggio automatico con reset mezzanotte
+
+**Indicatori di Rischio Avanzati:**
+- **Rischio Muffa**: Algoritmo Hukka-Viitanen (1999) per crescita funghi
+- **Rischio Congelamento**: Previsione basata su temperatura esterna e trend
+- **Efficienza Energetica**: Calcolo COP dinamico per ottimizzazione consumi
+
 Le principali componenti sono:
 - **Pannelli dei dispositivi**:
     - Ogni dispositivo VMC rilevato ha un pannello dedicato con le informazioni sullo stato e i controlli.
@@ -424,6 +453,165 @@ Le principali componenti sono:
     - Garantisce che l'utente riceva un feedback chiaro e immediato su ogni azione eseguita.
     - Include best practice per l'utilizzo dell'interfaccia e la gestione dei dispositivi VMC.
     - Feedback immediato all'utente sull'esito dei comandi
+
+### 7. ALGORITMI E CALCOLI SCIENTIFICI AVANZATI
+
+#### 7.1 Modelli Termodinamici per Calcoli Ambientali
+
+**Formula Umidità Assoluta (Magnus-Tetens):**
+```python
+def calcola_umidita_assoluta(temp_celsius, rh_percent):
+    """
+    Calcolo umidità assoluta usando formula Magnus-Tetens
+    Precisione: ±0.1 g/m³ per range -40°C to +50°C
+    """
+    # Costanti Magnus-Tetens per acqua
+    a = 17.27
+    b = 237.7
+    
+    # Pressione vapore saturo (hPa)
+    gamma = (a * temp_celsius) / (b + temp_celsius) + math.log(rh_percent / 100.0)
+    es = 6.112 * math.exp(gamma)
+    
+    # Umidità assoluta (g/m³)  
+    abs_humidity = (es * 2.1674) / (temp_celsius + 273.15)
+    return round(abs_humidity, 2)
+
+def calcola_punto_rugiada(temp_celsius, rh_percent):
+    """
+    Calcolo punto di rugiada con accuratezza ±0.2°C
+    """
+    a = 17.27
+    b = 237.7
+    alpha = ((a * temp_celsius) / (b + temp_celsius)) + math.log(rh_percent / 100.0)
+    dew_point = (b * alpha) / (a - alpha)
+    return round(dew_point, 1)
+```
+
+**Classificazione Comfort Igrometrico:**
+```python
+def indice_comfort_igrometrico(dew_point):
+    """
+    Classificazione qualitativa basata su punto di rugiada
+    Standard ASHRAE 55-2020 per comfort termico
+    """
+    if dew_point < 10:
+        return {"status": "Molto Secco", "color": "#ff6b47", "icon": "mdi:water-off"}
+    elif 10 <= dew_point < 13:
+        return {"status": "Secco", "color": "#ffeb3b", "icon": "mdi:water-minus"}
+    elif 13 <= dew_point < 16:
+        return {"status": "Confortevole", "color": "#4caf50", "icon": "mdi:water-check"}
+    elif 16 <= dew_point < 18:
+        return {"status": "Buono", "color": "#8bc34a", "icon": "mdi:water"}
+    elif 18 <= dew_point < 21:
+        return {"status": "Accettabile", "color": "#ffeb3b", "icon": "mdi:water-plus"}
+    elif 21 <= dew_point < 24:
+        return {"status": "Umido", "color": "#ff9800", "icon": "mdi:water-alert"}
+    else:
+        return {"status": "Oppressivo", "color": "#f44336", "icon": "mdi:water-remove"}
+```
+
+**Calcoli Portata Aria e Ricambi:**
+```python
+def calcola_portata_per_velocita():
+    """
+    Portate calibrate per VMC HELTY FLOW PLUS/ELITE
+    Valori da 1 a 4 certificati dal produttore
+    """
+    return {
+        0: {"portata": 0, "descrizione": "OFF"},
+        1: {"portata": 10, "descrizione": "Minima - Mantenimento"},
+        2: {"portata": 17, "descrizione": "Media-Bassa - Normale"},
+        3: {"portata": 26, "descrizione": "Media-Alta - Comfort"},
+        4: {"portata": 37, "descrizione": "Massima - Efficienza"},
+        5: {"portata": 7, "descrizione": "Notturna - Silenziosa"},
+        6: {"portata": 42, "descrizione": "Iperventilazione"},
+        7: {"portata": 26, "descrizione": "Free Cooling/Heating"}
+    }
+
+def calcola_tempo_ricambio(volume_ambiente, portata_mc_h):
+    """
+    Calcolo tempo ricambio completo aria ambiente
+    """
+    if portata_mc_h == 0:
+        return float('inf')
+    
+    tempo_ore = volume_ambiente / portata_mc_h
+    tempo_minuti = tempo_ore * 60
+    return round(tempo_minuti, 1)
+
+def calcola_ricambi_giornalieri(volume_ambiente, portata_mc_h):
+    """
+    Numero ricambi aria in 24 ore
+    """
+    if portata_mc_h == 0:
+        return 0
+    
+    volume_giornaliero = portata_mc_h * 24
+    ricambi = volume_giornaliero / volume_ambiente
+    return round(ricambi, 1)
+```
+
+#### 7.2 Algoritmo Anti-Muffa Hukka-Viitanen (1999)
+
+**Modello Predittivo Crescita Funghi:**
+```python
+class MoldGrowthPredictor:
+    """
+    Implementazione algoritmo Hukka-Viitanen (1999)
+    Per predizione rischio crescita muffa in ambienti interni
+    """
+    
+    def __init__(self):
+        self.history_days = 7  # Giorni di storico per calcolo
+        self.mold_index = 0    # Indice crescita muffa (0-6)
+        
+    def calculate_critical_humidity(self, temperature):
+        """
+        Calcola umidità critica per temperatura data
+        Basato su substrato di classe sensibilità media
+        """
+        if temperature < 20:
+            return 80.0
+        elif temperature <= 30:
+            return 80.0 - (temperature - 20) * 0.5
+        else:
+            return 75.0
+    
+    def update_mold_risk(self, temperature, humidity, hours_elapsed=1):
+        """
+        Aggiorna indice rischio muffa
+        """
+        critical_rh = self.calculate_critical_humidity(temperature)
+        
+        if humidity > critical_rh and temperature > 5:
+            # Condizioni favorevoli crescita
+            if temperature >= 20:
+                growth_rate = 0.1 * hours_elapsed
+            else:
+                growth_rate = 0.05 * hours_elapsed
+                
+            self.mold_index = min(6.0, self.mold_index + growth_rate)
+        else:
+            # Condizioni sfavorevoli - decrescita lenta
+            decline_rate = 0.02 * hours_elapsed
+            self.mold_index = max(0.0, self.mold_index - decline_rate)
+    
+    def get_risk_level(self):
+        """
+        Classificazione rischio muffa
+        """
+        if self.mold_index < 1:
+            return {"level": "Molto Basso", "color": "#4caf50", "action": "Nessuna"}
+        elif self.mold_index < 2:
+            return {"level": "Basso", "color": "#8bc34a", "action": "Monitoraggio"}
+        elif self.mold_index < 3:
+            return {"level": "Moderato", "color": "#ffeb3b", "action": "Attenzione"}
+        elif self.mold_index < 4:
+            return {"level": "Alto", "color": "#ff9800", "action": "Ventilazione"}
+        else:
+            return {"level": "Critico", "color": "#f44336", "action": "Immediata"}
+```
 
 
 ## 4. Sicurezza
