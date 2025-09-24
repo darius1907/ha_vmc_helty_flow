@@ -41,8 +41,8 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
     def __init__(self, coordinator):
         """Initialize the fan."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_fan"
-        self._attr_name = f"{coordinator.name} Fan"
+        self._attr_unique_id = f"vmc_{coordinator.ip}_fan"
+        self._attr_name = f"VMC {coordinator.name}"
         self._attr_speed_count = 4  # 4 velocità (1-4)
         self._attr_supported_features = FanEntityFeature.SET_SPEED
 

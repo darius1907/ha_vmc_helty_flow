@@ -192,8 +192,8 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._sensor_key = sensor_key
-        self._attr_unique_id = f"{coordinator.ip}_{sensor_key}"
-        self._attr_name = f"{coordinator.name} {sensor_name}"
+        self._attr_unique_id = f"vmc_{coordinator.ip}_{sensor_key}"
+        self._attr_name = f"VMC {coordinator.name} {sensor_name}"
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class
         self._attr_state_class = state_class
@@ -242,7 +242,7 @@ class VmcHeltyAirflowSensor(VmcHeltyEntity, SensorEntity):
     def __init__(self, coordinator):
         """Initialize the sensor."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_airflow"
+        self._attr_unique_id = f"vmc_{coordinator.ip}_airflow"
         self._attr_name = f"{coordinator.name} Portata d'Aria"
         self._attr_native_unit_of_measurement = "m³/h"
         self._attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
@@ -279,7 +279,7 @@ class VmcHeltyOnOffSensor(VmcHeltyEntity, BinarySensorEntity):
     def __init__(self, coordinator):
         """Initialize the sensor."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_online"
+        self._attr_unique_id = f"vmc_{coordinator.ip}_online"
         self._attr_name = f"{coordinator.name} Online"
         self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
@@ -295,7 +295,7 @@ class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):
     def __init__(self, coordinator):
         """Initialize the sensor."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_last_response"
+        self._attr_unique_id = f"vmc_{coordinator.ip}_last_response"
         self._attr_name = f"{coordinator.name} Last Response"
         self._attr_device_class = SensorDeviceClass.TIMESTAMP
 
