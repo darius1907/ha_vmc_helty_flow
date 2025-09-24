@@ -298,6 +298,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Registra il dispositivo nel device registry
     coordinator.device_entry = await async_get_or_create_device(hass, coordinator)
+    
+    # Aggiunge device_id per i sensori
+    coordinator.device_id = (
+        coordinator.device_entry.id if coordinator.device_entry else None
+    )
 
     # Salva il coordinatore
     hass.data[DOMAIN][entry.entry_id] = coordinator

@@ -1,5 +1,6 @@
 """Entità sensori per VMC Helty Flow."""
 
+import logging
 import math
 from datetime import datetime
 from typing import Any
@@ -26,67 +27,69 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from . import VmcHeltyCoordinator
 from .const import (
-    AIR_EXCHANGE_ACCEPTABLE,
-    AIR_EXCHANGE_EXCELLENT,
-    AIR_EXCHANGE_GOOD,
-    AIR_EXCHANGE_POOR,
-    AIR_EXCHANGE_TIME_ACCEPTABLE,
-    AIR_EXCHANGE_TIME_EXCELLENT,
-    AIR_EXCHANGE_TIME_GOOD,
-    AIRFLOW_MAPPING,
-    COMFORT_HUMIDITY_ACCEPTABLE_MAX,
-    COMFORT_HUMIDITY_ACCEPTABLE_MIN,
-    COMFORT_HUMIDITY_MAX,
-    COMFORT_HUMIDITY_OPTIMAL_MAX,
-    COMFORT_HUMIDITY_OPTIMAL_MIN,
-    COMFORT_HUMIDITY_REFERENCE,
-    COMFORT_HUMIDITY_TOLERABLE_MAX,
-    COMFORT_HUMIDITY_TOLERABLE_MIN,
-    COMFORT_INDEX_ACCEPTABLE,
-    COMFORT_INDEX_EXCELLENT,
-    COMFORT_INDEX_GOOD,
-    COMFORT_INDEX_MEDIOCRE,
-    COMFORT_TEMP_ACCEPTABLE_MAX,
-    COMFORT_TEMP_ACCEPTABLE_MIN,
-    COMFORT_TEMP_OPTIMAL_MAX,
-    COMFORT_TEMP_OPTIMAL_MIN,
-    COMFORT_TEMP_REFERENCE,
-    COMFORT_TEMP_TOLERABLE_MAX,
-    COMFORT_TEMP_TOLERABLE_MIN,
-    DAILY_AIR_CHANGES_ADEQUATE,
-    DAILY_AIR_CHANGES_ADEQUATE_MIN,
-    DAILY_AIR_CHANGES_EXCELLENT,
-    DAILY_AIR_CHANGES_EXCELLENT_MIN,
-    DAILY_AIR_CHANGES_GOOD,
-    DAILY_AIR_CHANGES_GOOD_MIN,
-    DAILY_AIR_CHANGES_POOR,
-    DEFAULT_ROOM_VOLUME,
-    DEW_POINT_ACCEPTABLE_MAX,
-    DEW_POINT_ACCEPTABLE_MIN,
-    DEW_POINT_COMFORTABLE_MAX,
-    DEW_POINT_COMFORTABLE_MIN,
-    DEW_POINT_DELTA_CRITICAL,
-    DEW_POINT_DELTA_HIGH_RISK,
-    DEW_POINT_DELTA_LOW_RISK,
-    DEW_POINT_DELTA_MODERATE_RISK,
-    DEW_POINT_DRY_MAX,
-    DEW_POINT_DRY_MIN,
-    DEW_POINT_GOOD_MAX,
-    DEW_POINT_GOOD_MIN,
-    DEW_POINT_HUMID_MAX,
-    DEW_POINT_HUMID_MIN,
-    DEW_POINT_VERY_DRY,
     DOMAIN,
-    FAN_SPEED_FREE_COOLING,
-    FAN_SPEED_HYPERVENTILATION,
-    FAN_SPEED_NIGHT_MODE,
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
+    AIRFLOW_MAPPING,
+    DEW_POINT_VERY_DRY,
+    DEW_POINT_DRY_MIN,
+    DEW_POINT_DRY_MAX,
+    DEW_POINT_COMFORTABLE_MIN,
+    DEW_POINT_COMFORTABLE_MAX,
+    DEW_POINT_GOOD_MIN,
+    DEW_POINT_GOOD_MAX,
+    DEW_POINT_ACCEPTABLE_MIN,
+    DEW_POINT_ACCEPTABLE_MAX,
+    DEW_POINT_HUMID_MIN,
+    DEW_POINT_HUMID_MAX,
+    COMFORT_TEMP_OPTIMAL_MIN,
+    COMFORT_TEMP_OPTIMAL_MAX,
+    COMFORT_TEMP_ACCEPTABLE_MIN,
+    COMFORT_TEMP_ACCEPTABLE_MAX,
+    COMFORT_TEMP_TOLERABLE_MIN,
+    COMFORT_TEMP_TOLERABLE_MAX,
+    COMFORT_TEMP_REFERENCE,
+    COMFORT_HUMIDITY_OPTIMAL_MIN,
+    COMFORT_HUMIDITY_OPTIMAL_MAX,
+    COMFORT_HUMIDITY_ACCEPTABLE_MIN,
+    COMFORT_HUMIDITY_ACCEPTABLE_MAX,
+    COMFORT_HUMIDITY_TOLERABLE_MIN,
+    COMFORT_HUMIDITY_TOLERABLE_MAX,
+    COMFORT_HUMIDITY_REFERENCE,
+    COMFORT_HUMIDITY_MAX,
+    COMFORT_INDEX_EXCELLENT,
+    COMFORT_INDEX_GOOD,
+    COMFORT_INDEX_ACCEPTABLE,
+    COMFORT_INDEX_MEDIOCRE,
+    DEW_POINT_DELTA_CRITICAL,
+    DEW_POINT_DELTA_HIGH_RISK,
+    DEW_POINT_DELTA_MODERATE_RISK,
+    DEW_POINT_DELTA_LOW_RISK,
+    AIR_EXCHANGE_EXCELLENT,
+    AIR_EXCHANGE_GOOD,
+    AIR_EXCHANGE_ACCEPTABLE,
+    AIR_EXCHANGE_POOR,
+    DEFAULT_ROOM_VOLUME,
+    AIR_EXCHANGE_TIME_EXCELLENT,
+    AIR_EXCHANGE_TIME_GOOD,
+    AIR_EXCHANGE_TIME_ACCEPTABLE,
+    DAILY_AIR_CHANGES_EXCELLENT,
+    DAILY_AIR_CHANGES_GOOD,
+    DAILY_AIR_CHANGES_ADEQUATE,
+    DAILY_AIR_CHANGES_POOR,
+    DAILY_AIR_CHANGES_EXCELLENT_MIN,
+    DAILY_AIR_CHANGES_GOOD_MIN,
+    DAILY_AIR_CHANGES_ADEQUATE_MIN,
+    FAN_SPEED_NIGHT_MODE,
+    FAN_SPEED_HYPERVENTILATION,
+    FAN_SPEED_FREE_COOLING
 )
+from . import VmcHeltyCoordinator
 from .device_info import VmcHeltyEntity
 from .helpers import parse_vmsl_response, tcp_send_command
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -95,7 +98,15 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up VMC Helty sensors from config entry."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    _LOGGER.debug("Setting up VMC Helty sensors for config entry: %s", config_entry.entry_id)
+    
+    try:
+        coordinator = hass.data[DOMAIN][config_entry.entry_id]
+        _LOGGER.debug("Retrieved coordinator: %s", coordinator)
+    except KeyError:
+        _LOGGER.error("Coordinator not found for entry %s in hass.data[%s]", config_entry.entry_id, DOMAIN)
+        _LOGGER.debug("Available entries in hass.data[%s]: %s", DOMAIN, list(hass.data.get(DOMAIN, {}).keys()))
+        return
 
     entities = [
         # Sensori ambientali
@@ -161,7 +172,9 @@ async def async_setup_entry(
         VmcHeltyPasswordText(coordinator),
     ]
 
+    _LOGGER.debug("Created %d sensor entities", len(entities))
     async_add_entities(entities)
+    _LOGGER.debug("Successfully added VMC Helty sensor entities")
 
 
 class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
@@ -484,16 +497,16 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
 
             # Pressione vapore saturo (hPa) - formula Magnus-Tetens
             es = 6.112 * math.exp((a * temp_internal) / (b + temp_internal))
-
+            
             # Pressione vapore reale (hPa)
             e = (humidity / 100.0) * es
-
+            
             # Umidità assoluta (g/m³) usando formula termodinamica
             # Formula: AH = (e * molar_mass) / (gas_constant * temp_kelvin)
             molar_mass = 18.016  # g/mol (peso molecolare acqua)
             gas_constant = 0.08314  # L·hPa/(mol·K)
             temp_kelvin = temp_internal + 273.15  # K
-
+            
             abs_humidity = (e * molar_mass) / (gas_constant * temp_kelvin)
 
             return round(abs_humidity, 2)
@@ -647,7 +660,7 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
 
 class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
     """Indice di comfort igrometrico basato su temperatura e umidità."""
-
+    
     def __init__(self, coordinator: VmcHeltyCoordinator) -> None:
         super().__init__(coordinator, "comfort_index")
         self._attr_name = "Indice Comfort Igrometrico"
@@ -714,24 +727,16 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
         # Range ottimale
         if COMFORT_HUMIDITY_OPTIMAL_MIN <= humidity <= COMFORT_HUMIDITY_OPTIMAL_MAX:
             return 1.0
-        # Range accettabile con degradazione lineare
+        # Range accettabile con degradazione lineare  
         if COMFORT_HUMIDITY_ACCEPTABLE_MIN <= humidity < COMFORT_HUMIDITY_OPTIMAL_MIN:
-            return (
-                0.5 + (humidity - COMFORT_HUMIDITY_ACCEPTABLE_MIN) * 0.05
-            )  # da 0.5 a 1.0
+            return 0.5 + (humidity - COMFORT_HUMIDITY_ACCEPTABLE_MIN) * 0.05  # da 0.5 a 1.0
         if COMFORT_HUMIDITY_OPTIMAL_MAX < humidity <= COMFORT_HUMIDITY_ACCEPTABLE_MAX:
-            return (
-                1.0 - (humidity - COMFORT_HUMIDITY_OPTIMAL_MAX) * 0.05
-            )  # da 1.0 a 0.5
+            return 1.0 - (humidity - COMFORT_HUMIDITY_OPTIMAL_MAX) * 0.05  # da 1.0 a 0.5
         # Range sopportabile con ulteriore degradazione
         if COMFORT_HUMIDITY_TOLERABLE_MIN <= humidity < COMFORT_HUMIDITY_ACCEPTABLE_MIN:
-            return (
-                0.2 + (humidity - COMFORT_HUMIDITY_TOLERABLE_MIN) * 0.06
-            )  # da 0.2 a 0.5
+            return 0.2 + (humidity - COMFORT_HUMIDITY_TOLERABLE_MIN) * 0.06  # da 0.2 a 0.5
         if COMFORT_HUMIDITY_ACCEPTABLE_MAX < humidity <= COMFORT_HUMIDITY_TOLERABLE_MAX:
-            return (
-                0.5 - (humidity - COMFORT_HUMIDITY_ACCEPTABLE_MAX) * 0.03
-            )  # da 0.5 a 0.2
+            return 0.5 - (humidity - COMFORT_HUMIDITY_ACCEPTABLE_MAX) * 0.03  # da 0.5 a 0.2
         # Fuori range accettabile
         return max(0.0, 0.2 - abs(humidity - COMFORT_HUMIDITY_REFERENCE) * 0.005)
 
@@ -756,10 +761,10 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
             # Estrai temperatura interna (pos 1) e umidità (pos 3)
             temp = float(parts[1]) / 10  # Decimi di °C
             humidity = float(parts[3]) / 10  # Decimi di %
-
+            
             temp_comfort = self._calculate_temperature_comfort(temp)
             humidity_comfort = self._calculate_humidity_comfort(humidity)
-
+            
             comfort_value = self.native_value
             if comfort_value is not None:
                 # Classificazione livello comfort
@@ -773,22 +778,20 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
                     comfort_category = "Mediocre"
                 else:
                     comfort_category = "Scarso"
-
-                attributes.update(
-                    {
-                        "comfort_category": comfort_category,
-                        "temperature_comfort": f"{temp_comfort:.2f}",
-                        "humidity_comfort": f"{humidity_comfort:.2f}",
-                        "optimal_temperature": "20-24°C",
-                        "optimal_humidity": "40-60%",
-                        "current_temperature": f"{temp}°C",
-                        "current_humidity": f"{humidity}%",
-                    }
-                )
-
+                
+                attributes.update({
+                    "comfort_category": comfort_category,
+                    "temperature_comfort": f"{temp_comfort:.2f}",
+                    "humidity_comfort": f"{humidity_comfort:.2f}",
+                    "optimal_temperature": "20-24°C",
+                    "optimal_humidity": "40-60%",
+                    "current_temperature": f"{temp}°C",
+                    "current_humidity": f"{humidity}%"
+                })
+                
         except (ValueError, TypeError, ZeroDivisionError):
             pass
-
+            
         return attributes
 
 
@@ -810,7 +813,7 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
         """Calcola il delta punto di rugiada (interno - esterno)."""
         if not self.coordinator.data:
             return None
-
+            
         try:
             # Ottieni i dati dei sensori dalla stringa VMGI
             sensors_data = self.coordinator.data.get("sensors", "")
@@ -825,18 +828,18 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
             temp_internal = float(parts[1]) / 10  # Decimi di °C (pos 1)
             temp_external = float(parts[2]) / 10  # Decimi di °C (pos 2)
             humidity = float(parts[3]) / 10  # Decimi di % (pos 3)
-
+            
             if humidity <= 0 or humidity > COMFORT_HUMIDITY_MAX:
                 return None
-
+                
             # Calcola i punti di rugiada interno ed esterno
             internal_dew_point = self._calculate_dew_point(temp_internal, humidity)
             external_dew_point = self._calculate_dew_point(temp_external, humidity)
-
+            
             delta = internal_dew_point - external_dew_point
-
+            
             return round(delta, 1)
-
+            
         except (ValueError, TypeError, ZeroDivisionError):
             return None
 
@@ -845,7 +848,7 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
         # Costanti Magnus-Tetens per acqua
         a = 17.27
         b = 237.7
-
+        
         # Calcola il punto di rugiada
         gamma = (a * temperature) / (b + temperature) + math.log(humidity / 100.0)
         return (b * gamma) / (a - gamma)
@@ -854,10 +857,10 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributi aggiuntivi con informazioni sul rischio condensazione."""
         attributes = super().extra_state_attributes or {}
-
+        
         if not self.coordinator.data:
             return attributes
-
+            
         try:
             # Ottieni i dati dei sensori dalla stringa VMGI
             sensors_data = self.coordinator.data.get("sensors", "")
@@ -872,31 +875,29 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
             if delta_value is not None:
                 # Classificazione del rischio di condensazione
                 risk_info = self._get_condensation_risk(delta_value)
-
+                
                 # Estrai dati dalla stringa VMGI
                 temp_internal = float(parts[1]) / 10  # Decimi di °C (pos 1)
                 temp_external = float(parts[2]) / 10  # Decimi di °C (pos 2)
                 humidity = float(parts[3]) / 10  # Decimi di % (pos 3)
-
+                
                 internal_dew_point = self._calculate_dew_point(temp_internal, humidity)
                 external_dew_point = self._calculate_dew_point(temp_external, humidity)
-
-                attributes.update(
-                    {
-                        "risk_level": risk_info["level"],
-                        "risk_description": risk_info["description"],
-                        "recommended_action": risk_info["action"],
-                        "internal_dew_point": f"{internal_dew_point:.1f}°C",
-                        "external_dew_point": f"{external_dew_point:.1f}°C",
-                        "internal_temperature": f"{temp_internal}°C",
-                        "external_temperature": f"{temp_external}°C",
-                        "humidity": f"{humidity}%",
-                    }
-                )
-
+                
+                attributes.update({
+                    "risk_level": risk_info["level"],
+                    "risk_description": risk_info["description"],
+                    "recommended_action": risk_info["action"],
+                    "internal_dew_point": f"{internal_dew_point:.1f}°C",
+                    "external_dew_point": f"{external_dew_point:.1f}°C",
+                    "internal_temperature": f"{temp_internal}°C",
+                    "external_temperature": f"{temp_external}°C",
+                    "humidity": f"{humidity}%"
+                })
+                
         except (ValueError, TypeError, ZeroDivisionError):
             pass
-
+            
         return attributes
 
     def _get_condensation_risk(self, delta: float) -> dict[str, str]:
@@ -905,34 +906,34 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
             return {
                 "level": "Critico",
                 "description": "Rischio condensazione molto alto",
-                "action": "Aumentare ventilazione immediatamente",
+                "action": "Aumentare ventilazione immediatamente"
             }
-
+        
         if delta <= DEW_POINT_DELTA_HIGH_RISK:
             return {
                 "level": "Alto",
                 "description": "Rischio condensazione alto",
-                "action": "Aumentare ventilazione e ridurre umidità",
+                "action": "Aumentare ventilazione e ridurre umidità"
             }
-
+        
         if delta <= DEW_POINT_DELTA_MODERATE_RISK:
             return {
                 "level": "Moderato",
                 "description": "Rischio condensazione moderato",
-                "action": "Monitorare e considerare ventilazione",
+                "action": "Monitorare e considerare ventilazione"
             }
-
+        
         if delta <= DEW_POINT_DELTA_LOW_RISK:
             return {
                 "level": "Basso",
                 "description": "Rischio condensazione basso",
-                "action": "Condizioni sotto controllo",
+                "action": "Condizioni sotto controllo"
             }
-
+        
         return {
             "level": "Sicuro",
             "description": "Nessun rischio condensazione",
-            "action": "Condizioni ottimali",
+            "action": "Condizioni ottimali"
         }
 
 
@@ -972,9 +973,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
                 return None  # Ventilazione spenta
 
             # Calcola portata aria stimata in m³/h basata sulla velocità
-            airflow = AIRFLOW_MAPPING.get(
-                fan_speed, 100
-            )  # Default 100 m³/h se non riconosciuto
+            airflow = AIRFLOW_MAPPING.get(fan_speed, 100)  # Default 100 m³/h se non riconosciuto
 
             # Volume ambiente (usa valore di default se non configurato)
             room_volume = DEFAULT_ROOM_VOLUME  # m³
@@ -1056,9 +1055,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
                 "fan_speed": actual_speed,
                 "raw_fan_speed": fan_speed_raw,
                 "calculation_method": "Volume/Airflow*60",
-                "optimization_tip": self._get_optimization_tip(
-                    exchange_time, actual_speed
-                ),
+                "optimization_tip": self._get_optimization_tip(exchange_time, actual_speed),
             }
 
         except (ValueError, IndexError, TypeError):
@@ -1076,15 +1073,15 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
 
         if exchange_time <= AIR_EXCHANGE_TIME_EXCELLENT:
             return "Prestazioni eccellenti, ricambio aria ottimale"
-        if exchange_time <= AIR_EXCHANGE_TIME_GOOD:
+        elif exchange_time <= AIR_EXCHANGE_TIME_GOOD:
             return "Buone prestazioni, ricambio efficace"
-        if exchange_time <= AIR_EXCHANGE_TIME_ACCEPTABLE:
+        elif exchange_time <= AIR_EXCHANGE_TIME_ACCEPTABLE:
             return "Prestazioni accettabili, considerare aumento velocità"
-        if fan_speed < 4:
-            return (
-                f"Ricambio lento, aumentare velocità da {fan_speed} per migliorare"
-            )
-        return "Ricambio lento anche a velocità massima, verificare impianto"
+        else:
+            if fan_speed < 4:
+                return f"Ricambio lento, aumentare velocità da {fan_speed} per migliorare"
+            else:
+                return "Ricambio lento anche a velocità massima, verificare impianto"
 
 
 class VmcHeltyDailyAirChangesSensor(SensorEntity):
@@ -1124,7 +1121,7 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
             # Decodifica modalità speciali in velocità effettiva
             if fan_speed_raw == 0:
                 return 0.0  # Ventilazione spenta
-            if fan_speed_raw == 5:  # Modalità notte
+            elif fan_speed_raw == 5:  # Modalità notte
                 fan_speed = 1
             elif fan_speed_raw == 6:  # Iperventilazione
                 fan_speed = 4
@@ -1176,15 +1173,13 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
                 category = DAILY_AIR_CHANGES_POOR
                 assessment = "Ricambio d'aria insufficiente"
 
-            attributes.update(
-                {
-                    "category": category,
-                    "assessment": assessment,
-                    "air_changes_per_hour": round(daily_changes / 24, 2),
-                    "room_volume_m3": DEFAULT_ROOM_VOLUME,
-                    "recommendation": self._get_recommendation(daily_changes),
-                }
-            )
+            attributes.update({
+                "category": category,
+                "assessment": assessment,
+                "air_changes_per_hour": round(daily_changes / 24, 2),
+                "room_volume_m3": DEFAULT_ROOM_VOLUME,
+                "recommendation": self._get_recommendation(daily_changes),
+            })
 
         return attributes
 
@@ -1192,33 +1187,35 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
         """Genera raccomandazioni basate sui ricambi d'aria giornalieri."""
         if daily_changes >= DAILY_AIR_CHANGES_EXCELLENT_MIN:
             return "Ricambio d'aria eccellente, continua così"
-        if daily_changes >= DAILY_AIR_CHANGES_GOOD_MIN:
+        elif daily_changes >= DAILY_AIR_CHANGES_GOOD_MIN:
             return "Ricambio d'aria buono, eventualmente aumenta ventilazione nelle ore di punta"
-        if daily_changes >= DAILY_AIR_CHANGES_ADEQUATE_MIN:
+        elif daily_changes >= DAILY_AIR_CHANGES_ADEQUATE_MIN:
             return "Ricambio adeguato, considera di aumentare la velocità ventola"
-        if not self.coordinator.data:
-            return "Nessun dato disponibile"
+        else:
+            if not self.coordinator.data:
+                return "Nessun dato disponibile"
 
-        status_data = self.coordinator.data.get("status", "")
-        if status_data and status_data.startswith("VMGO"):
-            try:
-                parts = status_data.split(",")
-                if len(parts) >= MIN_RESPONSE_PARTS:
-                    fan_speed_raw = int(parts[1])
-                    # Decodifica modalità speciali
-                    if fan_speed_raw == FAN_SPEED_NIGHT_MODE:
-                        fan_speed = 1
-                    elif fan_speed_raw == FAN_SPEED_HYPERVENTILATION:
-                        fan_speed = 4
-                    elif fan_speed_raw == FAN_SPEED_FREE_COOLING:
-                        fan_speed = 0
-                    elif 1 <= fan_speed_raw <= 4:
-                        fan_speed = fan_speed_raw
-                    else:
-                        fan_speed = 2
-                    if fan_speed < 4:
-                        return f"Ricambio insufficiente, aumentare velocità da {fan_speed} a 3-4"
-                    return "Ricambio insufficiente anche a velocità massima, verificare impianto"
-            except (ValueError, IndexError):
-                pass
-        return "Errore nel calcolo, verificare stato ventola"
+            status_data = self.coordinator.data.get("status", "")
+            if status_data and status_data.startswith("VMGO"):
+                try:
+                    parts = status_data.split(",")
+                    if len(parts) >= MIN_RESPONSE_PARTS:
+                        fan_speed_raw = int(parts[1])
+                        # Decodifica modalità speciali
+                        if fan_speed_raw == FAN_SPEED_NIGHT_MODE:
+                            fan_speed = 1
+                        elif fan_speed_raw == FAN_SPEED_HYPERVENTILATION:
+                            fan_speed = 4
+                        elif fan_speed_raw == FAN_SPEED_FREE_COOLING:
+                            fan_speed = 0
+                        elif 1 <= fan_speed_raw <= 4:
+                            fan_speed = fan_speed_raw
+                        else:
+                            fan_speed = 2
+                        if fan_speed < 4:
+                            return f"Ricambio insufficiente, aumentare velocità da {fan_speed} a 3-4"
+                        else:
+                            return "Ricambio insufficiente anche a velocità massima, verificare impianto"
+                except (ValueError, IndexError):
+                    pass
+            return "Errore nel calcolo, verificare stato ventola"
