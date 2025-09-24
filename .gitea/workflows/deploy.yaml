@@ -83,15 +83,15 @@ jobs:
             if [ ! -f "$LOVELACE_CONFIG" ]; then
               echo "📝 Creating new ui-lovelace.yaml"
               cat > "$LOVELACE_CONFIG" << EOF
-resources:
-  - url: $RESOURCE_URL
-    type: module
+              resources:
+                - url: $RESOURCE_URL
+                  type: module
 
-title: Home Assistant
-views:
-  - title: Home
-    cards: []
-EOF
+              title: Home Assistant
+              views:
+                - title: Home
+                  cards: []
+              EOF
             else
               # Check if resource already exists
               if ! grep -q "$RESOURCE_URL" "$LOVELACE_CONFIG"; then
