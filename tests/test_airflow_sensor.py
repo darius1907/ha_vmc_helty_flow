@@ -14,6 +14,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
     coordinator.name = "VMC Test"
+    coordinator.name_slug = "testvmc"
     coordinator.data = {
         "status": "VMGO,1,1,25,0,24",
     }
@@ -30,7 +31,7 @@ class TestVmcHeltyAirflowSensor:
 
     def test_init(self, airflow_sensor, mock_coordinator):
         """Test sensor initialization."""
-        assert airflow_sensor._attr_unique_id == f"{mock_coordinator.ip}_airflow"
+        assert airflow_sensor._attr_unique_id == "vmc_testvmc_airflow"
         assert airflow_sensor._attr_name == f"{mock_coordinator.name} Portata d'Aria"
         assert airflow_sensor._attr_native_unit_of_measurement == "m³/h"
         assert airflow_sensor._attr_device_class == "volume_flow_rate"
@@ -54,18 +55,20 @@ class TestVmcHeltyAirflowSensor:
     @pytest.mark.parametrize(
         ("fan_speed", "expected_airflow"),
         [
-            (0, 0),  # Spenta
+            (0, 0),   # Spenta
             (1, 10),  # Velocità 1
             (2, 17),  # Velocità 2
             (3, 26),  # Velocità 3
             (4, 37),  # Velocità 4
-        ],
+        ]
     )
     def test_native_value_normal_speeds(
         self, airflow_sensor, mock_coordinator, fan_speed, expected_airflow
     ):
         """Test native_value for normal fan speeds."""
-        mock_coordinator.data = {"status": f"VMGO,{fan_speed},1,25,0,24"}
+        mock_coordinator.data = {
+            "status": f"VMGO,{fan_speed},1,25,0,24"
+        }
         assert airflow_sensor.native_value == expected_airflow
 
     def test_native_value_night_mode(self, airflow_sensor, mock_coordinator):
@@ -107,7 +110,9 @@ class TestVmcHeltyAirflowSensor:
 
     def test_native_value_invalid_fan_speed(self, airflow_sensor, mock_coordinator):
         """Test native_value with invalid fan speed."""
-        mock_coordinator.data = {"status": "VMGO,invalid,1,25,0,24"}
+        mock_coordinator.data = {
+            "status": "VMGO,invalid,1,25,0,24"
+        }
         assert airflow_sensor.native_value is None
 
     def test_native_value_high_fan_speed_clamped(

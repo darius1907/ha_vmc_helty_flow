@@ -22,6 +22,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
     coordinator.name = "VMC Test"
+    coordinator.name_slug = "testvmc"
     coordinator.data = {
         "sensors": "VMGI,245,205,650,450,50,75,80,90,100,1,2,3,4,1000",
         "status": "VMGO,3,1,25,0,24",
@@ -71,6 +72,7 @@ class TestVmcHeltySensor:
 
     def test_init(self, mock_coordinator):
         """Test initialization."""
+        mock_coordinator.name_slug = "testvmc"
         sensor_entity = VmcHeltySensor(
             mock_coordinator,
             "temperature_internal",
@@ -79,10 +81,9 @@ class TestVmcHeltySensor:
             "temperature",
             "measurement",
         )
-
         assert sensor_entity._sensor_key == "temperature_internal"
-        assert sensor_entity._attr_unique_id == "192.168.1.100_temperature_internal"
-        assert sensor_entity._attr_name == "VMC Test Temperatura Interna"
+        assert sensor_entity._attr_unique_id == "vmc_testvmc_temperature_internal"
+        assert sensor_entity._attr_name == "VMC VMC Test Temperatura Interna"
         assert sensor_entity._attr_native_unit_of_measurement == "°C"
         assert sensor_entity._attr_device_class == "temperature"
         assert sensor_entity._attr_state_class == "measurement"
@@ -225,8 +226,8 @@ class TestVmcHeltyLastResponseSensor:
     def test_init(self, mock_coordinator):
         """Test sensor initialization."""
         sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
-
-        assert sensor_entity._attr_unique_id == f"{mock_coordinator.ip}_last_response"
+        expected_unique_id = f"vmc_{mock_coordinator.name_slug}_last_response"
+        assert sensor_entity._attr_unique_id == expected_unique_id
         assert sensor_entity._attr_name == f"{mock_coordinator.name} Last Response"
 
     def test_native_value_no_data(self, mock_coordinator):

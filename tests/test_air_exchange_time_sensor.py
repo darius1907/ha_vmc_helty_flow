@@ -24,11 +24,12 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         """Set up test fixtures."""
         self.coordinator = Mock()
         self.coordinator.ip = "192.168.1.100"
+        self.coordinator.name_slug = "testvmc"
         self.sensor = VmcHeltyAirExchangeTimeSensor(self.coordinator)
 
     def test_init(self):
         """Test sensor initialization."""
-        assert self.sensor.unique_id == "192_168_1_100_air_exchange_time"
+        assert self.sensor.unique_id == "vmc_testvmc_air_exchange_time"
         assert self.sensor.name == "Air Exchange Time"
         assert self.sensor.native_unit_of_measurement == "min"
         assert self.sensor.icon == "mdi:clock-time-four"

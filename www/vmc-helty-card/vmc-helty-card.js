@@ -2,7 +2,7 @@
  * VMC Helty Flow Control Card v2.0 - LitElement Implementation
  * Advanced Lovelace card for VMC Helty Flow Plus/Elite control
  *
- * ✅ Fully compliant with Home Assistant development guidelines:
+ * Fully compliant with Home Assistant development guidelines:
  * - LitElement-based architecture for maximum compatibility
  * - Mobile-first responsive design
  * - HA theme system integration
@@ -19,9 +19,7 @@
  */
 
 console.info(
-  `%c VMC HELTY CARD v2.0 LitElement %c
-   🌀 Advanced VMC Helty Flow control with device & sensor selection
-   📱 LitElement-based, Full HA Guidelines compliance`,
+  `%c VMC HELTY CARD v2.0 LitElement %c Advanced VMC Helty Flow control with device & sensor selection`,
   "color: orange; font-weight: bold; background: black",
   "color: white; font-weight: normal;"
 );
@@ -57,61 +55,12 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
+      /* Use ha-card base styles - let HA handle the styling */
       :host {
         display: block;
-        background: var(--card-background-color);
-        color: var(--primary-text-color);
-        border-radius: var(--ha-card-border-radius, 12px);
-        border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color));
-        box-shadow: var(--ha-card-box-shadow, 0 2px 8px rgba(0,0,0,0.1));
-        padding: var(--ha-card-padding, 16px);
-        font-family: var(--ha-card-font-family, inherit);
-        line-height: var(--ha-card-line-height, 1.5);
-        box-sizing: border-box;
       }
 
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-bottom: 16px;
-        border-bottom: 1px solid var(--divider-color);
-        margin-bottom: 16px;
-      }
-
-      .card-title {
-        font-size: var(--ha-card-header-font-size, 24px);
-        font-weight: var(--ha-card-header-font-weight, 400);
-        color: var(--ha-card-header-color, var(--primary-text-color));
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .device-status {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--secondary-text-color);
-        font-size: 14px;
-      }
-
-      .status-indicator {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--success-color, #4caf50);
-      }
-
-      .status-indicator.offline {
-        background: var(--error-color, #f44336);
-      }
-
-      .controls-section {
-        margin-bottom: 24px;
-      }
-
+      /* Minimal essential layout - let HA handle styling */
       .fan-controls {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
@@ -119,105 +68,11 @@ class VmcHeltyCard extends LitElement {
         margin-bottom: 16px;
       }
 
-      .fan-speed-button {
-        background: var(--secondary-background-color);
-        color: var(--primary-text-color);
-        border: 2px solid var(--divider-color);
-        border-radius: var(--ha-card-border-radius, 8px);
-        padding: 12px 8px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        min-height: 44px;
-        min-width: 44px;
-      }
-
-      .fan-speed-button:hover:not(:disabled) {
-        background: var(--primary-color);
-        color: var(--text-primary-color);
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-      }
-
-      .fan-speed-button.active {
-        background: var(--accent-color);
-        color: var(--text-primary-color);
-        border-color: var(--accent-color);
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px var(--accent-color-alpha, rgba(255, 193, 7, 0.3));
-      }
-
-      .fan-speed-button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .speed-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .speed-percentage {
-        font-weight: 700;
-      }
-
       .sensors-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         gap: 16px;
         margin-bottom: 16px;
-      }
-
-      .sensor-card {
-        background: var(--secondary-background-color);
-        border-radius: var(--ha-card-border-radius, 8px);
-        padding: 12px;
-        border: 1px solid var(--divider-color);
-        transition: all 0.2s ease;
-      }
-
-      .sensor-card:hover {
-        border-color: var(--accent-color);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      }
-
-      .sensor-label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: var(--secondary-text-color);
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .sensor-value {
-        font-size: 18px;
-        font-weight: 500;
-        color: var(--primary-text-color);
-        line-height: 1.2;
-      }
-
-      .sensor-unit {
-        font-size: 12px;
-        color: var(--secondary-text-color);
-        margin-left: 4px;
-      }
-
-      .sensor-source {
-        font-size: 10px;
-        color: var(--accent-color);
-        margin-top: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
       }
 
       .advanced-section {
@@ -871,7 +726,7 @@ window.customCards.push({
   documentationURL: 'https://github.com/your-repo/vmc-helty-card',
 });
 
-console.info(`%c VMC HELTY CARD v2.0 LitElement %c Loaded successfully! 🌀`,
+console.info(`%c VMC HELTY CARD v2.0 LitElement %c Loaded successfully!`,
   "color: white; background: green; font-weight: bold;",
   "color: green; font-weight: normal;");
 
