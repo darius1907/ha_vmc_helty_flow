@@ -44,7 +44,7 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
         self._attr_unique_id = f"{coordinator.ip}_fan"
         self._attr_name = f"{coordinator.name} Fan"
         self._attr_speed_count = 4  # 4 velocità (1-4)
-        self._attr_supported_features = FanEntityFeature(0)  # Nessuna feature speciale
+        self._attr_supported_features = FanEntityFeature.SET_SPEED
 
     @property
     def is_on(self) -> bool:
