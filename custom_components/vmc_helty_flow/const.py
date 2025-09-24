@@ -133,7 +133,7 @@ AIR_EXCHANGE_ACCEPTABLE = "Acceptable"
 AIR_EXCHANGE_POOR = "Poor"
 
 # Standard room volume (cubic meters) for calculation - configurable default
-DEFAULT_ROOM_VOLUME = 150  # m³ (typical 60m² room with 2.5m height)
+DEFAULT_ROOM_VOLUME = 60  # m³ (typical 60m² room with 2.5m height)
 
 # Air Exchange Time Thresholds (minutes) - Tempo ideale per ricambio completo aria
 AIR_EXCHANGE_TIME_EXCELLENT = 20  # Meno di 20 minuti = eccellente
@@ -143,7 +143,7 @@ AIR_EXCHANGE_TIME_ACCEPTABLE = 60 # 30-60 minuti = accettabile
 
 # Daily Air Changes Categories and thresholds
 DAILY_AIR_CHANGES_EXCELLENT = "Excellent"
-DAILY_AIR_CHANGES_GOOD = "Good" 
+DAILY_AIR_CHANGES_GOOD = "Good"
 DAILY_AIR_CHANGES_ADEQUATE = "Adequate"
 DAILY_AIR_CHANGES_POOR = "Poor"
 

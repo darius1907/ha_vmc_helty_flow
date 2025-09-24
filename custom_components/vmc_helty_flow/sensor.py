@@ -27,17 +27,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    CONF_DEVICE_ID,
     DOMAIN,
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
     AIRFLOW_MAPPING,
-    # Comfort level constants
-    COMFORT_LEVEL_EXCELLENT,
-    COMFORT_LEVEL_GOOD,
-    COMFORT_LEVEL_FAIR,
-    COMFORT_LEVEL_POOR,
-    # Dew point constants
     DEW_POINT_VERY_DRY,
     DEW_POINT_DRY_MIN,
     DEW_POINT_DRY_MAX,
@@ -49,8 +42,6 @@ from .const import (
     DEW_POINT_ACCEPTABLE_MAX,
     DEW_POINT_HUMID_MIN,
     DEW_POINT_HUMID_MAX,
-    DEW_POINT_OPPRESSIVE,
-    # Comfort index constants
     COMFORT_TEMP_OPTIMAL_MIN,
     COMFORT_TEMP_OPTIMAL_MAX,
     COMFORT_TEMP_ACCEPTABLE_MIN,
@@ -70,16 +61,10 @@ from .const import (
     COMFORT_INDEX_GOOD,
     COMFORT_INDEX_ACCEPTABLE,
     COMFORT_INDEX_MEDIOCRE,
-    # Dew point delta constants
     DEW_POINT_DELTA_CRITICAL,
     DEW_POINT_DELTA_HIGH_RISK,
     DEW_POINT_DELTA_MODERATE_RISK,
     DEW_POINT_DELTA_LOW_RISK,
-    DEW_POINT_DELTA_SAFE,
-    DEW_POINT_DELTA_RISK_HIGH,
-    DEW_POINT_DELTA_RISK_MEDIUM,
-    DEW_POINT_DELTA_RISK_LOW,
-    # Air exchange constants
     AIR_EXCHANGE_EXCELLENT,
     AIR_EXCHANGE_GOOD,
     AIR_EXCHANGE_ACCEPTABLE,
@@ -88,7 +73,6 @@ from .const import (
     AIR_EXCHANGE_TIME_EXCELLENT,
     AIR_EXCHANGE_TIME_GOOD,
     AIR_EXCHANGE_TIME_ACCEPTABLE,
-    # Daily air changes constants
     DAILY_AIR_CHANGES_EXCELLENT,
     DAILY_AIR_CHANGES_GOOD,
     DAILY_AIR_CHANGES_ADEQUATE,
@@ -96,6 +80,9 @@ from .const import (
     DAILY_AIR_CHANGES_EXCELLENT_MIN,
     DAILY_AIR_CHANGES_GOOD_MIN,
     DAILY_AIR_CHANGES_ADEQUATE_MIN,
+    FAN_SPEED_NIGHT_MODE,
+    FAN_SPEED_HYPERVENTILATION,
+    FAN_SPEED_FREE_COOLING
 )
 from . import VmcHeltyCoordinator
 from .device_info import VmcHeltyEntity
@@ -668,13 +655,13 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = "%"
         self._attr_icon = "mdi:account-check"
-        
+
     @property
     def native_value(self) -> int | None:
         """Calcola l'indice di comfort come percentuale (0-100%)."""
         if not self.coordinator.data:
             return None
-            
+
         try:
             # Ottieni i dati dei sensori dalla stringa VMGI
             sensors_data = self.coordinator.data.get("sensors", "")
@@ -688,22 +675,22 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
             # Estrai temperatura interna (pos 1) e umidità (pos 3)
             temp = float(parts[1]) / 10  # Decimi di °C
             humidity = float(parts[3]) / 10  # Decimi di %
-            
+
             if humidity <= 0 or humidity > COMFORT_HUMIDITY_MAX:
                 return None
-                
+
             # Indice basato su temperature e umidità ottimali
             temp_comfort = self._calculate_temperature_comfort(temp)
             humidity_comfort = self._calculate_humidity_comfort(humidity)
-            
+
             # Combina i due fattori con peso bilanciato
             comfort_index = (temp_comfort * 0.6 + humidity_comfort * 0.4) * 100
-            
+
             return round(comfort_index)
-            
+
         except (ValueError, TypeError, ZeroDivisionError):
             return None
-            
+
     def _calculate_temperature_comfort(self, temp: float) -> float:
         """Calcola il comfort termico (0.0-1.0)."""
         # Range ottimale
@@ -721,7 +708,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
             return 0.5 - (temp - COMFORT_TEMP_ACCEPTABLE_MAX) * 0.15  # da 0.5 a 0.2
         # Fuori range accettabile
         return max(0.0, 0.2 - abs(temp - COMFORT_TEMP_REFERENCE) * 0.02)
-    
+
     def _calculate_humidity_comfort(self, humidity: float) -> float:
         """Calcola il comfort igrometrico (0.0-1.0)."""
         # Range ottimale
@@ -739,15 +726,15 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
             return 0.5 - (humidity - COMFORT_HUMIDITY_ACCEPTABLE_MAX) * 0.03  # da 0.5 a 0.2
         # Fuori range accettabile
         return max(0.0, 0.2 - abs(humidity - COMFORT_HUMIDITY_REFERENCE) * 0.005)
-    
+
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributi aggiuntivi con dettagli del comfort."""
         attributes = super().extra_state_attributes or {}
-        
+
         if not self.coordinator.data:
             return attributes
-            
+
         try:
             # Ottieni i dati dei sensori dalla stringa VMGI
             sensors_data = self.coordinator.data.get("sensors", "")
@@ -968,33 +955,19 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
         try:
             # Velocità ventola dalla posizione 1 del VMGO
             fan_speed = int(parts[1])
-            
-            # Gestione modi speciali
-            if fan_speed == 5:  # Night mode
-                actual_speed = 1  # Velocità ridotta notturna
-            elif fan_speed == 6:  # Hyperventilation mode
-                actual_speed = 4  # Velocità massima per iperventilazione
-            elif fan_speed == 7:  # Free cooling mode
-                actual_speed = 2  # Velocità media per free cooling
-            elif 0 <= fan_speed <= 4:
-                actual_speed = fan_speed
-            else:
-                return None  # Velocità non valida
-            
-            if actual_speed == 0:
+
+            if fan_speed == 0:
                 return None  # Ventilazione spenta
-            
+
             # Calcola portata aria stimata in m³/h basata sulla velocità
-            # Stima tipica: velocità 1=50 m³/h, 2=100 m³/h, 3=150 m³/h, 4=200 m³/h
-            airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}  # m³/h
-            airflow = airflow_rates.get(actual_speed, 100)  # Default 100 m³/h se non riconosciuto
-            
+            airflow = AIRFLOW_MAPPING.get(fan_speed, 100)  # Default 100 m³/h se non riconosciuto
+
             # Volume ambiente (usa valore di default se non configurato)
             room_volume = DEFAULT_ROOM_VOLUME  # m³
-            
+
             # Calcola tempo di ricambio: Volume / Portata * 60 (per convertire in minuti)
             exchange_time = (room_volume / airflow) * 60
-            
+
             return round(exchange_time, 1)
 
         except (ValueError, IndexError, TypeError):
@@ -1033,7 +1006,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
         try:
             # Velocità ventola dalla posizione 1 del VMGO
             fan_speed_raw = int(parts[1])
-            
+
             # Gestione modi speciali per determinare velocità effettiva
             if fan_speed_raw == 101:  # Night mode
                 actual_speed = 1
@@ -1045,10 +1018,10 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
                 actual_speed = fan_speed_raw
             else:
                 actual_speed = 0  # Invalid speed
-            
+
             airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}
             airflow = airflow_rates.get(actual_speed, 0)
-            
+
             # Determina categoria efficienza
             exchange_time = self.native_value
             if exchange_time is None:
@@ -1084,7 +1057,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
         """Get optimization tip based on current performance."""
         if exchange_time is None:
             return "Ventilazione non attiva"
-        
+
         if exchange_time <= AIR_EXCHANGE_TIME_EXCELLENT:
             return "Prestazioni eccellenti, ricambio aria ottimale"
         elif exchange_time <= AIR_EXCHANGE_TIME_GOOD:
@@ -1131,7 +1104,7 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
         try:
             # Velocità ventola dalla posizione 1 del VMGO (0-7 = velocità/modalità)
             fan_speed_raw = int(parts[1])
-            
+
             # Decodifica modalità speciali in velocità effettiva
             if fan_speed_raw == 0:
                 return 0.0  # Ventilazione spenta
@@ -1146,21 +1119,21 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
                 fan_speed = fan_speed_raw
             else:
                 fan_speed = 2  # Default a velocità media
-            
+
             # Calcola portata aria stimata in m³/h basata sulla velocità
             # Stima tipica: velocità 1=50 m³/h, 2=100 m³/h, 3=150 m³/h, 4=200 m³/h
             airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}  # m³/h
             airflow_rate = airflow_rates.get(fan_speed, 100)  # Default 100 m³/h
-            
+
             # Volume ambiente (usa valore di default se non configurato)
             room_volume = DEFAULT_ROOM_VOLUME  # m³
-            
+
             # Calcola ricambi d'aria per ora
             air_changes_per_hour = airflow_rate / room_volume
-            
+
             # Calcola ricambi d'aria per 24 ore
             daily_air_changes = air_changes_per_hour * 24
-            
+
             return round(daily_air_changes, 1)
 
         except (ValueError, IndexError, TypeError):
@@ -1216,11 +1189,11 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
                     if len(parts) >= MIN_RESPONSE_PARTS:
                         fan_speed_raw = int(parts[1])
                         # Decodifica modalità speciali
-                        if fan_speed_raw == 5:
+                        if fan_speed_raw == FAN_SPEED_NIGHT_MODE:
                             fan_speed = 1
-                        elif fan_speed_raw == 6:
+                        elif fan_speed_raw == FAN_SPEED_HYPERVENTILATION:
                             fan_speed = 4
-                        elif fan_speed_raw == 7:
+                        elif fan_speed_raw == FAN_SPEED_FREE_COOLING:
                             fan_speed = 0
                         elif 1 <= fan_speed_raw <= 4:
                             fan_speed = fan_speed_raw

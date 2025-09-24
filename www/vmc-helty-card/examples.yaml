@@ -1,151 +1,376 @@
-# VMC Helty Card Configuration Examples
+# VMC Helty Card - Configuration Examples# VMC Helty Card Configuration Examples
+
 # Copy and paste these examples into your Lovelace dashboard
 
-# =====================================================
-# BASIC CONFIGURATION (Minimum required)
-# =====================================================
-type: custom:vmc-helty-card
-entity: fan.vmc_helty  # Replace with your actual fan entity
+## Basic Configuration
 
-# =====================================================  
-# STANDARD CONFIGURATION (Recommended)
-# =====================================================
-type: custom:vmc-helty-card
-entity: fan.vmc_helty_living_room
-name: "Living Room VMC"
-show_temperature: true
-show_humidity: true
-show_co2: true
-show_voc: true
+```yaml# =====================================================
 
-# =====================================================
+type: custom:vmc-helty-card# BASIC CONFIGURATION (Minimum required)
+
+entity: fan.vmc_helty_flow_kitchen# =====================================================
+
+name: "Kitchen VMC"type: custom:vmc-helty-card
+
+```entity: fan.vmc_helty  # Replace with your actual fan entity
+
+
+
+## Configuration with Custom Sensors# =====================================================  
+
+```yaml# STANDARD CONFIGURATION (Recommended)
+
+type: custom:vmc-helty-card# =====================================================
+
+entity: fan.vmc_helty_flow_living_roomtype: custom:vmc-helty-card
+
+name: "Living Room Ventilation"entity: fan.vmc_helty_living_room
+
+temperature_entity: sensor.living_room_temperaturename: "Living Room VMC"
+
+humidity_entity: sensor.living_room_humidityshow_temperature: true
+
+room_volume: 89.6  # 8m × 5.6m × 2.0mshow_humidity: true
+
+show_advanced: trueshow_co2: true
+
+enable_comfort_calculations: trueshow_voc: true
+
+enable_air_exchange: true
+
+```# =====================================================
+
 # FULL CONFIGURATION (All options)
-# =====================================================
-type: custom:vmc-helty-card
-entity: fan.vmc_helty_master_bedroom
-name: "Master Bedroom VMC"
-show_temperature: true
-show_humidity: true
-show_co2: true
-show_voc: true
-show_lights: true
-show_advanced: true
-theme: default
-volume_m3: 45  # Bedroom volume for air exchange calculations
 
-# =====================================================
-# COMPACT CONFIGURATION (Minimal display)
-# =====================================================
+## Minimal Configuration (Bathroom)# =====================================================
+
+```yamltype: custom:vmc-helty-card
+
+type: custom:vmc-helty-cardentity: fan.vmc_helty_master_bedroom
+
+entity: fan.vmc_helty_flow_bathroomname: "Master Bedroom VMC"
+
+name: "Bathroom Fan"show_temperature: true
+
+room_volume: 15.75  # 2.5m × 3.5m × 1.8mshow_humidity: true
+
+show_co2: falseshow_co2: true
+
+show_voc: falseshow_voc: true
+
+show_advanced: falseshow_lights: true
+
+```show_advanced: true
+
+theme: default
+
+## Full Configuration (All Options)volume_m3: 45  # Bedroom volume for air exchange calculations
+
+```yaml
+
+type: custom:vmc-helty-card# =====================================================
+
+# Required# COMPACT CONFIGURATION (Minimal display)
+
+entity: fan.vmc_helty_flow_bedroom# =====================================================
+
 type: custom:vmc-helty-card
-entity: fan.vmc_helty_bathroom
-name: "Bathroom VMC"
-show_temperature: false
+
+# Display Settings  entity: fan.vmc_helty_bathroom
+
+name: "Master Bedroom VMC"name: "Bathroom VMC"
+
+show_temperature: trueshow_temperature: false
+
+show_humidity: trueshow_humidity: true
+
+show_co2: trueshow_co2: false
+
+show_voc: trueshow_voc: false
+
+show_advanced: trueshow_lights: false
+
+show_advanced: false
+
+# Custom Sensorstheme: compact
+
+temperature_entity: sensor.bedroom_temperature_precise
+
+humidity_entity: sensor.bedroom_humidity_precise# =====================================================
+
+# FLOW PLUS CONFIGURATION (No CO2/VOC sensors)
+
+# Room Configuration# =====================================================
+
+room_volume: 45.5  # 6.5m × 3.5m × 2.0mtype: custom:vmc-helty-card
+
+entity: fan.vmc_helty_kitchen
+
+# Advanced Featuresname: "Kitchen VMC (Plus)"
+
+enable_comfort_calculations: trueshow_temperature: true
+
+enable_air_exchange: trueshow_humidity: true
+
+show_co2: false        # Plus model doesn't have CO2
+
+# Theme & Layoutshow_voc: false        # Plus model doesn't have VOC
+
+theme: defaultshow_lights: true
+
+layout: autoshow_advanced: false
+
+```theme: default
+
+
+
+## Multiple VMC Cards Dashboard# =====================================================
+
+```yaml# MULTIPLE CARDS LAYOUT (Dashboard example)
+
+# Living Room Card# =====================================================
+
+- type: custom:vmc-helty-cardviews:
+
+  entity: fan.vmc_helty_flow_living_room  - title: Ventilation
+
+  name: "Living Room"    cards:
+
+  temperature_entity: sensor.living_room_temp      - type: horizontal-stack
+
+  humidity_entity: sensor.living_room_humidity        cards:
+
+  room_volume: 89.6          # Living Room VMC (Elite)
+
+  show_advanced: true          - type: custom:vmc-helty-card
+
+            entity: fan.vmc_helty_living_room
+
+# Kitchen Card              name: "Living Room"
+
+- type: custom:vmc-helty-card            show_temperature: true
+
+  entity: fan.vmc_helty_flow_kitchen            show_humidity: true
+
+  name: "Kitchen"            show_co2: true
+
+  temperature_entity: sensor.kitchen_temp            show_voc: true
+
+  humidity_entity: sensor.kitchen_humidity              show_advanced: false
+
+  room_volume: 32.4            
+
+  show_co2: true          # Bedroom VMC (Plus)  
+
+  show_voc: false          - type: custom:vmc-helty-card
+
+            entity: fan.vmc_helty_bedroom
+
+# Bedroom Card            name: "Bedroom"
+
+- type: custom:vmc-helty-card            show_temperature: true
+
+  entity: fan.vmc_helty_flow_bedroom            show_humidity: true
+
+  name: "Master Bedroom"            show_co2: false
+
+  room_volume: 45.5            show_voc: false
+
+  show_co2: false            theme: compact
+
+  show_voc: false
+
+  show_advanced: true      # Full-width advanced card
+
+      - type: custom:vmc-helty-card
+
+# Bathroom Card (Minimal)        entity: fan.vmc_helty_main
+
+- type: custom:vmc-helty-card        name: "Main VMC System"
+
+  entity: fan.vmc_helty_flow_bathroom        show_temperature: true
+
+  name: "Bathroom"        show_humidity: true
+
+  room_volume: 15.75        show_co2: true
+
+  show_co2: false        show_voc: true
+
+  show_voc: false        show_lights: true
+
+  show_advanced: false        show_advanced: true
+
+```        volume_m3: 250
+
+
+
+## Configuration by Room Type# =====================================================
+
+# CONDITIONAL DISPLAY (Show based on device model)
+
+### Living Spaces (Living Room, Family Room)# =====================================================
+
+```yamltype: conditional
+
+type: custom:vmc-helty-cardconditions:
+
+entity: fan.vmc_helty_flow_living_room  - entity: sensor.vmc_helty_model
+
+name: "Living Room VMC"    state: "Flow Elite"
+
+room_volume: 80-120  # Large spacescard:
+
+show_co2: true       # Important for occupied spaces  type: custom:vmc-helty-card
+
+show_voc: true       # Monitor air quality  entity: fan.vmc_helty
+
+show_advanced: true  # Full analytics  name: "VMC Helty Elite"
+
+enable_comfort_calculations: true  show_temperature: true
+
+enable_air_exchange: true  show_humidity: true
+
+```  show_co2: true        # Only show for Elite
+
+  show_voc: true        # Only show for Elite
+
+### Kitchens  show_advanced: true
+
+```yaml
+
+type: custom:vmc-helty-card# =====================================================
+
+entity: fan.vmc_helty_flow_kitchen# MOBILE-OPTIMIZED LAYOUT
+
+name: "Kitchen VMC"# =====================================================
+
+room_volume: 25-45   # Medium spacestype: custom:vmc-helty-card
+
+show_co2: true       # Cooking produces CO2entity: fan.vmc_helty_mobile
+
+show_voc: true       # Monitor cooking odorsname: "VMC"
+
+show_advanced: true  # Track efficiencyshow_temperature: true
+
+temperature_entity: sensor.kitchen_temp  # Away from stoveshow_humidity: true
+
+humidity_entity: sensor.kitchen_humidityshow_co2: true
+
+```show_voc: false        # Hide VOC on mobile to save space
+
+show_lights: false     # Hide lights on mobile
+
+### Bedroomsshow_advanced: false   # Hide advanced on mobile
+
+```yamltheme: compact
+
+type: custom:vmc-helty-card
+
+entity: fan.vmc_helty_flow_bedroom# =====================================================
+
+name: "Bedroom VMC"# ADVANCED WITH CUSTOM ENTITIES (Override auto-discovery)
+
+room_volume: 30-50   # Medium spaces# =====================================================
+
+show_co2: false      # Less critical at nighttype: custom:vmc-helty-card
+
+show_voc: false      # Usually not neededentity: fan.vmc_helty_custom
+
+show_advanced: true  # Monitor comfortname: "Custom VMC Setup"
+
+enable_comfort_calculations: true# Override entity auto-discovery
+
+```entities:
+
+  temperature_internal: sensor.custom_temp_inside
+
+### Bathrooms  temperature_external: sensor.weather_temp  # Use weather service
+
+```yaml  humidity: sensor.custom_humidity
+
+type: custom:vmc-helty-card  co2: sensor.custom_co2_sensor
+
+entity: fan.vmc_helty_flow_bathroom    # VMC entities will still use auto-discovery
+
+name: "Bathroom VMC"show_temperature: true
+
+room_volume: 10-20   # Small spacesshow_humidity: true
+
+show_co2: false      # Not relevantshow_co2: true
+
+show_voc: false      # Not neededshow_voc: true
+show_advanced: false # Keep simple
+show_temperature: true  # Monitor humidity control
 show_humidity: true
+```
+
+## Advanced Sensor Integration
+
+### With Aqara Sensors
+```yaml
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_flow_living_room
+name: "Living Room VMC"
+temperature_entity: sensor.aqara_living_room_temperature
+humidity_entity: sensor.aqara_living_room_humidity
+room_volume: 89.6
+show_advanced: true
+enable_comfort_calculations: true
+```
+
+### With Xiaomi Mi Sensors  
+```yaml
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_flow_bedroom
+name: "Bedroom VMC"
+temperature_entity: sensor.xiaomi_bedroom_temperature
+humidity_entity: sensor.xiaomi_bedroom_humidity
+room_volume: 45.5
+show_advanced: true
+```
+
+### With Sonoff Sensors
+```yaml
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_flow_kitchen
+name: "Kitchen VMC" 
+temperature_entity: sensor.sonoff_kitchen_temperature
+humidity_entity: sensor.sonoff_kitchen_humidity
+room_volume: 32.4
+show_co2: true
+show_advanced: true
+```
+
+## Performance Optimized Configurations
+
+### Minimal Resource Usage
+```yaml
+type: custom:vmc-helty-card
+entity: fan.vmc_helty_flow_bathroom
+name: "Bathroom"
+room_volume: 15.75
+show_temperature: true
+show_humidity: true  
 show_co2: false
 show_voc: false
-show_lights: false
-show_advanced: false
-theme: compact
+show_advanced: false  # Disable calculations
+enable_comfort_calculations: false
+enable_air_exchange: false
+```
 
-# =====================================================
-# FLOW PLUS CONFIGURATION (No CO2/VOC sensors)
-# =====================================================
+### Maximum Features
+```yaml
 type: custom:vmc-helty-card
-entity: fan.vmc_helty_kitchen
-name: "Kitchen VMC (Plus)"
-show_temperature: true
-show_humidity: true
-show_co2: false        # Plus model doesn't have CO2
-show_voc: false        # Plus model doesn't have VOC
-show_lights: true
-show_advanced: false
-theme: default
-
-# =====================================================
-# MULTIPLE CARDS LAYOUT (Dashboard example)
-# =====================================================
-views:
-  - title: Ventilation
-    cards:
-      - type: horizontal-stack
-        cards:
-          # Living Room VMC (Elite)
-          - type: custom:vmc-helty-card
-            entity: fan.vmc_helty_living_room
-            name: "Living Room"
-            show_temperature: true
-            show_humidity: true
-            show_co2: true
-            show_voc: true
-            show_advanced: false
-            
-          # Bedroom VMC (Plus)  
-          - type: custom:vmc-helty-card
-            entity: fan.vmc_helty_bedroom
-            name: "Bedroom"
-            show_temperature: true
-            show_humidity: true
-            show_co2: false
-            show_voc: false
-            theme: compact
-
-      # Full-width advanced card
-      - type: custom:vmc-helty-card
-        entity: fan.vmc_helty_main
-        name: "Main VMC System"
-        show_temperature: true
-        show_humidity: true
-        show_co2: true
-        show_voc: true
-        show_lights: true
-        show_advanced: true
-        volume_m3: 250
-
-# =====================================================
-# CONDITIONAL DISPLAY (Show based on device model)
-# =====================================================
-type: conditional
-conditions:
-  - entity: sensor.vmc_helty_model
-    state: "Flow Elite"
-card:
-  type: custom:vmc-helty-card
-  entity: fan.vmc_helty
-  name: "VMC Helty Elite"
-  show_temperature: true
-  show_humidity: true
-  show_co2: true        # Only show for Elite
-  show_voc: true        # Only show for Elite
-  show_advanced: true
-
-# =====================================================
-# MOBILE-OPTIMIZED LAYOUT
-# =====================================================
-type: custom:vmc-helty-card
-entity: fan.vmc_helty_mobile
-name: "VMC"
-show_temperature: true
-show_humidity: true
-show_co2: true
-show_voc: false        # Hide VOC on mobile to save space
-show_lights: false     # Hide lights on mobile
-show_advanced: false   # Hide advanced on mobile
-theme: compact
-
-# =====================================================
-# ADVANCED WITH CUSTOM ENTITIES (Override auto-discovery)
-# =====================================================
-type: custom:vmc-helty-card
-entity: fan.vmc_helty_custom
-name: "Custom VMC Setup"
-# Override entity auto-discovery
-entities:
-  temperature_internal: sensor.custom_temp_inside
-  temperature_external: sensor.weather_temp  # Use weather service
-  humidity: sensor.custom_humidity
-  co2: sensor.custom_co2_sensor
-  # VMC entities will still use auto-discovery
+entity: fan.vmc_helty_flow_living_room
+name: "Living Room VMC"
+temperature_entity: sensor.living_room_temp_precise
+humidity_entity: sensor.living_room_humidity_precise
+room_volume: 89.6
 show_temperature: true
 show_humidity: true
 show_co2: true
 show_voc: true
+show_advanced: true
+enable_comfort_calculations: true
+enable_air_exchange: true
+```
