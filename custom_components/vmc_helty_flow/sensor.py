@@ -564,9 +564,18 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
             return None
 
         try:
-            # Ottieni temperatura interna e umidità relativa
-            temp_internal = self.coordinator.data.get("temperature_internal")
-            humidity = self.coordinator.data.get("humidity")
+            # Ottieni i dati dei sensori dalla stringa VMGI
+            sensors_data = self.coordinator.data.get("sensors", "")
+            if not sensors_data or not sensors_data.startswith("VMGI"):
+                return None
+
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return None
+
+            # Estrai temperatura interna (pos 1) e umidità (pos 3)
+            temp_internal = float(parts[1]) / 10  # Decimi di °C
+            humidity = float(parts[3]) / 10  # Decimi di %
 
             if temp_internal is None or humidity is None or humidity <= 0:
                 return None
@@ -595,8 +604,20 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
         if not self.coordinator.data:
             return None
 
-        temp_internal = self.coordinator.data.get("temperature_internal")
-        humidity = self.coordinator.data.get("humidity")
+        # Ottieni i dati dei sensori dalla stringa VMGI
+        sensors_data = self.coordinator.data.get("sensors", "")
+        if not sensors_data or not sensors_data.startswith("VMGI"):
+            return None
+
+        try:
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return None
+
+            temp_internal = float(parts[1]) / 10  # Decimi di °C
+            humidity = float(parts[3]) / 10  # Decimi di %
+        except (ValueError, IndexError):
+            return None
 
         # Calcola anche il comfort level basato sul punto di rugiada
         dew_point = self.native_value
@@ -651,14 +672,22 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
     @property
     def native_value(self) -> int | None:
         """Calcola l'indice di comfort come percentuale (0-100%)."""
-        data = self.coordinator.data
-        
-        if not data:
+        if not self.coordinator.data:
             return None
             
         try:
-            temp = float(data.get("temperature_internal", 0))
-            humidity = float(data.get("humidity", 0))
+            # Ottieni i dati dei sensori dalla stringa VMGI
+            sensors_data = self.coordinator.data.get("sensors", "")
+            if not sensors_data or not sensors_data.startswith("VMGI"):
+                return None
+
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return None
+
+            # Estrai temperatura interna (pos 1) e umidità (pos 3)
+            temp = float(parts[1]) / 10  # Decimi di °C
+            humidity = float(parts[3]) / 10  # Decimi di %
             
             if humidity <= 0 or humidity > COMFORT_HUMIDITY_MAX:
                 return None
@@ -672,7 +701,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
             
             return round(comfort_index)
             
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, ZeroDivisionError):
             return None
             
     def _calculate_temperature_comfort(self, temp: float) -> float:
@@ -716,13 +745,22 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
         """Attributi aggiuntivi con dettagli del comfort."""
         attributes = super().extra_state_attributes or {}
         
-        data = self.coordinator.data
-        if not data:
+        if not self.coordinator.data:
             return attributes
             
         try:
-            temp = float(data.get("Temperature", 0))
-            humidity = float(data.get("Humidity", 0))
+            # Ottieni i dati dei sensori dalla stringa VMGI
+            sensors_data = self.coordinator.data.get("sensors", "")
+            if not sensors_data or not sensors_data.startswith("VMGI"):
+                return attributes
+
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return attributes
+
+            # Estrai temperatura interna (pos 1) e umidità (pos 3)
+            temp = float(parts[1]) / 10  # Decimi di °C
+            humidity = float(parts[3]) / 10  # Decimi di %
             
             temp_comfort = self._calculate_temperature_comfort(temp)
             humidity_comfort = self._calculate_humidity_comfort(humidity)
@@ -751,7 +789,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
                     "current_humidity": f"{humidity}%"
                 })
                 
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, ZeroDivisionError):
             pass
             
         return attributes
@@ -773,15 +811,23 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
     @property
     def native_value(self) -> float | None:
         """Calcola il delta punto di rugiada (interno - esterno)."""
-        data = self.coordinator.data
-        
-        if not data:
+        if not self.coordinator.data:
             return None
             
         try:
-            temp_internal = float(data.get("temperature_internal", 0))
-            humidity = float(data.get("humidity", 0))
-            temp_external = float(data.get("temperature_external", 0))
+            # Ottieni i dati dei sensori dalla stringa VMGI
+            sensors_data = self.coordinator.data.get("sensors", "")
+            if not sensors_data or not sensors_data.startswith("VMGI"):
+                return None
+
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return None
+
+            # Estrai temperature e umidità
+            temp_internal = float(parts[1]) / 10  # Decimi di °C (pos 1)
+            temp_external = float(parts[2]) / 10  # Decimi di °C (pos 2)
+            humidity = float(parts[3]) / 10  # Decimi di % (pos 3)
             
             if humidity <= 0 or humidity > COMFORT_HUMIDITY_MAX:
                 return None
@@ -812,19 +858,28 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
         """Attributi aggiuntivi con informazioni sul rischio condensazione."""
         attributes = super().extra_state_attributes or {}
         
-        data = self.coordinator.data
-        if not data:
+        if not self.coordinator.data:
             return attributes
             
         try:
+            # Ottieni i dati dei sensori dalla stringa VMGI
+            sensors_data = self.coordinator.data.get("sensors", "")
+            if not sensors_data or not sensors_data.startswith("VMGI"):
+                return attributes
+
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return attributes
+
             delta_value = self.native_value
             if delta_value is not None:
                 # Classificazione del rischio di condensazione
                 risk_info = self._get_condensation_risk(delta_value)
                 
-                temp_internal = float(data.get("temperature_internal", 0))
-                humidity = float(data.get("humidity", 0))
-                temp_external = float(data.get("temperature_external", 0))
+                # Estrai dati dalla stringa VMGI
+                temp_internal = float(parts[1]) / 10  # Decimi di °C (pos 1)
+                temp_external = float(parts[2]) / 10  # Decimi di °C (pos 2)
+                humidity = float(parts[3]) / 10  # Decimi di % (pos 3)
                 
                 internal_dew_point = self._calculate_dew_point(temp_internal, humidity)
                 external_dew_point = self._calculate_dew_point(temp_external, humidity)
@@ -840,7 +895,7 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
                     "humidity": f"{humidity}%"
                 })
                 
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, ZeroDivisionError):
             pass
             
         return attributes
@@ -901,21 +956,38 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
         if not self.coordinator.data:
             return None
 
-        # Estraiamo i dati necessari
+        # Usa il parsing VMGO per ottenere la velocità ventola
         status_data = self.coordinator.data.get("status", "")
-        if not status_data or len(status_data) < 20:
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        parts = status_data.split(",")
+        if len(parts) < MIN_STATUS_PARTS:  # Need at least VMGO and fan_speed
             return None
 
         try:
-            # Velocità ventola (posizione 4, 1-4 = velocità, 0 = off)
-            fan_speed = int(status_data[4])
-            if fan_speed == 0:
+            # Velocità ventola dalla posizione 1 del VMGO
+            fan_speed = int(parts[1])
+            
+            # Gestione modi speciali
+            if fan_speed == 5:  # Night mode
+                actual_speed = 1  # Velocità ridotta notturna
+            elif fan_speed == 6:  # Hyperventilation mode
+                actual_speed = 4  # Velocità massima per iperventilazione
+            elif fan_speed == 7:  # Free cooling mode
+                actual_speed = 2  # Velocità media per free cooling
+            elif 0 <= fan_speed <= 4:
+                actual_speed = fan_speed
+            else:
+                return None  # Velocità non valida
+            
+            if actual_speed == 0:
                 return None  # Ventilazione spenta
             
             # Calcola portata aria stimata in m³/h basata sulla velocità
             # Stima tipica: velocità 1=50 m³/h, 2=100 m³/h, 3=150 m³/h, 4=200 m³/h
             airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}  # m³/h
-            airflow = airflow_rates.get(fan_speed, 100)  # Default 100 m³/h se non riconosciuto
+            airflow = airflow_rates.get(actual_speed, 100)  # Default 100 m³/h se non riconosciuto
             
             # Volume ambiente (usa valore di default se non configurato)
             room_volume = DEFAULT_ROOM_VOLUME  # m³
@@ -925,7 +997,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             
             return round(exchange_time, 1)
 
-        except (ValueError, IndexError):
+        except (ValueError, IndexError, TypeError):
             return None
 
     @property
@@ -939,8 +1011,18 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
                 "fan_speed": None,
             }
 
+        # Usa il parsing VMGO per ottenere la velocità ventola
         status_data = self.coordinator.data.get("status", "")
-        if not status_data or len(status_data) < 20:
+        if not status_data or not status_data.startswith("VMGO"):
+            return {
+                "efficiency_category": None,
+                "room_volume": None,
+                "estimated_airflow": None,
+                "fan_speed": None,
+            }
+
+        parts = status_data.split(",")
+        if len(parts) < MIN_STATUS_PARTS:
             return {
                 "efficiency_category": None,
                 "room_volume": None,
@@ -949,9 +1031,23 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             }
 
         try:
-            fan_speed = int(status_data[4])
+            # Velocità ventola dalla posizione 1 del VMGO
+            fan_speed_raw = int(parts[1])
+            
+            # Gestione modi speciali per determinare velocità effettiva
+            if fan_speed_raw == 101:  # Night mode
+                actual_speed = 1
+            elif fan_speed_raw == 102:  # Hyperventilation mode
+                actual_speed = 4
+            elif fan_speed_raw == 103:  # Free cooling mode
+                actual_speed = 2
+            elif 0 <= fan_speed_raw <= 4:
+                actual_speed = fan_speed_raw
+            else:
+                actual_speed = 0  # Invalid speed
+            
             airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}
-            airflow = airflow_rates.get(fan_speed, 0)
+            airflow = airflow_rates.get(actual_speed, 0)
             
             # Determina categoria efficienza
             exchange_time = self.native_value
@@ -970,12 +1066,13 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
                 "efficiency_category": efficiency_category,
                 "room_volume": f"{DEFAULT_ROOM_VOLUME} m³",
                 "estimated_airflow": f"{airflow} m³/h",
-                "fan_speed": fan_speed,
+                "fan_speed": actual_speed,
+                "raw_fan_speed": fan_speed_raw,
                 "calculation_method": "Volume/Airflow*60",
-                "optimization_tip": self._get_optimization_tip(exchange_time, fan_speed),
+                "optimization_tip": self._get_optimization_tip(exchange_time, actual_speed),
             }
 
-        except (ValueError, IndexError):
+        except (ValueError, IndexError, TypeError):
             return {
                 "efficiency_category": None,
                 "room_volume": None,
@@ -1021,34 +1118,53 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
         if not self.coordinator.data:
             return None
 
+        # Usa il parsing VMGO per ottenere la velocità ventola
         status_data = self.coordinator.data.get("status", "")
-        if not status_data:
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        parts = status_data.split(",")
+        # Per dati VMGO, servono almeno 15 parti
+        if len(parts) < MIN_RESPONSE_PARTS:
             return None
 
         try:
-            parts = status_data.split(",")
-            if len(parts) < MIN_STATUS_PARTS:
-                return None
+            # Velocità ventola dalla posizione 1 del VMGO (0-7 = velocità/modalità)
+            fan_speed_raw = int(parts[1])
+            
+            # Decodifica modalità speciali in velocità effettiva
+            if fan_speed_raw == 0:
+                return 0.0  # Ventilazione spenta
+            elif fan_speed_raw == 5:  # Modalità notte
+                fan_speed = 1
+            elif fan_speed_raw == 6:  # Iperventilazione
+                fan_speed = 4
+            elif fan_speed_raw == 7:  # Free cooling
+                fan_speed = 0
+                return 0.0
+            elif 1 <= fan_speed_raw <= 4:  # Velocità normale
+                fan_speed = fan_speed_raw
+            else:
+                fan_speed = 2  # Default a velocità media
+            
+            # Calcola portata aria stimata in m³/h basata sulla velocità
+            # Stima tipica: velocità 1=50 m³/h, 2=100 m³/h, 3=150 m³/h, 4=200 m³/h
+            airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}  # m³/h
+            airflow_rate = airflow_rates.get(fan_speed, 100)  # Default 100 m³/h
+            
+            # Volume ambiente (usa valore di default se non configurato)
+            room_volume = DEFAULT_ROOM_VOLUME  # m³
+            
+            # Calcola ricambi d'aria per ora
+            air_changes_per_hour = airflow_rate / room_volume
+            
+            # Calcola ricambi d'aria per 24 ore
+            daily_air_changes = air_changes_per_hour * 24
+            
+            return round(daily_air_changes, 1)
 
-            fan_speed_raw = int(parts[1])  # Velocità ventola
-        except (ValueError, IndexError):
+        except (ValueError, IndexError, TypeError):
             return None
-
-        # Ottieni portata oraria (M³/h)
-        airflow_rate = AIRFLOW_MAPPING.get(fan_speed_raw, 0)
-        if airflow_rate <= 0:
-            return 0.0
-
-        # Volume stanza standard (personalizzabile)
-        room_volume = DEFAULT_ROOM_VOLUME
-
-        # Calcola ricambi d'aria per ora
-        air_changes_per_hour = airflow_rate / room_volume
-
-        # Calcola ricambi d'aria per 24 ore
-        daily_air_changes = air_changes_per_hour * 24
-
-        return round(daily_air_changes, 1)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -1094,12 +1210,26 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
                 return "Nessun dato disponibile"
 
             status_data = self.coordinator.data.get("status", "")
-            try:
-                parts = status_data.split(",")
-                fan_speed = int(parts[1])
-                if fan_speed < 4:
-                    return f"Ricambio insufficiente, aumentare velocità da {fan_speed} a 3-4"
-                else:
-                    return "Ricambio insufficiente anche a velocità massima, verificare impianto"
-            except (ValueError, IndexError):
-                return "Errore nel calcolo, verificare stato ventola"
+            if status_data and status_data.startswith("VMGO"):
+                try:
+                    parts = status_data.split(",")
+                    if len(parts) >= MIN_RESPONSE_PARTS:
+                        fan_speed_raw = int(parts[1])
+                        # Decodifica modalità speciali
+                        if fan_speed_raw == 5:
+                            fan_speed = 1
+                        elif fan_speed_raw == 6:
+                            fan_speed = 4
+                        elif fan_speed_raw == 7:
+                            fan_speed = 0
+                        elif 1 <= fan_speed_raw <= 4:
+                            fan_speed = fan_speed_raw
+                        else:
+                            fan_speed = 2
+                        if fan_speed < 4:
+                            return f"Ricambio insufficiente, aumentare velocità da {fan_speed} a 3-4"
+                        else:
+                            return "Ricambio insufficiente anche a velocità massima, verificare impianto"
+                except (ValueError, IndexError):
+                    pass
+            return "Errore nel calcolo, verificare stato ventola"

@@ -110,7 +110,7 @@ L'applicazione supporta i seguenti comandi per interagire con i dispositivi VMC:
         - **Formato risposta**: `VMNM [nome_dispositivo]`
             - `nome_dispositivo`: Nome del dispositivo (stringa ASCII, max 32 caratteri)
     - `get_network_info`: Ottiene le informazioni sulla rete a cui è connesso il dispositivo.
-        - Include l'SSID, la password (mascherata), l'indirizzo IP, la subnet mask e il gateway.
+        - Include l'SSID, la password (mascherata).
         - Le informazioni vengono visualizzate in un pannello espandibile, consentendo all'utente di visualizzare e modificare la configurazione di rete.
         - La password viene mascherata per proteggere la privacy dell'utente.
         - **Formato comando**: `VMSL?`
@@ -191,15 +191,17 @@ L'applicazione supporta i seguenti comandi per interagire con i dispositivi VMC:
         - **Feedback utente**: `LED pannello disattivato`
     - `set_lights`: Imposta il livello delle luci (0-100).
         - Permette di regolare l'illuminazione dell'ambiente.
-        - **Formato comando**: Non documentato nell'implementazione corrente
-            - `livello`: Intensità dell'illuminazione (0-100, con step di 25)
+        - **Formato comando**: 
+            - `VMWH0600000` Luci ambientali disattivato
+            - `VMWH06nnn.000` Luci ambientali disattivato
+            - `nnn`: Intensità dell'illuminazione (0-100, con step di 1)
         - **Risposta**: `OK` in caso di successo
         - **Limitazioni**: Il livello viene automaticamente arrotondato allo step più vicino (0, 25, 50, 75, 100)
         - **Feedback utente**: `Livello luci impostato a 75%`
     - `set_lights_timer`: Imposta il timer per le luci (0-300 secondi).
         - Permette di spegnere automaticamente le luci dopo un certo periodo di tempo.
-        - **Formato comando**: Non documentato nell'implementazione corrente
-            - `secondi`: Durata del timer in secondi (0-300)
+        - **Formato comando**: `VMWH14nnnnn`
+            - `nnnnn`: Durata del timer in secondi
         - **Risposta**: `OK` in caso di successo
         - **Comportamento**: Quando il timer scade, le luci si spengono automaticamente (livello 0)
         - **Valore 0**: Disattiva il timer (le luci rimangono al livello impostato)
@@ -225,7 +227,7 @@ L'applicazione supporta i seguenti comandi per interagire con i dispositivi VMC:
         - **Formato comando**: `VMSL [ssid] [password]`
             - `ssid`: SSID della rete Wi-Fi (stringa ASCII, max 32 caratteri)
             - `password`: Password della rete Wi-Fi (stringa ASCII, max 32 caratteri)
-        - **Esempio**: `VMSL MiaReteWiFi Password123`
+        - **Esempio**: `VMSLMiaReteWiFi Password123`
         - **Risposta**: `OK` in caso di successo, seguito dal riavvio della connessione di rete
         - **Tempo di riconnessione**: Circa 10-15 secondi per applicare le nuove impostazioni di rete
         - **Sicurezza**: Supporta reti WPA/WPA2/WPA3

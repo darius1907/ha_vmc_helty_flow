@@ -72,17 +72,17 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
         # Arrotonda ai livelli supportati (0, 25, 50, 75, 100)
         light_level = round(light_level / 25) * 25
 
-        # Il comando per impostare le luci non è specificato nei requirements
-        # Placeholder per il comando - da implementare quando disponibile
+        # Formato comando corretto: VMWH06nnn000 dove nnn è il livello (0-100)
         response = await tcp_send_command(
-            self.coordinator.ip, 5001, f"VMWL{light_level:03d}"
+            self.coordinator.ip, 5001, f"VMWH06{light_level:03d}000"
         )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_kwargs) -> None:
         """Turn off the light."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWL000")
+        # VMWH0600000 per luci disattivate
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0600000")
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
@@ -129,15 +129,16 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
         """Set light timer (default 300 seconds)."""
         timer_seconds = 300  # Default 5 minuti
 
-        # Comando placeholder per impostare timer - da implementare
+        # Formato comando corretto: VMWH14nnnnn dove nnnnn è il timer in secondi
         response = await tcp_send_command(
-            self.coordinator.ip, 5001, f"VMWT{timer_seconds:03d}"
+            self.coordinator.ip, 5001, f"VMWH14{timer_seconds:05d}"
         )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_kwargs) -> None:
         """Disable light timer."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWT000")
+        # VMWH1400000 per disattivare il timer
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH1400000")
         if response == "OK":
             await self.coordinator.async_request_refresh()

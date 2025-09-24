@@ -156,8 +156,8 @@ class TestVmcHeltyLight:
 
         await light_entity.async_turn_on()
 
-        # Default brightness 255 -> 100 (rounded to 25 step) -> VMWL100
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWL100")
+        # Default brightness 255 -> 100 (rounded to 25 step) -> VMWH06100000
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH06100000")
         mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
@@ -170,7 +170,7 @@ class TestVmcHeltyLight:
         # Brightness 128 -> ~50 -> rounded to 50
         await light_entity.async_turn_on(brightness=128)
 
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWL050")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH06050000")
         mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
@@ -183,7 +183,7 @@ class TestVmcHeltyLight:
         # Brightness 32 -> ~12.5 -> rounded to 0
         await light_entity.async_turn_on(brightness=32)
 
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWL000")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH06000000")
         mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
@@ -196,7 +196,7 @@ class TestVmcHeltyLight:
         # Brightness 191 -> ~75 -> rounded to 75
         await light_entity.async_turn_on(brightness=191)
 
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWL075")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH06075000")
         mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
@@ -208,7 +208,7 @@ class TestVmcHeltyLight:
 
         await light_entity.async_turn_on()
 
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWL100")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH06100000")
         # Should not refresh on non-OK response
         mock_coordinator.async_request_refresh.assert_not_called()
 
@@ -233,7 +233,7 @@ class TestVmcHeltyLight:
 
         await light_entity.async_turn_off()
 
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWL000")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH0600000")
         mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
@@ -334,7 +334,7 @@ class TestVmcHeltyLightTimer:
         await timer_entity.async_turn_on()
 
         # Default timer 300 seconds
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWT300")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH1400300")
         mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
@@ -346,7 +346,7 @@ class TestVmcHeltyLightTimer:
 
         await timer_entity.async_turn_on()
 
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWT300")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH1400300")
         # Should not refresh on non-OK response
         mock_coordinator.async_request_refresh.assert_not_called()
 
@@ -371,7 +371,7 @@ class TestVmcHeltyLightTimer:
 
         await timer_entity.async_turn_off()
 
-        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWT000")
+        mock_tcp_send.assert_called_once_with("192.168.1.100", 5001, "VMWH1400000")
         mock_coordinator.async_request_refresh.assert_called_once()
 
     @pytest.mark.asyncio
