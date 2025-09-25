@@ -34,7 +34,7 @@ class VmcHeltyEntity(Entity):
         # Ottieni l'identificatore univoco o usa l'IP
         unique_id = (
             self._device_info.get("unique_id")
-            or f"helty_flow_{self.coordinator.ip.replace('.', '_')}"
+            or f"vmc_helty_{self.coordinator.ip.replace('.', '_')}"
         )
 
         return DeviceInfo(
