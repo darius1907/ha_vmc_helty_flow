@@ -2,6 +2,7 @@
 
 import ipaddress
 import logging
+import re
 from typing import Any
 
 import homeassistant.helpers.config_validation as cv
@@ -583,13 +584,24 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Continue scanning
         return await self._scan_next_ip()
 
+    def _slugify_name(self, name: str) -> str:
+        slug = re.sub(r"[^a-z0-9]+", "_", name.lower())
+        slug = re.sub(r"^_+|_+$", "", slug)
+        slug = re.sub(r"_+", "_", slug)
+        if not slug:
+            slug = "device"
+        if not slug.startswith("vmc_helty_"):
+            slug = f"vmc_helty_{slug}"
+        return slug
+
     async def async_step_discovered_device(self, discovery_info):
         """Handle automatic device discovery from incremental scan."""
         if not discovery_info:
             return self.async_abort(reason="invalid_discovery_info")
 
-        # Set unique_id for this device
-        await self.async_set_unique_id(discovery_info["ip"])
+        # Use slugified name as unique_id for config entry
+        name_slug = self._slugify_name(discovery_info["name"])
+        await self.async_set_unique_id(name_slug)
         self._abort_if_unique_id_configured()
 
         # Create entry for this device
