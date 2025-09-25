@@ -289,7 +289,7 @@ class VmcHeltyCard extends LitElement {
     
     // Extract device slug from fan entity ID
     // Convert from "fan.vmc_<device_name_slug>" to "<device_name_slug>"
-    const match = this.config.entity.match(/^fan\.vmc_helty(.+)$/);
+    const match = this.config.entity.match(/^fan\.vmc_helty_(.+)$/);
     return match ? match[1] : null;
   }
 
