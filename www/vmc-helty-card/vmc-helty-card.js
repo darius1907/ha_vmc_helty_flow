@@ -55,104 +55,87 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-      /* Use ha-card base styles - let HA handle the styling */
+      /* Minimal layout - let HA components handle styling */
       :host {
         display: block;
       }
 
-      /* Minimal essential layout - let HA handle styling */
-      .fan-controls {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-        gap: 8px;
-        margin-bottom: 16px;
+      .controls-section {
+        margin-bottom: var(--spacing);
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-s);
+        margin-bottom: var(--spacing-s);
+        font-weight: 500;
+        color: var(--primary-text-color);
+      }
+
+      .fan-controls,
+      .mode-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-s);
       }
 
       .sensors-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 16px;
-        margin-bottom: 16px;
+        gap: var(--spacing);
+      }
+
+      .light-controls {
+        display: grid;
+        gap: var(--spacing);
+      }
+
+      .light-control {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing);
+      }
+
+      .light-slider {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing);
+        flex: 1;
+      }
+
+      .brightness-value {
+        min-width: 40px;
+        text-align: right;
+        font-size: 0.9em;
+        color: var(--secondary-text-color);
+      }
+
+      .timer-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-s);
+        font-size: 0.9em;
+        color: var(--secondary-text-color);
+        margin-top: var(--spacing-s);
+      }
+
+      mwc-button .speed-label {
+        font-weight: 500;
+      }
+
+      mwc-button .speed-percentage {
+        font-size: 0.85em;
+        opacity: 0.7;
       }
 
       .advanced-section {
-        border-top: 1px solid var(--divider-color);
-        padding-top: 16px;
-        margin-top: 16px;
+        border-top: 1px solid var(--outline-color);
+        padding-top: var(--spacing);
+        margin-top: var(--spacing);
       }
 
-      .advanced-title {
-        font-size: 16px;
-        font-weight: 500;
-        color: var(--primary-text-color);
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .comfort-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 10px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .comfort-excellent {
-        background: var(--success-color-alpha, rgba(76, 175, 80, 0.2));
-        color: var(--success-color, #4caf50);
-      }
-
-      .comfort-good {
-        background: var(--info-color-alpha, rgba(33, 150, 243, 0.2));
-        color: var(--info-color, #2196f3);
-      }
-
-      .comfort-fair {
-        background: var(--warning-color-alpha, rgba(255, 152, 0, 0.2));
-        color: var(--warning-color, #ff9800);
-      }
-
-      .comfort-poor {
-        background: var(--error-color-alpha, rgba(244, 67, 54, 0.2));
-        color: var(--error-color, #f44336);
-      }
-
-      .error-message {
-        color: var(--error-color);
-        padding: 12px;
-        background: var(--error-color-alpha, rgba(244, 67, 54, 0.1));
-        border-radius: var(--ha-card-border-radius, 8px);
-        border: 1px solid var(--error-color);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .loading-message {
-        color: var(--secondary-text-color);
-        text-align: center;
-        padding: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
-
-      ha-icon {
-        --mdc-icon-size: 20px;
-      }
-
-      .fan-icon {
-        --mdc-icon-size: 24px;
-      }
-
+      /* Minimal animations */
       .fan-icon.spinning {
         animation: spin 2s linear infinite;
       }
@@ -162,204 +145,8 @@ class VmcHeltyCard extends LitElement {
         to { transform: rotate(360deg); }
       }
 
-      /* Responsive Design */
-      @media (max-width: 768px) {
-        .sensors-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .fan-controls {
-          grid-template-columns: repeat(5, 1fr);
-        }
-      }
-
-      @media (max-width: 480px) {
-        :host {
-          padding: 12px;
-        }
-
-        .sensors-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .fan-controls {
-          grid-template-columns: repeat(3, 1fr);
-        }
-
-        .card-title {
-          font-size: 20px;
-        }
-      }
-
-      /* High Contrast Mode Support */
-      @media (prefers-contrast: high) {
-        .fan-speed-button {
-          border-width: 3px;
-        }
-
-        .sensor-card {
-          border-width: 2px;
-        }
-      }
-
-      /* Mode and Light Controls */
-      .controls-section {
-        margin-bottom: 16px;
-      }
-
-      .section-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--primary-text-color);
-      }
-
-      .mode-controls {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 8px;
-      }
-
-      .mode-button {
-        padding: 12px 8px;
-        background: var(--card-background-color);
-        border: 1px solid var(--divider-color);
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        color: var(--primary-text-color);
-        font-size: 12px;
-      }
-
-      .mode-button:hover {
-        background: var(--secondary-background-color);
-        border-color: var(--accent-color);
-      }
-
-      .mode-button.active {
-        background: var(--accent-color);
-        border-color: var(--accent-color);
-        color: var(--text-accent-color, var(--primary-background-color));
-      }
-
-      .mode-label {
-        text-align: center;
-        line-height: 1.2;
-      }
-
-      .light-controls {
-        display: grid;
-        gap: 16px;
-      }
-
-      .light-control {
-        padding: 12px;
-        background: var(--card-background-color);
-        border: 1px solid var(--divider-color);
-        border-radius: 8px;
-      }
-
-      .light-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-
-      .light-header span {
-        flex: 1;
-        font-weight: 500;
-        color: var(--primary-text-color);
-      }
-
-      .light-toggle {
-        background: var(--card-background-color);
-        border: 1px solid var(--divider-color);
-        border-radius: 6px;
-        padding: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        color: var(--primary-text-color);
-      }
-
-      .light-toggle:hover {
-        background: var(--secondary-background-color);
-        border-color: var(--accent-color);
-      }
-
-      .light-toggle.active {
-        background: var(--accent-color);
-        border-color: var(--accent-color);
-        color: var(--text-accent-color, var(--primary-background-color));
-      }
-
-      .light-slider {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-top: 8px;
-      }
-
-      .brightness-slider {
-        flex: 1;
-        height: 6px;
-        border-radius: 3px;
-        background: var(--secondary-background-color);
-        outline: none;
-        cursor: pointer;
-      }
-
-      .brightness-slider::-webkit-slider-thumb {
-        appearance: none;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: var(--accent-color);
-        cursor: pointer;
-        border: 2px solid var(--card-background-color);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      }
-
-      .brightness-slider::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: var(--accent-color);
-        cursor: pointer;
-        border: 2px solid var(--card-background-color);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      }
-
-      .brightness-value {
-        font-size: 12px;
-        color: var(--secondary-text-color);
-        min-width: 35px;
-        text-align: right;
-      }
-
-      .timer-info {
-        margin-top: 8px;
-        font-size: 12px;
-        color: var(--secondary-text-color);
-        text-align: center;
-      }
-
-      /* Reduced Motion Support */
+      /* Reduced motion support */
       @media (prefers-reduced-motion: reduce) {
-        .fan-speed-button,
-        .sensor-card,
-        .mode-button,
-        .light-toggle {
-          transition: none;
-        }
-
         .fan-icon.spinning {
           animation: none;
         }
@@ -746,16 +533,19 @@ class VmcHeltyCard extends LitElement {
       <div class="controls-section">
         <div class="fan-controls">
           ${[0, 1, 2, 3, 4].map(speed => html`
-            <button
-              class="fan-speed-button ${currentSpeed === speed ? 'active' : ''}"
+            <mwc-button
+              class="${currentSpeed === speed ? 'active' : ''}"
               @click="${() => this._setFanSpeed(speed)}"
               ?disabled="${this._loading}"
-              aria-label="Set fan speed to ${speed}"
+              outlined
+              dense
             >
-              <ha-icon icon="${this._getFanSpeedIcon(speed)}"></ha-icon>
-              <span class="speed-label">${speed === 0 ? 'Off' : `Speed ${speed}`}</span>
-              <span class="speed-percentage">${speed * 25}%</span>
-            </button>
+              <ha-icon icon="${this._getFanSpeedIcon(speed)}" slot="icon"></ha-icon>
+              <div>
+                <div class="speed-label">${speed === 0 ? 'Off' : `Speed ${speed}`}</div>
+                <div class="speed-percentage">${speed * 25}%</div>
+              </div>
+            </mwc-button>
           `)}
         </div>
       </div>
@@ -827,15 +617,15 @@ class VmcHeltyCard extends LitElement {
             const isOn = state && state.state === 'on';
             
             return html`
-              <button
-                class="mode-button ${isOn ? 'active' : ''}"
+              <ha-chip
+                .selected="${isOn}"
                 @click="${() => this._toggleSwitch(mode.entity)}"
                 ?disabled="${this._loading}"
-                aria-label="${mode.label} ${isOn ? 'On' : 'Off'}"
+                selectable
               >
-                <ha-icon icon="${mode.icon}"></ha-icon>
-                <span class="mode-label">${mode.label}</span>
-              </button>
+                <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
+                ${mode.label}
+              </ha-chip>
             `;
           })}
         </div>
@@ -865,56 +655,48 @@ class VmcHeltyCard extends LitElement {
         <div class="light-controls">
           ${lightState ? html`
             <div class="light-control">
-              <div class="light-header">
-                <ha-icon icon="mdi:lightbulb"></ha-icon>
-                <span>Luminosità</span>
-                <button
-                  class="light-toggle ${lightState.state === 'on' ? 'active' : ''}"
-                  @click="${() => this._toggleLight(lightEntity)}"
-                  ?disabled="${this._loading}"
-                  aria-label="Toggle light"
-                >
-                  <ha-icon icon="${lightState.state === 'on' ? 'mdi:lightbulb-on' : 'mdi:lightbulb-off'}"></ha-icon>
-                </button>
-              </div>
-              ${lightState.state === 'on' ? html`
-                <div class="light-slider">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="25"
-                    .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
-                    @change="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
-                    ?disabled="${this._loading}"
-                    class="brightness-slider"
-                  />
-                  <span class="brightness-value">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
-                </div>
-              ` : nothing}
+              <ha-icon icon="mdi:lightbulb"></ha-icon>
+              <span>Luminosità</span>
+              <mwc-switch
+                .checked="${lightState.state === 'on'}"
+                @change="${() => this._toggleLight(lightEntity)}"
+                ?disabled="${this._loading}"
+              ></mwc-switch>
             </div>
+            
+            ${lightState.state === 'on' ? html`
+              <div class="light-slider">
+                <ha-icon icon="mdi:brightness-6"></ha-icon>
+                <ha-slider
+                  .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
+                  min="0"
+                  max="100"
+                  step="25"
+                  @change="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
+                  ?disabled="${this._loading}"
+                ></ha-slider>
+                <span class="brightness-value">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
+              </div>
+            ` : nothing}
           ` : nothing}
           
           ${timerState ? html`
             <div class="light-control">
-              <div class="light-header">
-                <ha-icon icon="mdi:timer"></ha-icon>
-                <span>Timer Luci</span>
-                <button
-                  class="light-toggle ${timerState.state === 'on' ? 'active' : ''}"
-                  @click="${() => this._toggleLight(timerEntity)}"
-                  ?disabled="${this._loading}"
-                  aria-label="Toggle light timer"
-                >
-                  <ha-icon icon="${timerState.state === 'on' ? 'mdi:timer' : 'mdi:timer-off'}"></ha-icon>
-                </button>
-              </div>
-              ${timerState.state === 'on' && timerState.attributes.timer_seconds ? html`
-                <div class="timer-info">
-                  <span>${Math.round(timerState.attributes.timer_seconds / 60)} min rimanenti</span>
-                </div>
-              ` : nothing}
+              <ha-icon icon="mdi:timer"></ha-icon>
+              <span>Timer Luci</span>
+              <mwc-switch
+                .checked="${timerState.state === 'on'}"
+                @change="${() => this._toggleLight(timerEntity)}"
+                ?disabled="${this._loading}"
+              ></mwc-switch>
             </div>
+            
+            ${timerState.state === 'on' && timerState.attributes.timer_seconds ? html`
+              <div class="timer-info">
+                <ha-icon icon="mdi:clock-outline"></ha-icon>
+                <span>${Math.round(timerState.attributes.timer_seconds / 60)} min rimanenti</span>
+              </div>
+            ` : nothing}
           ` : nothing}
         </div>
       </div>
