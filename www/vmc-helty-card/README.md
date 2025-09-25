@@ -1,6 +1,8 @@
 # VMC Helty Flow Control Card# VMC Helty Flow Control Card
 
-Advanced Lovelace card for VMC Helty Flow Plus/Elite ventilation systems in Home Assistant with **device selection**, **custom sensor support**, and **room volume configuration**.
+Advanced Lovelace card for VMC Helty Flow Plus/Elite ventilation systems in Home Assistant with
+
+**device selection**, **custom sensor support**, and **room volume configuration**.
 
 
 ## 🚀 **Key Features**##
@@ -9,24 +11,15 @@ Advanced Lovelace card for VMC Helty Flow Plus/Elite ventilation systems in Home
 ### 🎯 **Device Selection**
 
 - **Multiple VMC Support**: Choose specific VMC device from available entities
-
 - **Auto-Discovery**: Automatically finds VMC Helty Flow devices in your system
-
 - **Device Status**: Real-time connection status and availability monitoring
-
-
 
 ### 🌡️ **Custom Sensor Selection** ### 🌡️ **Custom Sensor Selection**
 
 - **Temperature Override**: Use any temperature sensor instead of VMC internal sensor
-
 - **Humidity Override**: Use any humidity sensor instead of VMC internal sensor
-
 - **Smart Calculations**: Advanced sensors use your selected sensors for accurate results
-
 - **Source Indicators**: Clear display of which sensors are being used
-
-
 
 ### 📏 **Room Volume Configuration**### � **Room Volume Configuration**
 
@@ -54,12 +47,14 @@ This card is **100% compliant** with Home Assistant development guidelines:
 ## 📋 Features Overview
 
 ### 🎛️ **Complete Control Panel**
+
 - **Visual fan speed controls** (0-4 speeds) with percentage display
 - **Real-time status display** with animated fan icon
 - **Connection status indicator** with WiFi icon
 - **Special modes**: Night Mode, Boost, Free Cooling with visual feedback
 
 ### 📊 **Environmental Monitoring**
+
 - **Flexible Sensor Sources**: VMC internal OR custom external sensors
 - **Temperature monitoring** with configurable source (VMC/Custom)
 - **Humidity monitoring** with configurable source (VMC/Custom)
@@ -68,6 +63,7 @@ This card is **100% compliant** with Home Assistant development guidelines:
 - **Source indicators** showing which sensors are active
 
 ### 🧮 **Advanced Calculations**
+
 - **Dew Point Calculation** using selected temperature/humidity sensors
 - **Comfort Index** with excellent/good/fair/poor ratings
 - **Air Exchange Time** calculated with actual room volume
@@ -75,6 +71,7 @@ This card is **100% compliant** with Home Assistant development guidelines:
 - **Real-time Updates** as conditions change
 
 ### 📱 **Responsive Design**
+
 - **Mobile-optimized** touch-friendly controls (44px minimum)
 - **Tablet adaptation** with 2-column grid layout
 - **Desktop layout** with full feature visibility
@@ -82,6 +79,7 @@ This card is **100% compliant** with Home Assistant development guidelines:
 - **High contrast** and reduced motion support
 
 ### 🔧 **Visual Configuration**
+
 - **Device Selection Dropdown** - Choose from available VMC entities
 - **Sensor Selection Dropdowns** - Pick custom temperature/humidity sensors
 - **Room Volume Input** - Set actual room volume or use calculator
@@ -93,12 +91,14 @@ This card is **100% compliant** with Home Assistant development guidelines:
 ### Method 1: Manual Installation
 
 1. **Download the files**:
+
    ```bash
    mkdir -p /config/www/vmc-helty-card
    # Copy vmc-helty-card.js and vmc-helty-card-editor.js
    ```
 
 2. **Add to Lovelace resources**:
+
    ```yaml
    resources:
      - url: /local/vmc-helty-card/vmc-helty-card.js
@@ -108,6 +108,7 @@ This card is **100% compliant** with Home Assistant development guidelines:
 3. **Add the card** using the visual editor or YAML
 
 ### Method 2: HACS (Recommended)
+
 ```bash
 # Add custom repository in HACS
 # Repository: https://github.com/your-repo/vmc-helty-card
@@ -160,6 +161,7 @@ layout: auto
 ### Configuration Examples
 
 #### Example 1: Kitchen VMC with Room Sensors
+
 ```yaml
 type: custom:vmc-helty-card
 entity: fan.vmc_helty_flow_kitchen
@@ -173,6 +175,7 @@ enable_air_exchange: true
 ```
 
 #### Example 2: Living Room VMC with Large Space
+
 ```yaml
 type: custom:vmc-helty-card
 entity: fan.vmc_helty_flow_living_room
@@ -185,6 +188,7 @@ enable_air_exchange: true
 ```
 
 #### Example 3: Bathroom VMC - Minimal Setup
+
 ```yaml
 type: custom:vmc-helty-card
 entity: fan.vmc_helty_flow_bathroom
@@ -198,23 +202,27 @@ show_advanced: false
 ## 🎯 Configuration Options
 
 ### Device Selection
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `entity` | string | **Required** | VMC fan entity ID to control |
 | `name` | string | `"VMC Helty Flow"` | Display name for the card |
 
 ### Sensor Configuration
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `temperature_entity` | string | `""` | Custom temperature sensor entity |
 | `humidity_entity` | string | `""` | Custom humidity sensor entity |
 
 ### Room Configuration
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `room_volume` | number | `60` | Room volume in cubic meters (m³) |
 
 ### Display Options
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `show_temperature` | boolean | `true` | Show temperature sensor |
@@ -224,6 +232,7 @@ show_advanced: false
 | `show_advanced` | boolean | `true` | Show calculated sensors |
 
 ### Advanced Features
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `enable_comfort_calculations` | boolean | `true` | Calculate comfort using selected sensors |
@@ -232,18 +241,22 @@ show_advanced: false
 ## 🔧 Room Volume Calculation
 
 ### Manual Input
+
 Set the `room_volume` parameter directly in m³:
+
 ```yaml
 room_volume: 45.5  # 45.5 cubic meters
 ```
 
 ### Using Built-in Calculator
+
 In the visual editor:
 1. **Enter dimensions**: Length × Width × Height (in meters)
 2. **Click Calculate**: Automatically sets room volume
 3. **Fine-tune**: Adjust the calculated value if needed
 
 ### Standard Room Volumes
+
 - **Small bathroom**: 10-20 m³
 - **Bedroom**: 30-50 m³
 - **Kitchen**: 25-45 m³
@@ -269,6 +282,7 @@ In the visual editor:
 ### Calculation Impact
 
 When custom sensors are selected:
+
 - **Dew Point**: Calculated using custom temp/humidity
 - **Comfort Index**: Uses custom sensors for accuracy
 - **Source Display**: Shows "Custom" vs "VMC" sensor source
@@ -329,30 +343,38 @@ When custom sensors are selected:
 
 ### Device Not Found
 
-```
+```text
 Error: Please define a VMC fan entity
 ```
+
 **Solution**: Select a valid VMC fan entity from the dropdown
 
 ### Custom Sensor Issues
-```
+
+```text
 Warning: Custom sensor unavailable
 ```
+
 **Solutions**:
+
 1. Check sensor entity exists and is available
 2. Verify sensor has correct device class or unit
 3. Use the visual editor to re-select sensor
 
 ### Volume Calculation Problems
-```
+
+```text
 Air exchange showing "Poor" category
 ```
+
 **Solutions**:
+
 1. Verify room volume is accurate for the space
 2. Check if VMC airflow matches your model specifications
 3. Consider room layout (open doors, connections to other rooms)
 
 ### Performance Issues
+
 - **Large installations**: Limit entities monitored
 - **Slow updates**: Check Home Assistant performance
 - **Memory usage**: Restart Home Assistant if needed
@@ -360,22 +382,26 @@ Air exchange showing "Poor" category
 ## 📝 Migration from Previous Versions
 
 ### Automatic Compatibility
+
 - **Config preserved**: All previous configurations work unchanged
 - **New defaults**: New features enabled by default
 - **Gradual adoption**: Add new features when convenient
 
 ### Recommended Upgrades
+
 1. **Add custom sensors** for more accurate readings
 2. **Set room volume** for proper air exchange calculations
 3. **Review display options** to show relevant sensors
 4. **Enable advanced features** for detailed analysis
 
 ### Breaking Changes
+
 - **None**: Full backward compatibility maintained
 
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for:
+
 - Code style requirements
 - Testing procedures
 - Pull request process
@@ -391,7 +417,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Quick Start**: [Quick Start Guide](QUICK-START.md)
 - **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
 - **Discussions**: [Community Forum](https://community.home-assistant.io/)
-- **VMC Integration**: [VMC Helty Flow Integration](https://github.com/your-repo/vmc-helty-flow)
+- **VMC Integration**: [VMC Helty Flow Integration](https://github.com/darius1907/ha_vmc_helty_flow)
 
 ---
 

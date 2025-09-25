@@ -41,12 +41,14 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 ## ✨ Caratteristiche Principali
 
 ### 🔍 **Scoperta Dispositivi Avanzata**
+
 - **Scansione Incrementale**: Trova e configura i dispositivi uno alla volta con controllo completo dell'utente
 - **Scansione Completa**: Scansiona l'intera rete e seleziona tutti i dispositivi alla fine
 - **Validazione Intelligente**: Controllo automatico di formato subnet, porte e timeout
 - **Gestione Errori**: Messaggi informativi e possibilità di recupero dagli errori
 
 ### 🎛️ **Controllo Completo VMC**
+
 - **Controllo Ventola**: Velocità variabile e modalità operative
 - **Monitoraggio Ambientale**: Temperatura interna/esterna, umidità, CO2, VOC
 - **Gestione Filtri**: Monitoraggio ore utilizzo e reset filtro
@@ -56,11 +58,13 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 ## 🏠 Entità Disponibili
 
 ### 🌪️ **Controllo Ventilazione**
+
 - **Fan**: Controllo velocità ventola e modalità operative
 - **Mode Switch**: Modalità operative (hyperventilation, night, free_cooling)
 - **Sensors Switch**: Attivazione/disattivazione sensori ambientali
 
 ### 📊 **Sensori Ambientali**
+
 - **Temperatura Interna/Esterna**: Monitoraggio temperature in tempo reale
 - **Umidità**: Livelli di umidità ambientale
 - **CO2**: Concentrazione anidride carbonica (ppm)
@@ -68,22 +72,26 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 - **Qualità Aria**: Indicatori complessivi qualità ambientale
 
 ### 🔧 **Gestione Sistema**
+
 - **Filter Hours**: Ore di funzionamento filtro
 - **Reset Filter Button**: Reset contatore filtro
 - **Last Response**: Timestamp ultima comunicazione
 - **Panel LED Switch**: Controllo LED pannello frontale
 
 ### 💡 **Illuminazione**
+
 - **Light**: Controllo luci integrate
 - **Light Timer**: Timer automatico spegnimento luci
 
 ### 🌐 **Configurazione di Rete**
+
 - **IP Address**: Indirizzo IP dispositivo
 - **Subnet Mask/Gateway**: Parametri di rete
 - **SSID/Password**: Configurazione WiFi
 - **Network Settings**: Gestione completa parametri di rete
 
 ### 📈 **Sensori Avanzati**
+
 - **Dew Point**: Calcolo punto di rugiada per prevenzione condensa
 - **Comfort Index**: Indice di comfort basato su temperatura e umidità
 - **Dew Point Delta**: Differenza tra temperatura esterna e punto rugiada
@@ -93,6 +101,7 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 ## 🎨 **Dashboard Personalizzata**
 
 ### 📱 **VMC Helty Control Card**
+
 Card Lovelace personalizzata per controllo completo del sistema VMC:
 
 - **🎛️ Controllo Ventola**: Interfaccia intuitiva con pulsanti velocità (0-4)
@@ -103,6 +112,7 @@ Card Lovelace personalizzata per controllo completo del sistema VMC:
 - **⚙️ Configurazione Visuale**: Editor grafico integrato in Lovelace
 
 #### Installazione Card
+
 ```bash
 # Copia i file della card in www/
 /config/www/vmc-helty-card/
@@ -113,6 +123,7 @@ Card Lovelace personalizzata per controllo completo del sistema VMC:
 ```
 
 Aggiungi alle risorse Lovelace:
+
 ```yaml
 resources:
   - url: /local/vmc-helty-card/vmc-helty-card.js
@@ -120,6 +131,7 @@ resources:
 ```
 
 Configurazione card:
+
 ```yaml
 type: custom:vmc-helty-card
 entity: fan.vmc_helty
@@ -132,13 +144,7 @@ show_voc: true
 
 ## �🚀 Configurazione Guidata
 
-```
-
-L'integrazione offre due modalità di configurazione per adattarsi alle diverse esigenze:
-
-### 📡 **Modalità Scansione Incrementale** (Consigliata)
-
-**Perfetta per reti con molti dispositivi o quando vuoi controllo completo**
+### 📡 **Scansione Incrementale**
 
 1. **Avvio Configurazione**
    - Apri Home Assistant → Impostazioni → Dispositivi e Servizi
@@ -159,27 +165,10 @@ L'integrazione offre due modalità di configurazione per adattarsi alle diverse 
      - **🛑 Termina scansione**: Ferma tutto senza aggiungere
 
 4. **Feedback Immediato**
-   - Visualizzazione in tempo reale dei dispositivi trovati
-   - Informazioni dettagliate (nome, IP, modello) per ogni dispositivo
-   - Contatore progressivo e indicatore posizione nella scansione
 
-### ⚡ **Modalità Scansione Completa**
-
-**Ideale per reti semplici o quando conosci già i tuoi dispositivi**
-
-1. **Configurazione Rapida**
-   - Stessi parametri della modalità incrementale
-   - Seleziona "Scansione completa"
-
-2. **Scansione Automatica**
-   - Scansiona automaticamente tutta la subnet
-   - Mostra progresso con barra di avanzamento
-   - Possibilità di interrompere in qualsiasi momento
-
-3. **Selezione Dispositivi**
-   - Al termine, mostra tutti i dispositivi trovati
-   - Seleziona quali dispositivi configurare
-   - Conferma per completare la configurazione
+- Visualizzazione in tempo reale dei dispositivi trovati
+- Informazioni dettagliate (nome, IP, modello) per ogni dispositivo
+- Contatore progressivo e indicatore posizione nella scansione
 
 ### 🔧 **Validazioni e Sicurezza**
 
@@ -192,6 +181,7 @@ L'integrazione offre due modalità di configurazione per adattarsi alle diverse 
 ## 📋 **Esempi di Configurazione**
 
 ### Configurazione Base
+
 ```
 Subnet: 192.168.1.0/24
 Porta: 5001
@@ -200,6 +190,7 @@ Modalità: Scansione incrementale
 ```
 
 ### Configurazione Rete Personalizzata
+
 ```
 Subnet: 10.0.0.0/24
 Porta: 8080
@@ -208,6 +199,7 @@ Modalità: Scansione completa
 ```
 
 ### Configurazione Rete Estesa
+
 ```
 Subnet: 192.168.0.0/23
 Porta: 5001
@@ -220,6 +212,7 @@ Modalità: Scansione incrementale (consigliata per reti grandi)
 Tutte le entità sono completamente integrate con Home Assistant:
 
 ### Automazione Qualità Aria
+
 ```yaml
 automation:
   - alias: "VMC Boost su CO2 Alto"
@@ -236,6 +229,7 @@ automation:
 ```
 
 ### Dashboard Personalizzata
+
 ```yaml
 cards:
   - type: entities
@@ -253,22 +247,26 @@ cards:
 ### Problemi Comuni
 
 **Dispositivi non trovati?**
+
 - Verifica che i dispositivi VMC siano accesi e connessi alla rete
 - Controlla che la subnet sia corretta
 - Prova ad aumentare il timeout di connessione
 - Verifica che la porta 5001 non sia bloccata dal firewall
 
 **Scansione lenta?**
+
 - Riduci la subnet (es. da /23 a /24)
 - Diminuisci il timeout per reti veloci
 - Usa la modalità incrementale per controllo granulare
 
 **Errori di connessione?**
+
 - Verifica la configurazione di rete del dispositivo VMC
 - Controlla che Home Assistant possa raggiungere la subnet specificata
 - Prova a riavviare il dispositivo VMC
 
 ### Log e Debug
+
 Per abilitare log dettagliati, aggiungi al `configuration.yaml`:
 
 ```yaml
@@ -288,7 +286,8 @@ logger:
 ## 📞 **Supporto**
 
 Per problemi, richieste di funzionalità o contributi:
-- 🐛 [Apri una issue](https://github.com/dpezzoli/ha_vmc_helty_flow/issues) su GitHub
+
+- 🐛 [Apri una issue](https://github.com/darius1907/ha_vmc_helty_flow/issues) su GitHub
 - 💬 Unisciti alla [discussione della community](https://community.home-assistant.io/)
 - 📖 Consulta la [documentazione completa](https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md)
 
@@ -324,16 +323,16 @@ Per problemi, richieste di funzionalità o contributi:
 [discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
-[license]: https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/LICENSE
+[license]: https://github.com/darius1907/ha_vmc_helty_flow/blob/main/LICENSE
 [license-shield]: https://img.shields.io/github/license/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-%40dpezzoli-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
-[releases]: https://github.com/dpezzoli/ha_vmc_helty_flow/releases
+[releases]: https://github.com/darius1907/ha_vmc_helty_flow/releases
 [commits-shield]: https://img.shields.io/github/commit-activity/y/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
-[commits]: https://github.com/dpezzoli/ha_vmc_helty_flow/commits/main
-[user_profile]: https://github.com/dpezzoli
-[buymecoffee]: https://www.buymeacoffee.com/dpezzoli
+[commits]: https://github.com/darius1907/ha_vmc_helty_flow/commits/main
+[user_profile]: https://github.com/darius1907
+[buymecoffee]: https://www.buymeacoffee.com/darius1907
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[release-date-shield]: https://img.shields.io/github/release-date/dpezzoli/ha_vmc_helty_flow?style=for-the-badge
-[commits-since-shield]: https://img.shields.io/github/commits-since/dpezzoli/ha_vmc_helty_flow/latest?style=for-the-badge
-[last-commit-shield]: https://img.shields.io/github/last-commit/dpezzoli/ha_vmc_helty_flow?style=for-the-badge
+[release-date-shield]: https://img.shields.io/github/release-date/darius1907/ha_vmc_helty_flow?style=for-the-badge
+[commits-since-shield]: https://img.shields.io/github/commits-since/darius1907/ha_vmc_helty_flow/latest?style=for-the-badge
+[last-commit-shield]: https://img.shields.io/github/last-commit/darius1907/ha_vmc_helty_flow?style=for-the-badge
