@@ -218,12 +218,12 @@ automation:
   - alias: "VMC Boost su CO2 Alto"
     trigger:
       platform: numeric_state
-      entity_id: sensor.soggiorno_co2
+      entity_id: sensor.vmc_helty_soggiorno_co2
       above: 800
     action:
       service: fan.set_percentage
       target:
-        entity_id: fan.soggiorno_vmc
+        entity_id: fan.vmc_helty_soggiorno
       data:
         percentage: 80
 ```
@@ -235,11 +235,11 @@ cards:
   - type: entities
     title: "Controllo VMC Soggiorno"
     entities:
-      - fan.soggiorno_vmc
-      - sensor.soggiorno_temperatura_interna
-      - sensor.soggiorno_co2
-      - switch.soggiorno_modalita
-      - light.soggiorno_luce_vmc
+      - fan.vmc_helty_soggiorno
+      - sensor.vmc_helty_soggiorno_temperatura_interna
+      - sensor.vmc_helty_soggiorno_co2
+      - switch.vmc_helty_soggiorno_modalita
+      - light.vmc_helty_soggiorno_luce
 ```
 
 ## 🛠️ **Risoluzione Problemi**
