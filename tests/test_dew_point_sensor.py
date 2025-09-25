@@ -16,7 +16,7 @@ class TestVmcHeltyDewPointSensor:
         mock_coordinator = Mock()
         mock_coordinator.ip = "192.168.1.100"
         mock_coordinator.name = "Test VMC"
-        mock_coordinator.name_slug = "testvmc"
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
 
         sensor = VmcHeltyDewPointSensor(mock_coordinator)
 

@@ -14,7 +14,7 @@ def test_vmc_helty_fan_creation():
     coordinator = Mock()
     coordinator.ip = IP
     coordinator.name = NAME
-    coordinator.name_slug = "testvmc"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = {"status": "VMGO,1,1,12345"}
 
     fan = VmcHeltyFan(coordinator)

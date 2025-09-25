@@ -12,7 +12,7 @@ class TestVmcHeltyComfortIndexSensor:
         """Test inizializzazione del sensore."""
         mock_coordinator = Mock()
         mock_coordinator.device_id = "test_device"
-        mock_coordinator.name_slug = "testvmc"
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
 
         sensor = VmcHeltyComfortIndexSensor(mock_coordinator)
 

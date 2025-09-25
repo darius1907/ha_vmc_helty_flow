@@ -1,7 +1,7 @@
 """Test absolute humidity sensor."""
 
-import pytest
 from unittest.mock import MagicMock
+import pytest
 from custom_components.vmc_helty_flow.sensor import VmcHeltyAbsoluteHumiditySensor
 
 
@@ -11,7 +11,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
     coordinator.name = "VMC Test"
-    coordinator.name_slug = "testvmc"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = {
         "sensors": "VMGI,245,205,650,450,50,75,80,90,100,1,2,3,4,1000",
         "status": "VMGO,3,1,25,0,24",
@@ -27,14 +27,15 @@ class TestVmcHeltyAbsoluteHumiditySensor:
     @pytest.fixture
     def sensor(self, mock_coordinator):
         """Create sensor instance."""
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
         return VmcHeltyAbsoluteHumiditySensor(mock_coordinator)
 
-    def test_init(self, sensor, mock_coordinator):
+    def test_init(self, sensor):
         """Test sensor initialization."""
         assert sensor._attr_unique_id == "vmc_helty_testvmc_absolute_humidity"
-        assert sensor._attr_name == f"{mock_coordinator.name} Umidità Assoluta"
+        assert sensor._attr_name == "VMC Helty VMC Test Umidità Assoluta"
         assert sensor._attr_native_unit_of_measurement == "g/m³"
-        assert sensor._attr_device_class == "humidity"
+        assert sensor._attr_device_class is None
         assert sensor._attr_state_class == "measurement"
         assert sensor._attr_icon == "mdi:water-percent"
 

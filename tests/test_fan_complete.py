@@ -14,7 +14,7 @@ class TestVmcHeltyFan:
     def setup_method(self):
         """Set up test fixtures."""
         self.coordinator = Mock()
-        self.coordinator.name_slug = "testvmc"
+        self.coordinator.name_slug = "vmc_helty_testvmc"
         self.coordinator.data = {}
         self.coordinator.async_request_refresh = AsyncMock()
 

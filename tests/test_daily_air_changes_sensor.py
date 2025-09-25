@@ -21,7 +21,7 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         self.coordinator = Mock()
         self.device_id = "test_device"
         self.coordinator.name = "Test VMC"
-        self.coordinator.name_slug = "testvmc"
+        self.coordinator.name_slug = "vmc_helty_testvmc"
         self.sensor = VmcHeltyDailyAirChangesSensor(self.coordinator, self.device_id)
 
     def test_init(self):

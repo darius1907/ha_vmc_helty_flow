@@ -22,7 +22,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
     coordinator.name = "VMC Test"
-    coordinator.name_slug = "testvmc"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = {
         "sensors": "VMGI,245,205,650,450,50,75,80,90,100,1,2,3,4,1000",
         "status": "VMGO,3,1,25,0,24",
@@ -72,7 +72,7 @@ class TestVmcHeltySensor:
 
     def test_init(self, mock_coordinator):
         """Test initialization."""
-        mock_coordinator.name_slug = "testvmc"
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
         sensor_entity = VmcHeltySensor(
             mock_coordinator,
             "temperature_internal",
@@ -225,8 +225,9 @@ class TestVmcHeltyLastResponseSensor:
 
     def test_init(self, mock_coordinator):
         """Test sensor initialization."""
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
         sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
-        expected_unique_id = f"vmc_helty_{mock_coordinator.name_slug}_last_response"
+        expected_unique_id = f"vmc_helty_testvmc_last_response"
         assert sensor_entity._attr_unique_id == expected_unique_id
         assert sensor_entity._attr_name == f"{mock_coordinator.name} Last Response"
 

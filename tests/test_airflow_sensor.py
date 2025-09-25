@@ -14,7 +14,7 @@ def mock_coordinator():
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
     coordinator.name = "VMC Test"
-    coordinator.name_slug = "testvmc"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = {
         "status": "VMGO,1,1,25,0,24",
     }
