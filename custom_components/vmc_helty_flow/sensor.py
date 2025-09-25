@@ -461,9 +461,9 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_absolute_humidity"
-        self._attr_name = f"{coordinator.name} Umidità Assoluta"
+        self._attr_name = f"VMC Helty {coordinator.name} Umidità Assoluta"
         self._attr_native_unit_of_measurement = "g/m³"
-        self._attr_device_class = SensorDeviceClass.HUMIDITY
+        self._attr_device_class = None  # No device class for absolute humidity
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_icon = "mdi:water-percent"
 
