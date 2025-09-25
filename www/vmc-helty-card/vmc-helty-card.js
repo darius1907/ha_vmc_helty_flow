@@ -171,6 +171,10 @@ class VmcHeltyCard extends LitElement {
       show_co2: config.show_co2 !== false,
       show_voc: config.show_voc !== false,
       show_advanced: config.show_advanced !== false,
+      show_airflow: config.show_airflow !== false,
+      show_filter_hours: config.show_filter_hours !== false,
+      show_device_status: config.show_device_status !== false,
+      show_network_info: config.show_network_info === true,
       enable_comfort_calculations: config.enable_comfort_calculations !== false,
       enable_air_exchange: config.enable_air_exchange !== false,
       theme: config.theme || "default",
@@ -448,11 +452,47 @@ class VmcHeltyCard extends LitElement {
     return Math.round((roomVolume / airflow) * 60 * 10) / 10; // minutes
   }
 
-  _getComfortLevel(index) {
-    if (index >= 85) return 'excellent';
-    if (index >= 70) return 'good';
-    if (index >= 55) return 'fair';
+    _getComfortLevel(comfortIndex) {
+    if (comfortIndex >= 80) return 'excellent';
+    if (comfortIndex >= 60) return 'good';
+    if (comfortIndex >= 40) return 'fair';
     return 'poor';
+  }
+
+  _getDewPointLevel(dewPoint) {
+    if (dewPoint < 10) return 'excellent'; // Molto secco
+    if (dewPoint < 13) return 'good';      // Secco
+    if (dewPoint < 16) return 'fair';      // Confortevole
+    if (dewPoint < 18) return 'good';      // Buono
+    if (dewPoint < 21) return 'fair';      // Accettabile
+    if (dewPoint < 24) return 'poor';      // Umido
+    return 'poor';                         // Molto umido
+  }
+
+  _getHumidityLevel(absoluteHumidity) {
+    if (absoluteHumidity < 7) return 'poor';      // Troppo secco
+    if (absoluteHumidity < 9) return 'fair';      // Secco
+    if (absoluteHumidity < 12) return 'excellent'; // Ottimale
+    if (absoluteHumidity < 15) return 'good';      // Buono
+    return 'poor';                                 // Troppo umido
+  }
+
+  _formatTimestamp(timestamp) {
+    if (!timestamp) return 'N/A';
+    
+    try {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins < 1) return 'Ora';
+      if (diffMins < 60) return `${diffMins} min fa`;
+      if (diffMins < 1440) return `${Math.floor(diffMins / 60)} ore fa`;
+      return date.toLocaleDateString('it-IT');
+    } catch (e) {
+      return timestamp;
+    }
   }
 
   _formatSensorValue(value, unit) {
@@ -756,6 +796,51 @@ class VmcHeltyCard extends LitElement {
       }
     }
 
+    // Sensori aggiuntivi configurabili
+    const baseEntityId = this.config.entity.replace('fan.', '');
+    
+    // Portata d'aria
+    if (this.config.show_airflow) {
+      const airflowState = this._getEntityState(`sensor.${baseEntityId}_airflow`);
+      if (airflowState) {
+        sensors.push({
+          label: 'Portata aria',
+          icon: 'mdi:fan',
+          value: this._formatSensorValue(airflowState.state, 'm³/h'),
+          unit: 'm³/h',
+          source: 'VMC'
+        });
+      }
+    }
+
+    // Ore filtro
+    if (this.config.show_filter_hours) {
+      const filterHoursState = this._getEntityState(`sensor.${baseEntityId}_filter_hours`);
+      if (filterHoursState) {
+        sensors.push({
+          label: 'Ore filtro',
+          icon: 'mdi:air-filter',
+          value: this._formatSensorValue(filterHoursState.state, 'h'),
+          unit: 'h',
+          source: 'VMC'
+        });
+      }
+    }
+
+    // Stato dispositivo
+    if (this.config.show_device_status) {
+      const deviceState = this._getEntityState(`binary_sensor.${baseEntityId}_status`);
+      if (deviceState) {
+        sensors.push({
+          label: 'Stato',
+          icon: deviceState.state === 'on' ? 'mdi:power' : 'mdi:power-off',
+          value: deviceState.state === 'on' ? 'Acceso' : 'Spento',
+          unit: '',
+          source: 'VMC'
+        });
+      }
+    }
+
     if (sensors.length === 0) return nothing;
 
     return html`
@@ -778,53 +863,121 @@ class VmcHeltyCard extends LitElement {
   }
 
   _renderAdvancedSensors() {
-    const tempState = this._getTemperatureState();
-    const humidityState = this._getHumidityState();
-
-    if (!tempState || !humidityState) return nothing;
-
-    const temp = parseFloat(tempState.state);
-    const humidity = parseFloat(humidityState.state);
-
-    const dewPoint = this._calculateDewPoint(temp, humidity);
-    const comfortIndex = this._calculateComfortIndex(temp, humidity);
-    const airExchangeTime = this._calculateAirExchangeTime();
-
+    const baseEntityId = this.config.entity.replace('fan.', '');
     const advancedSensors = [];
 
-    if (this.config.enable_comfort_calculations && dewPoint !== null) {
+    // Sensori avanzati dall'integrazione (preferiti rispetto ai calcoli client-side)
+    
+    // Umidità assoluta
+    const absoluteHumidityState = this._getEntityState(`sensor.${baseEntityId}_absolute_humidity`);
+    if (absoluteHumidityState) {
       advancedSensors.push({
-        label: 'Dew Point',
+        label: 'Umidità assoluta',
+        icon: 'mdi:water',
+        value: this._formatSensorValue(absoluteHumidityState.state, 'g/m³'),
+        unit: 'g/m³',
+        comfort: this._getHumidityLevel(parseFloat(absoluteHumidityState.state))
+      });
+    }
+
+    // Dew Point (sensore integrazione)
+    const dewPointState = this._getEntityState(`sensor.${baseEntityId}_dew_point`);
+    if (dewPointState) {
+      advancedSensors.push({
+        label: 'Punto di rugiada',
         icon: 'mdi:thermometer-water',
-        value: this._formatSensorValue(dewPoint, '°C'),
-        unit: '°C'
+        value: this._formatSensorValue(dewPointState.state, '°C'),
+        unit: '°C',
+        comfort: this._getDewPointLevel(parseFloat(dewPointState.state))
       });
     }
 
-    if (this.config.enable_comfort_calculations && comfortIndex !== null) {
-      const comfortLevel = this._getComfortLevel(comfortIndex);
+    // Delta Dew Point
+    const dewPointDeltaState = this._getEntityState(`sensor.${baseEntityId}_dew_point_delta`);
+    if (dewPointDeltaState) {
+      const delta = parseFloat(dewPointDeltaState.state);
       advancedSensors.push({
-        label: 'Comfort Index',
+        label: 'Delta punto rugiada',
+        icon: 'mdi:thermometer-minus',
+        value: this._formatSensorValue(dewPointDeltaState.state, '°C'),
+        unit: '°C',
+        comfort: delta > 0 ? 'good' : 'poor'
+      });
+    }
+
+    // Comfort Index (sensore integrazione)
+    const comfortIndexState = this._getEntityState(`sensor.${baseEntityId}_comfort_index`);
+    if (comfortIndexState) {
+      advancedSensors.push({
+        label: 'Indice comfort',
         icon: 'mdi:account-check',
-        value: this._formatSensorValue(comfortIndex, '%'),
+        value: this._formatSensorValue(comfortIndexState.state, '%'),
         unit: '%',
-        comfort: comfortLevel
+        comfort: this._getComfortLevel(parseFloat(comfortIndexState.state))
       });
     }
 
-    if (this.config.enable_air_exchange && airExchangeTime !== null) {
+    // Air Exchange Time (sensore integrazione)
+    const airExchangeTimeState = this._getEntityState(`sensor.${baseEntityId}_air_exchange_time`);
+    if (airExchangeTimeState) {
+      const exchangeTime = parseFloat(airExchangeTimeState.state);
       let category = 'poor';
-      if (airExchangeTime <= 20) category = 'excellent';
-      else if (airExchangeTime <= 30) category = 'good';
-      else if (airExchangeTime <= 60) category = 'fair';
-
+      if (exchangeTime <= 20) category = 'excellent';
+      else if (exchangeTime <= 30) category = 'good';
+      else if (exchangeTime <= 60) category = 'fair';
+      
       advancedSensors.push({
-        label: 'Air Exchange Time',
+        label: 'Tempo ricambio aria',
         icon: 'mdi:clock-time-four',
-        value: this._formatSensorValue(airExchangeTime, 'min'),
+        value: this._formatSensorValue(airExchangeTimeState.state, 'min'),
         unit: 'min',
         comfort: category
       });
+    }
+
+    // Daily Air Changes
+    const dailyAirChangesState = this._getEntityState(`sensor.${baseEntityId}_daily_air_changes`);
+    if (dailyAirChangesState) {
+      const dailyChanges = parseFloat(dailyAirChangesState.state);
+      let category = 'poor';
+      if (dailyChanges >= 20) category = 'excellent';
+      else if (dailyChanges >= 15) category = 'good';
+      else if (dailyChanges >= 10) category = 'fair';
+      
+      advancedSensors.push({
+        label: 'Ricambi aria/giorno',
+        icon: 'mdi:refresh',
+        value: this._formatSensorValue(dailyAirChangesState.state, ''),
+        unit: 'ricambi',
+        comfort: category
+      });
+    }
+
+    // Informazioni di rete (solo se abilitato)
+    if (this.config.show_network_info) {
+      // Ultima risposta
+      const lastResponseState = this._getEntityState(`sensor.${baseEntityId}_last_response`);
+      if (lastResponseState) {
+        advancedSensors.push({
+          label: 'Ultima comunicazione',
+          icon: 'mdi:clock-outline',
+          value: this._formatTimestamp(lastResponseState.state),
+          unit: '',
+          source: 'VMC'
+        });
+      }
+
+      // Indirizzo IP
+      const ipAddressState = this._getEntityState(`sensor.${baseEntityId}_ip_address`);
+      if (ipAddressState) {
+        advancedSensors.push({
+          label: 'Indirizzo IP',
+          icon: 'mdi:ip-network',
+          value: ipAddressState.state,
+          unit: '',
+          source: 'VMC'
+        });
+      }
     }
 
     if (advancedSensors.length === 0) return nothing;

@@ -646,6 +646,42 @@ class VmcHeltyCardEditor extends LitElement {
               @change=${this._valueChanged}
             ></ha-switch>
           </div>
+
+          <div class="toggle-item">
+            <span class="toggle-label">Show Airflow</span>
+            <ha-switch
+              .checked=${this.config.show_airflow !== false}
+              .configValue=${"show_airflow"}
+              @change=${this._valueChanged}
+            ></ha-switch>
+          </div>
+
+          <div class="toggle-item">
+            <span class="toggle-label">Show Filter Hours</span>
+            <ha-switch
+              .checked=${this.config.show_filter_hours !== false}
+              .configValue=${"show_filter_hours"}
+              @change=${this._valueChanged}
+            ></ha-switch>
+          </div>
+
+          <div class="toggle-item">
+            <span class="toggle-label">Show Device Status</span>
+            <ha-switch
+              .checked=${this.config.show_device_status !== false}
+              .configValue=${"show_device_status"}
+              @change=${this._valueChanged}
+            ></ha-switch>
+          </div>
+
+          <div class="toggle-item">
+            <span class="toggle-label">Show Network Info</span>
+            <ha-switch
+              .checked=${this.config.show_network_info === true}
+              .configValue=${"show_network_info"}
+              @change=${this._valueChanged}
+            ></ha-switch>
+          </div>
         </div>
       </div>
     `;
