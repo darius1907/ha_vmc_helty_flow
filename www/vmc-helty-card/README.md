@@ -277,12 +277,14 @@ When custom sensors are selected:
 ## 📊 Advanced Sensor Calculations
 
 ### Dew Point Calculation
+
 - **Formula**: Magnus formula using selected temperature/humidity
 - **Purpose**: Condensation risk assessment
 - **Units**: °C
 - **Accuracy**: Depends on sensor quality and placement
 
 ### Comfort Index
+
 - **Algorithm**: Temperature + humidity comfort scoring
 - **Ranges**:
   - Excellent: 85-100%
@@ -292,6 +294,7 @@ When custom sensors are selected:
 - **Factors**: Optimal temp 20-24°C, optimal humidity 40-60%
 
 ### Air Exchange Time
+
 - **Calculation**: Room volume ÷ Fan airflow × 60 (minutes)
 - **Airflow Mapping**:
   - Speed 0: 0 m³/h (Off)
@@ -308,12 +311,14 @@ When custom sensors are selected:
 ## 🚀 Performance Features
 
 ### Optimized Rendering
+
 - **Smart Updates**: Only re-renders when relevant entities change
 - **Entity Monitoring**: Tracks only configured VMC and sensor entities
 - **Memory Efficient**: Cleanup on disconnect
 - **Error Boundaries**: Graceful degradation on failures
 
 ### Accessibility Features
+
 - **ARIA Labels**: Complete screen reader support
 - **Keyboard Navigation**: Full keyboard control
 - **Focus Management**: Proper tab order and focus indicators
@@ -323,6 +328,7 @@ When custom sensors are selected:
 ## 🐛 Troubleshooting
 
 ### Device Not Found
+
 ```
 Error: Please define a VMC fan entity
 ```

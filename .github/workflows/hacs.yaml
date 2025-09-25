@@ -19,3 +19,12 @@ jobs:
         with:
           category: integration
           ignore: brands
+
+      - name: Validate Lovelace Card
+        run: |
+          if [ -d "www/vmc-helty-card" ]; then
+            echo "✅ Lovelace card found in www/vmc-helty-card/"
+            ls -la www/vmc-helty-card/
+          else
+            echo "ℹ️ No Lovelace card found"
+          fi
