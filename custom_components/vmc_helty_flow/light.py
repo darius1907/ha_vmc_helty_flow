@@ -32,7 +32,7 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
     def __init__(self, coordinator):
         """Initialize the light."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"vmc_{coordinator.name_slug}_light"
+        self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_light"
         self._attr_name = f"VMC {coordinator.name} Light"
         self._attr_color_mode = ColorMode.BRIGHTNESS
         self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
@@ -93,7 +93,7 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
     def __init__(self, coordinator):
         """Initialize the light timer."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"vmc_{coordinator.name_slug}_light_timer"
+        self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_light_timer"
         self._attr_name = f"VMC {coordinator.name} Light Timer"
         self._attr_icon = "mdi:timer"
 

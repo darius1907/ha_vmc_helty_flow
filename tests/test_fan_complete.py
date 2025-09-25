@@ -23,7 +23,7 @@ class TestVmcHeltyFan:
         fan = VmcHeltyFan(self.coordinator)
 
         assert fan.coordinator == self.coordinator
-        assert fan._attr_unique_id == "vmc_testvmc"
+        assert fan._attr_unique_id == "vmc_helty_testvmc"
         assert fan._attr_name == f"VMC {self.coordinator.name}"
         assert fan._attr_speed_count == 4
         assert fan._attr_supported_features == 1  # FanEntityFeature.SET_SPEED

@@ -18,7 +18,7 @@ class TestVmcHeltyDewPointDeltaSensor:
 
         sensor = VmcHeltyDewPointDeltaSensor(mock_coordinator)
 
-        assert sensor._attr_unique_id == "vmc_testvmc_dew_point_delta"
+        assert sensor._attr_unique_id == "vmc_helty_testvmc_dew_point_delta"
         assert sensor._attr_name == "VMC Helty Test Delta Punto Rugiada"
         assert sensor._attr_icon == "mdi:thermometer-water"
         assert sensor._attr_device_class == "temperature"

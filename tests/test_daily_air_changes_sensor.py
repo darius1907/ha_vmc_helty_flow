@@ -20,12 +20,14 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         """Configura il test."""
         self.coordinator = Mock()
         self.device_id = "test_device"
+        self.coordinator.name = "Test VMC"
+        self.coordinator.name_slug = "testvmc"
         self.sensor = VmcHeltyDailyAirChangesSensor(self.coordinator, self.device_id)
 
     def test_init(self):
         """Test di inizializzazione del sensore."""
         assert self.sensor._device_id == "test_device"
-        assert self.sensor._attr_unique_id == "test_device_daily_air_changes"
+        assert self.sensor._attr_unique_id == "vmc_helty_testvmc_daily_air_changes"
         assert self.sensor._attr_name == "Daily Air Changes"
         assert self.sensor._attr_icon == "mdi:air-filter"
         assert self.sensor._attr_native_unit_of_measurement == "changes/day"

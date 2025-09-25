@@ -49,7 +49,7 @@ class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
         """Initialize the switch."""
         super().__init__(coordinator)
         self._mode_key = mode_key
-        self._attr_unique_id = f"vmc_{coordinator.name_slug}_{mode_key}"
+        self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_{mode_key}"
         self._attr_name = f"VMC {coordinator.name} {mode_name}"
         self._attr_icon = self._get_mode_icon(mode_key)
 
@@ -100,7 +100,7 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
     def __init__(self, coordinator):
         """Initialize the switch."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"vmc_{coordinator.name_slug}_panel_led"
+        self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_panel_led"
         self._attr_name = f"VMC {coordinator.name} Panel LED"
         self._attr_icon = "mdi:led-on"
 
@@ -142,7 +142,7 @@ class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
     def __init__(self, coordinator):
         """Initialize the switch."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"vmc_{coordinator.name_slug}_sensors"
+        self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_sensors"
         self._attr_name = f"VMC {coordinator.name} Sensors"
         self._attr_icon = "mdi:eye"
 

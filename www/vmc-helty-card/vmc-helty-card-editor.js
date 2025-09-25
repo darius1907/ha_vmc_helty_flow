@@ -260,13 +260,9 @@ class VmcHeltyCardEditor extends LitElement {
         const state = this.hass.states[entityId];
         // Check if it's from our VMC Helty integration by looking at attributes
         return (
-          entityId.startsWith('fan.vmc_') || // Prioritize new vmc_{name} prefix
+          entityId.startsWith('fan.vmc_helty_') || // Prioritize new vmc_{name} prefix
           entityId.includes('vmc_helty') ||
           entityId.includes('helty') ||
-          entityId.includes('soggiorno') || // Add common room names
-          entityId.includes('cucina') ||
-          entityId.includes('bagno') ||
-          entityId.includes('camera') ||
           state?.attributes?.integration === 'vmc_helty_flow' ||
           state?.entity_id?.includes('_fan')
         );

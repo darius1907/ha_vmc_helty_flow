@@ -82,7 +82,7 @@ class TestVmcHeltySensor:
             "measurement",
         )
         assert sensor_entity._sensor_key == "temperature_internal"
-        assert sensor_entity._attr_unique_id == "vmc_testvmc_temperature_internal"
+        assert sensor_entity._attr_unique_id == "vmc_helty_testvmc_temperature_internal"
         assert sensor_entity._attr_name == "VMC VMC Test Temperatura Interna"
         assert sensor_entity._attr_native_unit_of_measurement == "°C"
         assert sensor_entity._attr_device_class == "temperature"
@@ -226,7 +226,7 @@ class TestVmcHeltyLastResponseSensor:
     def test_init(self, mock_coordinator):
         """Test sensor initialization."""
         sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
-        expected_unique_id = f"vmc_{mock_coordinator.name_slug}_last_response"
+        expected_unique_id = f"vmc_helty_{mock_coordinator.name_slug}_last_response"
         assert sensor_entity._attr_unique_id == expected_unique_id
         assert sensor_entity._attr_name == f"{mock_coordinator.name} Last Response"
 

@@ -71,8 +71,8 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
         # Cache per memorizzare l'ultimo dato valido
         self._cached_data = {
-            "name": None,
-            "network": None,
+            "name": str,
+            "network": str,
         }
 
     @property

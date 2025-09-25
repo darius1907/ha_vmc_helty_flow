@@ -31,7 +31,7 @@ class TestVmcHeltyAbsoluteHumiditySensor:
 
     def test_init(self, sensor, mock_coordinator):
         """Test sensor initialization."""
-        assert sensor._attr_unique_id == "vmc_testvmc_absolute_humidity"
+        assert sensor._attr_unique_id == "vmc_helty_testvmc_absolute_humidity"
         assert sensor._attr_name == f"{mock_coordinator.name} Umidità Assoluta"
         assert sensor._attr_native_unit_of_measurement == "g/m³"
         assert sensor._attr_device_class == "humidity"

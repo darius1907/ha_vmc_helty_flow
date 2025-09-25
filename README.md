@@ -191,7 +191,7 @@ Modalità: Scansione incrementale
 
 ### Configurazione Rete Personalizzata
 
-```
+```text
 Subnet: 10.0.0.0/24
 Porta: 8080
 Timeout: 5 secondi
@@ -200,7 +200,7 @@ Modalità: Scansione completa
 
 ### Configurazione Rete Estesa
 
-```
+```text
 Subnet: 192.168.0.0/23
 Porta: 5001
 Timeout: 15 secondi

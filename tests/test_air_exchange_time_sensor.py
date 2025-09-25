@@ -29,7 +29,7 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
     def test_init(self):
         """Test sensor initialization."""
-        assert self.sensor.unique_id == "vmc_testvmc_air_exchange_time"
+        assert self.sensor.unique_id == "vmc_helty_testvmc_air_exchange_time"
         assert self.sensor.name == "Air Exchange Time"
         assert self.sensor.native_unit_of_measurement == "min"
         assert self.sensor.icon == "mdi:clock-time-four"
