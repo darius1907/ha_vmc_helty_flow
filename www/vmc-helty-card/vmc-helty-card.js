@@ -289,7 +289,7 @@ class VmcHeltyCard extends LitElement {
     
     // Extract device slug from fan entity ID
     // Convert from "fan.vmc_<device_name_slug>" to "<device_name_slug>"
-    const match = this.config.entity.match(/^fan\.vmc_(.+)$/);
+    const match = this.config.entity.match(/^fan\.vmc_helty(.+)$/);
     return match ? match[1] : null;
   }
 
@@ -612,31 +612,31 @@ class VmcHeltyCard extends LitElement {
         key: 'hyperventilation',
         label: 'Iperventilazione',
         icon: 'mdi:fan-plus',
-        entity: `switch.vmc_${deviceSlug}_hyperventilation`
+        entity: `switch.vmc_helty_${deviceSlug}_hyperventilation`
       },
       {
         key: 'night',
         label: 'Modalità Notte',
         icon: 'mdi:weather-night',
-        entity: `switch.vmc_${deviceSlug}_night`
+        entity: `switch.vmc_helty_${deviceSlug}_night`
       },
       {
         key: 'free_cooling',
         label: 'Free Cooling',
         icon: 'mdi:snowflake',
-        entity: `switch.vmc_${deviceSlug}_free_cooling`
+        entity: `switch.vmc_helty_${deviceSlug}_free_cooling`
       },
       {
         key: 'panel_led',
         label: 'LED Pannello',
         icon: 'mdi:led-on',
-        entity: `switch.vmc_${deviceSlug}_panel_led`
+        entity: `switch.vmc_helty_${deviceSlug}_panel_led`
       },
       {
         key: 'sensors',
         label: 'Sensori',
         icon: 'mdi:eye',
-        entity: `switch.vmc_${deviceSlug}_sensors`
+        entity: `switch.vmc_helty_${deviceSlug}_sensors`
       }
     ];
 
@@ -677,8 +677,8 @@ class VmcHeltyCard extends LitElement {
     const deviceSlug = this._getDeviceSlug();
     if (!deviceSlug) return nothing;
 
-    const lightEntity = `light.vmc_${deviceSlug}_light`;
-    const timerEntity = `light.vmc_${deviceSlug}_light_timer`;
+  const lightEntity = `light.vmc_helty_${deviceSlug}_light`;
+  const timerEntity = `light.vmc_helty_${deviceSlug}_light_timer`;
     
     const lightState = this._getEntityState(lightEntity);
     const timerState = this._getEntityState(timerEntity);
