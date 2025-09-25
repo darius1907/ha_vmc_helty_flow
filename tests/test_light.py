@@ -74,8 +74,8 @@ class TestVmcHeltyLight:
         """Test initialization."""
         light_entity = VmcHeltyLight(mock_coordinator)
 
-        assert light_entity._attr_unique_id == "192.168.1.100_light"
-        assert light_entity._attr_name == "VMC Test Light"
+        assert light_entity._attr_unique_id == f"vmc_{mock_coordinator.name_slug}_light"
+        assert light_entity._attr_name == f"VMC {mock_coordinator.name} Light"
         assert light_entity._attr_color_mode == ColorMode.BRIGHTNESS
         assert light_entity._attr_supported_color_modes == {ColorMode.BRIGHTNESS}
 
@@ -254,8 +254,9 @@ class TestVmcHeltyLightTimer:
         """Test initialization."""
         timer_entity = VmcHeltyLightTimer(mock_coordinator)
 
-        assert timer_entity._attr_unique_id == "192.168.1.100_light_timer"
-        assert timer_entity._attr_name == "VMC Test Light Timer"
+        expected_id = f"vmc_{mock_coordinator.name_slug}_light_timer"
+        assert timer_entity._attr_unique_id == expected_id
+        assert timer_entity._attr_name == f"VMC {mock_coordinator.name} Light Timer"
         assert timer_entity._attr_icon == "mdi:timer"
 
     def test_extra_state_attributes_no_data(self, mock_coordinator):

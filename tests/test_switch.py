@@ -97,8 +97,10 @@ class TestVmcHeltyModeSwitch:
         )
 
         assert switch_entity._mode_key == "hyperventilation"
-        assert switch_entity._attr_unique_id == "192.168.1.100_hyperventilation"
-        assert switch_entity._attr_name == "VMC Test Iperventilazione"
+        expected_id = f"vmc_{mock_coordinator.name_slug}_hyperventilation"
+        assert switch_entity._attr_unique_id == expected_id
+        expected_name = f"VMC {mock_coordinator.name} Iperventilazione"
+        assert switch_entity._attr_name == expected_name
         assert switch_entity._attr_icon == "mdi:fan-plus"
 
     def test_get_mode_icon(self, mock_coordinator):
@@ -227,8 +229,10 @@ class TestVmcHeltyPanelLedSwitch:
         """Test initialization."""
         switch_entity = VmcHeltyPanelLedSwitch(mock_coordinator)
 
-        assert switch_entity._attr_unique_id == "192.168.1.100_panel_led"
-        assert switch_entity._attr_name == "VMC Test Panel LED"
+        expected_id = f"vmc_{mock_coordinator.name_slug}_panel_led"
+        assert switch_entity._attr_unique_id == expected_id
+        expected_name = f"VMC {mock_coordinator.name} Panel LED"
+        assert switch_entity._attr_name == expected_name
         assert switch_entity._attr_icon == "mdi:led-on"
 
     def test_is_on_no_data(self, mock_coordinator):
@@ -320,8 +324,10 @@ class TestVmcHeltySensorsSwitch:
         """Test initialization."""
         switch_entity = VmcHeltySensorsSwitch(mock_coordinator)
 
-        assert switch_entity._attr_unique_id == "192.168.1.100_sensors"
-        assert switch_entity._attr_name == "VMC Test Sensors"
+        expected_id = f"vmc_{mock_coordinator.name_slug}_sensors"
+        assert switch_entity._attr_unique_id == expected_id
+        expected_name = f"VMC {mock_coordinator.name} Sensors"
+        assert switch_entity._attr_name == expected_name
         assert switch_entity._attr_icon == "mdi:eye"
 
     def test_is_on_no_data(self, mock_coordinator):

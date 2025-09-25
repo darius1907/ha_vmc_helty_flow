@@ -202,10 +202,161 @@ class VmcHeltyCard extends LitElement {
         }
       }
 
+      /* Mode and Light Controls */
+      .controls-section {
+        margin-bottom: 16px;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--primary-text-color);
+      }
+
+      .mode-controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+      }
+
+      .mode-button {
+        padding: 12px 8px;
+        background: var(--card-background-color);
+        border: 1px solid var(--divider-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: var(--primary-text-color);
+        font-size: 12px;
+      }
+
+      .mode-button:hover {
+        background: var(--secondary-background-color);
+        border-color: var(--accent-color);
+      }
+
+      .mode-button.active {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: var(--text-accent-color, var(--primary-background-color));
+      }
+
+      .mode-label {
+        text-align: center;
+        line-height: 1.2;
+      }
+
+      .light-controls {
+        display: grid;
+        gap: 16px;
+      }
+
+      .light-control {
+        padding: 12px;
+        background: var(--card-background-color);
+        border: 1px solid var(--divider-color);
+        border-radius: 8px;
+      }
+
+      .light-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .light-header span {
+        flex: 1;
+        font-weight: 500;
+        color: var(--primary-text-color);
+      }
+
+      .light-toggle {
+        background: var(--card-background-color);
+        border: 1px solid var(--divider-color);
+        border-radius: 6px;
+        padding: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--primary-text-color);
+      }
+
+      .light-toggle:hover {
+        background: var(--secondary-background-color);
+        border-color: var(--accent-color);
+      }
+
+      .light-toggle.active {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: var(--text-accent-color, var(--primary-background-color));
+      }
+
+      .light-slider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .brightness-slider {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--secondary-background-color);
+        outline: none;
+        cursor: pointer;
+      }
+
+      .brightness-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        cursor: pointer;
+        border: 2px solid var(--card-background-color);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+
+      .brightness-slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        cursor: pointer;
+        border: 2px solid var(--card-background-color);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+
+      .brightness-value {
+        font-size: 12px;
+        color: var(--secondary-text-color);
+        min-width: 35px;
+        text-align: right;
+      }
+
+      .timer-info {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--secondary-text-color);
+        text-align: center;
+      }
+
       /* Reduced Motion Support */
       @media (prefers-reduced-motion: reduce) {
         .fan-speed-button,
-        .sensor-card {
+        .sensor-card,
+        .mode-button,
+        .light-toggle {
           transition: none;
         }
 
@@ -342,6 +493,15 @@ class VmcHeltyCard extends LitElement {
     return this._getEntityState(`sensor.${baseEntityId}_humidity`);
   }
 
+  _getDeviceSlug() {
+    if (!this.config.entity) return null;
+    
+    // Extract device slug from fan entity ID
+    // Convert from "fan.vmc_<device_name_slug>" to "<device_name_slug>"
+    const match = this.config.entity.match(/^fan\.vmc_(.+)$/);
+    return match ? match[1] : null;
+  }
+
   // Fan control methods
   async _setFanSpeed(speed) {
     if (!this.hass || !this.config.entity) return;
@@ -364,6 +524,84 @@ class VmcHeltyCard extends LitElement {
     } catch (error) {
       console.error("Error setting fan speed:", error);
       this._error = `Failed to set fan speed: ${error.message}`;
+    } finally {
+      this._loading = false;
+    }
+  }
+
+  async _toggleSwitch(entityId) {
+    if (!this.hass || !entityId) return;
+
+    try {
+      this._loading = true;
+
+      const state = this._getEntityState(entityId);
+      const service = state && state.state === 'on' ? 'turn_off' : 'turn_on';
+
+      await this.hass.callService("switch", service, {
+        entity_id: entityId
+      });
+
+      // Provide haptic feedback on mobile
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+
+    } catch (error) {
+      console.error("Error toggling switch:", error);
+      this._error = `Failed to toggle switch: ${error.message}`;
+    } finally {
+      this._loading = false;
+    }
+  }
+
+  async _toggleLight(entityId) {
+    if (!this.hass || !entityId) return;
+
+    try {
+      this._loading = true;
+
+      const state = this._getEntityState(entityId);
+      const service = state && state.state === 'on' ? 'turn_off' : 'turn_on';
+
+      await this.hass.callService("light", service, {
+        entity_id: entityId
+      });
+
+      // Provide haptic feedback on mobile
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+
+    } catch (error) {
+      console.error("Error toggling light:", error);
+      this._error = `Failed to toggle light: ${error.message}`;
+    } finally {
+      this._loading = false;
+    }
+  }
+
+  async _setLightBrightness(entityId, brightness) {
+    if (!this.hass || !entityId) return;
+
+    try {
+      this._loading = true;
+
+      const brightnessValue = Math.round((brightness / 100) * 255); // Convert 0-100 to 0-255
+
+      await this.hass.callService("light", "turn_on", {
+        entity_id: entityId,
+        brightness: brightnessValue
+      });
+
+      // Provide haptic feedback on mobile
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+
+    } catch (error) {
+      console.error("Error setting light brightness:", error);
+      this._error = `Failed to set light brightness: ${error.message}`;
     } finally {
       this._loading = false;
     }
@@ -472,6 +710,8 @@ class VmcHeltyCard extends LitElement {
       </div>
 
       ${this._renderFanControls()}
+      ${this._renderModeControls()}
+      ${this._renderLightControls()}
       ${this._renderSensors()}
       ${this.config.show_advanced ? this._renderAdvancedSensors() : nothing}
     `;
@@ -531,6 +771,154 @@ class VmcHeltyCard extends LitElement {
       4: 'mdi:fan'
     };
     return icons[speed] || 'mdi:fan';
+  }
+
+  _renderModeControls() {
+    const deviceSlug = this._getDeviceSlug();
+    if (!deviceSlug) return nothing;
+
+    const modes = [
+      {
+        key: 'hyperventilation',
+        label: 'Iperventilazione',
+        icon: 'mdi:fan-plus',
+        entity: `switch.vmc_${deviceSlug}_hyperventilation`
+      },
+      {
+        key: 'night',
+        label: 'Modalità Notte',
+        icon: 'mdi:weather-night',
+        entity: `switch.vmc_${deviceSlug}_night`
+      },
+      {
+        key: 'free_cooling',
+        label: 'Free Cooling',
+        icon: 'mdi:snowflake',
+        entity: `switch.vmc_${deviceSlug}_free_cooling`
+      },
+      {
+        key: 'panel_led',
+        label: 'LED Pannello',
+        icon: 'mdi:led-on',
+        entity: `switch.vmc_${deviceSlug}_panel_led`
+      },
+      {
+        key: 'sensors',
+        label: 'Sensori',
+        icon: 'mdi:eye',
+        entity: `switch.vmc_${deviceSlug}_sensors`
+      }
+    ];
+
+    // Filter modes to show only those with available entities
+    const availableModes = modes.filter(mode => this._getEntityState(mode.entity));
+    
+    if (availableModes.length === 0) return nothing;
+
+    return html`
+      <div class="controls-section">
+        <div class="section-title">
+          <ha-icon icon="mdi:cog"></ha-icon>
+          <span>Controlli Modalità</span>
+        </div>
+        <div class="mode-controls">
+          ${availableModes.map(mode => {
+            const state = this._getEntityState(mode.entity);
+            const isOn = state && state.state === 'on';
+            
+            return html`
+              <button
+                class="mode-button ${isOn ? 'active' : ''}"
+                @click="${() => this._toggleSwitch(mode.entity)}"
+                ?disabled="${this._loading}"
+                aria-label="${mode.label} ${isOn ? 'On' : 'Off'}"
+              >
+                <ha-icon icon="${mode.icon}"></ha-icon>
+                <span class="mode-label">${mode.label}</span>
+              </button>
+            `;
+          })}
+        </div>
+      </div>
+    `;
+  }
+
+  _renderLightControls() {
+    const deviceSlug = this._getDeviceSlug();
+    if (!deviceSlug) return nothing;
+
+    const lightEntity = `light.vmc_${deviceSlug}_light`;
+    const timerEntity = `light.vmc_${deviceSlug}_light_timer`;
+    
+    const lightState = this._getEntityState(lightEntity);
+    const timerState = this._getEntityState(timerEntity);
+    
+    // Show light controls only if at least one light entity is available
+    if (!lightState && !timerState) return nothing;
+
+    return html`
+      <div class="controls-section">
+        <div class="section-title">
+          <ha-icon icon="mdi:lightbulb"></ha-icon>
+          <span>Controlli Luci</span>
+        </div>
+        <div class="light-controls">
+          ${lightState ? html`
+            <div class="light-control">
+              <div class="light-header">
+                <ha-icon icon="mdi:lightbulb"></ha-icon>
+                <span>Luminosità</span>
+                <button
+                  class="light-toggle ${lightState.state === 'on' ? 'active' : ''}"
+                  @click="${() => this._toggleLight(lightEntity)}"
+                  ?disabled="${this._loading}"
+                  aria-label="Toggle light"
+                >
+                  <ha-icon icon="${lightState.state === 'on' ? 'mdi:lightbulb-on' : 'mdi:lightbulb-off'}"></ha-icon>
+                </button>
+              </div>
+              ${lightState.state === 'on' ? html`
+                <div class="light-slider">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="25"
+                    .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
+                    @change="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
+                    ?disabled="${this._loading}"
+                    class="brightness-slider"
+                  />
+                  <span class="brightness-value">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
+                </div>
+              ` : nothing}
+            </div>
+          ` : nothing}
+          
+          ${timerState ? html`
+            <div class="light-control">
+              <div class="light-header">
+                <ha-icon icon="mdi:timer"></ha-icon>
+                <span>Timer Luci</span>
+                <button
+                  class="light-toggle ${timerState.state === 'on' ? 'active' : ''}"
+                  @click="${() => this._toggleLight(timerEntity)}"
+                  ?disabled="${this._loading}"
+                  aria-label="Toggle light timer"
+                >
+                  <ha-icon icon="${timerState.state === 'on' ? 'mdi:timer' : 'mdi:timer-off'}"></ha-icon>
+                </button>
+              </div>
+              ${timerState.state === 'on' && timerState.attributes.timer_seconds ? html`
+                <div class="timer-info">
+                  <span>${Math.round(timerState.attributes.timer_seconds / 60)} min rimanenti</span>
+                </div>
+              ` : nothing}
+            </div>
+          ` : nothing}
+        </div>
+      </div>
+    `;
   }
 
   _renderSensors() {

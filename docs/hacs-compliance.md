@@ -49,7 +49,7 @@ Required fields present:
 1. **Add Custom Repository** (until included in default HACS store):
    - Go to HACS → Integrations
    - Click "..." → "Custom repositories"
-   - Add repository URL: `https://github.com/dpezzoli/ha_vmc_helty_flow`
+   - Add repository URL: `https://github.com/darius1907/ha_vmc_helty_flow`
    - Category: Integration
    - Click "Add"
 
