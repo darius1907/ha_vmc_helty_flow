@@ -7,6 +7,7 @@ This document outlines the release process, versioning strategy, and standards f
 ## 📋 Release Checklist
 
 ### Pre-Release Preparation
+
 - [ ] Update version in `manifest.json`
 - [ ] Update version in `hacs.json` (if changed)
 - [ ] Update `CHANGELOG.md` with new features and fixes
@@ -18,6 +19,7 @@ This document outlines the release process, versioning strategy, and standards f
 - [ ] Test with Home Assistant development version
 
 ### Release Creation
+
 - [ ] Create git tag with version number: `git tag v1.0.0`
 - [ ] Push tags: `git push origin --tags`
 - [ ] Create GitHub release with changelog
@@ -25,6 +27,7 @@ This document outlines the release process, versioning strategy, and standards f
 - [ ] Mark release as latest if stable
 
 ### Post-Release
+
 - [ ] Verify HACS can install the new release
 - [ ] Update documentation if needed
 - [ ] Announce release in community forums
@@ -40,12 +43,14 @@ We follow [Semantic Versioning](https://semver.org/):
 - **MINOR**: New features, entity additions, backward-compatible changes
 - **PATCH**: Bug fixes, documentation updates, minor improvements
 
-### Examples:
+### Examples
+
 - `1.0.0` → `1.1.0`: Added new sensor types
 - `1.1.0` → `1.1.1`: Fixed config flow validation bug
 - `1.x.x` → `2.0.0`: Changed entity naming scheme (breaking change)
 
-### Pre-Release Versions:
+### Pre-Release Versions
+
 - `1.0.0-alpha.1`: Early development version
 - `1.0.0-beta.1`: Feature-complete, testing needed
 - `1.0.0-rc.1`: Release candidate, final testing
@@ -53,46 +58,57 @@ We follow [Semantic Versioning](https://semver.org/):
 ## 🚀 Release Types
 
 ### Major Release (x.0.0)
+
 **Frequency**: 6-12 months
 **Contents**:
+
 - New major features
 - Architecture improvements
 - Breaking changes (with migration guide)
 - Home Assistant version updates
 
 **Example**: `2.0.0`
+
 - New climate entity support
 - Redesigned config flow
 - Updated entity naming (breaking change)
 
 ### Minor Release (x.y.0)
+
 **Frequency**: 1-3 months
 **Contents**:
+
 - New features and entities
 - Enhanced functionality
 - Performance improvements
 - New VMC model support
 
 **Example**: `1.2.0`
+
 - Added CO2 calibration sensor
 - Enhanced error reporting
 - Support for new VMC models
 
 ### Patch Release (x.y.z)
+
 **Frequency**: As needed
 **Contents**:
+
 - Bug fixes
 - Security updates
 - Documentation improvements
 - Minor enhancements
 
 **Example**: `1.1.1`
+
 - Fixed sensor update intervals
 - Improved error handling
 - Updated documentation
 
 ### Hotfix Release
+
 **Emergency releases for critical issues**:
+
 - Security vulnerabilities
 - Data loss issues
 - Integration breaking bugs
@@ -100,6 +116,7 @@ We follow [Semantic Versioning](https://semver.org/):
 ## 📝 Changelog Standards
 
 ### Format
+
 We follow [Keep a Changelog](https://keepachangelog.com/) format:
 
 ```markdown
@@ -128,7 +145,8 @@ We follow [Keep a Changelog](https://keepachangelog.com/) format:
 - Updated credential handling for enhanced security
 ```
 
-### Categories:
+### Categories
+
 - **Added**: New features, entities, or capabilities
 - **Changed**: Modifications to existing functionality
 - **Fixed**: Bug fixes and issue resolutions
@@ -139,15 +157,18 @@ We follow [Keep a Changelog](https://keepachangelog.com/) format:
 ## 🏷️ Release Naming
 
 ### Release Tags
+
 - Format: `v{MAJOR}.{MINOR}.{PATCH}`
 - Examples: `v1.0.0`, `v1.2.1`, `v2.0.0-beta.1`
 
 ### Release Titles
+
 - Major: "VMC Helty Flow v2.0.0 - Major Update with Climate Control"
 - Minor: "VMC Helty Flow v1.2.0 - Enhanced Sensors and Model Support"
 - Patch: "VMC Helty Flow v1.1.1 - Bug Fixes and Improvements"
 
 ### Release Notes Template
+
 ```markdown
 # VMC Helty Flow v1.2.0 - Enhanced Sensors and Model Support
 
@@ -211,6 +232,7 @@ Special thanks to community contributors:
 ## 🧪 Testing Standards
 
 ### Pre-Release Testing
+
 1. **Unit Tests**: All tests must pass with >95% coverage
 2. **Integration Tests**: Test with real VMC devices if possible
 3. **HACS Testing**: Verify installation via HACS custom repository
@@ -218,11 +240,13 @@ Special thanks to community contributors:
 5. **Python Versions**: Test with supported Python versions
 
 ### Test Environments
+
 - **Development**: Latest HA development version
 - **Stable**: Current HA stable release
 - **Previous**: Previous HA stable release (when possible)
 
 ### Device Testing
+
 - Test with multiple VMC models when available
 - Verify network discovery across different network configurations
 - Test error conditions and recovery scenarios
@@ -230,12 +254,14 @@ Special thanks to community contributors:
 ## 🔐 Security Release Process
 
 ### Security Patches
+
 1. **Private Development**: Fix developed privately
 2. **Limited Testing**: Security team testing only
 3. **Coordinated Release**: Release coordinated with HA security team
 4. **Public Disclosure**: Security advisory published after fix release
 
 ### Security Release Naming
+
 - Format: `v1.1.2-security`
 - Immediate patch release
 - Security advisory published separately
@@ -243,6 +269,7 @@ Special thanks to community contributors:
 ## 📈 Release Metrics
 
 ### Success Criteria
+
 - [ ] All CI/CD checks pass
 - [ ] No critical bugs reported within 48 hours
 - [ ] HACS installation success rate >95%
@@ -250,6 +277,7 @@ Special thanks to community contributors:
 - [ ] No security vulnerabilities introduced
 
 ### Monitoring
+
 - **Downloads**: Track HACS installation numbers
 - **Issues**: Monitor GitHub issues and resolution time
 - **Feedback**: Community forum and Discord feedback
@@ -258,12 +286,14 @@ Special thanks to community contributors:
 ## 🔄 Release Automation
 
 ### GitHub Actions
+
 - **CI/CD**: Automated testing on every commit
 - **Release Preparation**: Automated version bumping and changelog generation
 - **Quality Checks**: Code quality, type checking, and linting
 - **HACS Validation**: Automated HACS compatibility testing
 
 ### Manual Steps
+
 - Final testing and validation
 - Release notes creation
 - Community announcement

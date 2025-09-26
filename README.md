@@ -182,7 +182,7 @@ show_voc: true
 
 ### Configurazione Base
 
-```
+```text
 Subnet: 192.168.1.0/24
 Porta: 5001
 Timeout: 10 secondi

@@ -12,7 +12,6 @@ from custom_components.vmc_helty_flow.const import (
     AIR_EXCHANGE_TIME_EXCELLENT,
     AIR_EXCHANGE_TIME_GOOD,
     DEFAULT_ROOM_VOLUME,
-    MIN_STATUS_PARTS,
 )
 from custom_components.vmc_helty_flow.sensor import VmcHeltyAirExchangeTimeSensor
 
@@ -97,21 +96,25 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
     def test_calculation_fan_speed_hyperventilation(self):
         """Test calculation with hyperventilation mode (6 -> 42 m³/h)."""
-        self.coordinator.data = {"status": "VMGO,6,0,0,0"}  # Hyperventilation -> 42 m³/h
+        self.coordinator.data = {
+            "status": "VMGO,6,0,0,0"
+        }  # Hyperventilation -> 42 m³/h
         # Expected: (DEFAULT_ROOM_VOLUME / 42) * 60 = (60 / 42) * 60 = 85.7 minutes
         expected = (DEFAULT_ROOM_VOLUME / 42) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_free_cooling(self):
-        """Test calculation with free cooling mode (103 -> speed 2)."""
-        self.coordinator.data = {"status": "VMGO,103,0,0,0"}  # Free cooling -> speed 2
+        """Test calculation with free cooling mode (7 -> speed 2)."""
+        self.coordinator.data = {"status": "VMGO,7,0,0,0"}  # Free cooling -> speed 2
         # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (150 / 100) * 60 = 90 minutes
         expected = (DEFAULT_ROOM_VOLUME / 100) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_invalid_fan_speed(self):
         """Test calculation with invalid fan speed uses default 100 m³/h."""
-        self.coordinator.data = {"status": "VMGO,999,0,0,0"}  # Invalid speed -> default 100
+        self.coordinator.data = {
+            "status": "VMGO,999,0,0,0"
+        }  # Invalid speed -> default 100
         # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (60 / 100) * 60 = 36.0 minutes
         expected = (DEFAULT_ROOM_VOLUME / 100) * 60
         assert self.sensor.native_value == round(expected, 1)
@@ -181,8 +184,10 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
         # Should suggest increasing fan speed since it's < 4
         optimization_tip = attrs["optimization_tip"]
-        assert ("aumentare velocità" in optimization_tip.lower() or
-                "ricambio" in optimization_tip.lower())
+        assert (
+            "aumentare velocità" in optimization_tip.lower()
+            or "ricambio" in optimization_tip.lower()
+        )
 
     def test_optimization_tip_max_speed(self):
         """Test optimization tip when at maximum speed but still poor performance."""
@@ -196,14 +201,20 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
         # Check if the tip is appropriate for the actual exchange time
         if actual_exchange_time <= AIR_EXCHANGE_TIME_EXCELLENT:
-            assert ("eccellent" in optimization_tip.lower() or
-                    "ottimale" in optimization_tip.lower())
+            assert (
+                "eccellent" in optimization_tip.lower()
+                or "ottimale" in optimization_tip.lower()
+            )
         elif actual_exchange_time <= AIR_EXCHANGE_TIME_GOOD:
-            assert ("buon" in optimization_tip.lower() or
-                    "efficac" in optimization_tip.lower())
+            assert (
+                "buon" in optimization_tip.lower()
+                or "efficac" in optimization_tip.lower()
+            )
         elif actual_exchange_time <= AIR_EXCHANGE_TIME_ACCEPTABLE:
-            assert ("accettabil" in optimization_tip.lower() or
-                    "considerare" in optimization_tip.lower())
+            assert (
+                "accettabil" in optimization_tip.lower()
+                or "considerare" in optimization_tip.lower()
+            )
 
     def test_mathematical_consistency(self):
         """Test mathematical consistency across different fan speeds."""
@@ -229,12 +240,15 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
                 assert curr_value < prev_value, (
                     f"Speed {speed} should have lower exchange time "
-                    f"than speed {prev_speed}")
+                    f"than speed {prev_speed}"
+                )
 
     def test_extreme_conditions(self):
         """Test sensor behavior under extreme conditions."""
         # Test with very high fan speed (edge case) - uses default 100 m³/h
-        self.coordinator.data = {"status": "VMGO,99,0,0,0"}  # Very high speed -> default 100
+        self.coordinator.data = {
+            "status": "VMGO,99,0,0,0"
+        }  # Very high speed -> default 100
         # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (60 / 100) * 60 = 36.0 minutes
         expected = (DEFAULT_ROOM_VOLUME / 100) * 60
         assert self.sensor.native_value == round(expected, 1)
@@ -244,7 +258,7 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         # Use fan speed that creates non-integer result
         self.coordinator.data = {"status": "VMGO,3,0,0,0"}  # Fan speed 3
 
-        # Expected: (60 / 26) * 60 = 138.5 minutes 
+        # Expected: (60 / 26) * 60 = 138.5 minutes
         expected = round((DEFAULT_ROOM_VOLUME / 26) * 60, 1)
         assert self.sensor.native_value == expected
 

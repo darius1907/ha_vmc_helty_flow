@@ -8,23 +8,27 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 ## ✨ Funzionalità Principali
 
 ### 🔍 Scoperta Automatica
+
 - Scansione intelligente della rete locale
 - Configurazione guidata passo-passo
 - Supporto multi-dispositivo
 
 ### 🎛️ Controllo Completo
+
 - Controllo velocità ventola (5 livelli)
 - Modalità operative: Normal, Night, Hyperventilation, Free Cooling
 - Controllo LED pannello e sensori
 - Controlli luci con timer automatico
 
 ### 📊 Monitoraggio Avanzato
+
 - **Sensori Ambientali**: Temperatura interna/esterna, umidità, CO2, VOC
 - **Sensori Tecnici**: Portata aria, ore filtro, stato dispositivo
 - **Analytics Avanzati**: Punto di rugiada, indice comfort, ricambi aria
 - **Informazioni Rete**: IP dispositivo, ultima comunicazione
 
 ### 🎨 Lovelace Card Integrata
+
 - Card personalizzata per controllo e monitoraggio
 - Editor visuale integrato
 - Temi personalizzabili e layout responsive
@@ -50,6 +54,7 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 ## 🔧 Configurazione
 
 L'integrazione supporta:
+
 - **Scansione di rete personalizzabile** (subnet, porte, timeout)
 - **Sensori opzionali** configurabili individualmente
 - **Calcoli di comfort** con volume stanza personalizzabile
@@ -57,14 +62,14 @@ L'integrazione supporta:
 
 ## 📚 Documentazione
 
-- [Guida Completa](https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md)
-- [Installation Guide](https://github.com/dpezzoli/ha_vmc_helty_flow#-installazione-rapida)
-- [Card Configuration](https://github.com/dpezzoli/ha_vmc_helty_flow#-lovelace-card)
-- [Troubleshooting](https://github.com/dpezzoli/ha_vmc_helty_flow#-risoluzione-problemi)
+- [Guida Completa](https://github.com/darius1907/ha_vmc_helty_flow/blob/main/README.md)
+- [Installation Guide](https://github.com/darius1907/ha_vmc_helty_flow#-installazione-rapida)
+- [Card Configuration](https://github.com/darius1907/ha_vmc_helty_flow#-lovelace-card)
+- [Troubleshooting](https://github.com/darius1907/ha_vmc_helty_flow#-risoluzione-problemi)
 
 ## 🐛 Segnalazione Bug
 
-Segnala problemi su [GitHub Issues](https://github.com/dpezzoli/ha_vmc_helty_flow/issues)
+Segnala problemi su [GitHub Issues](https://github.com/darius1907/ha_vmc_helty_flow/issues)
 
 ---
 

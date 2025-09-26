@@ -256,7 +256,7 @@ class VmcHeltyCardEditor extends LitElement {
     this._vmcEntities = Object.keys(this.hass.states)
       .filter(entityId => {
         if (!entityId.startsWith('fan.')) return false;
-        
+
         const state = this.hass.states[entityId];
         // Check if it's from our VMC Helty integration by looking at attributes
         return (

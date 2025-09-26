@@ -93,7 +93,7 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
         return result
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> dict[str, int | bool | None]:
         """Return extra state attributes."""
         if not self.coordinator.data:
             return {}

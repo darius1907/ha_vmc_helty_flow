@@ -283,8 +283,9 @@ class TestVmcHeltyDewPointDeltaSensor:
         assert result_extreme > 5.0  # Dovrebbe essere un delta grande
 
         # Test umidità molto alta
+        # 25°C vs 20°C, 95%
         mock_coordinator.data = {
-            "sensors": "VMGI,250,200,950,800,0,0,0,0,0,0,150,0,0,0",  # 25°C vs 20°C, 95%
+            "sensors": "VMGI,250,200,950,800,0,0,0,0,0,0,150,0,0,0",
         }
         result_humid = sensor.native_value
         assert result_humid is not None

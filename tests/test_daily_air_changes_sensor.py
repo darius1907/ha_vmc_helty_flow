@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import Mock
 
 from custom_components.vmc_helty_flow.const import (
-    DAILY_AIR_CHANGES_ADEQUATE,
     DAILY_AIR_CHANGES_EXCELLENT,
     DAILY_AIR_CHANGES_GOOD,
     DAILY_AIR_CHANGES_POOR,
@@ -153,7 +152,8 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         expected_daily_changes = 40.0
         expected_hourly_changes = round(expected_daily_changes / 24, 2)
 
-        # 40.0 ricambi > DAILY_AIR_CHANGES_EXCELLENT_MIN (24) -> DAILY_AIR_CHANGES_EXCELLENT
+        # 40.0 ricambi > DAILY_AIR_CHANGES_EXCELLENT_MIN (24) 
+        # -> DAILY_AIR_CHANGES_EXCELLENT
         assert attrs["category"] == DAILY_AIR_CHANGES_EXCELLENT
         assert attrs["assessment"] == "Ricambio d'aria ottimale"
         assert attrs["air_changes_per_hour"] == expected_hourly_changes
@@ -190,14 +190,14 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
     def test_category_poor(self):
         """Test categoria insufficiente (<6 ricambi/giorno)."""
         # Simula una portata molto bassa modificando temporaneamente il volume
-        original_volume = DEFAULT_ROOM_VOLUME
         # Con volume 300 m³ e velocità 1 (50 m³/h): 50/300*24 = 4.0 ricambi/giorno
 
         # Non posso modificare la costante, quindi uso un test diverso
         # Testo con velocità 0 (off) che dovrebbe sempre essere "Poor"
         self.coordinator.data = {"status": "VMGO,0,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
 
-        # Con velocità 0, daily_changes sarà 0.0 che è < DAILY_AIR_CHANGES_ADEQUATE_MIN (6)
+        # Con velocità 0, daily_changes sarà 0.0 c
+        # he è < DAILY_AIR_CHANGES_ADEQUATE_MIN (6)
         attrs = self.sensor.extra_state_attributes
         assert attrs["category"] == DAILY_AIR_CHANGES_POOR
         assert attrs["assessment"] == "Ricambio d'aria insufficiente"

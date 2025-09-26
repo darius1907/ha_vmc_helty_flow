@@ -1,7 +1,9 @@
 """Test absolute humidity sensor."""
 
 from unittest.mock import MagicMock
+
 import pytest
+
 from custom_components.vmc_helty_flow.sensor import VmcHeltyAbsoluteHumiditySensor
 
 
@@ -62,10 +64,10 @@ class TestVmcHeltyAbsoluteHumiditySensor:
         mock_coordinator.data = {
             "sensors": "VMGI,225,183,650,850,50,75,80,90,100,1,120,3,4,1000"
         }
-        
+
         sensor = VmcHeltyAbsoluteHumiditySensor(mock_coordinator)
         result = sensor.native_value
-        
+
         # Il sensore deve prima estrarre i valori dalla stringa sensors
         # poi calcolare l'umidità assoluta
         # Per T=22.5°C, RH=65.0% => ~12.96 g/m³ (formula Magnus-Tetens)
@@ -95,7 +97,7 @@ class TestVmcHeltyAbsoluteHumiditySensor:
         value = sensor.native_value
         assert value is not None
         assert value > 0
-        
+
         # Umidità molto alta
         # VMGI,250,205,990,450,50,75,80,90,100,1,2,3,4,1000
         # temp_int: 250 (25.0°C), humidity: 990 (99.0%)
@@ -113,7 +115,7 @@ class TestVmcHeltyAbsoluteHumiditySensor:
             "sensors": "VMGI,invalid,205,650,450,50,75,80,90,100,1,2,3,4,1000"
         }
         assert sensor.native_value is None
-        
+
         mock_coordinator.data = {
             "sensors": "VMGI,245,205,invalid,450,50,75,80,90,100,1,2,3,4,1000"
         }

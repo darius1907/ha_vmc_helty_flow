@@ -286,7 +286,7 @@ class VmcHeltyCard extends LitElement {
 
   _getDeviceSlug() {
     if (!this.config.entity) return null;
-    
+
     // Extract device slug from fan entity ID
     // Convert from "fan.vmc_<device_name_slug>" to "<device_name_slug>"
     const match = this.config.entity.match(/^fan\.vmc_helty_(.+)$/);
@@ -479,13 +479,13 @@ class VmcHeltyCard extends LitElement {
 
   _formatTimestamp(timestamp) {
     if (!timestamp) return 'N/A';
-    
+
     try {
       const date = new Date(timestamp);
       const now = new Date();
       const diffMs = now - date;
       const diffMins = Math.floor(diffMs / 60000);
-      
+
       if (diffMins < 1) return 'Ora';
       if (diffMins < 60) return `${diffMins} min fa`;
       if (diffMins < 1440) return `${Math.floor(diffMins / 60)} ore fa`;
@@ -642,7 +642,7 @@ class VmcHeltyCard extends LitElement {
 
     // Filter modes to show only those with available entities
     const availableModes = modes.filter(mode => this._getEntityState(mode.entity));
-    
+
     if (availableModes.length === 0) return nothing;
 
     return html`
@@ -655,7 +655,7 @@ class VmcHeltyCard extends LitElement {
           ${availableModes.map(mode => {
             const state = this._getEntityState(mode.entity);
             const isOn = state && state.state === 'on';
-            
+
             return html`
               <ha-chip
                 .selected="${isOn}"
@@ -679,10 +679,10 @@ class VmcHeltyCard extends LitElement {
 
   const lightEntity = `light.vmc_helty_${deviceSlug}_light`;
   const timerEntity = `light.vmc_helty_${deviceSlug}_light_timer`;
-    
+
     const lightState = this._getEntityState(lightEntity);
     const timerState = this._getEntityState(timerEntity);
-    
+
     // Show light controls only if at least one light entity is available
     if (!lightState && !timerState) return nothing;
 
@@ -703,7 +703,7 @@ class VmcHeltyCard extends LitElement {
                 ?disabled="${this._loading}"
               ></mwc-switch>
             </div>
-            
+
             ${lightState.state === 'on' ? html`
               <div class="light-slider">
                 <ha-icon icon="mdi:brightness-6"></ha-icon>
@@ -719,7 +719,7 @@ class VmcHeltyCard extends LitElement {
               </div>
             ` : nothing}
           ` : nothing}
-          
+
           ${timerState ? html`
             <div class="light-control">
               <ha-icon icon="mdi:timer"></ha-icon>
@@ -730,7 +730,7 @@ class VmcHeltyCard extends LitElement {
                 ?disabled="${this._loading}"
               ></mwc-switch>
             </div>
-            
+
             ${timerState.state === 'on' && timerState.attributes.timer_seconds ? html`
               <div class="timer-info">
                 <ha-icon icon="mdi:clock-outline"></ha-icon>
@@ -798,7 +798,7 @@ class VmcHeltyCard extends LitElement {
 
     // Sensori aggiuntivi configurabili
     const baseEntityId = this.config.entity.replace('fan.', '');
-    
+
     // Portata d'aria
     if (this.config.show_airflow) {
       const airflowState = this._getEntityState(`sensor.${baseEntityId}_airflow`);
@@ -867,7 +867,7 @@ class VmcHeltyCard extends LitElement {
     const advancedSensors = [];
 
     // Sensori avanzati dall'integrazione (preferiti rispetto ai calcoli client-side)
-    
+
     // Umidità assoluta
     const absoluteHumidityState = this._getEntityState(`sensor.${baseEntityId}_absolute_humidity`);
     if (absoluteHumidityState) {
@@ -925,7 +925,7 @@ class VmcHeltyCard extends LitElement {
       if (exchangeTime <= 20) category = 'excellent';
       else if (exchangeTime <= 30) category = 'good';
       else if (exchangeTime <= 60) category = 'fair';
-      
+
       advancedSensors.push({
         label: 'Tempo ricambio aria',
         icon: 'mdi:clock-time-four',
@@ -943,7 +943,7 @@ class VmcHeltyCard extends LitElement {
       if (dailyChanges >= 20) category = 'excellent';
       else if (dailyChanges >= 15) category = 'good';
       else if (dailyChanges >= 10) category = 'fair';
-      
+
       advancedSensors.push({
         label: 'Ricambi aria/giorno',
         icon: 'mdi:refresh',

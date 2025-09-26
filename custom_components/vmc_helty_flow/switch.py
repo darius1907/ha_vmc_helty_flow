@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, PART_INDEX_PANEL_LED, PART_INDEX_SENSORS, ENTITY_NAME_PREFIX
+from .const import DOMAIN, ENTITY_NAME_PREFIX, PART_INDEX_PANEL_LED, PART_INDEX_SENSORS
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 

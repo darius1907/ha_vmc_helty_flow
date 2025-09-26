@@ -98,7 +98,7 @@ class TestVmcHeltyModeSwitch:
         )
 
         assert switch_entity._mode_key == "hyperventilation"
-        expected_id = f"vmc_helty_testvmc_hyperventilation"
+        expected_id = "vmc_helty_testvmc_hyperventilation"
         assert switch_entity._attr_unique_id == expected_id
         expected_name = f"VMC Helty {mock_coordinator.name} Iperventilazione"
         assert switch_entity._attr_name == expected_name
@@ -231,7 +231,7 @@ class TestVmcHeltyPanelLedSwitch:
         mock_coordinator.name_slug = "vmc_helty_testvmc"
         switch_entity = VmcHeltyPanelLedSwitch(mock_coordinator)
 
-        expected_id = f"vmc_helty_testvmc_panel_led"
+        expected_id = "vmc_helty_testvmc_panel_led"
         assert switch_entity._attr_unique_id == expected_id
         expected_name = f"VMC Helty {mock_coordinator.name} Panel LED"
         assert switch_entity._attr_name == expected_name
@@ -327,7 +327,7 @@ class TestVmcHeltySensorsSwitch:
         mock_coordinator.name_slug = "vmc_helty_testvmc"
         switch_entity = VmcHeltySensorsSwitch(mock_coordinator)
 
-        expected_id = f"vmc_helty_testvmc_sensors"
+        expected_id = "vmc_helty_testvmc_sensors"
         assert switch_entity._attr_unique_id == expected_id
         expected_name = f"VMC Helty {mock_coordinator.name} Sensors"
         assert switch_entity._attr_name == expected_name

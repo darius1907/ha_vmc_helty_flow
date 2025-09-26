@@ -43,30 +43,30 @@ Please include the following information in your report:
 ### Security Considerations
 
 #### Network Security
+
 - **Local Network Only**: Integration only communicates within local network
 - **No External Connections**: No data sent to external servers
 - **Encryption**: Supports secure communication protocols where available
 
 #### Data Privacy
+
 - **Local Processing**: All data processing happens locally
 - **No Cloud Storage**: No user data stored in cloud services
 - **Minimal Data**: Only necessary device data is collected
 
 #### Authentication
+
 - **Device Authentication**: Secure authentication with VMC devices
 - **Home Assistant Integration**: Follows HA security best practices
 - **Configuration Protection**: Sensitive config data is encrypted
 
 ### Known Security Features
 
-#### Integration Security
 - ✅ Input validation for all user inputs
 - ✅ Sanitized network communications
 - ✅ Secure credential storage
 - ✅ Rate limiting for API calls
 - ✅ Error handling without information disclosure
-
-#### Network Security
 - ✅ Local network communication only
 - ✅ Configurable timeouts and retries
 - ✅ No hardcoded credentials
@@ -75,19 +75,22 @@ Please include the following information in your report:
 
 ### Security Best Practices for Users
 
-#### Installation Security
+#### Installation
+
 1. **Official Sources**: Only install from official HACS or GitHub releases
 2. **Verify Checksums**: Verify file integrity when possible
 3. **Update Regularly**: Keep integration updated to latest version
 4. **Review Permissions**: Understand what permissions the integration needs
 
-#### Network Security
+#### Network
+
 1. **Isolate VMC Network**: Consider network isolation for IoT devices
 2. **Firewall Rules**: Configure appropriate firewall rules
 3. **Monitor Traffic**: Monitor network traffic for unusual activity
 4. **Secure WiFi**: Use strong WiFi passwords for VMC devices
 
-#### Home Assistant Security
+#### Home Assistant
+
 1. **HTTPS**: Enable HTTPS for Home Assistant access
 2. **Authentication**: Use strong authentication methods
 3. **Updates**: Keep Home Assistant updated
@@ -142,9 +145,8 @@ We appreciate security researchers and will:
 
 ### Contact Information
 
-- **Security Email**: dario.pezzoli@par-tec.it
-- **General Issues**: https://github.com/dpezzoli/ha_vmc_helty_flow/issues
-- **Documentation**: https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md
+- **General Issues**: <https://github.com/darius1907/ha_vmc_helty_flow/issues>
+- **Documentation**: <https://github.com/darius1907/ha_vmc_helty_flow/blob/main/README.md>
 
 ---
 

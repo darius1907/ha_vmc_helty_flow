@@ -63,7 +63,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "manufacturer": entry.data.get("manufacturer", "Helty"),
                     "entry_id": entry.entry_id,
                     "title": entry.title,
-                    "state": entry.state.name if entry.state else "unknown"
+                    "state": entry.state.name if entry.state else "unknown",
                 }
                 configured_devices.append(device_info)
 
@@ -78,9 +78,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Salva dispositivi nello storage (compatibilità con discovery)."""
         # Non salviamo più nello storage interno - usiamo solo il registry
         # Manteniamo la funzione per compatibilità con il codice esistente
-        _LOGGER.debug(
-            "_save_devices called with %d devices (no-op)", len(devices)
-        )
+        _LOGGER.debug("_save_devices called with %d devices (no-op)", len(devices))
 
     def _create_config_form(self, help_text=None):
         """Create the configuration form for subnet, port, and timeout."""

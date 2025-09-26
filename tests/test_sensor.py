@@ -61,7 +61,6 @@ async def test_async_setup_entry(mock_hass, mock_config_entry, mock_coordinator)
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
 
-    # Should have 20 entities total (rimosse VmcHeltyNetworkPasswordSensor e VmcHeltyNetworkSSIDSensor)
     assert len(entities) == 20
     sensor_entities = [e for e in entities if isinstance(e, VmcHeltySensor)]
     assert len(sensor_entities) >= 5  # At least the 5 main sensors
@@ -226,8 +225,11 @@ class TestVmcHeltyLastResponseSensor:
         """Test sensor initialization."""
         mock_coordinator.name_slug = "vmc_helty_testvmc"
         sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
-        assert sensor_entity._attr_unique_id == f"vmc_helty_testvmc_last_response"
-        assert sensor_entity._attr_name == f"VMC Helty {mock_coordinator.name} Last Response"
+        assert sensor_entity._attr_unique_id == "vmc_helty_testvmc_last_response"
+        assert (
+            sensor_entity._attr_name
+            == f"VMC Helty {mock_coordinator.name} Last Response"
+        )
 
     def test_native_value_no_data(self, mock_coordinator):
         """Test native_value with no data."""

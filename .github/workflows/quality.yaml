@@ -27,7 +27,7 @@ jobs:
       - name: Run linting
         run: |
           ruff check custom_components/vmc_helty_flow/
-          
+
       - name: Run type checking
         run: |
           mypy custom_components/vmc_helty_flow/
@@ -56,7 +56,7 @@ jobs:
           python -m json.tool custom_components/vmc_helty_flow/manifest.json > /dev/null
           echo "✅ manifest.json is valid JSON"
 
-      - name: Validate hacs.json  
+      - name: Validate hacs.json
         run: |
           python -m json.tool hacs.json > /dev/null
           echo "✅ hacs.json is valid JSON"
@@ -65,13 +65,13 @@ jobs:
         run: |
           files=(
             "README.md"
-            "INFO.md" 
+            "INFO.md"
             "LICENSE"
             "hacs.json"
             "custom_components/vmc_helty_flow/manifest.json"
             "custom_components/vmc_helty_flow/__init__.py"
           )
-          
+
           for file in "${files[@]}"; do
             if [ -f "$file" ]; then
               echo "✅ $file exists"

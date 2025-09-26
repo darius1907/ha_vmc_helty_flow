@@ -3,8 +3,6 @@
 import math
 from unittest.mock import Mock
 
-import pytest
-
 from custom_components.vmc_helty_flow.sensor import VmcHeltyDewPointSensor
 
 
@@ -124,14 +122,14 @@ class TestVmcHeltyDewPointSensor:
         """Test calcolo in casi limite."""
         mock_coordinator = Mock()
         sensor = VmcHeltyDewPointSensor(mock_coordinator)
-        
+
         # Umidità molto alta (99%)
         # VMGI,150,120,990,800,0,0,0,0,0,0,150,0,0,0 - temp=15.0°C, humidity=99.0%
         mock_coordinator.data = {
             "sensors": "VMGI,150,120,990,800,0,0,0,0,0,0,150,0,0,0",
         }
         result_high_humidity = sensor.native_value
-        
+
         # Il punto di rugiada dovrebbe essere molto vicino alla temperatura
         assert result_high_humidity is not None
         assert abs(result_high_humidity - 15.0) < 1.0
@@ -142,7 +140,7 @@ class TestVmcHeltyDewPointSensor:
             "sensors": "VMGI,150,120,10,800,0,0,0,0,0,0,150,0,0,0",
         }
         result_low_humidity = sensor.native_value
-        
+
         # Il punto di rugiada dovrebbe essere molto più basso della temperatura
         assert result_low_humidity is not None
         assert result_low_humidity < 0
@@ -184,32 +182,34 @@ class TestVmcHeltyDewPointSensor:
 
         # Test diversi valori di punto di rugiada e livelli di comfort
         test_cases = [
-            (5.0, "Molto Secco"),     # < 8°C
-            (10.0, "Secco"),          # 8-12°C  
-            (15.0, "Confortevole"),   # 13-18°C
-            (20.0, "Buono"),          # 18-21°C
-            (23.0, "Accettabile"),    # 21-24°C
-            (26.0, "Umido"),          # 24-26°C
-            (28.0, "Opprimente"),     # > 26°C
+            (5.0, "Molto Secco"),  # < 8°C
+            (10.0, "Secco"),  # 8-12°C
+            (15.0, "Confortevole"),  # 13-18°C
+            (20.0, "Buono"),  # 18-21°C
+            (23.0, "Accettabile"),  # 21-24°C
+            (26.0, "Umido"),  # 24-26°C
+            (28.0, "Opprimente"),  # > 26°C
         ]
 
         for dew_point_temp, _expected_comfort in test_cases:
             # Simula il calcolo che produce il dew point desiderato
             # Usiamo una temperatura e umidità che producano circa il dew point voluto
-            temp_value = int((dew_point_temp + 5) * 10)  # Temp leggermente più alta in decimi
+            temp_value = int(
+                (dew_point_temp + 5) * 10
+            )  # Temp leggermente più alta in decimi
             humidity_value = 700  # Umidità 70.0% in decimi
             mock_coordinator.data = {
                 "sensors": (
                     f"VMGI,{temp_value},180,{humidity_value},800,0,0,0,0,0,0,150,0,0,0"
                 ),
             }
-            
+
             # Verifica che gli attributi contengano il comfort level
             attributes = sensor.extra_state_attributes
             assert attributes is not None
             assert "comfort_level" in attributes
             assert "comfort_color" in attributes
-            
+
             # Il colore dovrebbe essere una stringa hex valida
             assert attributes["comfort_color"].startswith("#")
 
@@ -228,7 +228,7 @@ class TestVmcHeltyDewPointSensor:
                         f"VMGI,{temp_value},180,{humidity_value},800,0,0,0,0,0,0,150,0,0,0"
                     ),
                 }
-                
+
                 dew_point = sensor.native_value
                 assert dew_point is not None
                 assert dew_point <= temp, f"Dew point {dew_point} > temperature {temp}"
@@ -252,7 +252,7 @@ class TestVmcHeltyDewPointSensor:
         """Test gestione di tipi di dati non validi."""
         mock_coordinator = Mock()
         sensor = VmcHeltyDewPointSensor(mock_coordinator)
-        
+
         # Test con dati malformati
         mock_coordinator.data = {
             "sensors": "VMGI,invalid,150,600,800,0,0,0,0,0,0,150,0,0,0",
