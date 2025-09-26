@@ -106,8 +106,8 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
     def test_calculation_fan_speed_free_cooling(self):
         """Test calculation with free cooling mode (7 -> speed 2)."""
         self.coordinator.data = {"status": "VMGO,7,0,0,0"}  # Free cooling -> speed 2
-        # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (150 / 100) * 60 = 90 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 100) * 60
+        # Expected: (DEFAULT_ROOM_VOLUME / 26) * 60 = (26 / 100) * 60 = 90 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 26) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_invalid_fan_speed(self):

@@ -84,28 +84,40 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
 
     def test_calculation_fan_speed_4(self):
         """Test calcolo con velocità ventola 4 (200 m³/h)."""
-        self.coordinator.data = {"status": "VMGO,4,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
-        # Portata: 200 m³/h, Ricambi/ora: 200/150 = 1.333, Ricambi/giorno: 1.333*24 = 32.0
+        self.coordinator.data = {
+            "status": "VMGO,4,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
+        }
+        # Portata: 200 m³/h, Ricambi/ora: 200/150 = 1.333,
+        # Ricambi/giorno: 1.333*24 = 32.0
         expected = round((200 / DEFAULT_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_night_mode(self):
-        """Test calcolo con modalità notte (velocità 5 -> 1)."""
-        self.coordinator.data = {"status": "VMGO,5,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
+        """Test calcolo con modalità notte (velocità FAN_SPEED_NIGHT_MODE -> 1)."""
+        from custom_components.vmc_helty_flow.const import FAN_SPEED_NIGHT_MODE
+        self.coordinator.data = {
+            "status": f"VMGO,{FAN_SPEED_NIGHT_MODE},1,0,0,0,0,0,0,0,0,50,0,0,0,60"
+        }
         # Modalità notte: velocità effettiva 1 (50 m³/h)
         expected = round((50 / DEFAULT_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_hyperventilation(self):
-        """Test calcolo con iperventilazione (velocità 6 -> 4)."""
-        self.coordinator.data = {"status": "VMGO,6,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
+        """Test calcolo con iperventilazione (velocità FAN_SPEED_HYPERVENTILATION -> 4)."""
+        from custom_components.vmc_helty_flow.const import FAN_SPEED_HYPERVENTILATION
+        self.coordinator.data = {
+            "status": f"VMGO,{FAN_SPEED_HYPERVENTILATION},1,0,0,0,0,0,0,0,0,50,0,0,0,60"
+        }
         # Iperventilazione: velocità effettiva 4 (200 m³/h)
         expected = round((200 / DEFAULT_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_free_cooling(self):
-        """Test calcolo con free cooling (velocità 7 -> 0)."""
-        self.coordinator.data = {"status": "VMGO,7,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
+        """Test calcolo con free cooling (velocità FAN_SPEED_FREE_COOLING -> 0)."""
+        from custom_components.vmc_helty_flow.const import FAN_SPEED_FREE_COOLING
+        self.coordinator.data = {
+            "status": f"VMGO,{FAN_SPEED_FREE_COOLING},1,0,0,0,0,0,0,0,0,50,0,0,0,60"
+        }
         # Free cooling: velocità effettiva 0
         assert self.sensor.native_value == 0.0
 
