@@ -21,7 +21,7 @@ from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     UnitOfTemperature,
-    UnitOfTime,
+    UnitOfTime
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -83,7 +83,8 @@ from .const import (
     DAILY_AIR_CHANGES_ADEQUATE_MIN,
     FAN_SPEED_NIGHT_MODE,
     FAN_SPEED_HYPERVENTILATION,
-    FAN_SPEED_FREE_COOLING
+    FAN_SPEED_FREE_COOLING,
+    ENTITY_NAME_PREFIX
 )
 from . import VmcHeltyCoordinator
 from .device_info import VmcHeltyEntity
@@ -193,7 +194,7 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
         super().__init__(coordinator)
         self._sensor_key = sensor_key
         self._attr_unique_id = f"{coordinator.name_slug}_{sensor_key}"
-        self._attr_name = f"VMC {coordinator.name} {sensor_name}"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} {sensor_name}"
         self._attr_native_unit_of_measurement = unit
         self._attr_device_class = device_class
         self._attr_state_class = state_class
@@ -243,7 +244,7 @@ class VmcHeltyAirflowSensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_airflow"
-        self._attr_name = f"{coordinator.name} Portata d'Aria"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Portata d'Aria"
         self._attr_native_unit_of_measurement = "m³/h"
         self._attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -280,7 +281,7 @@ class VmcHeltyOnOffSensor(VmcHeltyEntity, BinarySensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_online"
-        self._attr_name = f"{coordinator.name} Online"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Online"
         self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
     @property
@@ -296,7 +297,7 @@ class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_last_response"
-        self._attr_name = f"{coordinator.name} Last Response"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Last Response"
         self._attr_device_class = SensorDeviceClass.TIMESTAMP
 
     @property
@@ -320,7 +321,7 @@ class VmcHeltyFilterHoursSensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_filter_hours"
-        self._attr_name = f"{coordinator.name} Filter Hours"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Filter Hours"
         self._attr_native_unit_of_measurement = UnitOfTime.HOURS
         self._attr_icon = "mdi:air-filter"
         self._attr_device_class = SensorDeviceClass.DURATION
@@ -344,7 +345,7 @@ class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_ip_address"
-        self._attr_name = f"{coordinator.name} IP Address"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} IP Address"
         self._attr_icon = "mdi:ip-network"
 
     @property
@@ -360,7 +361,7 @@ class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
         """Initialize the button."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_reset_filter"
-        self._attr_name = f"{coordinator.name} Reset Filter"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Reset Filter"
         self._attr_icon = "mdi:air-filter"
 
     async def async_press(self) -> None:
@@ -377,7 +378,7 @@ class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
         """Initialize the text entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_device_name"
-        self._attr_name = f"{coordinator.name} Device Name"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Device Name"
         self._attr_icon = "mdi:rename-box"
 
     @property
@@ -405,7 +406,7 @@ class VmcHeltySSIDText(VmcHeltyEntity, TextEntity):
         """Initialize the text entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_wifi_ssid"
-        self._attr_name = f"{coordinator.name} WiFi SSID"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} WiFi SSID"
         self._attr_icon = "mdi:wifi"
 
     @property
@@ -433,7 +434,7 @@ class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
         """Initialize the text entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_wifi_password"
-        self._attr_name = f"{coordinator.name} WiFi Password"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} WiFi Password"
         self._attr_icon = "mdi:lock"
         self._attr_mode = "password"
 
@@ -461,7 +462,7 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_absolute_humidity"
-        self._attr_name = f"VMC Helty {coordinator.name} Umidità Assoluta"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Umidità Assoluta"
         self._attr_native_unit_of_measurement = "g/m³"
         self._attr_device_class = None  # No device class for absolute humidity
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -551,7 +552,7 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_dew_point"
-        self._attr_name = f"{coordinator.name} Punto di Rugiada"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Punto di Rugiada"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_device_class = SensorDeviceClass.TEMPERATURE
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -663,7 +664,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
     
     def __init__(self, coordinator: VmcHeltyCoordinator) -> None:
         super().__init__(coordinator, "comfort_index")
-        self._attr_name = "Indice Comfort Igrometrico"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Indice Comfort Igrometrico"
         self._attr_unique_id = f"{coordinator.name_slug}_comfort_index"
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = "%"
@@ -761,10 +762,10 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
             # Estrai temperatura interna (pos 1) e umidità (pos 3)
             temp = float(parts[1]) / 10  # Decimi di °C
             humidity = float(parts[3]) / 10  # Decimi di %
-            
+
             temp_comfort = self._calculate_temperature_comfort(temp)
             humidity_comfort = self._calculate_humidity_comfort(humidity)
-            
+
             comfort_value = self.native_value
             if comfort_value is not None:
                 # Classificazione livello comfort
@@ -778,7 +779,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
                     comfort_category = "Mediocre"
                 else:
                     comfort_category = "Scarso"
-                
+
                 attributes.update({
                     "comfort_category": comfort_category,
                     "temperature_comfort": f"{temp_comfort:.2f}",
@@ -788,10 +789,10 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
                     "current_temperature": f"{temp}°C",
                     "current_humidity": f"{humidity}%"
                 })
-                
+
         except (ValueError, TypeError, ZeroDivisionError):
             pass
-            
+
         return attributes
 
 
@@ -802,7 +803,7 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
         """Inizializza il sensore."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_dew_point_delta"
-        self._attr_name = f"{coordinator.name} Delta Punto Rugiada"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Delta Punto di Rugiada"
         self._attr_icon = "mdi:thermometer-water"
         self._attr_device_class = SensorDeviceClass.TEMPERATURE
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -944,7 +945,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_air_exchange_time"
-        self._attr_name = "Air Exchange Time"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Air Exchange Time"
         self._attr_native_unit_of_measurement = "min"
         self._attr_device_class = SensorDeviceClass.DURATION
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -1092,7 +1093,7 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
         self.coordinator = coordinator
         self._device_id = device_id
         self._attr_unique_id = f"{coordinator.name_slug}_daily_air_changes"
-        self._attr_name = "Daily Air Changes"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Daily Air Changes"
         self._attr_icon = "mdi:air-filter"
         self._attr_device_class = None
         self._attr_state_class = SensorStateClass.MEASUREMENT

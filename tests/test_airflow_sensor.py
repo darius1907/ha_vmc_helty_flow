@@ -32,7 +32,7 @@ class TestVmcHeltyAirflowSensor:
     def test_init(self, airflow_sensor, mock_coordinator):
         """Test sensor initialization."""
         assert airflow_sensor._attr_unique_id == "vmc_helty_testvmc_airflow"
-        assert airflow_sensor._attr_name == f"{mock_coordinator.name} Portata d'Aria"
+        assert airflow_sensor._attr_name == f"VMC Helty {mock_coordinator.name} Portata d'Aria"
         assert airflow_sensor._attr_native_unit_of_measurement == "m³/h"
         assert airflow_sensor._attr_device_class == "volume_flow_rate"
         assert airflow_sensor._attr_state_class == "measurement"

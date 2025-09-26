@@ -12,11 +12,12 @@ class TestVmcHeltyComfortIndexSensor:
         """Test inizializzazione del sensore."""
         mock_coordinator = Mock()
         mock_coordinator.device_id = "test_device"
+        mock_coordinator.name = "testvmc"
         mock_coordinator.name_slug = "vmc_helty_testvmc"
 
         sensor = VmcHeltyComfortIndexSensor(mock_coordinator)
 
-        assert sensor._attr_name == "Indice Comfort Igrometrico"
+        assert sensor._attr_name == "VMC Helty testvmc Indice Comfort Igrometrico"
         assert sensor._attr_unique_id == "vmc_helty_testvmc_comfort_index"
         assert sensor._attr_state_class == "measurement"
         assert sensor._attr_native_unit_of_measurement == "%"

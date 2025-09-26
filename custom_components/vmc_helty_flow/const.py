@@ -4,6 +4,7 @@ DOMAIN = "vmc_helty_flow"
 DEFAULT_PORT = 5001
 DEFAULT_TIMEOUT = 10
 DEFAULT_SUBNET = "192.168.1."
+ENTITY_NAME_PREFIX = "VMC Helty" # Prefisso per i nomi delle entità
 
 # Timeout per le connessioni TCP
 TCP_TIMEOUT = 3

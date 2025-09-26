@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, ENTITY_NAME_PREFIX
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -31,8 +31,8 @@ class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
     def __init__(self, coordinator):
         """Initialize the button."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_reset_filter"
-        self._attr_name = f"{coordinator.name} Reset Filter"
+        self._attr_unique_id = f"{coordinator.name_slug}_reset_filter"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Reset Filter"
         self._attr_icon = "mdi:air-filter"
 
     async def async_press(self) -> None:

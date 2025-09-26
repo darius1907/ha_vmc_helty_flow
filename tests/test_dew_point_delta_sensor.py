@@ -13,13 +13,13 @@ class TestVmcHeltyDewPointDeltaSensor:
         """Test inizializzazione del sensore."""
         mock_coordinator = Mock()
         mock_coordinator.ip = "192.168.1.100"
-        mock_coordinator.name = "VMC Helty Test"
+        mock_coordinator.name = "Test"
         mock_coordinator.name_slug = "vmc_helty_testvmc"
 
         sensor = VmcHeltyDewPointDeltaSensor(mock_coordinator)
 
         assert sensor._attr_unique_id == "vmc_helty_testvmc_dew_point_delta"
-        assert sensor._attr_name == "VMC Helty Test Delta Punto Rugiada"
+        assert sensor._attr_name == "VMC Helty Test Delta Punto di Rugiada"
         assert sensor._attr_icon == "mdi:thermometer-water"
         assert sensor._attr_device_class == "temperature"
         assert sensor._attr_state_class == "measurement"

@@ -22,7 +22,7 @@ class TestVmcHeltyDewPointSensor:
 
         assert sensor.coordinator == mock_coordinator
         assert sensor._attr_unique_id == "vmc_helty_testvmc_dew_point"
-        assert sensor._attr_name == "Test VMC Punto di Rugiada"
+        assert sensor._attr_name == "VMC Helty Test VMC Punto di Rugiada"
         assert sensor._attr_native_unit_of_measurement == "°C"
         assert sensor._attr_icon == "mdi:thermometer-water"
 

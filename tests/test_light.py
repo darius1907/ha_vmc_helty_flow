@@ -17,7 +17,8 @@ def mock_coordinator():
     """Create a mock coordinator."""
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
-    coordinator.name = "VMC Test"
+    coordinator.name = "TestVMC"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = {
         "status": "VMGO,3,1,25,0,24,0,0,0,0,0,75,0,0,0,300",
         "temperature": 22.5,
@@ -74,8 +75,8 @@ class TestVmcHeltyLight:
         """Test initialization."""
         light_entity = VmcHeltyLight(mock_coordinator)
 
-        assert light_entity._attr_unique_id == f"vmc_helty_{mock_coordinator.name_slug}_light"
-        assert light_entity._attr_name == f"VMC {mock_coordinator.name} Light"
+        assert light_entity._attr_unique_id == f"vmc_helty_testvmc_light"
+        assert light_entity._attr_name == f"VMC Helty {mock_coordinator.name} Light"
         assert light_entity._attr_color_mode == ColorMode.BRIGHTNESS
         assert light_entity._attr_supported_color_modes == {ColorMode.BRIGHTNESS}
 
@@ -252,11 +253,10 @@ class TestVmcHeltyLightTimer:
 
     def test_init(self, mock_coordinator):
         """Test initialization."""
-        mock_coordinator.name_slug = "testvmc"
         timer_entity = VmcHeltyLightTimer(mock_coordinator)
-        expected_id = f"vmc_helty_{mock_coordinator.name_slug}_light_timer"
+        expected_id = f"vmc_helty_testvmc_light_timer"
         assert timer_entity._attr_unique_id == expected_id
-        assert timer_entity._attr_name == f"VMC {mock_coordinator.name} Light Timer"
+        assert timer_entity._attr_name == f"VMC Helty {mock_coordinator.name} Light Timer"
         assert timer_entity._attr_icon == "mdi:timer"
 
     def test_extra_state_attributes_no_data(self, mock_coordinator):

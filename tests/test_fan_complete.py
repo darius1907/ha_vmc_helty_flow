@@ -14,6 +14,7 @@ class TestVmcHeltyFan:
     def setup_method(self):
         """Set up test fixtures."""
         self.coordinator = Mock()
+        self.coordinator.name = "testvmc"
         self.coordinator.name_slug = "vmc_helty_testvmc"
         self.coordinator.data = {}
         self.coordinator.async_request_refresh = AsyncMock()
@@ -24,7 +25,7 @@ class TestVmcHeltyFan:
 
         assert fan.coordinator == self.coordinator
         assert fan._attr_unique_id == "vmc_helty_testvmc"
-        assert fan._attr_name == f"VMC {self.coordinator.name}"
+        assert fan._attr_name == f"VMC Helty {self.coordinator.name}"
         assert fan._attr_speed_count == 4
         assert fan._attr_supported_features == 1  # FanEntityFeature.SET_SPEED
         assert isinstance(fan, FanEntity)

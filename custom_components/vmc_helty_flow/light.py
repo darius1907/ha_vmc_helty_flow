@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, PART_INDEX_LIGHTS_LEVEL, PART_INDEX_LIGHTS_TIMER
+from .const import DOMAIN, PART_INDEX_LIGHTS_LEVEL, PART_INDEX_LIGHTS_TIMER, ENTITY_NAME_PREFIX
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -32,8 +32,8 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
     def __init__(self, coordinator):
         """Initialize the light."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_light"
-        self._attr_name = f"VMC {coordinator.name} Light"
+        self._attr_unique_id = f"{coordinator.name_slug}_light"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Light"
         self._attr_color_mode = ColorMode.BRIGHTNESS
         self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
@@ -93,8 +93,8 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
     def __init__(self, coordinator):
         """Initialize the light timer."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"vmc_helty_{coordinator.name_slug}_light_timer"
-        self._attr_name = f"VMC {coordinator.name} Light Timer"
+        self._attr_unique_id = f"{coordinator.name_slug}_light_timer"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Light Timer"
         self._attr_icon = "mdi:timer"
 
     @property

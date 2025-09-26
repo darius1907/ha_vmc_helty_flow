@@ -12,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     DOMAIN,
+    ENTITY_NAME_PREFIX,
     FAN_PERCENTAGE_STEP,
     FAN_SPEED_FREE_COOLING,
     FAN_SPEED_HYPERVENTILATION,
@@ -42,7 +43,7 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
         """Initialize the fan."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}"
-        self._attr_name = f"VMC {coordinator.name}"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name}"
         self._attr_speed_count = 4  # 4 velocità (1-4)
         self._attr_supported_features = FanEntityFeature.SET_SPEED
 
