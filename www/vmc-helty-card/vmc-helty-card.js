@@ -30,7 +30,19 @@ import {
   css,
   nothing,
 } from "https://unpkg.com/lit@3.1.0/index.js?module";
-import { fireEvent } from "/hacsfiles/lovelace-hass-helpers/event.js";
+
+function fireEvent(node, type, detail, options) {
+  options = options || {};
+  detail = detail === null || detail === undefined ? {} : detail;
+  const event = new Event(type, {
+    bubbles: options.bubbles === undefined ? true : options.bubbles,
+    cancelable: Boolean(options.cancelable),
+    composed: options.composed === undefined ? true : options.composed,
+  });
+  event.detail = detail;
+  node.dispatchEvent(event);
+  return event;
+}
 
 // VMC Helty Flow Control Card - LitElement Implementation
 class VmcHeltyCard extends LitElement {
