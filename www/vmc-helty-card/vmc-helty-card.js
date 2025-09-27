@@ -568,26 +568,34 @@ class VmcHeltyCard extends LitElement {
 
     const currentPercentage = parseFloat(vmcState.attributes.percentage || 0);
     const currentSpeed = Math.round(currentPercentage / 25);
-
+    const speedLabels = [
+      { label: "Spento", icon: "mdi:fan-off" },
+      { label: "Bassa", icon: "mdi:fan-speed-1" },
+      { label: "Media", icon: "mdi:fan-speed-2" },
+      { label: "Alta", icon: "mdi:fan-speed-3" },
+      { label: "Massima", icon: "mdi:fan" },
+    ];
     return html`
       <div class="controls-section">
-        <div class="fan-controls">
-          ${[0, 1, 2, 3, 4].map(speed => html`
-            <mwc-button
-              class="${currentSpeed === speed ? 'active' : ''}"
-              @click="${() => this._setFanSpeed(speed)}"
-              ?disabled="${this._loading}"
-              outlined
-              dense
-            >
-              <ha-icon icon="${this._getFanSpeedIcon(speed)}" slot="icon"></ha-icon>
-              <div>
-                <div class="speed-label">${speed === 0 ? 'Off' : `Speed ${speed}`}</div>
-                <div class="speed-percentage">${speed * 25}%</div>
-              </div>
-            </mwc-button>
-          `)}
+        <div class="section-title">
+          <ha-icon icon="mdi:fan"></ha-icon>
+          <span>Velocità Ventilazione</span>
         </div>
+        <ha-chip-set>
+          ${speedLabels.map(
+            (s, idx) => html`
+              <ha-chip
+                .selected=${currentSpeed === idx}
+                @click=${() => this._setFanSpeed(idx)}
+                aria-label="Imposta velocità ${s.label}"
+                ?disabled=${this._loading}
+              >
+                <ha-icon icon="${s.icon}" slot="icon"></ha-icon>
+                ${s.label}
+              </ha-chip>
+            `
+          )}
+        </ha-chip-set>
       </div>
     `;
   }
@@ -649,26 +657,25 @@ class VmcHeltyCard extends LitElement {
       <div class="controls-section">
         <div class="section-title">
           <ha-icon icon="mdi:cog"></ha-icon>
-          <span>Controlli Modalità</span>
+          <span>Modalità Speciali</span>
         </div>
-        <div class="mode-controls">
+        <ha-chip-set>
           ${availableModes.map(mode => {
             const state = this._getEntityState(mode.entity);
             const isOn = state && state.state === 'on';
-
             return html`
               <ha-chip
-                .selected="${isOn}"
-                @click="${() => this._toggleSwitch(mode.entity)}"
-                ?disabled="${this._loading}"
-                selectable
+                .selected=${isOn}
+                @click=${() => this._toggleSwitch(mode.entity)}
+                aria-label="${mode.label}"
+                ?disabled=${this._loading}
               >
                 <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
                 ${mode.label}
               </ha-chip>
             `;
           })}
-        </div>
+        </ha-chip-set>
       </div>
     `;
   }
