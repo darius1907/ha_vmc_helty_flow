@@ -1121,7 +1121,6 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
     def __init__(self, coordinator: VmcHeltyCoordinator, device_id: str) -> None:
         """Inizializza il sensore dei ricambi d'aria giornalieri."""
         self.coordinator = coordinator
-        self._device_id = device_id
         self._attr_unique_id = f"{coordinator.name_slug}_daily_air_changes"
         self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Daily Air Changes"
         self._attr_icon = "mdi:air-filter"
