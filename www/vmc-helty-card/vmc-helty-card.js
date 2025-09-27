@@ -578,20 +578,17 @@ class VmcHeltyCard extends LitElement {
     const vmcState = this._getVmcState();
     if (!vmcState) return nothing;
 
-    const currentPercentage = parseFloat(vmcState.attributes.percentage || 0);
-    const min = 0;
-    const max = 100;
-    const step = 5;
-    // Label and icon for 0, 25, 50, 75, 100
-    const speedIcons = [
-      { pct: 0, icon: "mdi:fan-off", label: "Spento" },
-      { pct: 25, icon: "mdi:fan-speed-1", label: "Bassa" },
-      { pct: 50, icon: "mdi:fan-speed-2", label: "Media" },
-      { pct: 75, icon: "mdi:fan-speed-3", label: "Alta" },
-      { pct: 100, icon: "mdi:fan", label: "Massima" },
+    // Discrete steps: 0-4, mapped to 0/25/50/75/100%
+    const speedSteps = [
+      { value: 0, pct: 0, icon: "mdi:fan-off", label: "Spento" },
+      { value: 1, pct: 25, icon: "mdi:fan-speed-1", label: "Bassa" },
+      { value: 2, pct: 50, icon: "mdi:fan-speed-2", label: "Media" },
+      { value: 3, pct: 75, icon: "mdi:fan-speed-3", label: "Alta" },
+      { value: 4, pct: 100, icon: "mdi:fan", label: "Massima" },
     ];
-    // Find closest label for current percentage
-    const closest = speedIcons.reduce((prev, curr) => Math.abs(curr.pct - currentPercentage) < Math.abs(prev.pct - currentPercentage) ? curr : prev);
+    const currentPercentage = parseFloat(vmcState.attributes.percentage || 0);
+    // Find closest step
+    const currentStep = speedSteps.reduce((prev, curr) => Math.abs(curr.pct - currentPercentage) < Math.abs(prev.pct - currentPercentage) ? curr : prev);
 
     return html`
       <div class="controls-section">
@@ -600,29 +597,32 @@ class VmcHeltyCard extends LitElement {
           <span>Velocità Ventilazione</span>
         </div>
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-          <ha-icon icon="${closest.icon}" style="font-size: 2rem;"></ha-icon>
+          <ha-icon icon="${currentStep.icon}" style="font-size: 2rem;"></ha-icon>
           <ha-slider
-            min="${min}"
-            max="${max}"
-            step="${step}"
-            .value="${currentPercentage}"
-            @change="${(e) => this._setFanSpeedSlider(e)}"
+            min="0"
+            max="4"
+            step="1"
+            .value="${currentStep.value}"
+            @change="${(e) => this._setFanSpeedDiscrete(e)}"
             ?disabled="${this._loading}"
             style="flex: 1;"
+            dir="ltr"
           ></ha-slider>
-          <span style="min-width: 40px; text-align: right; font-weight: 600;">${Math.round(currentPercentage)}%</span>
+          <span style="min-width: 40px; text-align: right; font-weight: 600;">${currentStep.pct}%</span>
         </div>
         <div class="speed-status">
-          Velocità attuale: <b>${closest.label}</b> (${Math.round(currentPercentage)}%)
+          Velocità attuale: <b>${currentStep.label}</b> (${currentStep.pct}%)
         </div>
       </div>
     `;
   }
 
-  // New handler for slider
-  async _setFanSpeedSlider(e) {
-    const pct = Number(e.target.value);
-    if (!isNaN(pct)) {
+  // Handler for discrete slider
+  async _setFanSpeedDiscrete(e) {
+    const step = Number(e.target.value);
+    if (!isNaN(step) && step >= 0 && step <= 4) {
+      // Map 0-4 to 0/25/50/75/100
+      const pct = step * 25;
       await this._setFanSpeedPct(pct);
     }
   }
