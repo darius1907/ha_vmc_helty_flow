@@ -46,6 +46,73 @@ function fireEvent(node, type, detail, options) {
 
 // VMC Helty Flow Control Card - LitElement Implementation
 class VmcHeltyCard extends LitElement {
+  _renderModeControls() {
+    const deviceSlug = this._getDeviceSlug();
+    if (!deviceSlug) return nothing;
+
+    const modes = [
+      {
+        key: 'hyperventilation',
+        label: 'Iperventilazione',
+        icon: 'mdi:fan-plus',
+        entity: `switch.vmc_helty_${deviceSlug}_hyperventilation`
+      },
+      {
+        key: 'night',
+        label: 'Modalità Notte',
+        icon: 'mdi:weather-night',
+        entity: `switch.vmc_helty_${deviceSlug}_night`
+      },
+      {
+        key: 'free_cooling',
+        label: 'Free Cooling',
+        icon: 'mdi:snowflake',
+        entity: `switch.vmc_helty_${deviceSlug}_free_cooling`
+      },
+      {
+        key: 'panel_led',
+        label: 'LED Pannello',
+        icon: 'mdi:led-on',
+        entity: `switch.vmc_helty_${deviceSlug}_panel_led`
+      },
+      {
+        key: 'sensors',
+        label: 'Sensori',
+        icon: 'mdi:eye',
+        entity: `switch.vmc_helty_${deviceSlug}_sensors`
+      }
+    ];
+
+    // Filter modes to show only those with available entities
+    const availableModes = modes.filter(mode => this._getEntityState(mode.entity));
+    if (availableModes.length === 0) return nothing;
+
+    return html`
+      <div class="controls-section">
+        <div class="section-title">
+          <ha-icon icon="mdi:cog"></ha-icon>
+          <span>Modalità Speciali</span>
+        </div>
+        <ha-chip-set>
+          ${availableModes.map(mode => {
+            const state = this._getEntityState(mode.entity);
+            const isOn = state && state.state === 'on';
+            return html`
+              <ha-chip
+                .selected=${isOn}
+                @click=${() => this._toggleSwitch(mode.entity)}
+                aria-label="${mode.label}"
+                ?disabled=${this._loading}
+              >
+                <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
+                ${mode.label}
+              </ha-chip>
+            `;
+          })}
+        </ha-chip-set>
+      </div>
+    `;
+  }
   static get properties() {
     return {
       hass: { type: Object },
