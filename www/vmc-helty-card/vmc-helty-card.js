@@ -1044,6 +1044,11 @@ class VmcHeltyCard extends LitElement {
       enable_air_exchange: true
     };
   }
+
+  setConfig(config) {
+    this.config = config;
+    this.requestUpdate();
+  }
 }
 
 // Register the card
