@@ -579,41 +579,74 @@ class VmcHeltyCard extends LitElement {
     if (!vmcState) return nothing;
 
     const currentPercentage = parseFloat(vmcState.attributes.percentage || 0);
-    const currentSpeed = Math.round(currentPercentage / 25);
-    const speedLabels = [
-      { label: "Spento", icon: "mdi:fan-off" },
-      { label: "Bassa", icon: "mdi:fan-speed-1" },
-      { label: "Media", icon: "mdi:fan-speed-2" },
-      { label: "Alta", icon: "mdi:fan-speed-3" },
-      { label: "Massima", icon: "mdi:fan" },
+    const min = 0;
+    const max = 100;
+    const step = 5;
+    // Label and icon for 0, 25, 50, 75, 100
+    const speedIcons = [
+      { pct: 0, icon: "mdi:fan-off", label: "Spento" },
+      { pct: 25, icon: "mdi:fan-speed-1", label: "Bassa" },
+      { pct: 50, icon: "mdi:fan-speed-2", label: "Media" },
+      { pct: 75, icon: "mdi:fan-speed-3", label: "Alta" },
+      { pct: 100, icon: "mdi:fan", label: "Massima" },
     ];
+    // Find closest label for current percentage
+    const closest = speedIcons.reduce((prev, curr) => Math.abs(curr.pct - currentPercentage) < Math.abs(prev.pct - currentPercentage) ? curr : prev);
+
     return html`
       <div class="controls-section">
         <div class="section-title">
           <ha-icon icon="mdi:fan"></ha-icon>
           <span>Velocità Ventilazione</span>
         </div>
-        <ha-chip-set>
-          ${speedLabels.map(
-            (s, idx) => html`
-              <ha-chip
-                .selected=${currentSpeed === idx}
-                @click=${() => this._setFanSpeed(idx)}
-                aria-label="Imposta velocità ${s.label}"
-                ?disabled=${this._loading}
-                style=${this._lastSpeedSet === idx ? 'box-shadow: 0 0 0 3px var(--primary-color, #2196f3);' : ''}
-              >
-                <ha-icon icon="${s.icon}" slot="icon"></ha-icon>
-                ${s.label}
-              </ha-chip>
-            `
-          )}
-        </ha-chip-set>
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+          <ha-icon icon="${closest.icon}" style="font-size: 2rem;"></ha-icon>
+          <ha-slider
+            min="${min}"
+            max="${max}"
+            step="${step}"
+            .value="${currentPercentage}"
+            @change="${(e) => this._setFanSpeedSlider(e)}"
+            ?disabled="${this._loading}"
+            style="flex: 1;"
+          ></ha-slider>
+          <span style="min-width: 40px; text-align: right; font-weight: 600;">${Math.round(currentPercentage)}%</span>
+        </div>
         <div class="speed-status">
-          Velocità attuale: <b>${speedLabels[currentSpeed]?.label || 'N/A'}</b> (${currentPercentage}%)
+          Velocità attuale: <b>${closest.label}</b> (${Math.round(currentPercentage)}%)
         </div>
       </div>
     `;
+  }
+
+  // New handler for slider
+  async _setFanSpeedSlider(e) {
+    const pct = Number(e.target.value);
+    if (!isNaN(pct)) {
+      await this._setFanSpeedPct(pct);
+    }
+  }
+
+  // Set fan speed by percentage (for slider)
+  async _setFanSpeedPct(percentage) {
+    if (!this.hass || !this.config.entity) return;
+    try {
+      this._loading = true;
+      await this.hass.callService("fan", "set_percentage", {
+        entity_id: this.config.entity,
+        percentage: percentage,
+      });
+      fireEvent(this, "hass-notification", {
+        message: `Velocità impostata: ${percentage}%`,
+      });
+      if ("vibrate" in navigator) navigator.vibrate(40);
+    } catch (e) {
+      fireEvent(this, "hass-notification", {
+        message: `Errore: ${e.message}`,
+      });
+    } finally {
+      this._loading = false;
+    }
   }
 
   _getFanSpeedIcon(speed) {
