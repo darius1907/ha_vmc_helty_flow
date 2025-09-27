@@ -71,92 +71,107 @@ class VmcHeltyCard extends LitElement {
         margin-bottom: var(--spacing-s);
         font-weight: 500;
         color: var(--primary-text-color);
-      }
-
-      .fan-controls,
-      .mode-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--spacing-s);
-      }
-
-      .sensors-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: var(--spacing);
-      }
-
-      .light-controls {
-        display: grid;
-        gap: var(--spacing);
-      }
-
-      .light-control {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing);
-      }
-
-      .light-slider {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing);
-        flex: 1;
-      }
-
-      .brightness-value {
-        min-width: 40px;
-        text-align: right;
-        font-size: 0.9em;
-        color: var(--secondary-text-color);
-      }
-
-      .timer-info {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-s);
-        font-size: 0.9em;
-        color: var(--secondary-text-color);
-        margin-top: var(--spacing-s);
-      }
-
-      mwc-button .speed-label {
-        font-weight: 500;
-      }
-
-      mwc-button .speed-percentage {
-        font-size: 0.85em;
-        opacity: 0.7;
-      }
-
-      .advanced-section {
-        border-top: 1px solid var(--outline-color);
-        padding-top: var(--spacing);
-        margin-top: var(--spacing);
-      }
-
-      /* Minimal animations */
-      .fan-icon.spinning {
-        animation: spin 2s linear infinite;
-      }
-
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-
-      /* Reduced motion support */
-      @media (prefers-reduced-motion: reduce) {
-        .fan-icon.spinning {
-          animation: none;
-        }
-      }
-    `;
-  }
-
-  // Configuration management
-  setConfig(config) {
-    if (!config) {
+          return css`
+            :host {
+              display: block;
+            }
+            .controls-section {
+              margin-bottom: 20px;
+            }
+            .section-title {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-bottom: 12px;
+              font-size: 1.1rem;
+              font-weight: 600;
+              color: var(--primary-text-color);
+              letter-spacing: 0.01em;
+            }
+            .fan-icon.spinning {
+              animation: spin 2s linear infinite;
+            }
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+            .ha-chip-set {
+              gap: 12px;
+            }
+            ha-chip {
+              --mdc-chip-height: 44px;
+              --mdc-shape-medium: var(--ha-card-border-radius, 8px);
+              font-size: 1rem;
+              font-weight: 500;
+              margin-right: 8px;
+              margin-bottom: 8px;
+              min-width: 70px;
+              padding: 0 12px;
+              background: var(--secondary-background-color);
+              transition: background 0.2s, color 0.2s;
+            }
+            ha-chip[selected] {
+              background: var(--primary-color);
+              color: var(--text-primary-color, #fff);
+              box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+            }
+            ha-chip[selected] ha-icon {
+              color: var(--text-primary-color, #fff);
+              filter: drop-shadow(0 0 2px var(--primary-color));
+            }
+            ha-chip ha-icon {
+              color: var(--primary-text-color, #888);
+              transition: color 0.2s;
+            }
+            ha-chip[aria-label] {
+              cursor: pointer;
+            }
+            .speed-status {
+              margin-top: 4px;
+              font-size: 1rem;
+              font-weight: 500;
+              color: var(--primary-color);
+              text-align: left;
+            }
+            .mode-chip {
+              --mdc-chip-height: 44px;
+              font-size: 1rem;
+              font-weight: 500;
+              margin-right: 8px;
+              margin-bottom: 8px;
+              min-width: 120px;
+              background: var(--secondary-background-color);
+              transition: background 0.2s, color 0.2s;
+            }
+            .mode-chip[selected] {
+              background: var(--success-color, #4caf50);
+              color: var(--text-primary-color, #fff);
+            }
+            .sensor-card {
+              border: 1px solid var(--divider-color, #e0e0e0);
+              border-radius: var(--ha-card-border-radius, 8px);
+              padding: 8px;
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+            .comfort-excellent { color: var(--success-color, green); }
+            .comfort-good { color: var(--primary-color, #03a9f4); }
+            .comfort-fair { color: var(--warning-color, orange); }
+            .comfort-poor { color: var(--error-color, red); }
+            .advanced-toggle {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              cursor: pointer;
+              padding: 8px 0;
+            }
+            .gauges-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+              gap: 16px;
+            }
+          `;
       throw new Error("Invalid configuration");
     }
 
@@ -299,22 +314,25 @@ class VmcHeltyCard extends LitElement {
 
     try {
       this._loading = true;
-
-      const serviceData = {
-        entity_id: this.config.entity,
-        percentage: speed * 25 // Convert 0-4 to percentage (0,25,50,75,100)
-      };
-
-      await this.hass.callService("fan", "set_percentage", serviceData);
-
-      // Provide haptic feedback on mobile
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
+      try {
+        await this.hass.callService("fan", "set_percentage", {
+          entity_id: this.config.entity,
+          percentage: speed * 25,
+        });
+        fireEvent(this, "hass-notification", {
+          message: `Velocità impostata: ${speed * 25}%`,
+        });
+        // Evidenzia temporaneamente il chip attivo
+        this._lastSpeedSet = speed;
+        setTimeout(() => { this._lastSpeedSet = null; this.requestUpdate(); }, 800);
+        if ("vibrate" in navigator) navigator.vibrate(40);
+      } catch (e) {
+        fireEvent(this, "hass-notification", {
+          message: `Errore: ${e.message}`,
+        });
+      } finally {
+        this._loading = false;
       }
-
-    } catch (error) {
-      console.error("Error setting fan speed:", error);
-      this._error = `Failed to set fan speed: ${error.message}`;
     } finally {
       this._loading = false;
     }
@@ -589,6 +607,7 @@ class VmcHeltyCard extends LitElement {
                 @click=${() => this._setFanSpeed(idx)}
                 aria-label="Imposta velocità ${s.label}"
                 ?disabled=${this._loading}
+                style=${this._lastSpeedSet === idx ? 'box-shadow: 0 0 0 3px var(--primary-color, #2196f3);' : ''}
               >
                 <ha-icon icon="${s.icon}" slot="icon"></ha-icon>
                 ${s.label}
@@ -596,6 +615,9 @@ class VmcHeltyCard extends LitElement {
             `
           )}
         </ha-chip-set>
+        <div class="speed-status">
+          Velocità attuale: <b>${speedLabels[currentSpeed]?.label || 'N/A'}</b> (${currentPercentage}%)
+        </div>
       </div>
     `;
   }
