@@ -55,125 +55,106 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-      /* Minimal layout - let HA components handle styling */
       :host {
         display: block;
       }
-
       .controls-section {
-        margin-bottom: var(--spacing);
+        margin-bottom: 20px;
       }
-
       .section-title {
         display: flex;
         align-items: center;
-        gap: var(--spacing-s);
-        margin-bottom: var(--spacing-s);
-        font-weight: 500;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
         color: var(--primary-text-color);
-          return css`
-            :host {
-              display: block;
-            }
-            .controls-section {
-              margin-bottom: 20px;
-            }
-            .section-title {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              margin-bottom: 12px;
-              font-size: 1.1rem;
-              font-weight: 600;
-              color: var(--primary-text-color);
-              letter-spacing: 0.01em;
-            }
-            .fan-icon.spinning {
-              animation: spin 2s linear infinite;
-            }
-            @keyframes spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-            .ha-chip-set {
-              gap: 12px;
-            }
-            ha-chip {
-              --mdc-chip-height: 44px;
-              --mdc-shape-medium: var(--ha-card-border-radius, 8px);
-              font-size: 1rem;
-              font-weight: 500;
-              margin-right: 8px;
-              margin-bottom: 8px;
-              min-width: 70px;
-              padding: 0 12px;
-              background: var(--secondary-background-color);
-              transition: background 0.2s, color 0.2s;
-            }
-            ha-chip[selected] {
-              background: var(--primary-color);
-              color: var(--text-primary-color, #fff);
-              box-shadow: 0 2px 8px rgba(33,150,243,0.08);
-            }
-            ha-chip[selected] ha-icon {
-              color: var(--text-primary-color, #fff);
-              filter: drop-shadow(0 0 2px var(--primary-color));
-            }
-            ha-chip ha-icon {
-              color: var(--primary-text-color, #888);
-              transition: color 0.2s;
-            }
-            ha-chip[aria-label] {
-              cursor: pointer;
-            }
-            .speed-status {
-              margin-top: 4px;
-              font-size: 1rem;
-              font-weight: 500;
-              color: var(--primary-color);
-              text-align: left;
-            }
-            .mode-chip {
-              --mdc-chip-height: 44px;
-              font-size: 1rem;
-              font-weight: 500;
-              margin-right: 8px;
-              margin-bottom: 8px;
-              min-width: 120px;
-              background: var(--secondary-background-color);
-              transition: background 0.2s, color 0.2s;
-            }
-            .mode-chip[selected] {
-              background: var(--success-color, #4caf50);
-              color: var(--text-primary-color, #fff);
-            }
-            .sensor-card {
-              border: 1px solid var(--divider-color, #e0e0e0);
-              border-radius: var(--ha-card-border-radius, 8px);
-              padding: 8px;
-              display: flex;
-              flex-direction: column;
-              gap: 4px;
-            }
-            .comfort-excellent { color: var(--success-color, green); }
-            .comfort-good { color: var(--primary-color, #03a9f4); }
-            .comfort-fair { color: var(--warning-color, orange); }
-            .comfort-poor { color: var(--error-color, red); }
-            .advanced-toggle {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              cursor: pointer;
-              padding: 8px 0;
-            }
-            .gauges-grid {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
-              gap: 16px;
-            }
-          `;
-      throw new Error("Invalid configuration");
-    }
+        letter-spacing: 0.01em;
+      }
+      .fan-icon.spinning {
+        animation: spin 2s linear infinite;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .ha-chip-set {
+        gap: 12px;
+      }
+      ha-chip {
+        --mdc-chip-height: 44px;
+        --mdc-shape-medium: var(--ha-card-border-radius, 8px);
+        font-size: 1rem;
+        font-weight: 500;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        min-width: 70px;
+        padding: 0 12px;
+        background: var(--secondary-background-color);
+        transition: background 0.2s, color 0.2s;
+      }
+      ha-chip[selected] {
+        background: var(--primary-color);
+        color: var(--text-primary-color, #fff);
+        box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+      }
+      ha-chip[selected] ha-icon {
+        color: var(--text-primary-color, #fff);
+        filter: drop-shadow(0 0 2px var(--primary-color));
+      }
+      ha-chip ha-icon {
+        color: var(--primary-text-color, #888);
+        transition: color 0.2s;
+      }
+      ha-chip[aria-label] {
+        cursor: pointer;
+      }
+      .speed-status {
+        margin-top: 4px;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--primary-color);
+        text-align: left;
+      }
+      .mode-chip {
+        --mdc-chip-height: 44px;
+        font-size: 1rem;
+        font-weight: 500;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        min-width: 120px;
+        background: var(--secondary-background-color);
+        transition: background 0.2s, color 0.2s;
+      }
+      .mode-chip[selected] {
+        background: var(--success-color, #4caf50);
+        color: var(--text-primary-color, #fff);
+      }
+      .sensor-card {
+        border: 1px solid var(--divider-color, #e0e0e0);
+        border-radius: var(--ha-card-border-radius, 8px);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .comfort-excellent { color: var(--success-color, green); }
+      .comfort-good { color: var(--primary-color, #03a9f4); }
+      .comfort-fair { color: var(--warning-color, orange); }
+      .comfort-poor { color: var(--error-color, red); }
+      .advanced-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        padding: 8px 0;
+      }
+      .gauges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+        gap: 16px;
+      }
+    `;
 
     this.config = {
       entity: config.entity || "",
