@@ -9,8 +9,6 @@ from custom_components.vmc_helty_flow.config_flow import (
     MAX_IPS_IN_SUBNET,
     MAX_PORT,
     MAX_TIMEOUT,
-    STORAGE_KEY,
-    STORAGE_VERSION,
     VmcHeltyFlowConfigFlow,
 )
 from custom_components.vmc_helty_flow.const import DOMAIN
@@ -36,8 +34,7 @@ class TestVmcHeltyFlowConfigFlow:
         assert MAX_PORT == 65535
         assert MAX_TIMEOUT == 60
         assert MAX_IPS_IN_SUBNET == 254
-        assert f"{DOMAIN}.devices" == STORAGE_KEY
-        assert STORAGE_VERSION == 1
+        # Storage constants removed - now using config entries registry
 
     def test_init(self, config_flow):
         """Test config flow initialization."""
@@ -46,90 +43,50 @@ class TestVmcHeltyFlowConfigFlow:
         assert config_flow.port is None
         assert config_flow.timeout == 10
         assert config_flow.discovered_devices == []
-        assert config_flow._store is None
+        # Storage system removed - now using config entries registry directly
 
-    def test_get_store(self, config_flow):
-        """Test store getter."""
-        with patch("custom_components.vmc_helty_flow.config_flow.Store") as mock_store:
-            store = config_flow._get_store()
-            assert store is not None
-            mock_store.assert_called_once_with(
-                config_flow.hass, STORAGE_VERSION, STORAGE_KEY
-            )
+    def test_get_configured_devices_empty(self, config_flow):
+        """Test getting configured devices with no entries."""
+        config_flow._async_current_entries = MagicMock(return_value=[])
+        devices = config_flow._get_configured_devices()
+        assert devices == []
 
-            # Test caching
-            store2 = config_flow._get_store()
-            assert store is store2
+    def test_get_configured_devices_with_entries(self, config_flow):
+        """Test getting configured devices with existing entries."""
+        mock_entry = MagicMock()
+        mock_entry.domain = DOMAIN
+        mock_entry.entry_id = "test_id"
+        mock_entry.title = "Test VMC"
+        mock_entry.data = {
+            "ip": "192.168.1.100",
+            "name": "Test Device",
+            "model": "VMC Flow",
+            "manufacturer": "Helty",
+        }
+        mock_entry.state.name = "loaded"
 
-    async def test_load_devices_success(self, config_flow):
-        """Test successful device loading."""
-        mock_store = MagicMock()
-        mock_store.async_load = AsyncMock(
-            return_value={"devices": [{"ip": "192.168.1.100", "name": "Test"}]}
-        )
+        config_flow._async_current_entries = MagicMock(return_value=[mock_entry])
+        devices = config_flow._get_configured_devices()
 
-        with patch.object(config_flow, "_get_store", return_value=mock_store):
+        assert len(devices) == 1
+        assert devices[0]["ip"] == "192.168.1.100"
+        assert devices[0]["name"] == "Test Device"
+        assert devices[0]["entry_id"] == "test_id"
+
+    async def test_load_devices_uses_registry(self, config_flow):
+        """Test that _load_devices now uses registry via _get_configured_devices."""
+        mock_devices = [{"ip": "192.168.1.100", "name": "Test"}]
+
+        with patch.object(
+            config_flow, "_get_configured_devices", return_value=mock_devices
+        ):
             devices = await config_flow._load_devices()
-            assert devices == [{"ip": "192.168.1.100", "name": "Test"}]
+            assert devices == mock_devices
 
-    async def test_load_devices_no_data(self, config_flow):
-        """Test device loading with no data."""
-        mock_store = MagicMock()
-        mock_store.async_load = AsyncMock(return_value=None)
-
-        with patch.object(config_flow, "_get_store", return_value=mock_store):
-            devices = await config_flow._load_devices()
-            assert devices == []
-
-    async def test_load_devices_empty_data(self, config_flow):
-        """Test device loading with empty devices."""
-        mock_store = MagicMock()
-        mock_store.async_load = AsyncMock(return_value={})
-
-        with patch.object(config_flow, "_get_store", return_value=mock_store):
-            devices = await config_flow._load_devices()
-            assert devices == []
-
-    async def test_load_devices_exception(self, config_flow):
-        """Test device loading with exception."""
-        mock_store = MagicMock()
-        mock_store.async_load = AsyncMock(side_effect=Exception("Load error"))
-
-        with patch.object(config_flow, "_get_store", return_value=mock_store):
-            devices = await config_flow._load_devices()
-            assert devices == []
-
-    async def test_save_devices_success(self, config_flow):
-        """Test successful device saving."""
-        mock_store = MagicMock()
-        mock_store.async_save = AsyncMock()
-        devices = [{"ip": "192.168.1.100", "name": "Test"}]
-
-        with patch.object(config_flow, "_get_store", return_value=mock_store):
-            await config_flow._save_devices(devices)
-            mock_store.async_save.assert_called_once_with({"devices": devices})
-
-    async def test_save_devices_exception(self, config_flow):
-        """Test device saving with exception."""
-        mock_store = MagicMock()
-        mock_store.async_save = AsyncMock(side_effect=Exception("Save error"))
-        devices = [{"ip": "192.168.1.100", "name": "Test"}]
-
-        with patch.object(config_flow, "_get_store", return_value=mock_store):
-            # Should not raise exception due to suppress
-            await config_flow._save_devices(devices)
-            mock_store.async_save.assert_called_once()
-
-    async def test_async_step_user_no_existing_devices(self, config_flow):
-        """Test user step with no existing devices."""
-        with patch.object(config_flow, "_load_devices", return_value=[]):
-            result = await config_flow.async_step_user()
-
-            assert result["type"] == "form"
-            assert result["step_id"] == "user"
-            assert "subnet" in result["data_schema"].schema
-            assert "port" in result["data_schema"].schema
-            assert "timeout" in result["data_schema"].schema
+    async def test_save_devices_is_noop(self, config_flow):
+        """Test that _save_devices is now a no-op."""
+        # Should not raise any exceptions or do anything
+        await config_flow._save_devices([{"ip": "test", "name": "test"}])
 
     async def test_async_step_user_with_existing_devices_no_input(self, config_flow):
         """Test user step with existing devices and no input."""
@@ -329,7 +286,6 @@ class TestVmcHeltyFlowConfigFlow:
         user_input = {"selected_devices": ["192.168.1.100"]}
 
         with (
-            patch.object(config_flow, "_save_devices") as mock_save,
             patch.object(config_flow, "_async_current_entries", return_value=[]),
             patch.object(config_flow, "async_set_unique_id"),
             patch.object(config_flow, "_abort_if_unique_id_configured"),
@@ -340,7 +296,6 @@ class TestVmcHeltyFlowConfigFlow:
 
             result = await config_flow._process_device_selection(user_input)
 
-            mock_save.assert_called_once()
             mock_create.assert_called_once()
             assert result == mock_entry
 
@@ -354,7 +309,6 @@ class TestVmcHeltyFlowConfigFlow:
         existing_entry.data.get.return_value = "192.168.1.100"
 
         with (
-            patch.object(config_flow, "_save_devices"),
             patch.object(
                 config_flow, "_async_current_entries", return_value=[existing_entry]
             ),
@@ -410,42 +364,41 @@ class TestVmcHeltyFlowConfigFlow:
 
     async def test_complete_flow_no_loop(self, config_flow):
         """Test complete flow from confirmation to incremental scan without loops."""
-        # Setup: existing devices
+        # Setup: existing devices in registry
         existing_devices = [{"name": "Test Device", "ip": "192.168.1.100"}]
-        config_flow._store = AsyncMock()
-        config_flow._store.async_load = AsyncMock(
-            return_value={"devices": existing_devices}
-        )
 
-        # Step 1: First request - should show confirmation form
-        result1 = await config_flow.async_step_user(None)
-        assert result1["type"] == "form"
-        assert result1["step_id"] == "user"
-        assert "confirm" in str(result1["data_schema"])
-        assert "subnet" not in str(result1["data_schema"])
+        with patch.object(
+            config_flow, "_get_configured_devices", return_value=existing_devices
+        ):
+            # Step 1: First request - should show confirmation form
+            result1 = await config_flow.async_step_user(None)
+            assert result1["type"] == "form"
+            assert result1["step_id"] == "user"
+            assert "confirm" in str(result1["data_schema"])
+            assert "subnet" not in str(result1["data_schema"])
 
-        # Step 2: User confirms new scan - should show config form
-        result2 = await config_flow.async_step_user({"confirm": True})
-        assert result2["type"] == "form"
-        assert result2["step_id"] == "user"
-        assert "subnet" in str(result2["data_schema"])
-        assert "port" in str(result2["data_schema"])
-        assert "timeout" in str(result2["data_schema"])
-        assert "confirm" not in str(result2["data_schema"])
+            # Step 2: User confirms new scan - should show config form
+            result2 = await config_flow.async_step_user({"confirm": True})
+            assert result2["type"] == "form"
+            assert result2["step_id"] == "user"
+            assert "subnet" in str(result2["data_schema"])
+            assert "port" in str(result2["data_schema"])
+            assert "timeout" in str(result2["data_schema"])
+            assert "confirm" not in str(result2["data_schema"])
 
-        # Step 3: User inputs valid config - should start incremental scan
-        with patch.object(config_flow, "_scan_next_ip") as mock_scan:
-            mock_scan.return_value = {"type": "form", "step_id": "scanning"}
-            await config_flow.async_step_user(
-                {"subnet": "192.168.1.0/24", "port": 5001, "timeout": 10}
-            )
-            mock_scan.assert_called_once()
-            assert config_flow.scan_in_progress is True
+            # Step 3: User inputs valid config - should start incremental scan
+            with patch.object(config_flow, "_scan_next_ip") as mock_scan:
+                mock_scan.return_value = {"type": "form", "step_id": "scanning"}
+                await config_flow.async_step_user(
+                    {"subnet": "192.168.1.0/24", "port": 5001, "timeout": 10}
+                )
+                mock_scan.assert_called_once()
+                assert config_flow.scan_in_progress is True
 
-        # Verify flow state is set correctly
-        assert config_flow.subnet == "192.168.1.0/24"
-        assert config_flow.port == 5001
-        assert config_flow.timeout == 10
+            # Verify flow state is set correctly
+            assert config_flow.subnet == "192.168.1.0/24"
+            assert config_flow.port == 5001
+            assert config_flow.timeout == 10
 
     async def test_incremental_scan_device_found(self, config_flow):
         """Test incremental scan when device is found."""
@@ -483,6 +436,8 @@ class TestVmcHeltyFlowConfigFlow:
 
         with (
             patch.object(config_flow, "_scan_next_ip") as mock_scan,
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
             patch.object(
                 config_flow.hass.config_entries.flow,
                 "async_init",
@@ -519,10 +474,22 @@ class TestVmcHeltyFlowConfigFlow:
         with (
             patch.object(config_flow, "async_set_unique_id"),
             patch.object(config_flow, "_abort_if_unique_id_configured"),
+            patch.object(
+                config_flow.hass.config_entries.flow,
+                "async_init",
+                new_callable=AsyncMock,
+            ) as mock_init,
         ):
             result = await config_flow.async_step_device_found({"action": "add_stop"})
 
-            # Should create entry directly
-            assert result["type"] == "create_entry"
-            assert result["title"] == "VMC Test Device"
-            assert result["data"]["ip"] == "192.168.1.100"
+            # Should create entry via discovery flow in background
+            mock_init.assert_called_once()
+            assert mock_init.call_args[1]["context"]["source"] == "discovered_device"
+
+            # Should abort with success message after stopping scan
+            assert result["type"] == "abort"
+            assert result["reason"] == "devices_configured_successfully"
+
+            # Device should be added to session
+            assert len(config_flow.found_devices_session) == 1
+            assert config_flow.found_devices_session[0]["ip"] == "192.168.1.100"

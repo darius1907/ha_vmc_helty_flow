@@ -67,7 +67,7 @@ class TestVmcHeltyEntity:
 
         assert isinstance(device_info, dict)
         assert device_info["identifiers"] == {
-            (DOMAIN, "helty_flow_192_168_1_100"),
+            (DOMAIN, "vmc_helty_192_168_1_100"),
             (DOMAIN, "192.168.1.100"),
         }
         assert device_info["connections"] == {("ip", "192.168.1.100")}
@@ -141,7 +141,7 @@ class TestVmcHeltyEntity:
         device_info = entity.device_info
 
         # Verifica che i punti nell'IP siano sostituiti con underscore
-        expected_unique_id = "helty_flow_192_168_1_255"
+        expected_unique_id = "vmc_helty_192_168_1_255"
         assert (DOMAIN, expected_unique_id) in device_info["identifiers"]
 
     def test_device_info_domain_constant(self):

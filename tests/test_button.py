@@ -16,7 +16,8 @@ def mock_coordinator():
     """Create a mock coordinator."""
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
-    coordinator.name = "VMC Test"
+    coordinator.name = "TestVMC"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = {"status": "VMGO,3,1,25,0,24"}
     coordinator.async_request_refresh = AsyncMock()
     return coordinator
@@ -66,8 +67,8 @@ class TestVmcHeltyResetFilterButton:
         """Test initialization."""
         button_entity = VmcHeltyResetFilterButton(mock_coordinator)
 
-        assert button_entity._attr_unique_id == "192.168.1.100_reset_filter"
-        assert button_entity._attr_name == "VMC Test Reset Filter"
+        assert button_entity._attr_unique_id == "vmc_helty_testvmc_reset_filter"
+        assert button_entity._attr_name == "VMC Helty TestVMC Reset Filter"
         assert button_entity._attr_icon == "mdi:air-filter"
 
     @pytest.mark.asyncio

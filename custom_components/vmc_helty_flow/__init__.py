@@ -1,6 +1,8 @@
 """Integrazione VMC Helty Flow per Home Assistant."""
 
 import logging
+import re
+import time
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
@@ -9,7 +11,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_PORT, DOMAIN
+from .const import (
+    DEFAULT_PORT,
+    DOMAIN,
+    NETWORK_INFO_UPDATE_INTERVAL,
+    SENSORS_UPDATE_INTERVAL,
+)
 from .device_action import async_setup_device_actions
 from .device_registry import async_get_or_create_device, async_remove_orphaned_devices
 from .helpers import (
@@ -30,8 +37,10 @@ PLATFORMS: list[Platform] = [
     Platform.BUTTON,
 ]
 
-# Intervallo di aggiornamento predefinito
-DEFAULT_SCAN_INTERVAL = timedelta(seconds=60)
+# Intervalli di aggiornamento per diversi tipi di dati
+DEFAULT_SCAN_INTERVAL = timedelta(seconds=SENSORS_UPDATE_INTERVAL)
+NETWORK_INFO_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
+DEVICE_NAME_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 
 
 class VmcHeltyCoordinator(DataUpdateCoordinator):
@@ -44,6 +53,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name=DOMAIN,
             update_interval=DEFAULT_SCAN_INTERVAL,
+            config_entry=config_entry,
         )
         self.config_entry = config_entry
         self.ip = config_entry.data["ip"]
@@ -54,6 +64,29 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self._error_recovery_interval = timedelta(seconds=30)
         self._normal_update_interval = DEFAULT_SCAN_INTERVAL
         self._recovery_update_interval = timedelta(seconds=60)
+
+        # Timestamp per gestire aggiornamenti differenziati
+        self._last_network_update = 0
+        self._last_name_update = 0
+
+        # Cache per memorizzare l'ultimo dato valido
+        self._cached_data = {
+            "name": str,
+            "network": str,
+        }
+
+    @property
+    def name_slug(self) -> str:
+        """Return device name as a slug with vmc_helty_ prefix (safe for entity IDs)."""
+        slug = re.sub(r"[^a-z0-9]+", "_", self.name.lower())
+        slug = re.sub(r"^_+|_+$", "", slug)
+        slug = re.sub(r"_+", "_", slug)
+        if not slug:
+            slug = "device"
+        # Ensure prefix only once
+        if not slug.startswith("vmc_helty_"):
+            slug = f"vmc_helty_{slug}"
+        return slug
 
     async def _get_status_data(self) -> str:
         """Get device status data."""
@@ -73,10 +106,11 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(f"Errore di connessione a {self.ip}: {err}") from err
 
     async def _get_additional_data(self) -> dict[str, str | None]:
-        """Get additional device data (sensors, name, network)."""
+        """Get additional device data (sensors, name, network) with smart intervals."""
         responses: dict[str, str | None] = {}
+        current_time = time.time()
 
-        # Sensors data
+        # Sensors data - sempre aggiornati (ogni 60 secondi)
         try:
             responses["sensors"] = await tcp_send_command(
                 self.ip, DEFAULT_PORT, "VMGI?"
@@ -85,23 +119,45 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             _LOGGER.warning("Impossibile leggere i sensori da %s: %s", self.ip, err)
             responses["sensors"] = None
 
-        # Device name
-        try:
-            responses["name"] = await tcp_send_command(self.ip, DEFAULT_PORT, "VMNM?")
-        except VMCConnectionError as err:
-            _LOGGER.warning("Impossibile leggere il nome da %s: %s", self.ip, err)
-            responses["name"] = None
+        # Device name - aggiornato ogni 15 minuti
+        time_since_name_update = current_time - self._last_name_update
+        if time_since_name_update >= DEVICE_NAME_INTERVAL.total_seconds():
+            try:
+                responses["name"] = await tcp_send_command(
+                    self.ip, DEFAULT_PORT, "VMNM?"
+                )
+                self._last_name_update = current_time
+                # Aggiorna la cache se il comando ha successo
+                if responses["name"]:
+                    self._cached_data["name"] = responses["name"]
+                _LOGGER.debug("Aggiornato nome dispositivo per %s", self.ip)
+            except VMCConnectionError as err:
+                _LOGGER.warning("Impossibile leggere il nome da %s: %s", self.ip, err)
+                responses["name"] = None
+        else:
+            # Usa il valore cached invece di None
+            responses["name"] = self._cached_data["name"]
 
-        # Network info
-        try:
-            responses["network"] = await tcp_send_command(
-                self.ip, DEFAULT_PORT, "VMSL?"
-            )
-        except VMCConnectionError as err:
-            _LOGGER.warning(
-                "Impossibile leggere le info di rete da %s: %s", self.ip, err
-            )
-            responses["network"] = None
+        # Network info - aggiornato ogni 15 minuti
+        time_since_network_update = current_time - self._last_network_update
+        if time_since_network_update >= NETWORK_INFO_INTERVAL.total_seconds():
+            try:
+                responses["network"] = await tcp_send_command(
+                    self.ip, DEFAULT_PORT, "VMSL?"
+                )
+                self._last_network_update = current_time
+                # Aggiorna la cache se il comando ha successo
+                if responses["network"]:
+                    self._cached_data["network"] = responses["network"]
+                _LOGGER.debug("Aggiornate info di rete per %s", self.ip)
+            except VMCConnectionError as err:
+                _LOGGER.warning(
+                    "Impossibile leggere le info di rete da %s: %s", self.ip, err
+                )
+                responses["network"] = None
+        else:
+            # Usa il valore cached invece di None
+            responses["network"] = self._cached_data["network"]
 
         return responses
 
@@ -152,7 +208,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                 "name": additional_data["name"],
                 "network": additional_data["network"],
                 "available": True,
-                "last_update": self.hass.loop.time(),
+                "last_update": time.time(),
             }
 
             # Aggiorna il nome del dispositivo se necessario
@@ -256,6 +312,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Registra il dispositivo nel device registry
     coordinator.device_entry = await async_get_or_create_device(hass, coordinator)
+
+    # Aggiunge device_id per i sensori
+    coordinator.device_id = (
+        coordinator.device_entry.id if coordinator.device_entry else None
+    )
 
     # Salva il coordinatore
     hass.data[DOMAIN][entry.entry_id] = coordinator

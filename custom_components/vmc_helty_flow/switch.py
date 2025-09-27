@@ -5,7 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, PART_INDEX_PANEL_LED, PART_INDEX_SENSORS
+from .const import DOMAIN, ENTITY_NAME_PREFIX, PART_INDEX_PANEL_LED, PART_INDEX_SENSORS
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -49,8 +49,8 @@ class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
         """Initialize the switch."""
         super().__init__(coordinator)
         self._mode_key = mode_key
-        self._attr_unique_id = f"{coordinator.ip}_{mode_key}"
-        self._attr_name = f"{coordinator.name} {mode_name}"
+        self._attr_unique_id = f"{coordinator.name_slug}_{mode_key}"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} {mode_name}"
         self._attr_icon = self._get_mode_icon(mode_key)
 
     def _get_mode_icon(self, mode_key):
@@ -100,8 +100,8 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
     def __init__(self, coordinator):
         """Initialize the switch."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_panel_led"
-        self._attr_name = f"{coordinator.name} Panel LED"
+        self._attr_unique_id = f"{coordinator.name_slug}_panel_led"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Panel LED"
         self._attr_icon = "mdi:led-on"
 
     @property
@@ -142,8 +142,8 @@ class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
     def __init__(self, coordinator):
         """Initialize the switch."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_sensors"
-        self._attr_name = f"{coordinator.name} Sensors"
+        self._attr_unique_id = f"{coordinator.name_slug}_sensors"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Sensors"
         self._attr_icon = "mdi:eye"
 
     @property

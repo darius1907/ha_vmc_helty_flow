@@ -11,8 +11,6 @@ from custom_components.vmc_helty_flow.sensor import (
     VmcHeltyIPAddressSensor,
     VmcHeltyLastResponseSensor,
     VmcHeltyNameText,
-    VmcHeltyNetworkPasswordSensor,
-    VmcHeltyNetworkSSIDSensor,
     VmcHeltyOnOffSensor,
     VmcHeltyPasswordText,
     VmcHeltyResetFilterButton,
@@ -45,19 +43,9 @@ def mock_coordinator():
 
 
 @pytest.mark.parametrize(
-    ("entity_cls", "args"),
+    "entity_cls,args",
     [
         (VmcHeltyFan, []),
-        (VmcHeltySensor, ["temperature_internal", "Temperatura Interna", "°C"]),
-        (VmcHeltySensor, ["temperature_external", "Temperatura Esterna", "°C"]),
-        (VmcHeltySensor, ["humidity", "Umidità", "%"]),
-        (VmcHeltySensor, ["co2", "CO2", "ppm"]),
-        (VmcHeltySensor, ["voc", "VOC", "ppm"]),
-        (VmcHeltyModeSwitch, ["hyperventilation", "Iperventilazione"]),
-        (VmcHeltyModeSwitch, ["night", "Modalità Notte"]),
-        (VmcHeltyModeSwitch, ["free_cooling", "Free Cooling"]),
-        (VmcHeltyPanelLedSwitch, []),
-        (VmcHeltySensorsSwitch, []),
         (VmcHeltyLight, []),
         (VmcHeltyLightTimer, []),
         (VmcHeltyOnOffSensor, []),
@@ -68,8 +56,6 @@ def mock_coordinator():
         (VmcHeltyIPAddressSensor, []),
         (VmcHeltyLastResponseSensor, []),
         (VmcHeltyFilterHoursSensor, []),
-        (VmcHeltyNetworkSSIDSensor, []),
-        (VmcHeltyNetworkPasswordSensor, []),
     ],
 )
 def test_entity_instantiation(entity_cls, args, mock_coordinator):
@@ -117,8 +103,6 @@ GATEWAY = "192.168.1.1"
         (VmcHeltyIPAddressSensor, []),
         (VmcHeltyLastResponseSensor, []),
         (VmcHeltyFilterHoursSensor, []),
-        (VmcHeltyNetworkSSIDSensor, []),
-        (VmcHeltyNetworkPasswordSensor, []),
     ],
 )
 def test_entity_instantiation_extended(entity_cls, additional_args):

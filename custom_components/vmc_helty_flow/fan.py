@@ -12,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     DOMAIN,
+    ENTITY_NAME_PREFIX,
     FAN_PERCENTAGE_STEP,
     FAN_SPEED_FREE_COOLING,
     FAN_SPEED_HYPERVENTILATION,
@@ -41,10 +42,10 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
     def __init__(self, coordinator):
         """Initialize the fan."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_fan"
-        self._attr_name = f"{coordinator.name} Fan"
+        self._attr_unique_id = f"{coordinator.name_slug}"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name}"
         self._attr_speed_count = 4  # 4 velocità (1-4)
-        self._attr_supported_features = FanEntityFeature(0)  # Nessuna feature speciale
+        self._attr_supported_features = FanEntityFeature.SET_SPEED
 
     @property
     def is_on(self) -> bool:
@@ -92,7 +93,7 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
         return result
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> dict[str, int | bool | None]:
         """Return extra state attributes."""
         if not self.coordinator.data:
             return {}

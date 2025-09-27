@@ -23,10 +23,12 @@
         "title": "Selezione Dispositivi VMC",
         "description": "Seleziona i dispositivi VMC da configurare",
         "data": {
-          "selected_devices": "Dispositivi da configurare"
+          "selected_devices": "Dispositivi da configurare",
+          "interrupt_scan": "Interrompi scansione"
         },
         "data_description": {
-          "selected_devices": "Seleziona uno o più dispositivi VMC dalla lista per aggiungerli a Home Assistant"
+          "selected_devices": "Seleziona uno o più dispositivi VMC dalla lista per aggiungerli a Home Assistant",
+          "interrupt_scan": "Spunta per interrompere la scansione in corso"
         }
       },
       "progress": {
@@ -84,7 +86,8 @@
     "abort": {
       "already_configured": "Questo dispositivo è già configurato",
       "all_devices_already_configured": "Tutti i dispositivi selezionati sono già configurati",
-      "no_devices": "Nessun dispositivo trovato"
+      "no_devices": "Nessun dispositivo trovato",
+      "devices_configured_successfully": "Dispositivi configurati con successo: {device_count} dispositivo/i VMC Helty"
     }
   },
   "options": {
@@ -118,6 +121,162 @@
         "skip_continue": "Salta e continua",
         "add_stop": "Aggiungi e termina",
         "stop_scan": "Termina scansione"
+      }
+    }
+  },
+  "entity": {
+    "fan": {
+      "vmc_helty_flow": {
+        "state_attributes": {
+          "night_mode": {
+            "name": "Modalità Notte"
+          },
+          "hyperventilation": {
+            "name": "Iperventilazione"
+          },
+          "free_cooling": {
+            "name": "Free Cooling"
+          },
+          "manual_speed": {
+            "name": "Velocità Manuale"
+          },
+          "panel_led": {
+            "name": "LED Pannello"
+          },
+          "sensors_active": {
+            "name": "Sensori Attivi"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "vmc_helty_flow": {
+        "temperature_internal": {
+          "name": "Temperatura Interna"
+        },
+        "temperature_external": {
+          "name": "Temperatura Esterna"
+        },
+        "humidity": {
+          "name": "Umidità"
+        },
+        "co2": {
+          "name": "CO2"
+        },
+        "voc": {
+          "name": "VOC"
+        },
+        "filter_hours": {
+          "name": "Ore Filtro"
+        },
+        "ip_address": {
+          "name": "Indirizzo IP"
+        },
+        "network_ssid": {
+          "name": "SSID Rete"
+        },
+        "network_password": {
+          "name": "Password Rete"
+        },
+        "last_response": {
+          "name": "Ultima Risposta"
+        }
+      }
+    },
+    "binary_sensor": {
+      "vmc_helty_flow": {
+        "online": {
+          "name": "Online"
+        }
+      }
+    },
+    "switch": {
+      "vmc_helty_flow": {
+        "hyperventilation": {
+          "name": "Iperventilazione"
+        },
+        "night": {
+          "name": "Modalità Notte"
+        },
+        "free_cooling": {
+          "name": "Free Cooling"
+        },
+        "panel_led": {
+          "name": "LED Pannello"
+        },
+        "sensors": {
+          "name": "Sensori"
+        }
+      }
+    },
+    "light": {
+      "vmc_helty_flow": {
+        "light": {
+          "name": "Luci"
+        },
+        "light_timer": {
+          "name": "Timer Luci"
+        }
+      }
+    },
+    "button": {
+      "vmc_helty_flow": {
+        "reset_filter": {
+          "name": "Reset Filtro"
+        }
+      }
+    },
+    "text": {
+      "vmc_helty_flow": {
+        "device_name": {
+          "name": "Nome Dispositivo"
+        },
+        "wifi_ssid": {
+          "name": "SSID WiFi"
+        },
+        "wifi_password": {
+          "name": "Password WiFi"
+        }
+      }
+    }
+  },
+  "services": {
+    "set_fan_speed": {
+      "name": "Imposta Velocità Ventola",
+      "description": "Imposta la velocità della ventola VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entità",
+          "description": "Ventola VMC da controllare"
+        },
+        "speed": {
+          "name": "Velocità",
+          "description": "Velocità della ventola (0-4)"
+        }
+      }
+    },
+    "set_mode": {
+      "name": "Imposta Modalità",
+      "description": "Imposta una modalità speciale del VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entità",
+          "description": "Dispositivo VMC da controllare"
+        },
+        "mode": {
+          "name": "Modalità",
+          "description": "Modalità da attivare"
+        }
+      }
+    },
+    "reset_filter": {
+      "name": "Reset Filtro",
+      "description": "Resetta il contatore del filtro del VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entità",
+          "description": "Dispositivo VMC da controllare"
+        }
       }
     }
   }

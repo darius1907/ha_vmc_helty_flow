@@ -1,15 +1,14 @@
 """Config flow per l'integrazione VMC Helty Flow."""
 
-import contextlib
 import ipaddress
 import logging
+import re
 from typing import Any
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, IP_NETWORK_PREFIX
 from .helpers import discover_vmc_devices, get_device_info
@@ -24,8 +23,7 @@ MAX_PORT = 65535
 MAX_TIMEOUT = 60
 MAX_IPS_IN_SUBNET = 254
 
-STORAGE_KEY = f"{DOMAIN}.devices"
-STORAGE_VERSION = 1
+# Storage rimosso - ora usiamo direttamente config entries registry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +39,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.port = None
         self.timeout = 10
         self.discovered_devices = []
-        self._store = None
 
         # New attributes for incremental scan
         self.scan_mode = "incremental"  # Always incremental for better UX
@@ -52,26 +49,36 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.total_ips_to_scan = 0
         self.current_found_device = None
 
-    def _get_store(self) -> Store:
-        """Ottieni l'istanza del store per i dispositivi."""
-        if self._store is None:
-            self._store = Store(self.hass, STORAGE_VERSION, STORAGE_KEY)
-        return self._store
+    def _get_configured_devices(self) -> list[dict[str, Any]]:
+        """Ottieni dispositivi configurati dal registry delle config entries."""
+        configured_devices = []
+
+        # Scorri tutte le config entries del nostro dominio
+        for entry in self._async_current_entries():
+            if entry.domain == DOMAIN and entry.data.get("ip"):
+                device_info = {
+                    "ip": entry.data["ip"],
+                    "name": entry.data.get("name", f"VMC {entry.data['ip']}"),
+                    "model": entry.data.get("model", "VMC Flow"),
+                    "manufacturer": entry.data.get("manufacturer", "Helty"),
+                    "entry_id": entry.entry_id,
+                    "title": entry.title,
+                    "state": entry.state.name if entry.state else "unknown",
+                }
+                configured_devices.append(device_info)
+
+        _LOGGER.debug("Found %d configured devices", len(configured_devices))
+        return configured_devices
 
     async def _load_devices(self) -> list[dict[str, Any]]:
-        """Carica la lista dei dispositivi dallo storage di Home Assistant."""
-        try:
-            data = await self._get_store().async_load()
-        except Exception:
-            return []
-        else:
-            devices: list[dict[str, Any]] = data.get("devices", []) if data else []
-            return devices
+        """Carica dispositivi attualmente configurati (compatibilità)."""
+        return self._get_configured_devices()
 
     async def _save_devices(self, devices: list) -> None:
-        """Salva la lista dei dispositivi nello storage di Home Assistant."""
-        with contextlib.suppress(Exception):
-            await self._get_store().async_save({"devices": devices})
+        """Salva dispositivi nello storage (compatibilità con discovery)."""
+        # Non salviamo più nello storage interno - usiamo solo il registry
+        # Manteniamo la funzione per compatibilità con il codice esistente
+        _LOGGER.debug("_save_devices called with %d devices (no-op)", len(devices))
 
     def _create_config_form(self, help_text=None):
         """Create the configuration form for subnet, port, and timeout."""
@@ -249,7 +256,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Salva i dispositivi scoperti
             self.discovered_devices = discovered_devices
-            await self._save_devices(discovered_devices)
 
             # Vai direttamente al form di selezione dispositivi
             return self._show_device_selection_form()
@@ -291,9 +297,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             d for d in self.discovered_devices if d["ip"] in selected_ips
         ]
 
-        # Salva i dispositivi selezionati nello storage
-        await self._save_devices(selected_devices)
-
         # Crea entry separate per ogni dispositivo selezionato
         entries_created = 0
         first_entry = None
@@ -322,6 +325,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "name": device["name"],
                         "model": device.get("model", "VMC Flow"),
                         "manufacturer": device.get("manufacturer", "Helty"),
+                        "port": device.get("port", 5001),
+                        "timeout": device.get("timeout", 10),
                     },
                 )
 
@@ -484,7 +489,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Save found devices for reference
         self.discovered_devices = self.found_devices_session
-        await self._save_devices(self.discovered_devices)
 
         # All devices should have been created during scan
         # Complete the flow by aborting with success message
@@ -542,8 +546,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         device = self.current_found_device
 
         if action in ["add_continue", "add_stop"]:
-            # Create entry immediately for instant feedback
-            _LOGGER.info("Creating immediate entry for device %s", device["ip"])
+            # Create entry in background for both actions - no popup
+            _LOGGER.info("Creating background entry for device %s", device["ip"])
 
             # Check if device is already configured
             existing_entries = [
@@ -553,40 +557,19 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ]
 
             if not existing_entries:
-                # Create the entry using discovery pattern for additional devices
-                if action == "add_continue":
-                    # Use discovery flow for additional devices
-                    await self.hass.config_entries.flow.async_init(
-                        DOMAIN,
-                        context={"source": "discovered_device"},
-                        data={
-                            "ip": device["ip"],
-                            "name": device["name"],
-                            "model": device.get("model", "VMC Flow"),
-                            "manufacturer": device.get("manufacturer", "Helty"),
-                            "port": self.port,
-                            "timeout": self.timeout,
-                        },
-                    )
-                else:  # add_stop
-                    # For the last device, create entry in this flow
-                    await self.async_set_unique_id(device["ip"])
-                    try:
-                        self._abort_if_unique_id_configured()
-                    except Exception:
-                        _LOGGER.warning("Device %s already configured", device["ip"])
-
-                    return self.async_create_entry(
-                        title=device["name"],
-                        data={
-                            "ip": device["ip"],
-                            "name": device["name"],
-                            "model": device.get("model", "VMC Flow"),
-                            "manufacturer": device.get("manufacturer", "Helty"),
-                            "port": self.port,
-                            "timeout": self.timeout,
-                        },
-                    )
+                # Use discovery flow for both actions - creates entry in background
+                await self.hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": "discovered_device"},
+                    data={
+                        "ip": device["ip"],
+                        "name": device["name"],
+                        "model": device.get("model", "VMC Flow"),
+                        "manufacturer": device.get("manufacturer", "Helty"),
+                        "port": self.port,
+                        "timeout": self.timeout,
+                    },
+                )
 
             # Add to session for tracking
             self.found_devices_session.append(device)
@@ -599,13 +582,24 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Continue scanning
         return await self._scan_next_ip()
 
+    def _slugify_name(self, name: str) -> str:
+        slug = re.sub(r"[^a-z0-9]+", "_", name.lower())
+        slug = re.sub(r"^_+|_+$", "", slug)
+        slug = re.sub(r"_+", "_", slug)
+        if not slug:
+            slug = "device"
+        if not slug.startswith("vmc_helty_"):
+            slug = f"vmc_helty_{slug}"
+        return slug
+
     async def async_step_discovered_device(self, discovery_info):
         """Handle automatic device discovery from incremental scan."""
         if not discovery_info:
             return self.async_abort(reason="invalid_discovery_info")
 
-        # Set unique_id for this device
-        await self.async_set_unique_id(discovery_info["ip"])
+        # Use slugified name as unique_id for config entry
+        name_slug = self._slugify_name(discovery_info["name"])
+        await self.async_set_unique_id(name_slug)
         self._abort_if_unique_id_configured()
 
         # Create entry for this device

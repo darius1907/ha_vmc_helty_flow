@@ -92,13 +92,16 @@ class TestVmcHeltyModeSwitch:
 
     def test_init(self, mock_coordinator):
         """Test initialization."""
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
         switch_entity = VmcHeltyModeSwitch(
             mock_coordinator, "hyperventilation", "Iperventilazione"
         )
 
         assert switch_entity._mode_key == "hyperventilation"
-        assert switch_entity._attr_unique_id == "192.168.1.100_hyperventilation"
-        assert switch_entity._attr_name == "VMC Test Iperventilazione"
+        expected_id = "vmc_helty_testvmc_hyperventilation"
+        assert switch_entity._attr_unique_id == expected_id
+        expected_name = f"VMC Helty {mock_coordinator.name} Iperventilazione"
+        assert switch_entity._attr_name == expected_name
         assert switch_entity._attr_icon == "mdi:fan-plus"
 
     def test_get_mode_icon(self, mock_coordinator):
@@ -225,10 +228,13 @@ class TestVmcHeltyPanelLedSwitch:
 
     def test_init(self, mock_coordinator):
         """Test initialization."""
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
         switch_entity = VmcHeltyPanelLedSwitch(mock_coordinator)
 
-        assert switch_entity._attr_unique_id == "192.168.1.100_panel_led"
-        assert switch_entity._attr_name == "VMC Test Panel LED"
+        expected_id = "vmc_helty_testvmc_panel_led"
+        assert switch_entity._attr_unique_id == expected_id
+        expected_name = f"VMC Helty {mock_coordinator.name} Panel LED"
+        assert switch_entity._attr_name == expected_name
         assert switch_entity._attr_icon == "mdi:led-on"
 
     def test_is_on_no_data(self, mock_coordinator):
@@ -318,10 +324,13 @@ class TestVmcHeltySensorsSwitch:
 
     def test_init(self, mock_coordinator):
         """Test initialization."""
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
         switch_entity = VmcHeltySensorsSwitch(mock_coordinator)
 
-        assert switch_entity._attr_unique_id == "192.168.1.100_sensors"
-        assert switch_entity._attr_name == "VMC Test Sensors"
+        expected_id = "vmc_helty_testvmc_sensors"
+        assert switch_entity._attr_unique_id == expected_id
+        expected_name = f"VMC Helty {mock_coordinator.name} Sensors"
+        assert switch_entity._attr_name == expected_name
         assert switch_entity._attr_icon == "mdi:eye"
 
     def test_is_on_no_data(self, mock_coordinator):

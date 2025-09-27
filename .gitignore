@@ -73,3 +73,6 @@ Thumbs.db
 # Home Assistant specific
 .storage/
 known_devices.yaml
+
+# File privati e gestione repo
+private/

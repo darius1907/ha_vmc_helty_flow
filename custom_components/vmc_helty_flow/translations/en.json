@@ -23,10 +23,12 @@
         "title": "VMC Device Selection",
         "description": "Select VMC devices to configure",
         "data": {
-          "selected_devices": "Devices to configure"
+          "selected_devices": "Devices to configure",
+          "interrupt_scan": "Interrupt scan"
         },
         "data_description": {
-          "selected_devices": "Select one or more VMC devices from the list to add them to Home Assistant"
+          "selected_devices": "Select one or more VMC devices from the list to add them to Home Assistant",
+          "interrupt_scan": "Check to interrupt the ongoing scan"
         }
       },
       "progress": {
@@ -84,7 +86,8 @@
     "abort": {
       "already_configured": "This device is already configured",
       "all_devices_already_configured": "All selected devices are already configured",
-      "no_devices": "No devices found"
+      "no_devices": "No devices found",
+      "devices_configured_successfully": "Devices successfully configured: {device_count} VMC Helty device(s)"
     }
   },
   "options": {
@@ -118,6 +121,162 @@
         "skip_continue": "Skip and continue",
         "add_stop": "Add and stop",
         "stop_scan": "Stop scan"
+      }
+    }
+  },
+  "entity": {
+    "fan": {
+      "vmc_helty_flow": {
+        "state_attributes": {
+          "night_mode": {
+            "name": "Night Mode"
+          },
+          "hyperventilation": {
+            "name": "Hyperventilation"
+          },
+          "free_cooling": {
+            "name": "Free Cooling"
+          },
+          "manual_speed": {
+            "name": "Manual Speed"
+          },
+          "panel_led": {
+            "name": "Panel LED"
+          },
+          "sensors_active": {
+            "name": "Sensors Active"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "vmc_helty_flow": {
+        "temperature_internal": {
+          "name": "Internal Temperature"
+        },
+        "temperature_external": {
+          "name": "External Temperature"
+        },
+        "humidity": {
+          "name": "Humidity"
+        },
+        "co2": {
+          "name": "CO2"
+        },
+        "voc": {
+          "name": "VOC"
+        },
+        "filter_hours": {
+          "name": "Filter Hours"
+        },
+        "ip_address": {
+          "name": "IP Address"
+        },
+        "network_ssid": {
+          "name": "Network SSID"
+        },
+        "network_password": {
+          "name": "Network Password"
+        },
+        "last_response": {
+          "name": "Last Response"
+        }
+      }
+    },
+    "binary_sensor": {
+      "vmc_helty_flow": {
+        "online": {
+          "name": "Online"
+        }
+      }
+    },
+    "switch": {
+      "vmc_helty_flow": {
+        "hyperventilation": {
+          "name": "Hyperventilation"
+        },
+        "night": {
+          "name": "Night Mode"
+        },
+        "free_cooling": {
+          "name": "Free Cooling"
+        },
+        "panel_led": {
+          "name": "Panel LED"
+        },
+        "sensors": {
+          "name": "Sensors"
+        }
+      }
+    },
+    "light": {
+      "vmc_helty_flow": {
+        "light": {
+          "name": "Lights"
+        },
+        "light_timer": {
+          "name": "Light Timer"
+        }
+      }
+    },
+    "button": {
+      "vmc_helty_flow": {
+        "reset_filter": {
+          "name": "Reset Filter"
+        }
+      }
+    },
+    "text": {
+      "vmc_helty_flow": {
+        "device_name": {
+          "name": "Device Name"
+        },
+        "wifi_ssid": {
+          "name": "WiFi SSID"
+        },
+        "wifi_password": {
+          "name": "WiFi Password"
+        }
+      }
+    }
+  },
+  "services": {
+    "set_fan_speed": {
+      "name": "Set Fan Speed",
+      "description": "Set the VMC fan speed",
+      "fields": {
+        "entity_id": {
+          "name": "Entity",
+          "description": "VMC fan to control"
+        },
+        "speed": {
+          "name": "Speed",
+          "description": "Fan speed (0-4)"
+        }
+      }
+    },
+    "set_mode": {
+      "name": "Set Mode",
+      "description": "Set a special VMC mode",
+      "fields": {
+        "entity_id": {
+          "name": "Entity",
+          "description": "VMC device to control"
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "Mode to activate"
+        }
+      }
+    },
+    "reset_filter": {
+      "name": "Reset Filter",
+      "description": "Reset the VMC filter counter",
+      "fields": {
+        "entity_id": {
+          "name": "Entity",
+          "description": "VMC device to control"
+        }
       }
     }
   }

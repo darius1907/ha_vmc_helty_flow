@@ -16,7 +16,11 @@ class VmcHeltyEntity(Entity):
     def __init__(self, coordinator, device_info=None):
         """Initialize VMC Helty entity."""
         self.coordinator = coordinator
-        self._device_info = device_info or {}
+        # Ensure device_info is always a dict
+        if isinstance(device_info, dict):
+            self._device_info = device_info
+        else:
+            self._device_info = {}
         self._attr_should_poll = False
 
         # Specifica l'attributo unique_id
@@ -34,7 +38,7 @@ class VmcHeltyEntity(Entity):
         # Ottieni l'identificatore univoco o usa l'IP
         unique_id = (
             self._device_info.get("unique_id")
-            or f"helty_flow_{self.coordinator.ip.replace('.', '_')}"
+            or f"vmc_helty_{self.coordinator.ip.replace('.', '_')}"
         )
 
         return DeviceInfo(

@@ -1,7 +1,7 @@
 name: Deploy Home Assistant Integration
 run-name: ${{ gitea.actor }} is deploying vmc_helty_flow integration  🚀
 
-on: 
+on:
   push
 
 jobs:
@@ -51,6 +51,105 @@ jobs:
         run: |
           kubectl cp /tmp/ha_vmc_helty_flow/custom_components/vmc_helty_flow/ \
             $POD_NAME:/config/custom_components/ -n home-assistant
+
+      - name: Create www directory for Lovelace cards
+        run: |
+          kubectl exec $POD_NAME -n home-assistant -- \
+            mkdir -p /config/www/vmc-helty-card
+
+      - name: Copy VMC Helty Card to Home Assistant
+        run: |
+          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/vmc-helty-card.js \
+            $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
+          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/vmc-helty-card-editor.js \
+            $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
+
+      - name: Copy VMC Helty Card documentation
+        run: |
+          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/README.md \
+            $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
+          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/QUICK-START.md \
+            $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
+          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/examples.yaml \
+            $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
+
+      - name: Add Lovelace resource configuration
+        run: |
+          kubectl exec $POD_NAME -n home-assistant -- bash -c '
+            LOVELACE_CONFIG="/config/ui-lovelace.yaml"
+            RESOURCE_URL="/local/vmc-helty-card/vmc-helty-card.js"
+
+            # Create ui-lovelace.yaml if it does not exist
+            if [ ! -f "$LOVELACE_CONFIG" ]; then
+              echo "📝 Creating new ui-lovelace.yaml"
+              echo "resources:" > "$LOVELACE_CONFIG"
+              echo "  - url: /local/vmc-helty-card/vmc-helty-card.js" >> "$LOVELACE_CONFIG"
+              echo "    type: module" >> "$LOVELACE_CONFIG"
+              echo "" >> "$LOVELACE_CONFIG"
+              echo "title: Home Assistant" >> "$LOVELACE_CONFIG"
+              echo "views:" >> "$LOVELACE_CONFIG"
+              echo "  - title: Home" >> "$LOVELACE_CONFIG"
+              echo "    cards: []" >> "$LOVELACE_CONFIG"
+            else
+              # Check if resource already exists
+              if ! grep -q "$RESOURCE_URL" "$LOVELACE_CONFIG"; then
+                echo "➕ Adding VMC Helty Card resource to existing configuration"
+                # Create backup
+                cp "$LOVELACE_CONFIG" "$LOVELACE_CONFIG.backup.$(date +%Y%m%d_%H%M%S)"
+
+                # Check if resources section exists
+                if grep -q "^resources:" "$LOVELACE_CONFIG"; then
+                  # Add to existing resources section
+                  sed -i "/^resources:/a\\  - url: $RESOURCE_URL\\n    type: module" "$LOVELACE_CONFIG"
+                else
+                  # Add new resources section at the beginning
+                  {
+                    echo "resources:"
+                    echo "  - url: $RESOURCE_URL"
+                    echo "    type: module"
+                    echo ""
+                    cat "$LOVELACE_CONFIG"
+                  } > "$LOVELACE_CONFIG.tmp" && mv "$LOVELACE_CONFIG.tmp" "$LOVELACE_CONFIG"
+                fi
+              else
+                echo "✅ VMC Helty Card resource already configured"
+              fi
+            fi
+          '
+
+      - name: Verify VMC Helty Card installation
+        run: |
+          kubectl exec $POD_NAME -n home-assistant -- sh -c '
+            echo "🔍 Verifying VMC Helty Card installation..."
+
+            # Check files exist
+            if [ -f "/config/www/vmc-helty-card/vmc-helty-card.js" ]; then
+              echo "✅ vmc-helty-card.js installed"
+              FILE_SIZE=$(wc -c < /config/www/vmc-helty-card/vmc-helty-card.js)
+              echo "📊 File size: $FILE_SIZE bytes"
+            else
+              echo "❌ vmc-helty-card.js missing"
+              exit 1
+            fi
+
+            if [ -f "/config/www/vmc-helty-card/vmc-helty-card-editor.js" ]; then
+              echo "✅ vmc-helty-card-editor.js installed"
+              FILE_SIZE=$(wc -c < /config/www/vmc-helty-card/vmc-helty-card-editor.js)
+              echo "📊 File size: $FILE_SIZE bytes"
+            else
+              echo "❌ vmc-helty-card-editor.js missing"
+              exit 1
+            fi
+
+            # Check Lovelace configuration
+            if grep -q "/local/vmc-helty-card/vmc-helty-card.js" /config/ui-lovelace.yaml; then
+              echo "✅ Lovelace resource configured"
+            else
+              echo "⚠️ Lovelace resource not found in configuration"
+            fi
+
+            echo "🎉 VMC Helty Card installation verified successfully!"
+          '
 
       - name: Rollout restart Home Assistant
         run: |

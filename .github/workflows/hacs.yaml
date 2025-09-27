@@ -1,0 +1,30 @@
+name: HACS Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  hacs-validation:
+    runs-on: ubuntu-latest
+    name: HACS Validation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+          ignore: brands
+
+      - name: Validate Lovelace Card
+        run: |
+          if [ -d "www/vmc-helty-card" ]; then
+            echo "✅ Lovelace card found in www/vmc-helty-card/"
+            ls -la www/vmc-helty-card/
+          else
+            echo "ℹ️ No Lovelace card found"
+          fi

@@ -5,7 +5,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, PART_INDEX_LIGHTS_LEVEL, PART_INDEX_LIGHTS_TIMER
+from .const import (
+    DOMAIN,
+    ENTITY_NAME_PREFIX,
+    PART_INDEX_LIGHTS_LEVEL,
+    PART_INDEX_LIGHTS_TIMER,
+)
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -32,8 +37,8 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
     def __init__(self, coordinator):
         """Initialize the light."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_light"
-        self._attr_name = f"{coordinator.name} Light"
+        self._attr_unique_id = f"{coordinator.name_slug}_light"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Light"
         self._attr_color_mode = ColorMode.BRIGHTNESS
         self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
 
@@ -72,17 +77,17 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
         # Arrotonda ai livelli supportati (0, 25, 50, 75, 100)
         light_level = round(light_level / 25) * 25
 
-        # Il comando per impostare le luci non è specificato nei requirements
-        # Placeholder per il comando - da implementare quando disponibile
+        # Formato comando corretto: VMWH06nnn000 dove nnn è il livello (0-100)
         response = await tcp_send_command(
-            self.coordinator.ip, 5001, f"VMWL{light_level:03d}"
+            self.coordinator.ip, 5001, f"VMWH06{light_level:03d}000"
         )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_kwargs) -> None:
         """Turn off the light."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWL000")
+        # VMWH0600000 per luci disattivate
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0600000")
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
@@ -93,8 +98,8 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
     def __init__(self, coordinator):
         """Initialize the light timer."""
         super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.ip}_light_timer"
-        self._attr_name = f"{coordinator.name} Light Timer"
+        self._attr_unique_id = f"{coordinator.name_slug}_light_timer"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Light Timer"
         self._attr_icon = "mdi:timer"
 
     @property
@@ -129,15 +134,16 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
         """Set light timer (default 300 seconds)."""
         timer_seconds = 300  # Default 5 minuti
 
-        # Comando placeholder per impostare timer - da implementare
+        # Formato comando corretto: VMWH14nnnnn dove nnnnn è il timer in secondi
         response = await tcp_send_command(
-            self.coordinator.ip, 5001, f"VMWT{timer_seconds:03d}"
+            self.coordinator.ip, 5001, f"VMWH14{timer_seconds:05d}"
         )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_kwargs) -> None:
         """Disable light timer."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWT000")
+        # VMWH1400000 per disattivare il timer
+        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH1400000")
         if response == "OK":
             await self.coordinator.async_request_refresh()

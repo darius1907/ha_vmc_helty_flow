@@ -1,14 +1,19 @@
 """Tests for sensor module."""
 
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
 
 from custom_components.vmc_helty_flow import sensor
 from custom_components.vmc_helty_flow.const import DOMAIN
-from custom_components.vmc_helty_flow.sensor import VmcHeltySensor
+from custom_components.vmc_helty_flow.sensor import (
+    VmcHeltyLastResponseSensor,
+    VmcHeltySensor,
+)
 
 
 @pytest.fixture
@@ -16,7 +21,8 @@ def mock_coordinator():
     """Create a mock coordinator."""
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
-    coordinator.name = "VMC Test"
+    coordinator.name = "TestVMC"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = {
         "sensors": "VMGI,245,205,650,450,50,75,80,90,100,1,2,3,4,1000",
         "status": "VMGO,3,1,25,0,24",
@@ -55,10 +61,7 @@ async def test_async_setup_entry(mock_hass, mock_config_entry, mock_coordinator)
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
 
-    # Should have 15 entities total
-    assert len(entities) == 15
-
-    # Check some entity types
+    assert len(entities) == 20
     sensor_entities = [e for e in entities if isinstance(e, VmcHeltySensor)]
     assert len(sensor_entities) >= 5  # At least the 5 main sensors
 
@@ -76,10 +79,9 @@ class TestVmcHeltySensor:
             "temperature",
             "measurement",
         )
-
         assert sensor_entity._sensor_key == "temperature_internal"
-        assert sensor_entity._attr_unique_id == "192.168.1.100_temperature_internal"
-        assert sensor_entity._attr_name == "VMC Test Temperatura Interna"
+        assert sensor_entity._attr_unique_id == "vmc_helty_testvmc_temperature_internal"
+        assert sensor_entity._attr_name == "VMC Helty TestVMC Temperatura Interna"
         assert sensor_entity._attr_native_unit_of_measurement == "°C"
         assert sensor_entity._attr_device_class == "temperature"
         assert sensor_entity._attr_state_class == "measurement"
@@ -167,12 +169,22 @@ class TestVmcHeltySensor:
     def test_native_value_voc(self, mock_coordinator):
         """Test native_value for VOC."""
         mock_coordinator.data = {
-            "sensors": "VMGI,245,205,650,450,50,75,80,90,100,1,2,3,4,1000"
+            "sensors": "VMGI,245,205,650,450,50,75,80,90,100,1,203,3,4,0,1000"
         }
         sensor_entity = VmcHeltySensor(mock_coordinator, "voc", "Test", "ppb")
 
-        # 1000 (position 14)
-        assert sensor_entity.native_value == 1000
+        # 203 (position 11)
+        assert sensor_entity.native_value == 203
+
+    def test_native_value_voc_zero(self, mock_coordinator):
+        """Test native_value for VOC with zero value."""
+        mock_coordinator.data = {
+            "sensors": "VMGI,245,205,650,450,50,75,80,90,100,1,0,3,4,0,1000"
+        }
+        sensor_entity = VmcHeltySensor(mock_coordinator, "voc", "Test", "ppb")
+
+        # VOC value 0 should be treated as None (sensor not working/no data)
+        assert sensor_entity.native_value is None
 
     def test_native_value_unknown_sensor(self, mock_coordinator):
         """Test native_value for unknown sensor type."""
@@ -204,3 +216,43 @@ class TestVmcHeltySensor:
         )
 
         assert sensor_entity.native_value is None
+
+
+class TestVmcHeltyLastResponseSensor:
+    """Test VMC Helty Last Response sensor."""
+
+    def test_init(self, mock_coordinator):
+        """Test sensor initialization."""
+        mock_coordinator.name_slug = "vmc_helty_testvmc"
+        sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
+        assert sensor_entity._attr_unique_id == "vmc_helty_testvmc_last_response"
+        assert (
+            sensor_entity._attr_name
+            == f"VMC Helty {mock_coordinator.name} Last Response"
+        )
+
+    def test_native_value_no_data(self, mock_coordinator):
+        """Test native_value with no data."""
+        mock_coordinator.data = None
+        sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
+
+        assert sensor_entity.native_value is None
+
+    def test_native_value_no_timestamp(self, mock_coordinator):
+        """Test native_value with no timestamp."""
+        mock_coordinator.data = {"status": "test"}
+        sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
+
+        assert sensor_entity.native_value is None
+
+    def test_native_value_with_timestamp(self, mock_coordinator):
+        """Test native_value with valid timestamp."""
+        test_timestamp = 1693123200.0  # 2023-08-27 10:00:00 UTC
+        mock_coordinator.data = {"last_update": test_timestamp}
+        sensor_entity = VmcHeltyLastResponseSensor(mock_coordinator)
+
+        result = sensor_entity.native_value
+        expected = datetime.fromtimestamp(test_timestamp, tz=dt_util.UTC)
+
+        assert result == expected
+        assert result.tzinfo == dt_util.UTC

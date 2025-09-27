@@ -4,7 +4,7 @@
   "codeowners": ["@dpezzoli"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/dpezzoli/ha_vmc_helty_flow",
+  "documentation": "https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md",
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/dpezzoli/ha_vmc_helty_flow/issues",
