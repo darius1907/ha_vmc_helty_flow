@@ -590,6 +590,35 @@ class VmcHeltyCard extends LitElement {
     // Find closest step
     const currentStep = speedSteps.reduce((prev, curr) => Math.abs(curr.pct - currentPercentage) < Math.abs(prev.pct - currentPercentage) ? curr : prev);
 
+    // Track temporary slider value for optimistic UI
+    const sliderValue = this._fanSliderValue !== undefined ? this._fanSliderValue : currentStep.value;
+    const sliderStep = speedSteps[sliderValue] || currentStep;
+
+    // Slider element
+    const slider = window.customElements.get('ha-control-slider')
+      ? html`<ha-control-slider
+          min="0"
+          max="4"
+          step="1"
+          .value="${sliderValue}"
+          @input="${(e) => this._onFanSliderInput(e)}"
+          @change="${(e) => this._setFanSpeedDiscrete(e)}"
+          ?disabled="${this._loading}"
+          style="flex: 1;"
+          dir="ltr"
+        ></ha-control-slider>`
+      : html`<ha-slider
+          min="0"
+          max="4"
+          step="1"
+          .value="${sliderValue}"
+          @input="${(e) => this._onFanSliderInput(e)}"
+          @change="${(e) => this._setFanSpeedDiscrete(e)}"
+          ?disabled="${this._loading}"
+          style="flex: 1; --ha-slider-height: 32px; --ha-slider-bar-height: 12px; --ha-slider-thumb-size: 28px;"
+          dir="ltr"
+        ></ha-slider>`;
+
     return html`
       <div class="controls-section">
         <div class="section-title">
@@ -597,136 +626,60 @@ class VmcHeltyCard extends LitElement {
           <span>Velocità Ventilazione</span>
         </div>
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-          <ha-icon icon="${currentStep.icon}" style="font-size: 2rem;"></ha-icon>
-          <ha-slider
-            min="0"
-            max="4"
-            step="1"
-            .value="${currentStep.value}"
-            @change="${(e) => this._setFanSpeedDiscrete(e)}"
-            ?disabled="${this._loading}"
-            style="flex: 1;"
-            dir="ltr"
-          ></ha-slider>
-          <span style="min-width: 40px; text-align: right; font-weight: 600;">${currentStep.pct}%</span>
+          <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
+          ${slider}
+          <span style="min-width: 40px; text-align: right; font-weight: 600;">${sliderStep.pct}%</span>
         </div>
         <div class="speed-status">
-          Velocità attuale: <b>${currentStep.label}</b> (${currentStep.pct}%)
+          Velocità attuale: <b>${sliderStep.label}</b> (${sliderStep.pct}%)
         </div>
       </div>
     `;
+  }
+
+  // Track slider value for optimistic UI
+  _onFanSliderInput(e) {
+    const val = Number(e.target.value);
+    if (!isNaN(val) && val >= 0 && val <= 4) {
+      this._fanSliderValue = val;
+      this.requestUpdate();
+    }
   }
 
   // Handler for discrete slider
   async _setFanSpeedDiscrete(e) {
     const step = Number(e.target.value);
     if (!isNaN(step) && step >= 0 && step <= 4) {
-      // Map 0-4 to 0/25/50/75/100
+      this._fanSliderValue = step;
+      this.requestUpdate();
       const pct = step * 25;
-      await this._setFanSpeedPct(pct);
-    }
-  }
-
-  // Set fan speed by percentage (for slider)
-  async _setFanSpeedPct(percentage) {
-    if (!this.hass || !this.config.entity) return;
-    try {
-      this._loading = true;
-      await this.hass.callService("fan", "set_percentage", {
-        entity_id: this.config.entity,
-        percentage: percentage,
-      });
-      fireEvent(this, "hass-notification", {
-        message: `Velocità impostata: ${percentage}%`,
-      });
-      if ("vibrate" in navigator) navigator.vibrate(40);
-    } catch (e) {
-      fireEvent(this, "hass-notification", {
-        message: `Errore: ${e.message}`,
-      });
-    } finally {
-      this._loading = false;
-    }
-  }
-
-  _getFanSpeedIcon(speed) {
-    const icons = {
-      0: 'mdi:fan-off',
-      1: 'mdi:fan-speed-1',
-      2: 'mdi:fan-speed-2',
-      3: 'mdi:fan-speed-3',
-      4: 'mdi:fan'
-    };
-    return icons[speed] || 'mdi:fan';
-  }
-
-  _renderModeControls() {
-    const deviceSlug = this._getDeviceSlug();
-    if (!deviceSlug) return nothing;
-
-    const modes = [
-      {
-        key: 'hyperventilation',
-        label: 'Iperventilazione',
-        icon: 'mdi:fan-plus',
-        entity: `switch.vmc_helty_${deviceSlug}_hyperventilation`
-      },
-      {
-        key: 'night',
-        label: 'Modalità Notte',
-        icon: 'mdi:weather-night',
-        entity: `switch.vmc_helty_${deviceSlug}_night`
-      },
-      {
-        key: 'free_cooling',
-        label: 'Free Cooling',
-        icon: 'mdi:snowflake',
-        entity: `switch.vmc_helty_${deviceSlug}_free_cooling`
-      },
-      {
-        key: 'panel_led',
-        label: 'LED Pannello',
-        icon: 'mdi:led-on',
-        entity: `switch.vmc_helty_${deviceSlug}_panel_led`
-      },
-      {
-        key: 'sensors',
-        label: 'Sensori',
-        icon: 'mdi:eye',
-        entity: `switch.vmc_helty_${deviceSlug}_sensors`
+      let success = false;
+      try {
+        this._loading = true;
+        await this._setFanSpeedPct(pct);
+        fireEvent(this, "hass-notification", {
+          message: `Velocità impostata: ${pct}%`,
+        });
+        success = true;
+      } catch (err) {
+        let msg = "Errore: impossibile impostare la velocità.";
+        if (err && err.message) msg += ` (${err.message})`;
+        fireEvent(this, "hass-notification", { message: msg });
+      } finally {
+        this._loading = false;
+        // Se errore, resetta slider allo stato entity
+        if (!success) {
+          this._fanSliderValue = undefined;
+          this.requestUpdate();
+        } else {
+          // Su successo, lascia che il valore venga aggiornato dal backend
+          setTimeout(() => {
+            this._fanSliderValue = undefined;
+            this.requestUpdate();
+          }, 500);
+        }
       }
-    ];
-
-    // Filter modes to show only those with available entities
-    const availableModes = modes.filter(mode => this._getEntityState(mode.entity));
-
-    if (availableModes.length === 0) return nothing;
-
-    return html`
-      <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:cog"></ha-icon>
-          <span>Modalità Speciali</span>
-        </div>
-        <ha-chip-set>
-          ${availableModes.map(mode => {
-            const state = this._getEntityState(mode.entity);
-            const isOn = state && state.state === 'on';
-            return html`
-              <ha-chip
-                .selected=${isOn}
-                @click=${() => this._toggleSwitch(mode.entity)}
-                aria-label="${mode.label}"
-                ?disabled=${this._loading}
-              >
-                <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
-                ${mode.label}
-              </ha-chip>
-            `;
-          })}
-        </ha-chip-set>
-      </div>
-    `;
+    }
   }
 
   _renderLightControls() {
