@@ -708,11 +708,10 @@ class VmcHeltyCard extends LitElement {
     if (!isNaN(step) && step >= 0 && step <= 4) {
       this._fanSliderValue = step;
       this.requestUpdate();
-      const pct = step * 25;
       let success = false;
       try {
         this._loading = true;
-        await this._setFanSpeed(pct);
+        await this._setFanSpeed(step);
         success = true;
       } catch (err) {
         let msg = "Errore: impossibile impostare la velocità.";
