@@ -83,10 +83,6 @@ class VmcHeltyCard extends LitElement {
       }
     ];
 
-    // Filter modes to show only those with available entities
-    const availableModes = modes.filter(mode => this._getEntityState(mode.entity));
-    if (availableModes.length === 0) return nothing;
-
     return html`
       <div class="controls-section">
         <div class="section-title">
@@ -94,7 +90,7 @@ class VmcHeltyCard extends LitElement {
           <span>Modalità Speciali</span>
         </div>
         <ha-chip-set>
-          ${availableModes.map(mode => {
+          ${modes.map(mode => {
             const state = this._getEntityState(mode.entity);
             const isOn = state && state.state === 'on';
             return html`
@@ -644,6 +640,7 @@ class VmcHeltyCard extends LitElement {
 
   _renderFanControls() {
     const vmcState = this._getVmcState();
+    
     if (!vmcState) return nothing;
 
     // Discrete steps: 0-4, mapped to 0/25/50/75/100%
@@ -670,7 +667,7 @@ class VmcHeltyCard extends LitElement {
           .value="${sliderValue}"
           @input="${(e) => this._onFanSliderInput(e)}"
           @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
-          ?disabled="${this._loading}"
+          ?disabled="${this._loading || vmcState.state === 'off'}"
           style="flex: 1;"
           dir="ltr"
         ></ha-control-slider>`;
@@ -736,10 +733,11 @@ class VmcHeltyCard extends LitElement {
 
   _renderLightControls() {
     const deviceSlug = this._getDeviceSlug();
+    const vmcState = this._getVmcState();
     if (!deviceSlug) return nothing;
 
-  const lightEntity = `light.vmc_helty_${deviceSlug}_light`;
-  const timerEntity = `light.vmc_helty_${deviceSlug}_light_timer`;
+    const lightEntity = `light.vmc_helty_${deviceSlug}_light`;
+    const timerEntity = `light.vmc_helty_${deviceSlug}_light_timer`;
 
     const lightState = this._getEntityState(lightEntity);
     const timerState = this._getEntityState(timerEntity);
@@ -768,14 +766,14 @@ class VmcHeltyCard extends LitElement {
             ${lightState.state === 'on' ? html`
               <div class="light-slider">
                 <ha-icon icon="mdi:brightness-6"></ha-icon>
-                <ha-slider
+                <ha-control-slider
                   .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
                   min="0"
                   max="100"
                   step="25"
-                  @change="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
-                  ?disabled="${this._loading}"
-                ></ha-slider>
+                  @value-changed="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
+                  ?disabled="${this._loading || vmcState.state === 'off'}"
+                ></ha-control-slider>
                 <span class="brightness-value">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
               </div>
             ` : nothing}
