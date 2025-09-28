@@ -723,10 +723,7 @@ class VmcHeltyCard extends LitElement {
       let success = false;
       try {
         this._loading = true;
-        await this._setFanSpeedPct(pct);
-        fireEvent(this, "hass-notification", {
-          message: `Velocità impostata: ${pct}%`,
-        });
+        await this._setFanSpeed(pct);
         success = true;
       } catch (err) {
         let msg = "Errore: impossibile impostare la velocità.";
