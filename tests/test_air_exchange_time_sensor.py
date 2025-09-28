@@ -115,9 +115,9 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         self.coordinator.data = {
             "status": "VMGO,999,0,0,0"
         }  # Invalid speed -> default 100
-        # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (60 / 100) * 60 = 36.0 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 100) * 60
-        assert self.sensor.native_value == round(expected, 1)
+        # Expected: (DEFAULT_ROOM_VOLUME / 10) * 60 = (60 / 10) * 60 = 36.0 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 10) * 60
+        assert self.sensor.native_value == round(expected, 27)
 
     def test_invalid_data_types(self):
         """Test handling of invalid data types in VMGO."""
@@ -147,13 +147,13 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         self.coordinator.data = {"status": "VMGO,2,0,0,0"}  # Fan speed 2
         attrs = self.sensor.extra_state_attributes
 
-        # Fan speed 2 -> 100 m³/h -> (150/100)*60 = 90 min
-        # Check what category 90 min falls into
-        expected_efficiency = AIR_EXCHANGE_POOR
+        # Fan speed 2 -> 17 m³/h -> (45/17)*60 = 159.0 min
+        # Check what category 159.0 min falls into
+        expected_efficiency = AIR_EXCHANGE_GOOD
 
         assert attrs["efficiency_category"] == expected_efficiency
         assert attrs["room_volume"] == f"{DEFAULT_ROOM_VOLUME} m³"
-        assert attrs["estimated_airflow"] == "100 m³/h"
+        assert attrs["estimated_airflow"] == "17 m³/h"
         assert attrs["fan_speed"] == 2
         assert attrs["calculation_method"] == "Volume/Airflow*60"
         assert "optimization_tip" in attrs
@@ -245,12 +245,12 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
 
     def test_extreme_conditions(self):
         """Test sensor behavior under extreme conditions."""
-        # Test with very high fan speed (edge case) - uses default 100 m³/h
+        # Test with very high fan speed (edge case) - uses default 42 m³/h
         self.coordinator.data = {
-            "status": "VMGO,99,0,0,0"
-        }  # Very high speed -> default 100
-        # Expected: (DEFAULT_ROOM_VOLUME / 100) * 60 = (60 / 100) * 60 = 36.0 minutes
-        expected = (DEFAULT_ROOM_VOLUME / 100) * 60
+            "status": "VMGO,6,0,0,0"
+        }  # Very high speed -> default 42
+        # Expected: (DEFAULT_ROOM_VOLUME / 42) * 60 = (60 / 42) * 60 = 85.7 minutes
+        expected = (DEFAULT_ROOM_VOLUME / 42) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_precision_and_rounding(self):

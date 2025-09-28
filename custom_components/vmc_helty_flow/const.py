@@ -53,6 +53,18 @@ AIRFLOW_MAPPING = {
     7: 26,  # Free Cooling
 }
 
+FANSPEED_MAPPING = {
+    0: 0,  # Spenta
+    1: 1,  # Velocità 1
+    2: 2,  # Velocità 2
+    3: 3,  # Velocità 3
+    4: 4,  # Velocità 4
+    5: 1,  # Night Mode
+    6: 4,  # Hyperventilation
+    7: 3,  # Free Cooling
+}
+
+
 # Validazione lunghezza campi
 MAX_DEVICE_NAME_LENGTH = 32
 MAX_SSID_LENGTH = 32
@@ -136,13 +148,13 @@ AIR_EXCHANGE_POOR = "Poor"
 
 # Default room volume for air exchange calculations
 # NOTE: This should be configured by user for their specific room
-DEFAULT_ROOM_VOLUME = 60  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
+DEFAULT_ROOM_VOLUME = 45  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
 
 # Air Exchange Time Thresholds (minutes) - Tempo ideale per ricambio completo aria
-AIR_EXCHANGE_TIME_EXCELLENT = 20  # Meno di 20 minuti = eccellente
-AIR_EXCHANGE_TIME_GOOD = 30  # 20-30 minuti = buono
-AIR_EXCHANGE_TIME_ACCEPTABLE = 60  # 30-60 minuti = accettabile
-# Oltre 60 minuti = scarso
+AIR_EXCHANGE_TIME_EXCELLENT = 120  # Meno di 120 minuti = eccellente
+AIR_EXCHANGE_TIME_GOOD = 240  # 120-240 minuti = buono
+AIR_EXCHANGE_TIME_ACCEPTABLE = 480  # 240-480 minuti = accettabile
+# Oltre 480 minuti = scarso
 
 # Daily Air Changes Categories and thresholds
 DAILY_AIR_CHANGES_EXCELLENT = "Excellent"
@@ -151,10 +163,10 @@ DAILY_AIR_CHANGES_ADEQUATE = "Adequate"
 DAILY_AIR_CHANGES_POOR = "Poor"
 
 # Daily Air Changes Thresholds (changes per 24h) - Standard di ventilazione
-DAILY_AIR_CHANGES_EXCELLENT_MIN = 24  # 24+ ricambi/giorno = eccellente (1/ora)
-DAILY_AIR_CHANGES_GOOD_MIN = 12  # 12-24 ricambi/giorno = buono (0.5-1/ora)
-DAILY_AIR_CHANGES_ADEQUATE_MIN = 6  # 6-12 ricambi/giorno = adeguato (0.25-0.5/ora)
-# Meno di 6 ricambi/giorno = scarso
+DAILY_AIR_CHANGES_EXCELLENT_MIN = 12  # 12+ ricambi/giorno = eccellente
+DAILY_AIR_CHANGES_GOOD_MIN = 6  # 6-12 ricambi/giorno = buono
+DAILY_AIR_CHANGES_ADEQUATE_MIN = 3  # 3-6 ricambi/giorno = adeguato
+# Meno di 3 ricambi/giorno = scarso
 
 # Configuration constants
 CONF_DEVICE_ID = "device_id"

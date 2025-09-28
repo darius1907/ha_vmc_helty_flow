@@ -37,6 +37,7 @@ from .const import (
     AIR_EXCHANGE_TIME_EXCELLENT,
     AIR_EXCHANGE_TIME_GOOD,
     AIRFLOW_MAPPING,
+    FANSPEED_MAPPING,
     COMFORT_HUMIDITY_ACCEPTABLE_MAX,
     COMFORT_HUMIDITY_ACCEPTABLE_MIN,
     COMFORT_HUMIDITY_MAX,
@@ -1003,8 +1004,8 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
 
             # Calcola portata aria stimata in m³/h basata sulla velocità
             airflow = AIRFLOW_MAPPING.get(
-                fan_speed, 100
-            )  # Default 100 m³/h se non riconosciuto
+                fan_speed, 10
+            )  # Default 10 m³/h se non riconosciuto
 
             # Volume ambiente (usa valore di default se non configurato)
             room_volume = DEFAULT_ROOM_VOLUME  # m³
@@ -1049,22 +1050,10 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
 
         try:
             # Velocità ventola dalla posizione 1 del VMGO
-            fan_speed_raw = int(parts[1])
+            actual_speed = int(parts[1])
 
-            # Gestione modi speciali per determinare velocità effettiva
-            if fan_speed_raw == FAN_SPEED_NIGHT_MODE:  # Night mode
-                actual_speed = 1
-            elif fan_speed_raw == FAN_SPEED_HYPERVENTILATION:  # Hyperventilation mode
-                actual_speed = 4
-            elif fan_speed_raw == FAN_SPEED_FREE_COOLING:  # Free cooling mode
-                actual_speed = 3
-            elif FAN_SPEED_OFF <= fan_speed_raw <= FAN_SPEED_MAX_NORMAL:
-                actual_speed = fan_speed_raw
-            else:
-                actual_speed = FAN_SPEED_OFF  # Invalid speed
 
-            airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}
-            airflow = airflow_rates.get(actual_speed, 0)
+            airflow = AIRFLOW_MAPPING.get(actual_speed, 0)
 
             # Determina categoria efficienza
             exchange_time = self.native_value
@@ -1083,8 +1072,8 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
                 "efficiency_category": efficiency_category,
                 "room_volume": f"{DEFAULT_ROOM_VOLUME} m³",
                 "estimated_airflow": f"{airflow} m³/h",
-                "fan_speed": actual_speed,
-                "raw_fan_speed": fan_speed_raw,
+                "fan_speed": FANSPEED_MAPPING.get(actual_speed, 0),
+                "raw_fan_speed": actual_speed,
                 "calculation_method": "Volume/Airflow*60",
                 "optimization_tip": self._get_optimization_tip(
                     exchange_time, actual_speed
@@ -1148,25 +1137,8 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
             # Velocità ventola dalla posizione 1 del VMGO (0-7 = velocità/modalità)
             fan_speed_raw = int(parts[1])
 
-            # Decodifica modalità speciali in velocità effettiva
-            if fan_speed_raw == 0:
-                return 0.0  # Ventilazione spenta
-            if fan_speed_raw == 5:  # Modalità notte
-                fan_speed = 1
-            elif fan_speed_raw == 6:  # Iperventilazione
-                fan_speed = 4
-            elif fan_speed_raw == 7:  # Free cooling
-                fan_speed = 0
-                return 0.0
-            elif 1 <= fan_speed_raw <= 4:  # Velocità normale
-                fan_speed = fan_speed_raw
-            else:
-                fan_speed = 2  # Default a velocità media
-
             # Calcola portata aria stimata in m³/h basata sulla velocità
-            # Stima tipica: velocità 1=50 m³/h, 2=100 m³/h, 3=150 m³/h, 4=200 m³/h
-            airflow_rates = {1: 50, 2: 100, 3: 150, 4: 200}  # m³/h
-            airflow_rate = airflow_rates.get(fan_speed, 100)  # Default 100 m³/h
+            airflow_rate = AIRFLOW_MAPPING.get(fan_speed_raw, 1)  # Default 10 m³/h
 
             # Volume ambiente (usa valore di default se non configurato)
             room_volume = DEFAULT_ROOM_VOLUME  # m³
@@ -1185,6 +1157,11 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Ritorna attributi aggiuntivi del sensore."""
+        #Livello Ricambi d'aria/h (ACH)	Applicazioni tipiche
+        #Poor < 3 ACH	Ventilazione scarsa, rischio aria viziata in stanze chiuse.
+        #Adequate 3 - 6 ACH Sufficiente per stanze residenziali, uffici standard.
+        #Good 6 - 12 ACH Buona qualità, adatta a scuole, palestre, sale riunioni.
+        #Excellent > 12 ACH Elevata, tipica di ospedali, laboratori, cucine prof.
         attributes = {}
 
         daily_changes = self.native_value
@@ -1233,17 +1210,9 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
                 if len(parts) >= MIN_RESPONSE_PARTS:
                     fan_speed_raw = int(parts[1])
                     # Decodifica modalità speciali
-                    if fan_speed_raw == FAN_SPEED_NIGHT_MODE:
-                        fan_speed = 1
-                    elif fan_speed_raw == FAN_SPEED_HYPERVENTILATION:
-                        fan_speed = 4
-                    elif fan_speed_raw == FAN_SPEED_FREE_COOLING:
-                        fan_speed = 0
-                    elif 1 <= fan_speed_raw <= 4:
-                        fan_speed = fan_speed_raw
-                    else:
-                        fan_speed = 2
-                    if fan_speed < 4:
+                    fan_speed = FANSPEED_MAPPING.get(fan_speed_raw, 1)
+
+                    if fan_speed < FAN_SPEED_MAX_NORMAL:
                         return f"Ricambio insufficiente, aumentare velocità da {fan_speed} a 3-4"
                     return "Ricambio insufficiente anche a velocità massima, verificare impianto"
             except (ValueError, IndexError):
