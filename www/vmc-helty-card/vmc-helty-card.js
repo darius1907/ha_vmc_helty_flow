@@ -641,6 +641,7 @@ class VmcHeltyCard extends LitElement {
     `;
   }
 
+
   _renderFanControls() {
     const vmcState = this._getVmcState();
     if (!vmcState) return nothing;
@@ -661,30 +662,18 @@ class VmcHeltyCard extends LitElement {
     const sliderValue = this._fanSliderValue !== undefined ? this._fanSliderValue : currentStep.value;
     const sliderStep = speedSteps[sliderValue] || currentStep;
 
-    // Slider element
-    const slider = window.customElements.get('ha-control-slider')
-      ? html`<ha-control-slider
+    // Slider element: supporta sia ha-slider che ha-control-slider
+    const slider =  html`<ha-control-slider
           min="0"
           max="4"
           step="1"
           .value="${sliderValue}"
           @input="${(e) => this._onFanSliderInput(e)}"
-          @change="${(e) => this._setFanSpeedDiscrete(e)}"
+          @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
           ?disabled="${this._loading}"
           style="flex: 1;"
           dir="ltr"
-        ></ha-control-slider>`
-      : html`<ha-slider
-          min="0"
-          max="4"
-          step="1"
-          .value="${sliderValue}"
-          @input="${(e) => this._onFanSliderInput(e)}"
-          @change="${(e) => this._setFanSpeedDiscrete(e)}"
-          ?disabled="${this._loading}"
-          style="flex: 1; --ha-slider-height: 32px; --ha-slider-bar-height: 12px; --ha-slider-thumb-size: 28px;"
-          dir="ltr"
-        ></ha-slider>`;
+        ></ha-control-slider>`;
 
     return html`
       <div class="controls-section">
