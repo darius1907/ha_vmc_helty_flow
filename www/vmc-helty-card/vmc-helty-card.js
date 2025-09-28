@@ -48,40 +48,43 @@ function fireEvent(node, type, detail, options) {
 class VmcHeltyCard extends LitElement {
   _renderModeControls() {
     const deviceSlug = this._getDeviceSlug();
+    const vmcState = this._getVmcState();
     if (!deviceSlug) return nothing;
 
-    const modes = [
+    // Modalità speciali: stato letto dagli attributi della fan
+    const fanState = this._getVmcState();
+    const attrs = (fanState && fanState.attributes) || {};
+
+    // Mappa modalità speciali: chiave, label, icona, attributo, valore fan speed
+    const specialModes = [
       {
         key: 'hyperventilation',
         label: 'Iperventilazione',
         icon: 'mdi:fan-plus',
-        entity: `switch.vmc_helty_${deviceSlug}_hyperventilation`
+        attr: 'hyperventilation',
+        speed: 6
       },
       {
-        key: 'night',
+        key: 'night_mode',
         label: 'Modalità Notte',
         icon: 'mdi:weather-night',
-        entity: `switch.vmc_helty_${deviceSlug}_night`
+        attr: 'night_mode',
+        speed: 5
       },
       {
         key: 'free_cooling',
         label: 'Free Cooling',
         icon: 'mdi:snowflake',
-        entity: `switch.vmc_helty_${deviceSlug}_free_cooling`
-      },
-      {
-        key: 'panel_led',
-        label: 'LED Pannello',
-        icon: 'mdi:led-on',
-        entity: `switch.vmc_helty_${deviceSlug}_panel_led`
-      },
-      {
-        key: 'sensors',
-        label: 'Sensori',
-        icon: 'mdi:eye',
-        entity: `switch.vmc_helty_${deviceSlug}_sensors`
+        attr: 'free_cooling',
+        speed: 7
       }
     ];
+
+    // Switch reali
+    const panelLedEntity = `switch.vmc_helty_${deviceSlug}_panel_led`;
+    const sensorsEntity = `switch.vmc_helty_${deviceSlug}_sensors`;
+    const panelLedState = this._getEntityState(panelLedEntity);
+    const sensorsState = this._getEntityState(sensorsEntity);
 
     return html`
       <div class="controls-section">
@@ -90,15 +93,14 @@ class VmcHeltyCard extends LitElement {
           <span>Modalità Speciali</span>
         </div>
         <ha-chip-set>
-          ${modes.map(mode => {
-            const state = this._getEntityState(mode.entity);
-            const isOn = state && state.state === 'on';
+          ${specialModes.map(mode => {
+            const isOn = !!attrs[mode.attr];
             return html`
               <ha-chip
                 .selected=${isOn}
-                @click=${() => this._toggleSwitch(mode.entity)}
+                @click=${() => this._setSpecialMode(mode)}
                 aria-label="${mode.label}"
-                ?disabled=${this._loading}
+                ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
               >
                 <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
                 ${mode.label}
@@ -107,7 +109,52 @@ class VmcHeltyCard extends LitElement {
           })}
         </ha-chip-set>
       </div>
+      <div class="controls-section">
+          <ha-switch
+            .selected=${panelLedState && panelLedState.state === 'on'}
+            @click=${() => this._toggleSwitch(panelLedEntity)}
+            aria-label="LED Pannello"
+            ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+          >
+            <ha-icon icon="mdi:led-on" slot="icon"></ha-icon>
+            LED Pannello
+          </ha-switch>
+      </div>
+      <div class="controls-section">
+          <ha-switch
+            .selected=${sensorsState && sensorsState.state === 'on'}
+            @click=${() => this._toggleSwitch(sensorsEntity)}
+            aria-label="Sensori"
+            ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+          >
+            <ha-icon icon="mdi:eye" slot="icon"></ha-icon>
+            Sensori
+          </ha-switch>
+      </div>
     `;
+  }
+
+  /** Imposta la modalità speciale inviando la fan speed corrispondente */
+  async _setSpecialMode(mode) {
+    if (!this.hass || !this.config.entity) return;
+    try {
+      this._loading = true;
+      await this.hass.callService("fan", "set_percentage", {
+        entity_id: this.config.entity,
+        // La fan speed speciale va da 5 a 7, la percentuale non è usata realmente ma Home Assistant la mappa
+        percentage: mode.speed * 25,
+      });
+      fireEvent(this, "hass-notification", {
+        message: `Modalità impostata: ${mode.label}`,
+      });
+      if ("vibrate" in navigator) navigator.vibrate(40);
+    } catch (e) {
+      fireEvent(this, "hass-notification", {
+        message: `Errore: ${e.message}`,
+      });
+    } finally {
+      this._loading = false;
+    }
   }
   static get properties() {
     return {
