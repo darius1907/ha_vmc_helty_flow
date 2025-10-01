@@ -28,6 +28,7 @@ from .helpers import (
     VMCConnectionError,
     VMCTimeoutError,
     tcp_send_command,
+    validate_network_connectivity,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,13 +49,20 @@ NETWORK_INFO_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 DEVICE_NAME_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 
 
-async def async_setup_volume_service(hass: HomeAssistant) -> None:
-    """Setup del servizio per aggiornare il volume della stanza."""
+async def async_setup_services(hass: HomeAssistant) -> None:
+    """Setup services for the integration."""
+    # Service schema for room volume update
     update_room_volume_schema = vol.Schema({
         vol.Required("entity_id"): cv.entity_id,
         vol.Required("room_volume"): vol.All(
             vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
         ),
+    })
+
+    # Service schema for network diagnostics
+    network_diagnostics_schema = vol.Schema({
+        vol.Required("ip"): cv.string,
+        vol.Optional("port", default=DEFAULT_PORT): cv.port,
     })
 
     async def handle_update_room_volume(call: ServiceCall) -> None:
@@ -87,11 +95,52 @@ async def async_setup_volume_service(hass: HomeAssistant) -> None:
             new_volume
         )
 
+    async def handle_network_diagnostics(
+        call: ServiceCall,
+    ) -> dict[str, str | bool | int | None]:
+        """Handle network diagnostics service call."""
+        ip = call.data["ip"]
+        port = call.data["port"]
+
+        _LOGGER.info("Running network diagnostics for %s:%s", ip, port)
+
+        try:
+            diagnostics = await validate_network_connectivity(ip, port)
+        except Exception as err:
+            _LOGGER.exception("Failed to run network diagnostics for %s:%s", ip, port)
+            raise HomeAssistantError(f"Network diagnostics failed: {err}") from err
+        else:
+            # Log the results
+            _LOGGER.info(
+                "Network diagnostics for %s:%s - Ping: %s, TCP: %s, Reachable: %s",
+                ip, port,
+                diagnostics.get("ping_success"),
+                diagnostics.get("tcp_connection"),
+                diagnostics.get("reachable")
+            )
+
+            if diagnostics.get("error_details"):
+                _LOGGER.warning(
+                    "Network diagnostics errors for %s:%s - %s",
+                    ip, port, diagnostics.get("error_details")
+                )
+
+            return diagnostics
+
+    # Register services
     hass.services.async_register(
         DOMAIN,
         "update_room_volume",
         handle_update_room_volume,
         schema=update_room_volume_schema,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "network_diagnostics",
+        handle_network_diagnostics,
+        schema=network_diagnostics_schema,
+        supports_response="only",
     )
 
 
@@ -166,6 +215,25 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             ) from err
         except VMCConnectionError as err:
             _LOGGER.exception("Errore di connessione a %s", self.ip)
+            
+            # Run network diagnostics on first error or every 5th consecutive error
+            if self._consecutive_errors == 0 or self._consecutive_errors % 5 == 0:
+                try:
+                    diagnostics = await validate_network_connectivity(
+                        self.ip, DEFAULT_PORT
+                    )
+                    _LOGGER.info(
+                        "Diagnostica di rete per %s: ping=%s, tcp=%s, dettagli=%s",
+                        self.ip,
+                        diagnostics.get("ping_success"),
+                        diagnostics.get("tcp_connection"),
+                        diagnostics.get("error_details")
+                    )
+                except Exception as diag_err:
+                    _LOGGER.debug(
+                        "Impossibile eseguire diagnostica di rete: %s", diag_err
+                    )
+            
             self._handle_error()
             raise UpdateFailed(f"Errore di connessione a {self.ip}: {err}") from err
 
@@ -369,9 +437,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN]["device_actions_setup"] = True
 
     # Setup del servizio per aggiornare il volume (solo una volta)
-    if not hass.data[DOMAIN].get("volume_service_setup"):
-        await async_setup_volume_service(hass)
-        hass.data[DOMAIN]["volume_service_setup"] = True
+    if not hass.data[DOMAIN].get("services_setup"):
+        await async_setup_services(hass)
+        hass.data[DOMAIN]["services_setup"] = True
 
     # Crea il coordinatore per questo dispositivo
     coordinator = VmcHeltyCoordinator(hass, entry)

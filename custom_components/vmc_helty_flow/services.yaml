@@ -27,6 +27,28 @@ update_room_volume:
           step: 0.1
           unit_of_measurement: "m³"
 
+network_diagnostics:
+  name: "Network diagnostics"
+  description: "Run network connectivity diagnostics for a VMC Helty device"
+  fields:
+    ip:
+      name: "IP Address"
+      description: "The IP address of the VMC Helty device to test"
+      required: true
+      example: "192.168.1.117"
+      selector:
+        text:
+    port:
+      name: "TCP Port"
+      description: "The TCP port to test (default: 5001)"
+      required: false
+      default: 5001
+      example: 5001
+      selector:
+        number:
+          min: 1
+          max: 65535
+
 device_action:
   name: "Device action"
   description: "Execute a specific action on a VMC Helty device"

@@ -3,6 +3,8 @@
 import asyncio
 import logging
 import socket
+import subprocess
+import sys
 
 from homeassistant.exceptions import HomeAssistantError
 
@@ -12,6 +14,11 @@ _LOGGER = logging.getLogger(__name__)
 
 # Constants
 MIN_RESPONSE_LENGTH = 64
+
+# Network error constants
+ERROR_HOST_UNREACHABLE = 113  # EHOSTUNREACH
+ERROR_CONNECTION_REFUSED = 111  # ECONNREFUSED
+ERROR_TIMEOUT = 110  # ETIMEDOUT
 
 
 class VMCConnectionError(HomeAssistantError):
@@ -39,9 +46,35 @@ async def _establish_connection(ip: str, port: int, timeout: int) -> tuple:
     except TimeoutError:
         raise VMCTimeoutError(f"Timeout durante la connessione a {ip}:{port}") from None
     except ConnectionRefusedError:
-        raise VMCConnectionError(f"Connessione rifiutata da {ip}:{port}") from None
+        raise VMCConnectionError(
+            f"Connessione rifiutata da {ip}:{port} - "
+            "Il dispositivo potrebbe essere spento o non raggiungibile"
+        ) from None
     except (OSError, socket.gaierror) as err:
-        raise VMCConnectionError(f"Errore di connessione a {ip}:{port}: {err}") from err
+        # Provide more specific error messages based on errno
+        if hasattr(err, "errno"):
+            if err.errno == ERROR_HOST_UNREACHABLE:
+                error_msg = (
+                    f"Host non raggiungibile {ip}:{port} - "
+                    "Verificare la connessione di rete e l'indirizzo IP"
+                )
+            elif err.errno == ERROR_CONNECTION_REFUSED:
+                error_msg = (
+                    f"Connessione rifiutata da {ip}:{port} - "
+                    "Il servizio potrebbe non essere in esecuzione"
+                )
+            elif err.errno == ERROR_TIMEOUT:
+                error_msg = (
+                    f"Timeout di connessione a {ip}:{port} - "
+                    "Il dispositivo potrebbe essere irraggiungibile"
+                )
+            else:
+                error_msg = (
+                    f"Errore di rete ({err.errno}) connettendo a {ip}:{port}: {err}"
+                )
+        else:
+            error_msg = f"Errore di connessione a {ip}:{port}: {err}"
+        raise VMCConnectionError(error_msg) from err
 
 
 async def _send_and_receive(
@@ -177,7 +210,7 @@ async def get_device_info(
         _LOGGER.debug("get_device_info-> response: [%s]", response)
         if not response or not response.startswith("VMGO"):
             _LOGGER.warning(
-                "Dispositivo %s ha risposto con un formato non riconosciuto: %s",
+                "Dispositivo %s ha risposto con un formato non riconosciuto: [%s]",
                 ip,
                 response,
             )
@@ -247,6 +280,53 @@ async def discover_vmc_devices(
 def get_device_name(ip: str) -> str:
     """Restituisce un nome di default per il dispositivo basato sull'IP."""
     return f"VMC Helty {ip.split('.')[-1]}"
+
+
+async def validate_network_connectivity(
+    ip: str, port: int = DEFAULT_PORT
+) -> dict[str, str | bool | int | None]:
+    """Validate network connectivity to a VMC device and return diagnostic info."""
+    diagnostics = {
+        "ip": ip,
+        "port": port,
+        "reachable": False,
+        "ping_success": False,
+        "tcp_connection": False,
+        "error_details": None
+    }
+
+    # Test ping connectivity (basic network reachability)
+    try:
+        if sys.platform.startswith("win"):
+            ping_cmd = ["ping", "-n", "1", "-w", "1000", ip]
+        else:
+            ping_cmd = ["ping", "-c", "1", "-W", "1", ip]
+
+        result = subprocess.run(ping_cmd, capture_output=True, timeout=5, check=False)
+        diagnostics["ping_success"] = result.returncode == 0
+        if not diagnostics["ping_success"]:
+            error_output = (
+                result.stderr.decode() if result.stderr else "Host unreachable"
+            )
+            diagnostics["error_details"] = f"Ping failed: {error_output}"
+    except Exception as err:
+        diagnostics["error_details"] = f"Ping test failed: {err}"
+
+    # Test TCP connection
+    try:
+        _, writer = await asyncio.wait_for(
+            asyncio.open_connection(ip, port), timeout=3
+        )
+        diagnostics["tcp_connection"] = True
+        diagnostics["reachable"] = True
+        writer.close()
+        await writer.wait_closed()
+    except Exception as err:
+        diagnostics["tcp_connection"] = False
+        if not diagnostics["error_details"]:
+            diagnostics["error_details"] = f"TCP connection failed: {err}"
+
+    return diagnostics
 
 
 def parse_vmsl_response(response: str):

@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
-from custom_components.vmc_helty_flow import async_setup_volume_service
+from custom_components.vmc_helty_flow import async_setup_services
 from custom_components.vmc_helty_flow.const import DOMAIN
 
 
@@ -53,18 +53,21 @@ def mock_entity_entry():
 class TestUpdateRoomVolumeService:
     """Test class for update room volume service."""
 
-    async def test_async_setup_volume_service_registers_service(self, mock_hass):
+    async def test_async_setup_services_registers_service(self, mock_hass):
         """Test that service setup registers the service correctly."""
-        await async_setup_volume_service(mock_hass)
+        await async_setup_services(mock_hass)
 
-        # Verify service was registered
-        mock_hass.services.async_register.assert_called_once()
-        call_args = mock_hass.services.async_register.call_args
+        # Verify services were registered (update_room_volume and network_diagnostics)
+        assert mock_hass.services.async_register.call_count == 2
         
-        assert call_args[0][0] == DOMAIN  # domain
-        assert call_args[0][1] == "update_room_volume"  # service name
-        assert callable(call_args[0][2])  # handler function
-        assert "schema" in call_args[1]  # schema in kwargs
+        # Check that update_room_volume service was registered
+        calls = mock_hass.services.async_register.call_args_list
+        update_volume_call = calls[0]
+        
+        assert update_volume_call[0][0] == DOMAIN  # domain
+        assert update_volume_call[0][1] == "update_room_volume"  # service name
+        assert callable(update_volume_call[0][2])  # handler function
+        assert "schema" in update_volume_call[1]  # schema in kwargs
 
     async def test_handle_update_room_volume_success(
         self, mock_hass, mock_entity_registry, mock_config_entry, mock_entity_entry
@@ -77,10 +80,11 @@ class TestUpdateRoomVolumeService:
         mock_hass.config_entries.async_update_entry = MagicMock()
 
         # Setup service
-        await async_setup_volume_service(mock_hass)
+        await async_setup_services(mock_hass)
         
-        # Get the registered handler
-        handler = mock_hass.services.async_register.call_args[0][2]
+        # Get the registered handler for update_room_volume
+        calls = mock_hass.services.async_register.call_args_list
+        handler = calls[0][0][2]  # First service registered is update_room_volume
         
         # Create service call mock
         service_call = MagicMock()
@@ -107,10 +111,11 @@ class TestUpdateRoomVolumeService:
         mock_entity_registry.async_get.return_value = None  # Entity not found
 
         # Setup service
-        await async_setup_volume_service(mock_hass)
+        await async_setup_services(mock_hass)
         
-        # Get the registered handler
-        handler = mock_hass.services.async_register.call_args[0][2]
+        # Get the registered handler for update_room_volume
+        calls = mock_hass.services.async_register.call_args_list
+        handler = calls[0][0][2]  # First service registered is update_room_volume
         
         # Create service call mock
         service_call = MagicMock()
@@ -120,7 +125,9 @@ class TestUpdateRoomVolumeService:
         }
 
         # Verify exception is raised
-        with pytest.raises(HomeAssistantError, match="Entity fan.nonexistent not found"):
+        with pytest.raises(
+            HomeAssistantError, match=r"Entity fan\.nonexistent not found"
+        ):
             await handler(service_call)
 
     async def test_handle_update_room_volume_wrong_domain(
@@ -137,10 +144,11 @@ class TestUpdateRoomVolumeService:
         mock_hass.config_entries.async_get_entry.return_value = wrong_config_entry
 
         # Setup service
-        await async_setup_volume_service(mock_hass)
+        await async_setup_services(mock_hass)
         
-        # Get the registered handler
-        handler = mock_hass.services.async_register.call_args[0][2]
+        # Get the registered handler for update_room_volume
+        calls = mock_hass.services.async_register.call_args_list
+        handler = calls[0][0][2]  # First service registered is update_room_volume
         
         # Create service call mock
         service_call = MagicMock()
@@ -163,10 +171,11 @@ class TestUpdateRoomVolumeService:
         mock_hass.config_entries.async_get_entry.return_value = None  # Not found
 
         # Setup service
-        await async_setup_volume_service(mock_hass)
+        await async_setup_services(mock_hass)
         
-        # Get the registered handler
-        handler = mock_hass.services.async_register.call_args[0][2]
+        # Get the registered handler for update_room_volume
+        calls = mock_hass.services.async_register.call_args_list
+        handler = calls[0][0][2]  # First service registered is update_room_volume
         
         # Create service call mock
         service_call = MagicMock()
