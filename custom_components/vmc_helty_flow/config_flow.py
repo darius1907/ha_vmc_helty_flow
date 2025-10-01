@@ -48,6 +48,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.total_ips_to_scan = 0
         self.current_found_device = None
         self._stop_after_current = False
+        self._continue_after_room_config = False
 
     def _get_configured_devices(self) -> list[dict[str, Any]]:
         """Ottieni dispositivi configurati dal registry delle config entries."""
@@ -241,35 +242,47 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Aggiungi il dispositivo alla sessione per il tracking
             self.found_devices_session.append(device)
             
-            # Crea l'entry con il volume configurato
-            entry = self.async_create_entry(
-                title=device["name"],
-                data={
-                    "ip": device["ip"],
-                    "name": device["name"],
-                    "model": device.get("model", "VMC Flow"),
-                    "manufacturer": device.get("manufacturer", "Helty"),
-                    "port": device.get("port", 5001),
-                    "timeout": device.get("timeout", 10),
-                    "room_volume": room_volume,
-                },
+            # Crea entry data
+            entry_data = {
+                "ip": device["ip"],
+                "name": device["name"],
+                "model": device.get("model", "VMC Flow"),
+                "manufacturer": device.get("manufacturer", "Helty"),
+                "port": device.get("port", 5001),
+                "timeout": device.get("timeout", 10),
+                "room_volume": room_volume,
+            }
+
+            # Entrambe le azioni usano async_init per creare entry in background
+            # Create entry in background using discovered_device flow
+            await self.hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": "discovered_device"},
+                data=entry_data,
             )
-            
+
+            # Add to session for tracking
+            self.found_devices_session.append(device)
+
             # Se è stato impostato il flag di stop, termina la scansione
             if self._stop_after_current:
                 # Reset del flag per sicurezza
                 self._stop_after_current = False
-                return entry
-            
-            # Altrimenti continua la scansione dopo aver creato l'entry
-            # Dato che abbiamo già creato l'entry, dobbiamo continuare la scansione
-            # ma non possiamo restituire sia l'entry che continuare
-            # Quindi restituiamo l'entry e la scansione si fermerà naturalmente
-            return entry
-        
+                return await self._finalize_incremental_scan()
+
+            # Se è stato impostato il flag di continue, continua la scansione
+            if self._continue_after_room_config:
+                # Reset del flag per sicurezza
+                self._continue_after_room_config = False
+                # Continue scanning
+                return await self._scan_next_ip()
+
+            # Fallback - non dovrebbe mai arrivare qui
+            return self.async_abort(reason="unknown")
+
         # Mostra il form di configurazione del volume
         device = self.current_found_device
-        
+
         # Calcola volume suggerito basato su una stanza tipo
         suggested_volumes = {
             "Piccola (3x3x2.5m)": 22.5,
@@ -277,17 +290,17 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "Grande (5x5x2.8m)": 70.0,
             "Personalizzato": 60.0
         }
-        
+
         schema = vol.Schema({
             vol.Required("room_volume", default=60.0): vol.All(
                 vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
             ),
         })
-        
+
         suggested_text = "\n".join([
             f"• {name}: {volume} m³" for name, volume in suggested_volumes.items()
         ])
-        
+
         return self.async_show_form(
             step_id="room_config",
             data_schema=schema,
@@ -312,6 +325,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.subnet = subnet
         self.port = port
         self.timeout = timeout
+
         self.discovered_devices = []
 
         # Parsing subnet per determinare il range di IPs
@@ -448,10 +462,10 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle when a device is found during incremental scan."""
         if user_input is None:
             return await self._show_device_found_form()
-        
+
         # Handle user choice
         return await self._handle_device_found_action(user_input["action"])
-    
+
     async def _show_device_found_form(self):
         """Show the device found form."""
         device = self.current_found_device
@@ -486,11 +500,11 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "found_count": str(current_found_count),
             },
         )
-    
+
     async def _handle_device_found_action(self, action: str):
         """Handle the action selected for a found device."""
         device = self.current_found_device
-        
+
         if action == "add_and_configure":
             return await self._handle_add_and_configure(device)
         if action == "add_and_stop":
@@ -499,42 +513,45 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return await self._handle_skip_continue(device)
         if action == "stop_scan":
             return await self._handle_stop_scan()
-        
+
         # Fallback - should not reach here
         return await self._scan_next_ip()
-    
+
     async def _handle_add_and_configure(self, device):
         """Handle add device and configure volume."""
         _LOGGER.info(
             "User wants to add device %s, configuring room volume",
             device["ip"]
         )
-        
+
         # Check if device is already configured
         if await self._is_device_already_configured(device["ip"]):
             _LOGGER.warning("Device %s already configured, skipping", device["ip"])
             return await self._scan_next_ip()
-        
+
+        # Set flag to continue scanning after room config
+        self._continue_after_room_config = True
+
         # Go to room configuration step
         return await self.async_step_room_config()
-    
+
     async def _handle_add_and_stop(self, device):
         """Handle add device and stop scan - but configure volume first."""
         _LOGGER.info(
             "User wants to add device %s and stop scan - configuring volume first",
             device["ip"]
         )
-        
+
         # Check if device is already configured
         if await self._is_device_already_configured(device["ip"]):
             _LOGGER.warning(
                 "Device %s already configured, stopping scan", device["ip"]
             )
             return await self._finalize_incremental_scan()
-        
+
         # Imposta flag per fermare la scansione dopo questa configurazione
         self._stop_after_current = True
-        
+
         # Vai alla configurazione del volume
         return await self.async_step_room_config()
     

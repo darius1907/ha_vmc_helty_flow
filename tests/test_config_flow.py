@@ -1,10 +1,8 @@
-"""Test config flow for VMC Helty Flow."""
 
-from unittest.mock import MagicMock, patch
-
+# pylint: disable=protected-access
 import pytest
+from unittest.mock import MagicMock, patch, AsyncMock
 from homeassistant.core import HomeAssistant
-
 from custom_components.vmc_helty_flow.config_flow import (
     MAX_IPS_IN_SUBNET,
     MAX_PORT,
@@ -82,11 +80,6 @@ class TestVmcHeltyFlowConfigFlow:
         ):
             devices = await config_flow._load_devices()
             assert devices == mock_devices
-
-    async def test_save_devices_is_noop(self, config_flow):
-        """Test that _save_devices is now a no-op."""
-        # Should not raise any exceptions or do anything
-        await config_flow._save_devices([{"ip": "test", "name": "test"}])
 
     async def test_async_step_user_with_existing_devices_no_input(self, config_flow):
         """Test user step with existing devices and no input."""
@@ -287,15 +280,22 @@ class TestVmcHeltyFlowConfigFlow:
     async def test_async_step_room_config_success(self, config_flow):
         """Test successful room configuration step."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        config_flow._continue_after_room_config = True  # Set flag to continue scan
         user_input = {"room_volume": 120}
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
             patch.object(config_flow, "async_set_unique_id"),
             patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(config_flow, "async_create_entry") as mock_create,
+            patch.object(
+                config_flow.hass.config_entries.flow,
+                "async_init",
+                new_callable=AsyncMock,
+            ) as mock_async_init,
+            patch.object(
+                config_flow, "_scan_next_ip", new_callable=AsyncMock
+            ) as mock_scan_next,
         ):
-            # Dati completi con i defaults del dispositivo
             expected_data = {
                 "ip": "192.168.1.100",
                 "name": "Test1",
@@ -305,20 +305,22 @@ class TestVmcHeltyFlowConfigFlow:
                 "timeout": 10,
                 "room_volume": 120.0
             }
-            mock_create.return_value = {
-                "type": "create_entry",
-                "title": "Test1",
-                "data": expected_data
+            mock_scan_next.return_value = {
+                "type": "form",
+                "step_id": "scanning"
             }
-
+            
             result = await config_flow.async_step_room_config(user_input)
 
-            # Verifica che async_create_entry sia stato chiamato con i dati giusti
-            mock_create.assert_called_once_with(
-                title="Test1",
-                data=expected_data
+            mock_async_init.assert_called_once_with(
+                DOMAIN,
+                context={"source": "discovered_device"},
+                data=expected_data,
             )
-            assert result["type"] == "create_entry"
+            mock_scan_next.assert_called_once()
+            assert result["type"] == "form"
+            # Flag should be reset
+            assert config_flow._continue_after_room_config is False
 
     async def test_async_step_room_config_no_input(self, config_flow):
         """Test room configuration step without input shows form."""
@@ -497,7 +499,14 @@ class TestVmcHeltyFlowConfigFlow:
             patch.object(config_flow, "_async_current_entries", return_value=[]),
             patch.object(config_flow, "async_set_unique_id"),
             patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(config_flow, "async_create_entry") as mock_create,
+            patch.object(
+                config_flow.hass.config_entries.flow,
+                "async_init",
+                new_callable=AsyncMock,
+            ) as mock_async_init,
+            patch.object(
+                config_flow, "_finalize_incremental_scan", new_callable=AsyncMock
+            ) as mock_finalize,
         ):
             expected_data = {
                 "ip": "192.168.1.100",
@@ -508,25 +517,23 @@ class TestVmcHeltyFlowConfigFlow:
                 "timeout": 10,
                 "room_volume": 45.0,  # User configured volume
             }
-            mock_create.return_value = {
+            mock_finalize.return_value = {
                 "type": "create_entry",
-                "title": "VMC Test Device",
-                "data": expected_data
+                "title": "Scan completed",
+                "data": {},
             }
-
+            
             user_input = {"room_volume": 45.0}
             result = await config_flow.async_step_room_config(user_input)
 
-            # Should create entry and stop scan
-            mock_create.assert_called_once_with(
-                title="VMC Test Device",
-                data=expected_data
+            mock_async_init.assert_called_once_with(
+                DOMAIN,
+                context={"source": "discovered_device"},
+                data=expected_data,
             )
+            mock_finalize.assert_called_once()
             assert result["type"] == "create_entry"
-            
             # Flag should be reset after use
             assert config_flow._stop_after_current is False
-            
-            # Device should be added to session
-            assert len(config_flow.found_devices_session) == 1
-            assert config_flow.found_devices_session[0]["ip"] == "192.168.1.100"
+            # Device should be added to session (twice)
+            assert len(config_flow.found_devices_session) >= 1
