@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import Mock
 
 from custom_components.vmc_helty_flow import VmcHeltyCoordinator
+from custom_components.vmc_helty_flow.const import DEFAULT_ROOM_VOLUME
 from custom_components.vmc_helty_flow.sensor import (
     VmcHeltyAirExchangeTimeSensor,
     VmcHeltyDailyAirChangesSensor,
@@ -55,7 +56,7 @@ class TestRoomVolumeIntegration(unittest.TestCase):
         self.config_entry.options = {}
 
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
-        assert coordinator.room_volume == 60.0  # Default fallback
+        assert coordinator.room_volume == DEFAULT_ROOM_VOLUME  # Default fallback
 
     def test_air_exchange_sensor_uses_coordinator_room_volume(self):
         """Test that air exchange sensor uses coordinator room_volume."""

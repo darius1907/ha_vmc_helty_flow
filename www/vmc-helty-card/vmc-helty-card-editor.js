@@ -351,6 +351,7 @@ class VmcHeltyCardEditor extends LitElement {
     }
 
     // Fallback to card config or default
+    // NOTE: This value should match DEFAULT_ROOM_VOLUME in Python const.py (60 m³)
     return this.config.room_volume || 60;
   }
 

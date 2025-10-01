@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 
-from .const import DOMAIN, IP_NETWORK_PREFIX
+from .const import DEFAULT_ROOM_VOLUME, DOMAIN, IP_NETWORK_PREFIX
 from .helpers import discover_vmc_devices, get_device_info
 from .helpers_net import (
     count_ips_in_subnet,
@@ -222,14 +222,14 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "Piccola (3x3x2.5m)": 22.5,
             "Media (4x4x2.7m)": 43.2,
             "Grande (5x5x2.8m)": 70.0,
-            "Personalizzato": 60.0
+            "Personalizzato": DEFAULT_ROOM_VOLUME
         }
         
         if user_input is not None:
             # Determina il volume finale
             if "room_volume" in user_input:
                 # Volume inserito manualmente
-                room_volume = float(user_input.get("room_volume", 60.0))
+                room_volume = float(user_input.get("room_volume", DEFAULT_ROOM_VOLUME))
             else:
                 # Volume calcolato da dimensioni
                 length = float(user_input.get("length", 4.0))
@@ -304,7 +304,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "calculate"    # Calcolo da dimensioni
             ]),
             # Campi per inserimento manuale
-            vol.Optional("room_volume", default=60.0): vol.All(
+            vol.Optional("room_volume", default=DEFAULT_ROOM_VOLUME): vol.All(
                 vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
             ),
             # Campi per calcolo automatico
@@ -635,8 +635,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "manufacturer": discovery_info.get("manufacturer", "Helty"),
                 "port": discovery_info.get("port", 5001),
                 "timeout": discovery_info.get("timeout", 10),
-                # Use configured volume from discovery_info or default to 60.0
-                "room_volume": discovery_info.get("room_volume", 60.0),
+                # Use configured volume from discovery_info or default
+                # Use configured volume from discovery_info or default
+                "room_volume": discovery_info.get("room_volume", DEFAULT_ROOM_VOLUME),
             },
         )
 
@@ -678,7 +679,7 @@ class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
                 ): vol.All(vol.Coerce(int), vol.Range(min=1, max=10)),
                 vol.Optional(
                     "room_volume",
-                    default=self.config_entry.data.get("room_volume", 60.0),
+                    default=self.config_entry.data.get("room_volume", DEFAULT_ROOM_VOLUME),
                 ): vol.All(vol.Coerce(float), vol.Range(min=1.0, max=1000.0)),
             }
         )

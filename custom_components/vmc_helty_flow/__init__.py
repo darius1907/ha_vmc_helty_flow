@@ -17,6 +17,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     DEFAULT_PORT,
+    DEFAULT_ROOM_VOLUME,
     DOMAIN,
     NETWORK_INFO_UPDATE_INTERVAL,
     SENSORS_UPDATE_INTERVAL,
@@ -133,7 +134,9 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         room_volume = self.config_entry.data.get("room_volume")
         if room_volume is None:
             # Also check options for backward compatibility
-            room_volume = self.config_entry.options.get("room_volume", 60.0)
+            room_volume = self.config_entry.options.get(
+                "room_volume", DEFAULT_ROOM_VOLUME
+            )
         return float(room_volume)
 
     @property

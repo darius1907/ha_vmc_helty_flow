@@ -9,7 +9,7 @@ from custom_components.vmc_helty_flow.config_flow import (
     MAX_TIMEOUT,
     VmcHeltyFlowConfigFlow,
 )
-from custom_components.vmc_helty_flow.const import DOMAIN
+from custom_components.vmc_helty_flow.const import DEFAULT_ROOM_VOLUME, DOMAIN
 
 
 class TestVmcHeltyFlowConfigFlow:
@@ -356,7 +356,7 @@ class TestVmcHeltyFlowConfigFlow:
                 "manufacturer": "Helty",
                 "port": 5001,
                 "timeout": 10,
-                "room_volume": 60.0  # 5.0 * 4.0 * 3.0 = 60.0
+                "room_volume": DEFAULT_ROOM_VOLUME  # 5.0 * 4.0 * 3.0 = 60.0
             }
             mock_scan_next.return_value = {
                 "type": "form",
@@ -677,7 +677,7 @@ class TestVmcHeltyFlowConfigFlow:
                     "manufacturer": "Helty",
                     "port": 5001,
                     "timeout": 10,
-                    "room_volume": 60.0,  # Should use default volume
+                    "room_volume": DEFAULT_ROOM_VOLUME,  # Should use default volume
                 }
             )
             

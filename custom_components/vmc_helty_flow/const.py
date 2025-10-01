@@ -148,7 +148,7 @@ AIR_EXCHANGE_POOR = "Poor"
 
 # Default room volume for air exchange calculations
 # NOTE: This should be configured by user for their specific room
-DEFAULT_ROOM_VOLUME = 45  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
+DEFAULT_ROOM_VOLUME = 60  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
 
 # Air Exchange Time Thresholds (minutes) - Tempo ideale per ricambio completo aria
 AIR_EXCHANGE_TIME_EXCELLENT = 120  # Meno di 120 minuti = eccellente

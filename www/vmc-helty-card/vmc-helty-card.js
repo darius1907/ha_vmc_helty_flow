@@ -291,7 +291,7 @@ class VmcHeltyCard extends LitElement {
     const numVolume = parseFloat(volume);
 
     if (isNaN(numVolume) || numVolume < 1 || numVolume > 10000) {
-      return 60; // Default room volume
+      return 60; // Default room volume - should match DEFAULT_ROOM_VOLUME in Python const.py
     }
 
     return Math.round(numVolume * 10) / 10;
@@ -526,7 +526,7 @@ class VmcHeltyCard extends LitElement {
 
     if (airflow === 0) return null;
 
-    const roomVolume = this.config.room_volume || 60;
+    const roomVolume = this.config.room_volume || 60; // Fallback matches DEFAULT_ROOM_VOLUME
     return Math.round((roomVolume / airflow) * 60 * 10) / 10; // minutes
   }
 
@@ -1086,7 +1086,7 @@ class VmcHeltyCard extends LitElement {
     return {
       entity: "",
       name: "VMC Helty Flow",
-      room_volume: 60,
+      room_volume: 60, // Should match DEFAULT_ROOM_VOLUME in Python const.py
       show_temperature: true,
       show_humidity: true,
       show_co2: true,
