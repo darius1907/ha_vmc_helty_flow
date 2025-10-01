@@ -5,7 +5,6 @@ import logging
 import re
 from typing import Any
 
-import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -203,169 +202,97 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Always use incremental scan for better UX
         return await self._start_incremental_scan()
 
-    async def async_step_discovery(self, user_input=None):
-        """Handle device discovery and selection."""
-        if user_input:
-            errors: dict[str, str] = {}
-            return await self._handle_discovery_input(user_input, errors)
+    # async_step_discovery rimosso - ora usiamo solo scansione incrementale
 
-        return await self._handle_discovery_display()
+    # _handle_discovery_input rimosso - non più necessario nel flow incrementale
 
-    async def _handle_discovery_input(self, user_input, _errors):
-        """Handle discovery step input."""
-        if "selected_devices" in user_input:
-            return await self._process_device_selection(user_input)
+    # _perform_device_discovery rimosso - ora usiamo solo scansione incrementale
 
-        # Se non ci sono dispositivi selezionati, torna al form
-        return self._show_device_selection_form()
+    # _handle_discovery_display rimosso - non più necessario nel flow incrementale
 
-    async def _perform_device_discovery(self):
-        """Esegue la discovery direttamente senza step intermedio."""
-        _LOGGER.info("Inizio discovery diretta...")
+    # _process_device_selection e _create_multiple_entries rimossi
+    # Nel flow incrementale ogni dispositivo viene gestito singolarmente
 
-        try:
-            # Esegui la discovery con callback di progresso
-            discovered_devices = await self._discover_devices_async(
-                self.subnet, self.port, self.timeout
-            )
-
-            _LOGGER.info(
-                "Discovery completata, trovati %d dispositivi", len(discovered_devices)
-            )
-
-            if not discovered_devices:
-                # Nessun dispositivo trovato, torna alla configurazione
-                schema = vol.Schema(
-                    {
-                        vol.Required("subnet", default=self.subnet): str,
-                        vol.Required("port", default=self.port): int,
-                        vol.Required("timeout", default=self.timeout): int,
-                    }
-                )
-                return self.async_show_form(
-                    step_id="user",
-                    data_schema=schema,
-                    errors={"base": "nessun_dispositivo_trovato"},
-                    description_placeholders={
-                        "help": (
-                            "Nessun dispositivo VMC Helty trovato nella rete. "
-                            "Verifica la subnet, porta e timeout, poi riprova."
-                        )
-                    },
-                )
-
-            # Salva i dispositivi scoperti
-            self.discovered_devices = discovered_devices
-
-            # Vai direttamente al form di selezione dispositivi
-            return self._show_device_selection_form()
-
-        except Exception:
-            _LOGGER.exception("Errore durante la discovery")
-            schema = vol.Schema(
-                {
-                    vol.Required("subnet", default=self.subnet): str,
-                    vol.Required("port", default=self.port): int,
-                    vol.Required("timeout", default=self.timeout): int,
-                }
-            )
-            return self.async_show_form(
-                step_id="user",
-                data_schema=schema,
-                errors={"base": "errore_discovery"},
-                description_placeholders={
-                    "help": (
-                        "Errore durante la scansione della rete. "
-                        "Verifica i parametri e riprova."
-                    )
-                },
-            )
-
-    async def _handle_discovery_display(self):
-        """Handle the display logic for discovery step."""
-        # Esegui la scansione se non è già stata fatta
-        if not hasattr(self, "discovered_devices") or not self.discovered_devices:
-            return await self._perform_device_discovery()
-
-        # Mostra il form di selezione dei dispositivi
-        return self._show_device_selection_form()
-
-    async def _process_device_selection(self, user_input):
-        """Process the user's device selection."""
-        selected_ips = user_input["selected_devices"]
-        selected_devices = [
-            d for d in self.discovered_devices if d["ip"] in selected_ips
-        ]
-
-        # Crea entry separate per ogni dispositivo selezionato
-        entries_created = 0
-        first_entry = None
-
-        for device in selected_devices:
+    async def async_step_room_config(self, user_input=None):
+        """Configure room volume for accurate air exchange calculations."""
+        if user_input is not None:
+            room_volume = float(user_input.get("room_volume", 60.0))
+            
+            # Crea entry per il dispositivo trovato con il volume configurato
+            device = self.current_found_device
+            
             # Verifica che non esista già una entry per questo dispositivo
             existing_entries = [
                 entry
                 for entry in self._async_current_entries()
                 if entry.data.get("ip") == device["ip"]
             ]
-
-            if not existing_entries:
-                await self.async_set_unique_id(device["ip"])
-                try:
-                    self._abort_if_unique_id_configured()
-                except Exception:
-                    # Se già configurato, salta questo dispositivo
-                    continue
-
-                # Crea entry separata per ogni dispositivo
-                entry = self.async_create_entry(
-                    title=device["name"],
-                    data={
-                        "ip": device["ip"],
-                        "name": device["name"],
-                        "model": device.get("model", "VMC Flow"),
-                        "manufacturer": device.get("manufacturer", "Helty"),
-                        "port": device.get("port", 5001),
-                        "timeout": device.get("timeout", 10),
-                    },
+            
+            if existing_entries:
+                return self.async_abort(reason="device_already_configured")
+            
+            await self.async_set_unique_id(device["ip"])
+            try:
+                self._abort_if_unique_id_configured()
+            except Exception:
+                return self.async_abort(reason="device_already_configured")
+            
+            # Aggiungi il dispositivo alla sessione per il tracking
+            self.found_devices_session.append(device)
+            
+            # Crea l'entry con il volume configurato
+            return self.async_create_entry(
+                title=device["name"],
+                data={
+                    "ip": device["ip"],
+                    "name": device["name"],
+                    "model": device.get("model", "VMC Flow"),
+                    "manufacturer": device.get("manufacturer", "Helty"),
+                    "port": device.get("port", 5001),
+                    "timeout": device.get("timeout", 10),
+                    "room_volume": room_volume,
+                },
+            )
+        
+        # Mostra il form di configurazione del volume
+        device = self.current_found_device
+        
+        # Calcola volume suggerito basato su una stanza tipo
+        suggested_volumes = {
+            "Piccola (3x3x2.5m)": 22.5,
+            "Media (4x4x2.7m)": 43.2,
+            "Grande (5x5x2.8m)": 70.0,
+            "Personalizzato": 60.0
+        }
+        
+        schema = vol.Schema({
+            vol.Required("room_volume", default=60.0): vol.All(
+                vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
+            ),
+        })
+        
+        suggested_text = "\n".join([
+            f"• {name}: {volume} m³" for name, volume in suggested_volumes.items()
+        ])
+        
+        return self.async_show_form(
+            step_id="room_config",
+            data_schema=schema,
+            description_placeholders={
+                "device_name": device["name"],
+                "device_ip": device["ip"],
+                "suggestions": suggested_text,
+                "help": (
+                    f"Configura il volume della stanza per il dispositivo "
+                    f"'{device['name']}' ({device['ip']}) per calcoli accurati "
+                    f"di ricambio d'aria.\n\n"
+                    f"Volumi suggeriti:\n{suggested_text}\n\n"
+                    "Il volume si calcola: Lunghezza x Larghezza x Altezza (metri)"
                 )
-
-                entries_created += 1
-                if first_entry is None:
-                    first_entry = entry
-
-        # Se tutti i dispositivi erano già configurati
-        if entries_created == 0:
-            return self.async_abort(reason="all_devices_already_configured")
-
-        # Ritorna la prima entry creata (Home Assistant gestisce le altre
-        # automaticamente)
-        return first_entry
-
-    def _show_device_selection_form(self):
-        """Show the device selection form."""
-        devices = self.discovered_devices
-        device_options = {d["ip"]: f"{d['name']} ({d['ip']})" for d in devices}
-
-        schema = vol.Schema(
-            {
-                vol.Required("selected_devices"): cv.multi_select(device_options),
             }
         )
 
-        # Calcola statistiche per il messaggio
-        total_scanned = getattr(self, "total_ips_scanned", 0)
-        progress_msg = (
-            f"Scansione completata! Analizzati {total_scanned} indirizzi IP. "
-            f"Trovati {len(devices)} dispositivi VMC Helty. "
-            "Seleziona i dispositivi da aggiungere a Home Assistant:"
-        )
-
-        return self.async_show_form(
-            step_id="discovery",
-            data_schema=schema,
-            description_placeholders={"help": progress_msg},
-        )
+    # _show_device_selection_form rimosso - non più necessario nel flow incrementale
 
     async def _discover_devices_async(self, subnet, port, timeout):
         """Perform device discovery with progress tracking."""
@@ -520,10 +447,10 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required("action"): vol.In(
                         [
-                            "add_continue",  # Add device and continue scanning
-                            "skip_continue",  # Skip device and continue scanning
-                            "add_stop",  # Add device and stop scanning
-                            "stop_scan",  # Stop scanning without adding
+                            "add_and_configure",  # Add device with volume config
+                            "add_and_stop",       # Add device with default volume and stop
+                            "skip_continue",      # Skip device and continue scanning
+                            "stop_scan",          # Stop scanning without adding
                         ]
                     )
                 }
@@ -545,10 +472,13 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         action = user_input["action"]
         device = self.current_found_device
 
-        if action in ["add_continue", "add_stop"]:
-            # Create entry in background for both actions - no popup
-            _LOGGER.info("Creating background entry for device %s", device["ip"])
-
+        if action == "add_and_configure":
+            # Vai alla configurazione del volume
+            _LOGGER.info(
+                "User wants to add device %s, configuring room volume",
+                device["ip"]
+            )
+            
             # Check if device is already configured
             existing_entries = [
                 entry
@@ -556,30 +486,71 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if entry.data.get("ip") == device["ip"]
             ]
 
-            if not existing_entries:
-                # Use discovery flow for both actions - creates entry in background
-                await self.hass.config_entries.flow.async_init(
-                    DOMAIN,
-                    context={"source": "discovered_device"},
-                    data={
-                        "ip": device["ip"],
-                        "name": device["name"],
-                        "model": device.get("model", "VMC Flow"),
-                        "manufacturer": device.get("manufacturer", "Helty"),
-                        "port": self.port,
-                        "timeout": self.timeout,
-                    },
-                )
+            if existing_entries:
+                _LOGGER.warning("Device %s already configured, skipping", device["ip"])
+                # Continue scanning since device is already there
+                return await self._scan_next_ip()
+            
+            # Go to room configuration step
+            return await self.async_step_room_config()
 
-            # Add to session for tracking
+        if action == "add_and_stop":
+            # Aggiungi dispositivo con volume di default e termina
+            _LOGGER.info(
+                "User wants to add device %s with default volume and stop scan",
+                device["ip"]
+            )
+            
+            # Check if device is already configured
+            existing_entries = [
+                entry
+                for entry in self._async_current_entries()
+                if entry.data.get("ip") == device["ip"]
+            ]
+
+            if existing_entries:
+                _LOGGER.warning("Device %s already configured, stopping scan", device["ip"])
+                return await self._finalize_incremental_scan()
+            
+            # Crea entry con volume di default
+            await self.async_set_unique_id(device["ip"])
+            try:
+                self._abort_if_unique_id_configured()
+            except Exception:
+                # Se già configurato, termina la scansione
+                return await self._finalize_incremental_scan()
+            
+            # Aggiungi il dispositivo alla sessione per il tracking
             self.found_devices_session.append(device)
+            
+            # Crea l'entry con volume di default (60m³)
+            entry = self.async_create_entry(
+                title=device["name"],
+                data={
+                    "ip": device["ip"],
+                    "name": device["name"],
+                    "model": device.get("model", "VMC Flow"),
+                    "manufacturer": device.get("manufacturer", "Helty"),
+                    "port": device.get("port", 5001),
+                    "timeout": device.get("timeout", 10),
+                    "room_volume": 60.0,  # Volume di default
+                },
+            )
+            
+            # Termina la scansione restituendo l'entry creata
+            return entry
 
-        if action in ["add_stop", "stop_scan"]:
-            # Stop scanning
-            _LOGGER.info("Scan stopped by user choice: %s", action)
+        if action == "skip_continue":
+            # Skip device and continue scanning
+            _LOGGER.info("User skipped device %s, continuing scan", device["ip"])
+            return await self._scan_next_ip()
+            
+        if action == "stop_scan":
+            # Stop scanning without adding current device
+            _LOGGER.info("Scan stopped by user choice without adding current device")
             return await self._finalize_incremental_scan()
 
-        # Continue scanning
+        # Should not reach here
         return await self._scan_next_ip()
 
     def _slugify_name(self, name: str) -> str:
@@ -612,6 +583,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "manufacturer": discovery_info.get("manufacturer", "Helty"),
                 "port": discovery_info.get("port", 5001),
                 "timeout": discovery_info.get("timeout", 10),
+                "room_volume": 60.0,  # Default room volume
             },
         )
 
@@ -651,6 +623,10 @@ class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
                     "retry_attempts",
                     default=self.config_entry.options.get("retry_attempts", 3),
                 ): vol.All(vol.Coerce(int), vol.Range(min=1, max=10)),
+                vol.Optional(
+                    "room_volume",
+                    default=self.config_entry.data.get("room_volume", 60.0),
+                ): vol.All(vol.Coerce(float), vol.Range(min=1.0, max=1000.0)),
             }
         )
 

@@ -64,7 +64,6 @@ from .const import (
     DAILY_AIR_CHANGES_GOOD,
     DAILY_AIR_CHANGES_GOOD_MIN,
     DAILY_AIR_CHANGES_POOR,
-    DEFAULT_ROOM_VOLUME,
     DEW_POINT_ACCEPTABLE_MAX,
     DEW_POINT_ACCEPTABLE_MIN,
     DEW_POINT_COMFORTABLE_MAX,
@@ -992,7 +991,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             return None
 
         parts = status_data.split(",")
-        if len(parts) < MIN_STATUS_PARTS:  # Need at least VMGO and fan_speed
+        if len(parts) < MIN_RESPONSE_PARTS:  # Need at least 15 parts for VMGO
             return None
 
         try:
@@ -1007,8 +1006,8 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
                 fan_speed, 10
             )  # Default 10 m³/h se non riconosciuto
 
-            # Volume ambiente (usa valore di default se non configurato)
-            room_volume = DEFAULT_ROOM_VOLUME  # m³
+            # Volume ambiente dalla configurazione del dispositivo
+            room_volume = self.coordinator.room_volume  # m³
 
             # Calcola tempo di ricambio: Volume / Portata * 60 (per convertire in minuti)
             exchange_time = (room_volume / airflow) * 60
@@ -1070,7 +1069,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
 
             return {
                 "efficiency_category": efficiency_category,
-                "room_volume": f"{DEFAULT_ROOM_VOLUME} m³",
+                "room_volume": f"{self.coordinator.room_volume} m³",
                 "estimated_airflow": f"{airflow} m³/h",
                 "fan_speed": FANSPEED_MAPPING.get(actual_speed, 0),
                 "raw_fan_speed": actual_speed,
@@ -1125,7 +1124,11 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
 
         # Usa il parsing VMGO per ottenere la velocità ventola
         status_data = self.coordinator.data.get("status", "")
-        if not status_data or not status_data.startswith("VMGO"):
+        if (
+            not status_data
+            or not isinstance(status_data, str)
+            or not status_data.startswith("VMGO")
+        ):
             return None
 
         parts = status_data.split(",")
@@ -1138,10 +1141,10 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
             fan_speed_raw = int(parts[1])
 
             # Calcola portata aria stimata in m³/h basata sulla velocità
-            airflow_rate = AIRFLOW_MAPPING.get(fan_speed_raw, 1)  # Default 10 m³/h
+            airflow_rate = AIRFLOW_MAPPING.get(fan_speed_raw, 10)  # Default 10 m³/h
 
-            # Volume ambiente (usa valore di default se non configurato)
-            room_volume = DEFAULT_ROOM_VOLUME  # m³
+            # Volume ambiente dalla configurazione del dispositivo
+            room_volume = self.coordinator.room_volume  # m³
 
             # Calcola ricambi d'aria per ora
             air_changes_per_hour = airflow_rate / room_volume
@@ -1185,7 +1188,7 @@ class VmcHeltyDailyAirChangesSensor(SensorEntity):
                     "category": category,
                     "assessment": assessment,
                     "air_changes_per_hour": round(daily_changes / 24, 2),
-                    "room_volume_m3": DEFAULT_ROOM_VOLUME,
+                    "room_volume_m3": self.coordinator.room_volume,
                     "recommendation": self._get_recommendation(daily_changes),
                 }
             )

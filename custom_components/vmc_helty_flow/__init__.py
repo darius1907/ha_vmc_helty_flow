@@ -76,6 +76,16 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         }
 
     @property
+    def room_volume(self) -> float:
+        """Return configured room volume from config entry."""
+        # Get room volume from config entry data, with fallback to default
+        room_volume = self.config_entry.data.get("room_volume")
+        if room_volume is None:
+            # Also check options for backward compatibility
+            room_volume = self.config_entry.options.get("room_volume", 60.0)
+        return float(room_volume)
+
+    @property
     def name_slug(self) -> str:
         """Return device name as a slug with vmc_helty_ prefix (safe for entity IDs)."""
         slug = re.sub(r"[^a-z0-9]+", "_", self.name.lower())

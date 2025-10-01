@@ -110,25 +110,25 @@ class VmcHeltyCard extends LitElement {
         </ha-chip-set>
       </div>
       <div class="controls-section">
+          <span>LED Pannello</span>
           <ha-switch
             .selected=${panelLedState && panelLedState.state === 'on'}
             @click=${() => this._toggleSwitch(panelLedEntity)}
             aria-label="LED Pannello"
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
           >
-            <ha-icon icon="mdi:led-on" slot="icon"></ha-icon>
-            LED Pannello
+            <ha-icon icon="mdi:led-on" slot="icon"></ha-icon>            
           </ha-switch>
       </div>
       <div class="controls-section">
+          <span>Sensori</span>
           <ha-switch
             .selected=${sensorsState && sensorsState.state === 'on'}
             @click=${() => this._toggleSwitch(sensorsEntity)}
             aria-label="Sensori"
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
           >
-            <ha-icon icon="mdi:eye" slot="icon"></ha-icon>
-            Sensori
+            <ha-icon icon="mdi:eye" slot="icon"></ha-icon>            
           </ha-switch>
       </div>
     `;
@@ -201,57 +201,12 @@ class VmcHeltyCard extends LitElement {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
       }
-      .ha-chip-set {
-        gap: 12px;
-      }
-      ha-chip {
-        --mdc-chip-height: 44px;
-        --mdc-shape-medium: var(--ha-card-border-radius, 8px);
-        font-size: 1rem;
-        font-weight: 500;
-        margin-right: 8px;
-        margin-bottom: 8px;
-        min-width: 70px;
-        padding: 0 12px;
-        background: var(--secondary-background-color);
-        transition: background 0.2s, color 0.2s;
-      }
-      ha-chip[selected] {
-        background: var(--primary-color);
-        color: var(--text-primary-color, #fff);
-        box-shadow: 0 2px 8px rgba(33,150,243,0.08);
-      }
-      ha-chip[selected] ha-icon {
-        color: var(--text-primary-color, #fff);
-        filter: drop-shadow(0 0 2px var(--primary-color));
-      }
-      ha-chip ha-icon {
-        color: var(--primary-text-color, #888);
-        transition: color 0.2s;
-      }
-      ha-chip[aria-label] {
-        cursor: pointer;
-      }
       .speed-status {
         margin-top: 4px;
         font-size: 1rem;
         font-weight: 500;
         color: var(--primary-color);
         text-align: left;
-      }
-      .mode-chip {
-        --mdc-chip-height: 44px;
-        font-size: 1rem;
-        font-weight: 500;
-        margin-right: 8px;
-        margin-bottom: 8px;
-        min-width: 120px;
-        background: var(--secondary-background-color);
-        transition: background 0.2s, color 0.2s;
-      }
-      .mode-chip[selected] {
-        background: var(--success-color, #4caf50);
-        color: var(--text-primary-color, #fff);
       }
       .sensor-card {
         border: 1px solid var(--divider-color, #e0e0e0);

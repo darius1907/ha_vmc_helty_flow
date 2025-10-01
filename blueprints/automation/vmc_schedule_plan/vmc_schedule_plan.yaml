@@ -1,0 +1,122 @@
+blueprint:
+  name: VMC Helty Flow - Automazione Boost Giorno/Notte
+  description: >
+    Gestisce automaticamente la velocità della ventola della VMC Helty Flow
+    con cicli base e boost separati per il giorno e la notte.
+  domain: automation
+  input:
+    vmc_entity:
+      name: Entità VMC
+      description: L'entità fan.* della VMC
+      selector:
+        entity:
+          domain: fan
+
+    day_start:
+      name: Ora inizio giorno
+      default: "08:00:00"
+      selector:
+        time: {}
+
+    night_start:
+      name: Ora inizio notte
+      default: "22:00:00"
+      selector:
+        time: {}
+
+    day_base_fan:
+      name: Velocità base giorno
+      description: Valore ventola quando è giorno (base)
+      default: 50
+      selector:
+        select:
+          options:
+            - label: Low (25%)
+              value: 25
+            - label: Medium (50%)
+              value: 50
+            - label: High (75%)
+              value: 75
+            - label: Max (100%)
+              value: 100
+
+    day_boost_fan:
+      name: Velocità boost giorno
+      description: Valore ventola quando è giorno (boost)
+      default: 75
+      selector:
+        select:
+          options:
+            - label: Low (25%)
+              value: 25
+            - label: Medium (50%)
+              value: 50
+            - label: High (75%)
+              value: 75
+            - label: Max (100%)
+              value: 100
+
+    night_base_fan:
+      name: Velocità base notte
+      description: Valore ventola quando è notte (base)
+      default: 25
+      selector:
+        select:
+          options:
+            - label: Low (25%)
+              value: 25
+            - label: Medium (50%)
+              value: 50
+            - label: High (75%)
+              value: 75
+            - label: Max (100%)
+              value: 100
+
+    night_boost_fan:
+      name: Velocità boost notte
+      description: Valore ventola quando è notte (boost)
+      default: 50
+      selector:
+        select:
+          options:
+            - label: Low (25%)
+              value: 25
+            - label: Medium (50%)
+              value: 50
+            - label: High (75%)
+              value: 75
+            - label: Max (100%)
+              value: 100
+
+mode: restart
+trigger:
+  - platform: time
+    at: !input day_start
+  - platform: time
+    at: !input night_start
+
+action:
+  - choose:
+      - conditions:
+          - condition: time
+            after: !input day_start
+            before: !input night_start
+        sequence:
+          - service: fan.set_percentage
+            target:
+              entity_id: !input vmc_entity
+            data:
+              percentage: !input day_boost_fan
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: time
+                after: !input night_start
+              - condition: time
+                before: !input day_start
+        sequence:
+          - service: fan.set_percentage
+            target:
+              entity_id: !input vmc_entity
+            data:
+              percentage: !input night_boost_fan
