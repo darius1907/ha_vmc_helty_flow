@@ -316,6 +316,44 @@ class VmcHeltyCardEditor extends LitElement {
       }));
   }
 
+  _getDeviceRoomVolume() {
+    if (!this.config.entity || !this.hass) {
+      return this.config.room_volume || 60;
+    }
+
+    // Try to get room volume from any sensor of the same device
+    const deviceEntities = Object.keys(this.hass.states).filter(entityId => 
+      entityId.includes('vmc_helty') && 
+      this.hass.states[entityId].attributes.device_id === 
+      this.hass.states[this.config.entity]?.attributes.device_id
+    );
+
+    // Look for room_volume in sensor attributes
+    for (const entityId of deviceEntities) {
+      const entity = this.hass.states[entityId];
+      if (entity.attributes && entity.attributes.room_volume) {
+        // Parse room_volume from "75.0 m³" format
+        const volumeStr = entity.attributes.room_volume;
+        if (typeof volumeStr === 'string') {
+          const match = volumeStr.match(/^([\d.]+)/);
+          if (match) {
+            return parseFloat(match[1]);
+          }
+        } else if (typeof volumeStr === 'number') {
+          return volumeStr;
+        }
+      }
+      
+      // Also check for room_volume_m3 attribute
+      if (entity.attributes && entity.attributes.room_volume_m3) {
+        return parseFloat(entity.attributes.room_volume_m3);
+      }
+    }
+
+    // Fallback to card config or default
+    return this.config.room_volume || 60;
+  }
+
   _valueChanged(ev) {
     const target = ev.target;
     const key = target.configValue;
@@ -337,6 +375,11 @@ class VmcHeltyCardEditor extends LitElement {
 
     // Fire config change event
     this._fireConfigChanged();
+
+    // If room_volume changed, sync with device configuration
+    if (key === 'room_volume' && this.config.entity && value > 0) {
+      this._syncRoomVolumeToDevice(value);
+    }
   }
 
   _fireConfigChanged() {
@@ -371,6 +414,44 @@ class VmcHeltyCardEditor extends LitElement {
     if (volumeField) {
       volumeField.value = volume;
     }
+
+    // Sync with device configuration
+    if (this.config.entity && volume > 0) {
+      this._syncRoomVolumeToDevice(volume);
+    }
+  }
+
+  async _syncRoomVolumeToDevice(volume) {
+    try {
+      // Call the update_room_volume service to sync with device configuration
+      await this.hass.callService('vmc_helty_flow', 'update_room_volume', {
+        entity_id: this.config.entity,
+        room_volume: volume
+      });
+
+      // Show success notification
+      this._showNotification('Room volume updated successfully', 'success');
+    } catch (error) {
+      console.error('Failed to sync room volume with device:', error);
+      // Show error notification
+      this._showNotification(
+        `Failed to update room volume: ${error.message || 'Unknown error'}`, 
+        'error'
+      );
+    }
+  }
+
+  _showNotification(message, type = 'info') {
+    // Create a toast notification event
+    const event = new CustomEvent('hass-notification', {
+      detail: {
+        message: message,
+        duration: type === 'error' ? 5000 : 3000
+      },
+      bubbles: true,
+      composed: true
+    });
+    this.dispatchEvent(event);
   }
 
   render() {
@@ -525,14 +606,32 @@ class VmcHeltyCardEditor extends LitElement {
         </div>
 
         <div class="form-group">
-          <label class="form-label">Room Volume</label>
+          <label class="form-label">
+            Room Volume
+            ${this.config.entity ? html`
+              <ha-icon 
+                icon="mdi:sync" 
+                style="color: var(--success-color, #4caf50); margin-left: 8px; --mdc-icon-size: 16px;" 
+                title="Volume will be synced with device configuration"
+              ></ha-icon>
+            ` : ''}
+          </label>
           <div class="form-description">
             Room volume in cubic meters (m³) for accurate air exchange calculations
+            ${this.config.entity ? html`
+              <br><small style="color: var(--success-color, #4caf50);">
+                ✓ Showing current device volume - changes will sync with device configuration
+              </small>
+            ` : html`
+              <br><small style="color: var(--warning-color, #ff9800);">
+                ⚠ Select a device above to load current volume and enable sync
+              </small>
+            `}
           </div>
           <ha-textfield
             id="room_volume"
             .label=${"Room Volume (m³)"}
-            .value=${this.config.room_volume || 60}
+            .value=${this._getDeviceRoomVolume()}
             .configValue=${"room_volume"}
             type="number"
             min="1"

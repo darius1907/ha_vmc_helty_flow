@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VMC Helty Card Editor Test</title>
+    <script type="module" src="./vmc-helty-card-editor.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .mock-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            color: white;
+            z-index: 1000;
+        }
+        .mock-notification.success {
+            background: #4caf50;
+        }
+        .mock-notification.error {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>VMC Helty Card Editor Test</h1>
+        <p>Test the room volume sync functionality</p>
+        
+        <vmc-helty-card-editor id="editor"></vmc-helty-card-editor>
+    </div>
+
+    <script>
+        // Mock Home Assistant object
+        const mockHass = {
+            language: 'en',
+            states: {
+                'fan.vmc_helty_192_168_1_100': {
+                    entity_id: 'fan.vmc_helty_192_168_1_100',
+                    state: 'off',
+                    attributes: {
+                        friendly_name: 'VMC Helty Test Device',
+                        device_id: 'vmc_device_123'
+                    }
+                },
+                'sensor.vmc_helty_192_168_1_100_air_exchange_time': {
+                    entity_id: 'sensor.vmc_helty_192_168_1_100_air_exchange_time',
+                    state: '45.5',
+                    attributes: {
+                        friendly_name: 'VMC Air Exchange Time',
+                        device_id: 'vmc_device_123',
+                        room_volume: '75.0 m³'  // Device volume
+                    }
+                },
+                'sensor.vmc_helty_192_168_1_100_daily_air_changes': {
+                    entity_id: 'sensor.vmc_helty_192_168_1_100_daily_air_changes',
+                    state: '12.5',
+                    attributes: {
+                        friendly_name: 'VMC Daily Air Changes',
+                        device_id: 'vmc_device_123',
+                        room_volume_m3: 75.0  // Device volume (numeric)
+                    }
+                }
+            },
+            callService: async (domain, service, data) => {
+                console.log(`Mock service call: ${domain}.${service}`, data);
+                
+                // Simulate the update_room_volume service
+                if (domain === 'vmc_helty_flow' && service === 'update_room_volume') {
+                    // Show mock notification
+                    showMockNotification(
+                        `Room volume updated to ${data.room_volume} m³ for ${data.entity_id}`,
+                        'success'
+                    );
+                    return { success: true };
+                }
+                
+                throw new Error(`Unknown service: ${domain}.${service}`);
+            }
+        };
+
+        // Mock config
+        const mockConfig = {
+            entity: 'fan.vmc_helty_192_168_1_100',
+            name: 'Test VMC',
+            room_volume: 60.0,  // Card stored volume (should be overridden by device volume)
+            show_temperature: true,
+            show_humidity: true
+        };
+
+        console.log('Device volume: 75.0 m³ (from sensor attributes)');
+        console.log('Card config volume: 60.0 m³ (should be overridden)');
+        console.log('Expected display: 75.0 m³ (device takes precedence)');
+
+        // Setup editor
+        const editor = document.getElementById('editor');
+        editor.hass = mockHass;
+        editor.setConfig(mockConfig);
+
+        // Listen for config changes
+        editor.addEventListener('config-changed', (event) => {
+            console.log('Config changed:', event.detail.config);
+        });
+
+        // Listen for notifications
+        editor.addEventListener('hass-notification', (event) => {
+            showMockNotification(event.detail.message, 'success');
+        });
+
+        function showMockNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `mock-notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+
+        console.log('Test setup complete. Try changing the room volume in the editor.');
+    </script>
+</body>
+</html>

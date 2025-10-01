@@ -5,9 +5,13 @@ import re
 import time
 from datetime import timedelta
 
+import voluptuous as vol
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -41,6 +45,53 @@ PLATFORMS: list[Platform] = [
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=SENSORS_UPDATE_INTERVAL)
 NETWORK_INFO_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 DEVICE_NAME_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
+
+
+async def async_setup_volume_service(hass: HomeAssistant) -> None:
+    """Setup del servizio per aggiornare il volume della stanza."""
+    update_room_volume_schema = vol.Schema({
+        vol.Required("entity_id"): cv.entity_id,
+        vol.Required("room_volume"): vol.All(
+            vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
+        ),
+    })
+
+    async def handle_update_room_volume(call: ServiceCall) -> None:
+        """Handle room volume update service call."""
+        entity_id = call.data["entity_id"]
+        new_volume = float(call.data["room_volume"])
+
+        # Trova la config entry associata all'entità
+        entity_registry = hass.helpers.entity_registry.async_get(hass)
+        entity_entry = entity_registry.async_get(entity_id)
+
+        if not entity_entry:
+            raise HomeAssistantError(f"Entity {entity_id} not found")
+
+        config_entry = hass.config_entries.async_get_entry(
+            entity_entry.config_entry_id
+        )
+        if not config_entry or config_entry.domain != DOMAIN:
+            raise HomeAssistantError(
+                f"Entity {entity_id} is not from VMC Helty Flow integration"
+            )
+
+        # Aggiorna i dati della config entry
+        new_data = {**config_entry.data, "room_volume": new_volume}
+        hass.config_entries.async_update_entry(config_entry, data=new_data)
+
+        _LOGGER.info(
+            "Updated room volume for %s to %.1f m³",
+            config_entry.data.get("name", config_entry.data.get("ip")),
+            new_volume
+        )
+
+    hass.services.async_register(
+        DOMAIN,
+        "update_room_volume",
+        handle_update_room_volume,
+        schema=update_room_volume_schema,
+    )
 
 
 class VmcHeltyCoordinator(DataUpdateCoordinator):
@@ -313,6 +364,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hass.data[DOMAIN].get("device_actions_setup"):
         await async_setup_device_actions(hass)
         hass.data[DOMAIN]["device_actions_setup"] = True
+
+    # Setup del servizio per aggiornare il volume (solo una volta)
+    if not hass.data[DOMAIN].get("volume_service_setup"):
+        await async_setup_volume_service(hass)
+        hass.data[DOMAIN]["volume_service_setup"] = True
 
     # Crea il coordinatore per questo dispositivo
     coordinator = VmcHeltyCoordinator(hass, entry)

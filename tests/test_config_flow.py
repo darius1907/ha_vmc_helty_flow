@@ -277,11 +277,14 @@ class TestVmcHeltyFlowConfigFlow:
             mock_scan.assert_called_once()
             assert result == mock_result
 
-    async def test_async_step_room_config_success(self, config_flow):
-        """Test successful room configuration step."""
+    async def test_async_step_room_config_success_manual_volume(self, config_flow):
+        """Test successful room configuration step with manual volume input."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
         config_flow._continue_after_room_config = True  # Set flag to continue scan
-        user_input = {"room_volume": 120}
+        user_input = {
+            "input_method": "manual",
+            "room_volume": 120
+        }
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
@@ -322,6 +325,56 @@ class TestVmcHeltyFlowConfigFlow:
             # Flag should be reset
             assert config_flow._continue_after_room_config is False
 
+    async def test_async_step_room_config_success_calculated_volume(self, config_flow):
+        """Test successful room configuration step with calculated volume."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        config_flow._continue_after_room_config = True  # Set flag to continue scan
+        user_input = {
+            "input_method": "calculate",
+            "length": 5.0,
+            "width": 4.0,
+            "height": 3.0
+        }
+
+        with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
+            patch.object(
+                config_flow.hass.config_entries.flow,
+                "async_init",
+                new_callable=AsyncMock,
+            ) as mock_async_init,
+            patch.object(
+                config_flow, "_scan_next_ip", new_callable=AsyncMock
+            ) as mock_scan_next,
+        ):
+            expected_data = {
+                "ip": "192.168.1.100",
+                "name": "Test1",
+                "model": "VMC Flow",
+                "manufacturer": "Helty",
+                "port": 5001,
+                "timeout": 10,
+                "room_volume": 60.0  # 5.0 * 4.0 * 3.0 = 60.0
+            }
+            mock_scan_next.return_value = {
+                "type": "form",
+                "step_id": "scanning"
+            }
+            
+            result = await config_flow.async_step_room_config(user_input)
+
+            mock_async_init.assert_called_once_with(
+                DOMAIN,
+                context={"source": "discovered_device"},
+                data=expected_data,
+            )
+            mock_scan_next.assert_called_once()
+            assert result["type"] == "form"
+            # Flag should be reset
+            assert config_flow._continue_after_room_config is False
+
     async def test_async_step_room_config_no_input(self, config_flow):
         """Test room configuration step without input shows form."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
@@ -330,7 +383,15 @@ class TestVmcHeltyFlowConfigFlow:
 
         assert result["type"] == "form"
         assert result["step_id"] == "room_config"
-        assert "room_volume" in result["data_schema"].schema
+        schema_keys = list(result["data_schema"].schema.keys())
+        schema_key_names = [str(key) for key in schema_keys]
+        
+        # Verifica che tutti i campi necessari siano presenti
+        assert any("input_method" in key_name for key_name in schema_key_names)
+        assert any("room_volume" in key_name for key_name in schema_key_names)
+        assert any("length" in key_name for key_name in schema_key_names)
+        assert any("width" in key_name for key_name in schema_key_names)
+        assert any("height" in key_name for key_name in schema_key_names)
 
     # Legacy test removed - method no longer exists
 

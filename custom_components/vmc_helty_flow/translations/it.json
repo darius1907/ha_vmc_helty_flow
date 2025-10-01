@@ -59,10 +59,18 @@
         "title": "Configurazione Volume Stanza",
         "description": "Configura il volume della stanza per calcoli accurati di ricambio d'aria",
         "data": {
-          "room_volume": "Volume stanza (m³)"
+          "input_method": "Metodo di inserimento volume",
+          "room_volume": "Volume stanza (m³)",
+          "length": "Lunghezza stanza (m)",
+          "width": "Larghezza stanza (m)",
+          "height": "Altezza stanza (m)"
         },
         "data_description": {
-          "room_volume": "Inserisci il volume della stanza in metri cubi per calcoli precisi dei ricambi d'aria (Lunghezza x Larghezza x Altezza)"
+          "input_method": "Scegli come inserire il volume: manuale diretto o calcolo automatico da dimensioni",
+          "room_volume": "Inserisci il volume totale della stanza in metri cubi",
+          "length": "Lunghezza della stanza in metri (es. 4.0)",
+          "width": "Larghezza della stanza in metri (es. 4.0)",
+          "height": "Altezza della stanza in metri (es. 2.7)"
         }
       },
       "device_found": {
@@ -126,6 +134,12 @@
       "options": {
         "full": "Scansione completa",
         "incremental": "Scansione incrementale"
+      }
+    },
+    "input_method": {
+      "options": {
+        "manual": "Inserimento manuale",
+        "calculate": "Calcolo automatico"
       }
     },
     "action": {
@@ -254,6 +268,20 @@
     }
   },
   "services": {
+    "update_room_volume": {
+      "name": "Aggiorna Volume Stanza",
+      "description": "Aggiorna il volume della stanza per i calcoli di ricambio d'aria",
+      "fields": {
+        "entity_id": {
+          "name": "ID Entità",
+          "description": "L'ID di qualsiasi entità VMC Helty nella stanza"
+        },
+        "room_volume": {
+          "name": "Volume Stanza",
+          "description": "Il nuovo volume della stanza in metri cubi"
+        }
+      }
+    },
     "set_fan_speed": {
       "name": "Imposta Velocità Ventola",
       "description": "Imposta la velocità della ventola VMC",

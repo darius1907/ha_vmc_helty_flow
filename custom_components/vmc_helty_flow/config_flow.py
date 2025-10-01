@@ -217,8 +217,25 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_room_config(self, user_input=None):
         """Configure room volume for accurate air exchange calculations."""
+        # Calcola volume suggerito basato su una stanza tipo
+        suggested_volumes = {
+            "Piccola (3x3x2.5m)": 22.5,
+            "Media (4x4x2.7m)": 43.2,
+            "Grande (5x5x2.8m)": 70.0,
+            "Personalizzato": 60.0
+        }
+        
         if user_input is not None:
-            room_volume = float(user_input.get("room_volume", 60.0))
+            # Determina il volume finale
+            if "room_volume" in user_input:
+                # Volume inserito manualmente
+                room_volume = float(user_input.get("room_volume", 60.0))
+            else:
+                # Volume calcolato da dimensioni
+                length = float(user_input.get("length", 4.0))
+                width = float(user_input.get("width", 4.0))
+                height = float(user_input.get("height", 2.7))
+                room_volume = round(length * width * height, 1)
             
             # Crea entry per il dispositivo trovato con il volume configurato
             device = self.current_found_device
@@ -238,9 +255,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
             except Exception:
                 return self.async_abort(reason="device_already_configured")
-            
-            # Aggiungi il dispositivo alla sessione per il tracking
-            self.found_devices_session.append(device)
             
             # Crea entry data
             entry_data = {
@@ -283,17 +297,25 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Mostra il form di configurazione del volume
         device = self.current_found_device
 
-        # Calcola volume suggerito basato su una stanza tipo
-        suggested_volumes = {
-            "Piccola (3x3x2.5m)": 22.5,
-            "Media (4x4x2.7m)": 43.2,
-            "Grande (5x5x2.8m)": 70.0,
-            "Personalizzato": 60.0
-        }
-
+        # Schema con opzioni di input del volume
         schema = vol.Schema({
-            vol.Required("room_volume", default=60.0): vol.All(
+            vol.Required("input_method", default="manual"): vol.In([
+                "manual",      # Inserimento manuale del volume
+                "calculate"    # Calcolo da dimensioni
+            ]),
+            # Campi per inserimento manuale
+            vol.Optional("room_volume", default=60.0): vol.All(
                 vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
+            ),
+            # Campi per calcolo automatico
+            vol.Optional("length", default=4.0): vol.All(
+                vol.Coerce(float), vol.Range(min=0.1, max=50.0)
+            ),
+            vol.Optional("width", default=4.0): vol.All(
+                vol.Coerce(float), vol.Range(min=0.1, max=50.0)
+            ),
+            vol.Optional("height", default=2.7): vol.All(
+                vol.Coerce(float), vol.Range(min=0.1, max=10.0)
             ),
         })
 
@@ -312,8 +334,17 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     f"Configura il volume della stanza per il dispositivo "
                     f"'{device['name']}' ({device['ip']}) per calcoli accurati "
                     f"di ricambio d'aria.\n\n"
-                    f"Volumi suggeriti:\n{suggested_text}\n\n"
-                    "Il volume si calcola: Lunghezza x Larghezza x Altezza (metri)"
+                    "🔧 METODO DI INPUT:\n"
+                    "• manual: Inserisci direttamente il volume in m³\n"
+                    "• calculate: Calcola automaticamente da "
+                    "lunghezza x larghezza x altezza\n\n"
+                    f"📏 VOLUMI SUGGERITI:\n{suggested_text}\n\n"
+                    "💡 CALCOLO AUTOMATICO:\n"
+                    "Inserisci le dimensioni della stanza in metri:\n"
+                    "• Lunghezza: es. 4.0 metri\n"
+                    "• Larghezza: es. 4.0 metri\n"
+                    "• Altezza: es. 2.7 metri\n"
+                    "Il sistema calcolerà automaticamente: Volume = L x W x H"
                 )
             }
         )

@@ -59,10 +59,18 @@
         "title": "Room Volume Configuration",
         "description": "Configure the room volume for accurate air change calculations",
         "data": {
-          "room_volume": "Room volume (m³)"
+          "input_method": "Volume input method",
+          "room_volume": "Room volume (m³)",
+          "length": "Room length (m)",
+          "width": "Room width (m)",
+          "height": "Room height (m)"
         },
         "data_description": {
-          "room_volume": "Enter the room volume in cubic meters for precise air change calculations (Length x Width x Height)"
+          "input_method": "Choose how to enter the volume: manual input or automatic calculation from dimensions",
+          "room_volume": "Enter the total room volume in cubic meters",
+          "length": "Room length in meters (e.g. 4.0)",
+          "width": "Room width in meters (e.g. 4.0)",
+          "height": "Room height in meters (e.g. 2.7)"
         }
       },
       "device_found": {
@@ -126,6 +134,12 @@
       "options": {
         "full": "Full scan",
         "incremental": "Incremental scan"
+      }
+    },
+    "input_method": {
+      "options": {
+        "manual": "Manual input",
+        "calculate": "Automatic calculation"
       }
     },
     "action": {
@@ -254,6 +268,20 @@
     }
   },
   "services": {
+    "update_room_volume": {
+      "name": "Update Room Volume",
+      "description": "Update the room volume for air exchange calculations",
+      "fields": {
+        "entity_id": {
+          "name": "Entity ID",
+          "description": "The ID of any VMC Helty entity in the room"
+        },
+        "room_volume": {
+          "name": "Room Volume",
+          "description": "The new room volume in cubic meters"
+        }
+      }
+    },
     "set_fan_speed": {
       "name": "Set Fan Speed",
       "description": "Set the VMC fan speed",
