@@ -635,7 +635,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "manufacturer": discovery_info.get("manufacturer", "Helty"),
                 "port": discovery_info.get("port", 5001),
                 "timeout": discovery_info.get("timeout", 10),
-                "room_volume": 60.0,  # Default room volume
+                # Use configured volume from discovery_info or default to 60.0
+                "room_volume": discovery_info.get("room_volume", 60.0),
             },
         )
 

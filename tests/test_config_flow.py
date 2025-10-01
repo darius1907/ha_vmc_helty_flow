@@ -598,3 +598,87 @@ class TestVmcHeltyFlowConfigFlow:
             assert config_flow._stop_after_current is False
             # Device should be added to session (twice)
             assert len(config_flow.found_devices_session) >= 1
+
+    async def test_async_step_discovered_device_with_custom_volume(self, config_flow):
+        """Test discovered_device step uses volume from discovery_info."""
+        discovery_info = {
+            "ip": "192.168.1.100",
+            "name": "Test Device",
+            "model": "VMC Flow",
+            "manufacturer": "Helty",
+            "port": 5001,
+            "timeout": 10,
+            "room_volume": 85.5,  # Custom volume
+        }
+
+        with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
+            patch.object(config_flow, "async_create_entry") as mock_create_entry,
+        ):
+            mock_create_entry.return_value = {
+                "type": "create_entry",
+                "title": "Test Device",
+                "data": discovery_info,
+            }
+
+            result = await config_flow.async_step_discovered_device(discovery_info)
+
+            # Verify that create_entry was called with custom volume
+            mock_create_entry.assert_called_once_with(
+                title="Test Device",
+                data={
+                    "ip": "192.168.1.100",
+                    "name": "Test Device",
+                    "model": "VMC Flow",
+                    "manufacturer": "Helty",
+                    "port": 5001,
+                    "timeout": 10,
+                    "room_volume": 85.5,  # Should use the custom volume
+                }
+            )
+            
+            assert result["type"] == "create_entry"
+
+    async def test_async_step_discovered_device_default_volume(self, config_flow):
+        """Test discovered_device step uses default volume when not provided."""
+        discovery_info = {
+            "ip": "192.168.1.100",
+            "name": "Test Device",
+            "model": "VMC Flow",
+            "manufacturer": "Helty",
+            "port": 5001,
+            "timeout": 10,
+            # No room_volume provided
+        }
+
+        with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
+            patch.object(config_flow, "async_create_entry") as mock_create_entry,
+        ):
+            mock_create_entry.return_value = {
+                "type": "create_entry",
+                "title": "Test Device",
+                "data": discovery_info,
+            }
+
+            result = await config_flow.async_step_discovered_device(discovery_info)
+
+            # Verify that create_entry was called with default volume
+            mock_create_entry.assert_called_once_with(
+                title="Test Device",
+                data={
+                    "ip": "192.168.1.100",
+                    "name": "Test Device",
+                    "model": "VMC Flow",
+                    "manufacturer": "Helty",
+                    "port": 5001,
+                    "timeout": 10,
+                    "room_volume": 60.0,  # Should use default volume
+                }
+            )
+            
+            assert result["type"] == "create_entry"
