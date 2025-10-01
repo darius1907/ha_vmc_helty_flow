@@ -1,5 +1,5 @@
 /**
- * VMC Helty Flow Control Card Editor v2.0 - LitElement Implementation
+ * VMC Helty Flow Control Card Editor v2.1 - LitElement Implementation
  * Visual configuration editor for VMC Helty Flow Control Card
  *
  * ✅ Fully compliant with Home Assistant development guidelines:
@@ -9,8 +9,9 @@
  * - Room volume calculator with visual interface
  * - Real-time configuration validation
  * - Accessible form controls with proper labels
+ * - Configurable light and timer controls visibility (NEW in v2.1)
  *
- * @version 2.0.0
+ * @version 2.1.0
  * @author VMC Helty Integration Team
  */
 
@@ -678,6 +679,29 @@ class VmcHeltyCardEditor extends LitElement {
               @change=${this._valueChanged}
             ></ha-switch>
           </div>
+
+          <div class="toggle-item">
+            <span class="toggle-label">Show Lights</span>
+            <ha-switch
+              .checked=${this.config.show_lights !== false}
+              .configValue=${"show_lights"}
+              @change=${this._valueChanged}
+            ></ha-switch>
+          </div>
+
+          <div class="toggle-item">
+            <span class="toggle-label">Show Timer</span>
+            <ha-switch
+              .checked=${this.config.show_timer !== false}
+              .configValue=${"show_timer"}
+              @change=${this._valueChanged}
+            ></ha-switch>
+          </div>
+        </div>
+
+        <div class="form-description" style="margin-top: 12px;">
+          <strong>Show Lights:</strong> Display light controls (only for VMC models with lighting support)<br>
+          <strong>Show Timer:</strong> Display light timer controls (only for VMC models with timer support)
         </div>
       </div>
     `;
@@ -723,6 +747,6 @@ class VmcHeltyCardEditor extends LitElement {
 // Register the editor
 customElements.define('vmc-helty-card-editor', VmcHeltyCardEditor);
 
-console.info(`%c VMC HELTY CARD EDITOR v2.0 LitElement %c Loaded successfully! 🛠️`,
+console.info(`%c VMC HELTY CARD EDITOR v2.1 LitElement %c Loaded successfully! 🛠️`,
   "color: white; background: blue; font-weight: bold;",
   "color: blue; font-weight: normal;");

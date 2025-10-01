@@ -47,6 +47,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.found_devices_session = []  # Devices found in current session
         self.total_ips_to_scan = 0
         self.current_found_device = None
+        self._stop_after_current = False
 
     def _get_configured_devices(self) -> list[dict[str, Any]]:
         """Ottieni dispositivi configurati dal registry delle config entries."""
@@ -241,7 +242,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.found_devices_session.append(device)
             
             # Crea l'entry con il volume configurato
-            return self.async_create_entry(
+            entry = self.async_create_entry(
                 title=device["name"],
                 data={
                     "ip": device["ip"],
@@ -253,6 +254,18 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "room_volume": room_volume,
                 },
             )
+            
+            # Se è stato impostato il flag di stop, termina la scansione
+            if self._stop_after_current:
+                # Reset del flag per sicurezza
+                self._stop_after_current = False
+                return entry
+            
+            # Altrimenti continua la scansione dopo aver creato l'entry
+            # Dato che abbiamo già creato l'entry, dobbiamo continuare la scansione
+            # ma non possiamo restituire sia l'entry che continuare
+            # Quindi restituiamo l'entry e la scansione si fermerà naturalmente
+            return entry
         
         # Mostra il form di configurazione del volume
         device = self.current_found_device
@@ -434,124 +447,115 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_device_found(self, user_input=None):
         """Handle when a device is found during incremental scan."""
         if user_input is None:
-            # Show device info and options
-            device = self.current_found_device
-
-            # Calculate progress
-            # Include current device in count
-            current_found_count = len(self.found_devices_session) + 1
-            # Progress string without percentage (static info)
-            progress_str = f"IP {self.current_ip_index} di {self.total_ips_to_scan}"
-
-            schema = vol.Schema(
-                {
-                    vol.Required("action"): vol.In(
-                        [
-                            "add_and_configure",  # Add device with volume config
-                            "add_and_stop",       # Add device with default volume and stop
-                            "skip_continue",      # Skip device and continue scanning
-                            "stop_scan",          # Stop scanning without adding
-                        ]
-                    )
-                }
-            )
-
-            return self.async_show_form(
-                step_id="device_found",
-                data_schema=schema,
-                description_placeholders={
-                    "device_name": device.get("name", "Dispositivo sconosciuto"),
-                    "device_ip": device["ip"],
-                    "device_model": device.get("model", "VMC Flow"),
-                    "progress": progress_str,
-                    "found_count": str(current_found_count),
-                },
-            )
-
+            return await self._show_device_found_form()
+        
         # Handle user choice
-        action = user_input["action"]
+        return await self._handle_device_found_action(user_input["action"])
+    
+    async def _show_device_found_form(self):
+        """Show the device found form."""
         device = self.current_found_device
 
+        # Calculate progress
+        # Include current device in count
+        current_found_count = len(self.found_devices_session) + 1
+        # Progress string without percentage (static info)
+        progress_str = f"IP {self.current_ip_index} di {self.total_ips_to_scan}"
+
+        schema = vol.Schema(
+            {
+                vol.Required("action"): vol.In(
+                    [
+                        "add_and_configure",  # Add device with volume config
+                        "add_and_stop",       # Add device and stop
+                        "skip_continue",      # Skip device and continue scanning
+                        "stop_scan",          # Stop scanning without adding
+                    ]
+                )
+            }
+        )
+
+        return self.async_show_form(
+            step_id="device_found",
+            data_schema=schema,
+            description_placeholders={
+                "device_name": device.get("name", "Dispositivo sconosciuto"),
+                "device_ip": device["ip"],
+                "device_model": device.get("model", "VMC Flow"),
+                "progress": progress_str,
+                "found_count": str(current_found_count),
+            },
+        )
+    
+    async def _handle_device_found_action(self, action: str):
+        """Handle the action selected for a found device."""
+        device = self.current_found_device
+        
         if action == "add_and_configure":
-            # Vai alla configurazione del volume
-            _LOGGER.info(
-                "User wants to add device %s, configuring room volume",
-                device["ip"]
-            )
-            
-            # Check if device is already configured
-            existing_entries = [
-                entry
-                for entry in self._async_current_entries()
-                if entry.data.get("ip") == device["ip"]
-            ]
-
-            if existing_entries:
-                _LOGGER.warning("Device %s already configured, skipping", device["ip"])
-                # Continue scanning since device is already there
-                return await self._scan_next_ip()
-            
-            # Go to room configuration step
-            return await self.async_step_room_config()
-
+            return await self._handle_add_and_configure(device)
         if action == "add_and_stop":
-            # Aggiungi dispositivo con volume di default e termina
-            _LOGGER.info(
-                "User wants to add device %s with default volume and stop scan",
-                device["ip"]
-            )
-            
-            # Check if device is already configured
-            existing_entries = [
-                entry
-                for entry in self._async_current_entries()
-                if entry.data.get("ip") == device["ip"]
-            ]
-
-            if existing_entries:
-                _LOGGER.warning("Device %s already configured, stopping scan", device["ip"])
-                return await self._finalize_incremental_scan()
-            
-            # Crea entry con volume di default
-            await self.async_set_unique_id(device["ip"])
-            try:
-                self._abort_if_unique_id_configured()
-            except Exception:
-                # Se già configurato, termina la scansione
-                return await self._finalize_incremental_scan()
-            
-            # Aggiungi il dispositivo alla sessione per il tracking
-            self.found_devices_session.append(device)
-            
-            # Crea l'entry con volume di default (60m³)
-            entry = self.async_create_entry(
-                title=device["name"],
-                data={
-                    "ip": device["ip"],
-                    "name": device["name"],
-                    "model": device.get("model", "VMC Flow"),
-                    "manufacturer": device.get("manufacturer", "Helty"),
-                    "port": device.get("port", 5001),
-                    "timeout": device.get("timeout", 10),
-                    "room_volume": 60.0,  # Volume di default
-                },
-            )
-            
-            # Termina la scansione restituendo l'entry creata
-            return entry
-
+            return await self._handle_add_and_stop(device)
         if action == "skip_continue":
-            # Skip device and continue scanning
-            _LOGGER.info("User skipped device %s, continuing scan", device["ip"])
-            return await self._scan_next_ip()
-            
+            return await self._handle_skip_continue(device)
         if action == "stop_scan":
-            # Stop scanning without adding current device
-            _LOGGER.info("Scan stopped by user choice without adding current device")
-            return await self._finalize_incremental_scan()
-
-        # Should not reach here
+            return await self._handle_stop_scan()
+        
+        # Fallback - should not reach here
         return await self._scan_next_ip()
+    
+    async def _handle_add_and_configure(self, device):
+        """Handle add device and configure volume."""
+        _LOGGER.info(
+            "User wants to add device %s, configuring room volume",
+            device["ip"]
+        )
+        
+        # Check if device is already configured
+        if await self._is_device_already_configured(device["ip"]):
+            _LOGGER.warning("Device %s already configured, skipping", device["ip"])
+            return await self._scan_next_ip()
+        
+        # Go to room configuration step
+        return await self.async_step_room_config()
+    
+    async def _handle_add_and_stop(self, device):
+        """Handle add device and stop scan - but configure volume first."""
+        _LOGGER.info(
+            "User wants to add device %s and stop scan - configuring volume first",
+            device["ip"]
+        )
+        
+        # Check if device is already configured
+        if await self._is_device_already_configured(device["ip"]):
+            _LOGGER.warning(
+                "Device %s already configured, stopping scan", device["ip"]
+            )
+            return await self._finalize_incremental_scan()
+        
+        # Imposta flag per fermare la scansione dopo questa configurazione
+        self._stop_after_current = True
+        
+        # Vai alla configurazione del volume
+        return await self.async_step_room_config()
+    
+    async def _handle_skip_continue(self, device):
+        """Handle skip device and continue scanning."""
+        _LOGGER.info("User skipped device %s, continuing scan", device["ip"])
+        return await self._scan_next_ip()
+    
+    async def _handle_stop_scan(self):
+        """Handle stop scanning without adding current device."""
+        _LOGGER.info("Scan stopped by user choice without adding current device")
+        return await self._finalize_incremental_scan()
+    
+    async def _is_device_already_configured(self, device_ip: str) -> bool:
+        """Check if a device is already configured."""
+        existing_entries = [
+            entry
+            for entry in self._async_current_entries()
+            if entry.data.get("ip") == device_ip
+        ]
+        return bool(existing_entries)
 
     def _slugify_name(self, name: str) -> str:
         slug = re.sub(r"[^a-z0-9]+", "_", name.lower())

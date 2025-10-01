@@ -1,5 +1,7 @@
 """Entità Switch per modalità speciali VMC Helty Flow."""
 
+import logging
+
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -8,6 +10,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN, ENTITY_NAME_PREFIX, PART_INDEX_PANEL_LED, PART_INDEX_SENSORS
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -125,15 +129,35 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
 
     async def async_turn_on(self, **_kwargs) -> None:
         """Turn on panel LED."""
+        _LOGGER.debug(
+            "Panel LED Switch: Sending turn_on command VMWH0100010 to %s",
+            self.coordinator.ip
+        )
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100010")
+        _LOGGER.debug("Panel LED Switch: Turn_on response: %s", response)
         if response == "OK":
+            _LOGGER.debug(
+                "Panel LED Switch: Turn_on successful, requesting coordinator refresh"
+            )
             await self.coordinator.async_request_refresh()
+        else:
+            _LOGGER.warning("Panel LED Switch: Turn_on failed, response: %s", response)
 
     async def async_turn_off(self, **_kwargs) -> None:
         """Turn off panel LED."""
+        _LOGGER.debug(
+            "Panel LED Switch: Sending turn_off command VMWH0100000 to %s",
+            self.coordinator.ip
+        )
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100000")
+        _LOGGER.debug("Panel LED Switch: Turn_off response: %s", response)
         if response == "OK":
+            _LOGGER.debug(
+                "Panel LED Switch: Turn_off successful, requesting coordinator refresh"
+            )
             await self.coordinator.async_request_refresh()
+        else:
+            _LOGGER.warning("Panel LED Switch: Turn_off failed, response: %s", response)
 
 
 class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):

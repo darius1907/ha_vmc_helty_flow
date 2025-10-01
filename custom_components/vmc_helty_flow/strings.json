@@ -131,7 +131,7 @@
     "action": {
       "options": {
         "add_and_configure": "Aggiungi e configura volume",
-        "add_and_stop": "Aggiungi e termina (volume 60m³)",
+        "add_and_stop": "Aggiungi e termina (configura volume)",
         "skip_continue": "Salta e continua",
         "stop_scan": "Termina scansione"
       }

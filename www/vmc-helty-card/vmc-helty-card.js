@@ -1,5 +1,5 @@
 /**
- * VMC Helty Flow Control Card v2.0 - LitElement Implementation
+ * VMC Helty Flow Control Card v2.1 - LitElement Implementation
  * Advanced Lovelace card for VMC Helty Flow Plus/Elite control
  *
  * Fully compliant with Home Assistant development guidelines:
@@ -13,13 +13,14 @@
  * - Configurable device selection
  * - Custom sensor selection for advanced calculations
  * - Room volume configuration for accurate air exchange calculations
+ * - Configurable light and timer controls visibility (NEW in v2.1)
  *
- * @version 2.0.0
+ * @version 2.1.0
  * @author VMC Helty Integration Team
  */
 
 console.info(
-  `%c VMC HELTY CARD v2.0 LitElement %c Advanced VMC Helty Flow control with device & sensor selection`,
+  `%c VMC HELTY CARD v2.1 LitElement %c Advanced VMC Helty Flow control with configurable light/timer controls`,
   "color: orange; font-weight: bold; background: black",
   "color: white; font-weight: normal;"
 );
@@ -744,8 +745,8 @@ class VmcHeltyCard extends LitElement {
     const lightState = this._getEntityState(lightEntity);
     const timerState = this._getEntityState(timerEntity);
 
-    // Show light controls only if at least one light entity is available
-    if (!lightState && !timerState) return nothing;
+    // Show light controls only if enabled in config and at least one light entity is available
+    if (this.config.show_lights === false || (!lightState && !timerState)) return nothing;
 
     return html`
       <div class="controls-section">
@@ -754,7 +755,7 @@ class VmcHeltyCard extends LitElement {
           <span>Controlli Luci</span>
         </div>
         <div class="light-controls">
-          ${lightState ? html`
+          ${lightState && this.config.show_lights !== false ? html`
             <div class="light-control">
               <ha-icon icon="mdi:lightbulb"></ha-icon>
               <span>Luminosità</span>
@@ -781,7 +782,7 @@ class VmcHeltyCard extends LitElement {
             ` : nothing}
           ` : nothing}
 
-          ${timerState ? html`
+          ${timerState && this.config.show_timer !== false ? html`
             <div class="light-control">
               <ha-icon icon="mdi:timer"></ha-icon>
               <span>Timer Luci</span>
@@ -1091,6 +1092,8 @@ class VmcHeltyCard extends LitElement {
       show_co2: true,
       show_voc: false,
       show_advanced: true,
+      show_lights: true,
+      show_timer: true,
       enable_comfort_calculations: true,
       enable_air_exchange: true
     };
@@ -1115,7 +1118,7 @@ window.customCards.push({
   documentationURL: 'https://github.com/your-repo/vmc-helty-card',
 });
 
-console.info(`%c VMC HELTY CARD v2.0 LitElement %c Loaded successfully!`,
+console.info(`%c VMC HELTY CARD v2.1 LitElement %c Loaded successfully!`,
   "color: white; background: green; font-weight: bold;",
   "color: green; font-weight: normal;");
 

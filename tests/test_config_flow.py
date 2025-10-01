@@ -245,44 +245,30 @@ class TestVmcHeltyFlowConfigFlow:
             assert result == mock_result
 
     async def test_async_step_device_found_add_and_stop(self, config_flow):
-        """Test device found step with add and stop action."""
+        """Test device found step with add and stop action now goes to room config."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
         user_input = {"action": "add_and_stop"}
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(config_flow, "async_set_unique_id"),
-            patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(config_flow, "async_create_entry") as mock_create,
+            patch.object(
+                config_flow, "async_step_room_config"
+            ) as mock_room_config,
         ):
-            # Expected data with default room volume
-            expected_data = {
-                "ip": "192.168.1.100",
-                "name": "Test1",
-                "model": "VMC Flow",
-                "manufacturer": "Helty",
-                "port": 5001,
-                "timeout": 10,
-                "room_volume": 60.0  # Default volume
-            }
-            mock_create.return_value = {
-                "type": "create_entry",
-                "title": "Test1",
-                "data": expected_data
+            mock_room_config.return_value = {
+                "type": "form",
+                "step_id": "room_config",
             }
 
             result = await config_flow.async_step_device_found(user_input)
 
-            # Verify that device was added to session
-            expected_device = {"ip": "192.168.1.100", "name": "Test1"}
-            assert config_flow.found_devices_session == [expected_device]
+            # Verify that it goes to room configuration step
+            mock_room_config.assert_called_once()
+            assert result["type"] == "form"
+            assert result["step_id"] == "room_config"
             
-            # Verify entry creation with default volume
-            mock_create.assert_called_once_with(
-                title="Test1",
-                data=expected_data
-            )
-            assert result["type"] == "create_entry"
+            # Verify that stop flag is set
+            assert config_flow._stop_after_current is True
 
     async def test_async_step_device_found_skip_continue(self, config_flow):
         """Test device found step with skip and continue action."""
@@ -465,7 +451,7 @@ class TestVmcHeltyFlowConfigFlow:
             assert result == mock_result
 
     async def test_incremental_scan_add_stop(self, config_flow):
-        """Test adding device and stopping scan."""
+        """Test adding device and stopping scan now goes to room config first."""
         # Setup flow state
         config_flow.scan_in_progress = True
         config_flow.current_found_device = {
@@ -478,26 +464,69 @@ class TestVmcHeltyFlowConfigFlow:
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(config_flow, "async_set_unique_id"),
-            patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(config_flow, "async_create_entry") as mock_create,
-            patch.object(config_flow, "_finalize_incremental_scan") as mock_finalize,
+            patch.object(
+                config_flow, "async_step_room_config"
+            ) as mock_room_config,
         ):
-            mock_result = {"type": "create_entry", "title": "VMC Test Device"}
-            mock_create.return_value = mock_result
-            mock_finalize.return_value = mock_result
+            mock_result = {"type": "form", "step_id": "room_config"}
+            mock_room_config.return_value = mock_result
 
-            await config_flow.async_step_device_found(
+            result = await config_flow.async_step_device_found(
                 {"action": "add_and_stop"}
             )
 
-            # Should create entry with default volume
-            mock_create.assert_called_once()
-            create_args = mock_create.call_args[1]
-            assert create_args["title"] == "VMC Test Device"
-            assert create_args["data"]["ip"] == "192.168.1.100"
-            assert create_args["data"]["room_volume"] == 60.0  # Default volume
+            # Should go to room configuration step
+            mock_room_config.assert_called_once()
+            assert result["type"] == "form"
+            assert result["step_id"] == "room_config"
+            
+            # Stop flag should be set
+            assert config_flow._stop_after_current is True
 
-            # Device should be added to session for tracking
+    async def test_room_config_with_stop_flag(self, config_flow):
+        """Test room config step when _stop_after_current flag is set."""
+        # Setup flow state
+        config_flow.current_found_device = {
+            "ip": "192.168.1.100",
+            "name": "VMC Test Device",
+        }
+        config_flow._stop_after_current = True
+        config_flow.found_devices_session = []
+
+        with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
+            patch.object(config_flow, "async_create_entry") as mock_create,
+        ):
+            expected_data = {
+                "ip": "192.168.1.100",
+                "name": "VMC Test Device",
+                "model": "VMC Flow",
+                "manufacturer": "Helty",
+                "port": 5001,
+                "timeout": 10,
+                "room_volume": 45.0,  # User configured volume
+            }
+            mock_create.return_value = {
+                "type": "create_entry",
+                "title": "VMC Test Device",
+                "data": expected_data
+            }
+
+            user_input = {"room_volume": 45.0}
+            result = await config_flow.async_step_room_config(user_input)
+
+            # Should create entry and stop scan
+            mock_create.assert_called_once_with(
+                title="VMC Test Device",
+                data=expected_data
+            )
+            assert result["type"] == "create_entry"
+            
+            # Flag should be reset after use
+            assert config_flow._stop_after_current is False
+            
+            # Device should be added to session
             assert len(config_flow.found_devices_session) == 1
             assert config_flow.found_devices_session[0]["ip"] == "192.168.1.100"
