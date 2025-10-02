@@ -111,26 +111,32 @@ class VmcHeltyCard extends LitElement {
         </ha-chip-set>
       </div>
       <div class="controls-section">
-          <span>LED Pannello</span>
+        <div class="section-title">
+          <ha-icon icon="mdi:toggle-switch"></ha-icon>
+          <span>Controlli Dispositivo</span>
+        </div>
+        <ha-settings-row>
+          <span slot="heading">LED Pannello</span>
+          <span slot="description">Controllo LED del pannello frontale</span>
           <ha-switch
-            .selected=${panelLedState && panelLedState.state === 'on'}
+            slot="content"
+            .checked=${panelLedState && panelLedState.state === 'on'}
             @click=${() => this._toggleSwitch(panelLedEntity)}
             aria-label="LED Pannello"
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          >
-            <ha-icon icon="mdi:led-on" slot="icon"></ha-icon>            
-          </ha-switch>
-      </div>
-      <div class="controls-section">
-          <span>Sensori</span>
+          ></ha-switch>
+        </ha-settings-row>
+        <ha-settings-row>
+          <span slot="heading">Sensori</span>
+          <span slot="description">Attivazione sensori ambientali</span>
           <ha-switch
-            .selected=${sensorsState && sensorsState.state === 'on'}
+            slot="content"
+            .checked=${sensorsState && sensorsState.state === 'on'}
             @click=${() => this._toggleSwitch(sensorsEntity)}
             aria-label="Sensori"
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          >
-            <ha-icon icon="mdi:eye" slot="icon"></ha-icon>            
-          </ha-switch>
+          ></ha-switch>
+        </ha-settings-row>
       </div>
     `;
   }
@@ -917,7 +923,6 @@ class VmcHeltyCard extends LitElement {
               ${sensor.value}
               <span class="sensor-unit">${sensor.unit}</span>
             </div>
-            <div class="sensor-source">Source: ${sensor.source}</div>
           </div>
         `)}
       </div>
