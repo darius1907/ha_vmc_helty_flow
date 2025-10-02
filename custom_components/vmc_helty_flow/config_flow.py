@@ -286,18 +286,36 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 description_placeholders={"device_name": name},
             )
 
-        # Preparazione dati finali per entry
+        # Aggiorna device con volume configurato
         device = getattr(self, "current_found_device", None)
+        if device:
+            device["room_volume"] = room_volume
 
+        # Controlla flag per decidere cosa fare dopo room_config
+        if getattr(self, "_stop_after_current", False):
+            # User vuole aggiungere questo device e fermare scan
+            final_data = {
+                "ip": device.get("ip") if device else "localhost",
+                "name": device.get("name") if device else "Unknown Device",
+                "port": device.get("port") if device else 5001,
+                "room_volume": room_volume,
+            }
+            title = device.get("name") if device else "VMC Unknown Device"
+            return self.async_create_entry(title=title, data=final_data)
+
+        if getattr(self, "_continue_after_room_config", False):
+            # Continua scan incrementale dopo aver configurato volume
+            self._continue_after_room_config = False
+            return await self._scan_next_ip()
+
+        # Entry diretta (discovery automatico)
         final_data = {
             "ip": device.get("ip") if device else "localhost",
             "name": device.get("name") if device else "Unknown Device",
             "port": device.get("port") if device else 5001,
             "room_volume": room_volume,
         }
-
         title = device.get("name") if device else "VMC Unknown Device"
-
         return self.async_create_entry(title=title, data=final_data)
 
     # _show_device_selection_form rimosso - non più necessario nel flow incrementale
