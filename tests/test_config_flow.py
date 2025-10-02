@@ -429,7 +429,41 @@ class TestVmcHeltyFlowConfigFlow:
         assert any("width" in key_name for key_name in schema_key_names)
         assert any("height" in key_name for key_name in schema_key_names)
 
-    # Legacy test removed - method no longer exists
+    async def test_async_step_room_config_empty_fields(self, config_flow):
+        """Test che i campi vuoti non causino errori voluptuous."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+
+        # Test modalità manual con tutti i campi vuoti/None
+        result = await config_flow.async_step_room_config({
+            "input_method": "manual",
+            "room_volume": "",  # Campo vuoto
+            "length": "",  # Campo vuoto (non dovrebbe causare errore voluptuous)
+            "width": None,  # Campo None (non dovrebbe causare errore voluptuous)
+            "height": ""  # Campo vuoto (non dovrebbe causare errore voluptuous)
+        })
+        assert result["type"] == "form"
+        # Dovrebbe avere solo errore logico su room_volume, non errori voluptuous
+        assert "room_volume_required" in result["errors"]["room_volume"]
+        # Non dovrebbero esserci errori sui campi non rilevanti per manual
+        assert "length" not in result["errors"]
+        assert "width" not in result["errors"]
+        assert "height" not in result["errors"]
+
+        # Test modalità calculate con tutti i campi vuoti/None
+        result = await config_flow.async_step_room_config({
+            "input_method": "calculate",
+            "room_volume": "",  # Campo vuoto (non dovrebbe causare errore)
+            "length": "",  # Campo vuoto (dovrebbe causare errore logico)
+            "width": None,  # Campo None (dovrebbe causare errore logico)
+            "height": ""  # Campo vuoto (dovrebbe causare errore logico)
+        })
+        assert result["type"] == "form"
+        # Dovrebbe avere errori logici sui campi richiesti per calculate
+        assert "length_required" in result["errors"]["length"]
+        assert "width_required" in result["errors"]["width"]
+        assert "height_required" in result["errors"]["height"]
+        # Non dovrebbe esserci errore su room_volume (non rilevante per calculate)
+        assert "room_volume" not in result["errors"]
 
     async def test_discover_devices_async(self, config_flow):
         """Test async device discovery."""

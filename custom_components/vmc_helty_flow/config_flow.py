@@ -40,44 +40,54 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         room_volume = None
         input_method = user_input.get("input_method")
+        
         if input_method == "manual":
             rv = user_input.get("room_volume")
-            if rv is None:
+            # Gestisci valori vuoti, None o stringa vuota
+            if not rv or rv == "" or rv is None:
                 errors["room_volume"] = "room_volume_required"
             else:
                 try:
                     room_volume = float(rv)
                     if not (MIN_ROOM_VOLUME <= room_volume <= MAX_ROOM_VOLUME):
                         errors["room_volume"] = "room_volume_out_of_range"
-                except Exception:
+                except (ValueError, TypeError):
                     errors["room_volume"] = "room_volume_invalid"
+                    
         elif input_method == "calculate":
             length = user_input.get("length")
             width = user_input.get("width")
             height = user_input.get("height")
-            missing = [
-                k for k, v in zip(["length", "width", "height"], [length, width, height], strict=True)
-                if v is None
-            ]
-            for k in missing:
-                errors[k] = f"{k}_required"
+            
+            # Controlla campi vuoti, None o stringa vuota
+            missing = []
+            for field_name, value in [("length", length), ("width", width), ("height", height)]:
+                if not value or value == "" or value is None:
+                    missing.append(field_name)
+                    
+            for field in missing:
+                errors[field] = f"{field}_required"
+                
             if not missing:
                 try:
                     length_f = float(length)
                     width_f = float(width)
                     height_f = float(height)
+                    
                     if not (MIN_DIMENSION <= length_f <= MAX_DIMENSION):
                         errors["length"] = "length_out_of_range"
                     if not (MIN_DIMENSION <= width_f <= MAX_DIMENSION):
                         errors["width"] = "width_out_of_range"
                     if not (MIN_DIMENSION <= height_f <= MAX_HEIGHT):
                         errors["height"] = "height_out_of_range"
+                        
                     if not errors:
                         room_volume = round(length_f * width_f * height_f, 1)
-                except Exception:
+                except (ValueError, TypeError):
                     errors["length"] = "length_invalid"
         else:
             errors["input_method"] = "input_method_required"
+            
         return room_volume, errors
 
     def _create_room_config_schema(self, user_input: dict | None = None) -> vol.Schema:
@@ -87,7 +97,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """
         input_method = user_input.get("input_method", "manual") if user_input else "manual"
         
-        # Schema con tutti i campi sempre presenti, ma senza vincoli di validazione
+        # Schema con tutti i campi sempre presenti, gestendo valori vuoti
         # La validazione vera avviene in _validate_and_calculate_volume
         schema_dict = {
             vol.Required(
@@ -96,20 +106,20 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ): vol.In(["manual", "calculate"]),
             vol.Optional(
                 "room_volume",
-                default=user_input.get("room_volume") if user_input else None
-            ): str,  # Nessuna validazione qui
+                default=user_input.get("room_volume", "") if user_input else ""
+            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
             vol.Optional(
                 "length",
-                default=user_input.get("length") if user_input else None
-            ): str,  # Nessuna validazione qui
+                default=user_input.get("length", "") if user_input else ""
+            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
             vol.Optional(
                 "width",
-                default=user_input.get("width") if user_input else None
-            ): str,  # Nessuna validazione qui
+                default=user_input.get("width", "") if user_input else ""
+            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
             vol.Optional(
                 "height",
-                default=user_input.get("height") if user_input else None
-            ): str,  # Nessuna validazione qui
+                default=user_input.get("height", "") if user_input else ""
+            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
         }
         
         return vol.Schema(schema_dict)
