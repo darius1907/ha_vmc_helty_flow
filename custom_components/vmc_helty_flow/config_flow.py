@@ -385,19 +385,27 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "timeout": device.get("timeout", 10),
                 "room_volume": room_volume,
             }
-            await self.hass.config_entries.flow.async_init(
-                DOMAIN,
-                context={"source": "discovered_device"},
+            
+            # Crea la config entry direttamente tramite il manager
+            # senza avviare un nuovo flow (che causava duplicazione)
+            self.hass.config_entries.async_create_entry(
+                domain=DOMAIN,
+                title=device["name"],
                 data=entry_data,
+                source="discovered_device",
             )
+            
+            # Aggiungi il dispositivo alla sessione corrente
             self.found_devices_session.append(device)
+            
+            # Gestisci il flusso incrementale basato sui flag
             if self._stop_after_current:
                 self._stop_after_current = False
                 return await self._finalize_incremental_scan()
             if self._continue_after_room_config:
                 self._continue_after_room_config = False
                 return await self._scan_next_ip()
-            return self.async_abort(reason="unknown")
+            return self.async_abort(reason="device_configured_successfully")
 
         # Prima visualizzazione del form
         schema = self._create_room_config_schema()
