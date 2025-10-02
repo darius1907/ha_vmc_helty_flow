@@ -217,8 +217,7 @@ async def get_device_info(
             return None
 
         try:
-            parts = response.split(",")
-            modello = parts[1] if len(parts) > 1 else "VMC Flow"
+            modello = "VMC Helty Flow"
 
             # Recupera nome e versione
             nome = await _get_device_name(ip, port, timeout)
@@ -229,7 +228,7 @@ async def get_device_info(
             return {
                 "ip": ip,
                 "name": f"VMC Helty {ip.split('.')[-1]}",
-                "model": "VMC Flow",
+                "model": "VMC Helty Flow",
                 "manufacturer": "Helty",
                 "available": "True",
                 "parse_error": "Errore di parsing",

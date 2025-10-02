@@ -17,10 +17,16 @@ from .helpers_net import (
     validate_subnet,
 )
 
+
 # Costanti per i limiti di validazione
 MAX_PORT = 65535
 MAX_TIMEOUT = 60
 MAX_IPS_IN_SUBNET = 254
+MAX_ROOM_VOLUME = 200.0
+MIN_ROOM_VOLUME = 1.0
+MIN_DIMENSION = 1.0
+MAX_DIMENSION = 25.0
+MAX_HEIGHT = 5.0
 
 # Storage rimosso - ora usiamo direttamente config entries registry
 
@@ -28,6 +34,51 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    @staticmethod
+    def _validate_and_calculate_volume(user_input: dict) -> tuple[float | None, dict]:
+        """Validazione e calcolo del volume stanza. Restituisce (volume, errors)."""
+        errors = {}
+        room_volume = None
+        input_method = user_input.get("input_method")
+        if input_method == "manual":
+            rv = user_input.get("room_volume")
+            if rv is None:
+                errors["room_volume"] = "room_volume_required"
+            else:
+                try:
+                    room_volume = float(rv)
+                    if not (MIN_ROOM_VOLUME <= room_volume <= MAX_ROOM_VOLUME):
+                        errors["room_volume"] = "room_volume_out_of_range"
+                except Exception:
+                    errors["room_volume"] = "room_volume_invalid"
+        elif input_method == "calculate":
+            length = user_input.get("length")
+            width = user_input.get("width")
+            height = user_input.get("height")
+            missing = [
+                k for k, v in zip(["length", "width", "height"], [length, width, height], strict=True)
+                if v is None
+            ]
+            for k in missing:
+                errors[k] = f"{k}_required"
+            if not missing:
+                try:
+                    length_f = float(length)
+                    width_f = float(width)
+                    height_f = float(height)
+                    if not (MIN_DIMENSION <= length_f <= MAX_DIMENSION):
+                        errors["length"] = "length_out_of_range"
+                    if not (MIN_DIMENSION <= width_f <= MAX_DIMENSION):
+                        errors["width"] = "width_out_of_range"
+                    if not (MIN_DIMENSION <= height_f <= MAX_HEIGHT):
+                        errors["height"] = "height_out_of_range"
+                    if not errors:
+                        room_volume = round(length_f * width_f * height_f, 1)
+                except Exception:
+                    errors["length"] = "length_invalid"
+        else:
+            errors["input_method"] = "input_method_required"
+        return room_volume, errors
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
 
     VERSION = 1
@@ -59,7 +110,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if entry.domain == DOMAIN and entry.data.get("ip"):
                 device_info = {
                     "ip": entry.data["ip"],
-                    "name": entry.data.get("name", f"VMC {entry.data['ip']}"),
+                    "name": entry.data.get("name", f"VMC {entry.data['name']}"),
                     "model": entry.data.get("model", "VMC Flow"),
                     "manufacturer": entry.data.get("manufacturer", "Helty"),
                     "entry_id": entry.entry_id,
@@ -157,7 +208,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.subnet = user_input["subnet"]
         self.port = user_input["port"]
         self.timeout = user_input.get("timeout", 10)
-        self.scan_mode = "incremental"  # Always incremental
+
         errors = {}
         if not validate_subnet(self.subnet):
             errors["subnet"] = "subnet_non_valida"
@@ -174,9 +225,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required("subnet", default=self.subnet): str,
                     vol.Required("port", default=self.port): int,
                     vol.Required("timeout", default=self.timeout): int,
-                    vol.Required("scan_mode", default=self.scan_mode): vol.In(
-                        ["full", "incremental"]
-                    ),
                 }
             )
             return self.async_show_form(
@@ -204,59 +252,103 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Always use incremental scan for better UX
         return await self._start_incremental_scan()
 
-    # async_step_discovery rimosso - ora usiamo solo scansione incrementale
-
-    # _handle_discovery_input rimosso - non più necessario nel flow incrementale
-
-    # _perform_device_discovery rimosso - ora usiamo solo scansione incrementale
-
-    # _handle_discovery_display rimosso - non più necessario nel flow incrementale
-
-    # _process_device_selection e _create_multiple_entries rimossi
     # Nel flow incrementale ogni dispositivo viene gestito singolarmente
 
-    async def async_step_room_config(self, user_input=None):
-        """Configure room volume for accurate air exchange calculations."""
-        # Calcola volume suggerito basato su una stanza tipo
+
+    async def async_step_room_config(self, user_input=None) -> config_entries.ConfigFlowResult:
+        """Step di configurazione stanza con validazione e calcolo volume separato."""
         suggested_volumes = {
             "Piccola (3x3x2.5m)": 22.5,
             "Media (4x4x2.7m)": 43.2,
             "Grande (5x5x2.8m)": 70.0,
             "Personalizzato": DEFAULT_ROOM_VOLUME
         }
-        
+
+        device = self.current_found_device
+        name = device.get("name", "Dispositivo sconosciuto") if device else "Dispositivo sconosciuto"
+        ip = device.get("ip", "N/A") if device else "N/A"
+
         if user_input is not None:
-            # Determina il volume finale
-            if "room_volume" in user_input:
-                # Volume inserito manualmente
-                room_volume = float(user_input.get("room_volume", DEFAULT_ROOM_VOLUME))
-            else:
-                # Volume calcolato da dimensioni
-                length = float(user_input.get("length", 4.0))
-                width = float(user_input.get("width", 4.0))
-                height = float(user_input.get("height", 2.7))
-                room_volume = round(length * width * height, 1)
-            
-            # Crea entry per il dispositivo trovato con il volume configurato
-            device = self.current_found_device
-            
-            # Verifica che non esista già una entry per questo dispositivo
+            room_volume, errors = self._validate_and_calculate_volume(user_input)
+            if errors:
+                schema = vol.Schema({
+                    vol.Required(
+                        "input_method",
+                        default=user_input.get("input_method", "manual")
+                    ): vol.In(["manual", "calculate"]),
+                    vol.Optional(
+                        "room_volume",
+                        default=user_input.get("room_volume")
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
+                    ),
+                    vol.Optional(
+                        "length",
+                        default=user_input.get("length")
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
+                    ),
+                    vol.Optional(
+                        "width",
+                        default=user_input.get("width")
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
+                    ),
+                    vol.Optional(
+                        "height",
+                        default=user_input.get("height")
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=MIN_DIMENSION, max=MAX_HEIGHT)
+                    ),
+                })
+                suggested_text = "\n".join([
+                    f"• {n}: {v} m³" for n, v in suggested_volumes.items()
+                ])
+                return self.async_show_form(
+                    step_id="room_config",
+                    data_schema=schema,
+                    errors=errors,
+                    description_placeholders={
+                        "device_name": name,
+                        "device_ip": ip,
+                        "suggestions": suggested_text,
+                        "help": (
+                            f"Configura il volume della stanza per il dispositivo "
+                            f"'{name}' ({ip}) per calcoli accurati "
+                            f"di ricambio d'aria.\n\n"
+                            "🔧 METODO DI INPUT:\n"
+                            "• manual: Inserisci direttamente il volume in m³\n"
+                            "• calculate: Calcola automaticamente da "
+                            "lunghezza x larghezza x altezza\n\n"
+                            f"📏 VOLUMI SUGGERITI:\n{suggested_text}\n\n"
+                            "💡 CALCOLO AUTOMATICO:\n"
+                            "Inserisci le dimensioni della stanza in metri:\n"
+                            "• Lunghezza: es. 4.0 metri\n"
+                            "• Larghezza: es. 4.0 metri\n"
+                            "• Altezza: es. 2.7 metri\n"
+                            "Il sistema calcolerà automaticamente: Volume = L x W x H"
+                        )
+                    }
+                )
+            # Se non ci sono errori, prosegui con la creazione della entry
             existing_entries = [
                 entry
                 for entry in self._async_current_entries()
-                if entry.data.get("ip") == device["ip"]
+                if device is not None and entry.data.get("ip") == device.get("ip")
             ]
-            
             if existing_entries:
                 return self.async_abort(reason="device_already_configured")
-            
+            if device is None:
+                return self.async_abort(reason="device_not_found")
             await self.async_set_unique_id(device["ip"])
             try:
                 self._abort_if_unique_id_configured()
             except Exception:
                 return self.async_abort(reason="device_already_configured")
-            
-            # Crea entry data
             entry_data = {
                 "ip": device["ip"],
                 "name": device["name"],
@@ -266,73 +358,63 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "timeout": device.get("timeout", 10),
                 "room_volume": room_volume,
             }
-
-            # Entrambe le azioni usano async_init per creare entry in background
-            # Create entry in background using discovered_device flow
             await self.hass.config_entries.flow.async_init(
                 DOMAIN,
                 context={"source": "discovered_device"},
                 data=entry_data,
             )
-
-            # Add to session for tracking
             self.found_devices_session.append(device)
-
-            # Se è stato impostato il flag di stop, termina la scansione
             if self._stop_after_current:
-                # Reset del flag per sicurezza
                 self._stop_after_current = False
                 return await self._finalize_incremental_scan()
-
-            # Se è stato impostato il flag di continue, continua la scansione
             if self._continue_after_room_config:
-                # Reset del flag per sicurezza
                 self._continue_after_room_config = False
-                # Continue scanning
                 return await self._scan_next_ip()
-
-            # Fallback - non dovrebbe mai arrivare qui
             return self.async_abort(reason="unknown")
 
-        # Mostra il form di configurazione del volume
-        device = self.current_found_device
-
-        # Schema con opzioni di input del volume
+        # Prima visualizzazione del form
         schema = vol.Schema({
-            vol.Required("input_method", default="manual"): vol.In([
-                "manual",      # Inserimento manuale del volume
-                "calculate"    # Calcolo da dimensioni
-            ]),
-            # Campi per inserimento manuale
-            vol.Optional("room_volume", default=DEFAULT_ROOM_VOLUME): vol.All(
-                vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
+            vol.Required(
+                "input_method", default="manual"
+            ): vol.In(["manual", "calculate"]),
+            vol.Optional(
+                "room_volume", default=None
+            ): vol.All(
+                vol.Coerce(float),
+                vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
             ),
-            # Campi per calcolo automatico
-            vol.Optional("length", default=4.0): vol.All(
-                vol.Coerce(float), vol.Range(min=0.1, max=50.0)
+            vol.Optional(
+                "length", default=None
+            ): vol.All(
+                vol.Coerce(float),
+                vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
             ),
-            vol.Optional("width", default=4.0): vol.All(
-                vol.Coerce(float), vol.Range(min=0.1, max=50.0)
+            vol.Optional(
+                "width", default=None
+            ): vol.All(
+                vol.Coerce(float),
+                vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
             ),
-            vol.Optional("height", default=2.7): vol.All(
-                vol.Coerce(float), vol.Range(min=0.1, max=10.0)
+            vol.Optional(
+                "height", default=None
+            ): vol.All(
+                vol.Coerce(float),
+                vol.Range(min=MIN_DIMENSION, max=MAX_HEIGHT)
             ),
         })
-
         suggested_text = "\n".join([
-            f"• {name}: {volume} m³" for name, volume in suggested_volumes.items()
+            f"• {n}: {v} m³" for n, v in suggested_volumes.items()
         ])
-
         return self.async_show_form(
             step_id="room_config",
             data_schema=schema,
             description_placeholders={
-                "device_name": device["name"],
-                "device_ip": device["ip"],
+                "device_name": name,
+                "device_ip": ip,
                 "suggestions": suggested_text,
                 "help": (
                     f"Configura il volume della stanza per il dispositivo "
-                    f"'{device['name']}' ({device['ip']}) per calcoli accurati "
+                    f"'{name}' ({ip}) per calcoli accurati "
                     f"di ricambio d'aria.\n\n"
                     "🔧 METODO DI INPUT:\n"
                     "• manual: Inserisci direttamente il volume in m³\n"
@@ -388,12 +470,12 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Invalid subnet format: %s", subnet)
             return []
 
-    async def _start_incremental_scan(self) -> dict[str, Any]:
+    async def _start_incremental_scan(self) -> config_entries.ConfigFlowResult:
         """Start incremental device scanning."""
         _LOGGER.info("Starting incremental scan on subnet %s", self.subnet)
 
         # Generate IP range to scan
-        self.ip_range = self._generate_ip_range(self.subnet)
+        self.ip_range = self._generate_ip_range(str(self.subnet))
         self.total_ips_to_scan = len(self.ip_range)
         self.current_ip_index = 0
         self.scan_in_progress = True
@@ -413,8 +495,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Start scanning
         return await self._scan_next_ip()
 
-    async def _scan_next_ip(self) -> dict[str, Any] | None:
-        """Scan the next IP in the range. Returns device info if found."""
+    async def _scan_next_ip(self) -> config_entries.ConfigFlowResult:
+        """Scan the next IP in the range. Returns a ConfigFlowResult."""
         while self.current_ip_index < len(self.ip_range):
             current_ip = self.ip_range[self.current_ip_index]
             _LOGGER.debug(
@@ -455,7 +537,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
         return await self._finalize_incremental_scan()
 
-    async def _finalize_incremental_scan(self) -> dict[str, Any]:
+    async def _finalize_incremental_scan(self) -> config_entries.ConfigFlowResult:
         """Finalize incremental scan and proceed to completion."""
         self.scan_in_progress = False
 
@@ -489,7 +571,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_device_found(self, user_input=None):
+    async def async_step_device_found(self, user_input=None) -> config_entries.ConfigFlowResult:
         """Handle when a device is found during incremental scan."""
         if user_input is None:
             return await self._show_device_found_form()
@@ -497,7 +579,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Handle user choice
         return await self._handle_device_found_action(user_input["action"])
 
-    async def _show_device_found_form(self):
+    async def _show_device_found_form(self) -> config_entries.ConfigFlowResult:
         """Show the device found form."""
         device = self.current_found_device
 
@@ -520,19 +602,24 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
+        # Safely get device attributes, fallback to defaults if device is None
+        device_name = device.get("name", "Dispositivo sconosciuto") if device else "Dispositivo sconosciuto"
+        device_ip = device.get("ip", "N/A") if device else "N/A"
+        device_model = device.get("model", "VMC Flow") if device else "VMC Flow"
+
         return self.async_show_form(
             step_id="device_found",
             data_schema=schema,
             description_placeholders={
-                "device_name": device.get("name", "Dispositivo sconosciuto"),
-                "device_ip": device["ip"],
-                "device_model": device.get("model", "VMC Flow"),
+                "device_name": device_name,
+                "device_ip": device_ip,
+                "device_model": device_model,
                 "progress": progress_str,
                 "found_count": str(current_found_count),
             },
         )
 
-    async def _handle_device_found_action(self, action: str):
+    async def _handle_device_found_action(self, action: str) -> config_entries.ConfigFlowResult:
         """Handle the action selected for a found device."""
         device = self.current_found_device
 
@@ -548,7 +635,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Fallback - should not reach here
         return await self._scan_next_ip()
 
-    async def _handle_add_and_configure(self, device):
+    async def _handle_add_and_configure(self, device) -> config_entries.ConfigFlowResult:
         """Handle add device and configure volume."""
         _LOGGER.info(
             "User wants to add device %s, configuring room volume",
@@ -566,7 +653,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Go to room configuration step
         return await self.async_step_room_config()
 
-    async def _handle_add_and_stop(self, device):
+    async def _handle_add_and_stop(self, device) -> config_entries.ConfigFlowResult:
         """Handle add device and stop scan - but configure volume first."""
         _LOGGER.info(
             "User wants to add device %s and stop scan - configuring volume first",
@@ -585,17 +672,17 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Vai alla configurazione del volume
         return await self.async_step_room_config()
-    
-    async def _handle_skip_continue(self, device):
+
+    async def _handle_skip_continue(self, device) -> config_entries.ConfigFlowResult:
         """Handle skip device and continue scanning."""
         _LOGGER.info("User skipped device %s, continuing scan", device["ip"])
         return await self._scan_next_ip()
-    
-    async def _handle_stop_scan(self):
+
+    async def _handle_stop_scan(self) -> config_entries.ConfigFlowResult:
         """Handle stop scanning without adding current device."""
         _LOGGER.info("Scan stopped by user choice without adding current device")
         return await self._finalize_incremental_scan()
-    
+
     async def _is_device_already_configured(self, device_ip: str) -> bool:
         """Check if a device is already configured."""
         existing_entries = [

@@ -542,7 +542,7 @@ class TestVmcHeltyFlowConfigFlow:
             mock_room_config.assert_called_once()
             assert result["type"] == "form"
             assert result["step_id"] == "room_config"
-            
+
             # Stop flag should be set
             assert config_flow._stop_after_current is True
 
@@ -583,8 +583,8 @@ class TestVmcHeltyFlowConfigFlow:
                 "title": "Scan completed",
                 "data": {},
             }
-            
-            user_input = {"room_volume": 45.0}
+
+            user_input = {"input_method": "manual", "room_volume": 45.0}
             result = await config_flow.async_step_room_config(user_input)
 
             mock_async_init.assert_called_once_with(

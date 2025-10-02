@@ -127,7 +127,7 @@ class TestTcpSendCommand:
             with pytest.raises(VMCConnectionError) as exc_info:
                 await tcp_send_command("invalid.host", 5001, "TEST")
 
-            assert "Errore di connessione" in str(exc_info.value)
+            assert "Errore di rete" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_response_timeout(self):
