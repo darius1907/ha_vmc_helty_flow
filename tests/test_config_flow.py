@@ -280,103 +280,41 @@ class TestVmcHeltyFlowConfigFlow:
     async def test_async_step_room_config_success_manual_volume(self, config_flow):
         """Test successful room configuration step with manual volume input."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
-        config_flow._continue_after_room_config = True  # Set flag to continue scan
         user_input = {
-            "input_method": "manual",
-            "room_volume": 120
+            "room_volume": "120"
         }
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(config_flow, "async_set_unique_id"),
-            patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(
-                config_flow.hass.config_entries.flow,
-                "async_init",
-                new_callable=AsyncMock,
-            ) as mock_async_init,
-            patch.object(
-                config_flow, "_scan_next_ip", new_callable=AsyncMock
-            ) as mock_scan_next,
         ):
-            expected_data = {
-                "ip": "192.168.1.100",
-                "name": "Test1",
-                "model": "VMC Flow",
-                "manufacturer": "Helty",
-                "port": 5001,
-                "timeout": 10,
-                "room_volume": 120.0
-            }
-            mock_scan_next.return_value = {
-                "type": "form",
-                "step_id": "scanning"
-            }
-
             result = await config_flow.async_step_room_config(user_input)
 
-            mock_async_init.assert_called_once_with(
-                DOMAIN,
-                context={"source": "discovered_device"},
-                data=expected_data,
-            )
-            mock_scan_next.assert_called_once()
-            assert result["type"] == "form"
-            # Flag should be reset
-            assert config_flow._continue_after_room_config is False
+            # Verifica che venga creata una entry
+            assert result["type"] == "create_entry"
+            assert result["title"] == "VMC Test1"
+            assert result["data"]["ip"] == "192.168.1.100"
+            assert result["data"]["room_volume"] == 120.0
 
     async def test_async_step_room_config_success_calculated_volume(self, config_flow):
-        """Test successful room configuration step with calculated volume."""
+        """Test successful room configuration step with volume input (no calculation anymore)."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
-        config_flow._continue_after_room_config = True  # Set flag to continue scan
         user_input = {
-            "input_method": "calculate",
-            "length": 5.0,
-            "width": 4.0,
-            "height": 3.0
+            "room_volume": "60.0"
         }
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(config_flow, "async_set_unique_id"),
-            patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(
-                config_flow.hass.config_entries.flow,
-                "async_init",
-                new_callable=AsyncMock,
-            ) as mock_async_init,
-            patch.object(
-                config_flow, "_scan_next_ip", new_callable=AsyncMock
-            ) as mock_scan_next,
         ):
-            expected_data = {
-                "ip": "192.168.1.100",
-                "name": "Test1",
-                "model": "VMC Flow",
-                "manufacturer": "Helty",
-                "port": 5001,
-                "timeout": 10,
-                "room_volume": DEFAULT_ROOM_VOLUME  # 5.0 * 4.0 * 3.0 = 60.0
-            }
-            mock_scan_next.return_value = {
-                "type": "form",
-                "step_id": "scanning"
-            }
-
             result = await config_flow.async_step_room_config(user_input)
 
-            mock_async_init.assert_called_once_with(
-                DOMAIN,
-                context={"source": "discovered_device"},
-                data=expected_data,
-            )
-            mock_scan_next.assert_called_once()
-            assert result["type"] == "form"
-            # Flag should be reset
-            assert config_flow._continue_after_room_config is False
+            # Verifica che venga creata una entry
+            assert result["type"] == "create_entry"
+            assert result["title"] == "VMC Test1"
+            assert result["data"]["ip"] == "192.168.1.100"
+            assert result["data"]["room_volume"] == 60.0
 
     async def test_async_step_room_config_no_input(self, config_flow):
-        """Test room configuration step without input shows form with all fields."""
+        """Test room configuration step without input shows form with room_volume field."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
         result = await config_flow.async_step_room_config()
@@ -386,136 +324,94 @@ class TestVmcHeltyFlowConfigFlow:
         schema_keys = list(result["data_schema"].schema.keys())
         schema_key_names = [str(key) for key in schema_keys]
 
-        # Verifica che tutti i campi siano sempre presenti nel form
-        assert any("input_method" in key_name for key_name in schema_key_names)
+        # Verifica che ci sia solo il campo room_volume
         assert any("room_volume" in key_name for key_name in schema_key_names)
-        assert any("length" in key_name for key_name in schema_key_names)
-        assert any("width" in key_name for key_name in schema_key_names)
-        assert any("height" in key_name for key_name in schema_key_names)
+        # Verifica che non ci siano più i campi di calcolo
+        assert not any("input_method" in key_name for key_name in schema_key_names)
+        assert not any("length" in key_name for key_name in schema_key_names)
+        assert not any("width" in key_name for key_name in schema_key_names)
+        assert not any("height" in key_name for key_name in schema_key_names)
 
     async def test_async_step_room_config_validation_modes(self, config_flow):
-        """Test room configuration validation for different input methods."""
+        """Test room configuration validation for volume input."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
-        # Test modalità manual - dovrebbe richiedere solo room_volume
+        # Test volume vuoto - dovrebbe dare errore
         result = await config_flow.async_step_room_config({
-            "input_method": "manual"
-            # Nessun room_volume fornito - dovrebbe dare errore
+            "room_volume": ""
         })
         assert result["type"] == "form"
         assert "room_volume_required" in result["errors"]["room_volume"]
 
-        # Test modalità calculate - dovrebbe richiedere dimensioni, non room_volume
+        # Test volume valido - dovrebbe creare entry
         result = await config_flow.async_step_room_config({
-            "input_method": "calculate",
-            "room_volume": "50.0"  # Fornito ma non dovrebbe causare errori
-            # Nessuna dimensione fornita - dovrebbe dare errori
+            "room_volume": "50.0"
         })
-        assert result["type"] == "form"
-        assert "length_required" in result["errors"]["length"]
-        assert "width_required" in result["errors"]["width"]
-        assert "height_required" in result["errors"]["height"]
+        assert result["type"] == "create_entry"
 
-        # Test che tutti i campi siano sempre visibili
-        result = await config_flow.async_step_room_config({
-            "input_method": "manual"
-        })
+        # Test che solo il campo room_volume sia presente
+        result = await config_flow.async_step_room_config()
         assert result["type"] == "form"
         schema_keys = list(result["data_schema"].schema.keys())
         schema_key_names = [str(key) for key in schema_keys]
-        # Tutti i campi dovrebbero essere sempre presenti
+        # Solo room_volume dovrebbe essere presente
         assert any("room_volume" in key_name for key_name in schema_key_names)
-        assert any("length" in key_name for key_name in schema_key_names)
-        assert any("width" in key_name for key_name in schema_key_names)
-        assert any("height" in key_name for key_name in schema_key_names)
+        # I campi di calcolo non dovrebbero più esistere
+        assert not any("input_method" in key_name for key_name in schema_key_names)
+        assert not any("length" in key_name for key_name in schema_key_names)
+        assert not any("width" in key_name for key_name in schema_key_names)
+        assert not any("height" in key_name for key_name in schema_key_names)
 
     async def test_async_step_room_config_empty_fields(self, config_flow):
-        """Test che i campi vuoti non causino errori voluptuous."""
+        """Test che i campi vuoti causino errori appropriati."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
-        # Test modalità manual con tutti i campi vuoti/None
+        # Test con room_volume vuoto
         result = await config_flow.async_step_room_config({
-            "input_method": "manual",
             "room_volume": "",  # Campo vuoto
-            "length": "",  # Campo vuoto (non dovrebbe causare errore voluptuous)
-            "width": None,  # Campo None (non dovrebbe causare errore voluptuous)
-            "height": ""  # Campo vuoto (non dovrebbe causare errore voluptuous)
         })
         assert result["type"] == "form"
-        # Dovrebbe avere solo errore logico su room_volume, non errori voluptuous
+        # Dovrebbe avere errore su room_volume
         assert "room_volume_required" in result["errors"]["room_volume"]
-        # Non dovrebbero esserci errori sui campi non rilevanti per manual
-        assert "length" not in result["errors"]
-        assert "width" not in result["errors"]
-        assert "height" not in result["errors"]
 
-        # Test modalità calculate con tutti i campi vuoti/None
+        # Test con room_volume None
         result = await config_flow.async_step_room_config({
-            "input_method": "calculate",
-            "room_volume": "",  # Campo vuoto (non dovrebbe causare errore)
-            "length": "",  # Campo vuoto (dovrebbe causare errore logico)
-            "width": None,  # Campo None (dovrebbe causare errore logico)
-            "height": ""  # Campo vuoto (dovrebbe causare errore logico)
+            "room_volume": None,  # Campo None
         })
         assert result["type"] == "form"
-        # Dovrebbe avere errori logici sui campi richiesti per calculate
-        assert "length_required" in result["errors"]["length"]
-        assert "width_required" in result["errors"]["width"]
-        assert "height_required" in result["errors"]["height"]
-        # Non dovrebbe esserci errore su room_volume (non rilevante per calculate)
-        assert "room_volume" not in result["errors"]
+        assert "room_volume_required" in result["errors"]["room_volume"]
+
+        # Test con room_volume invalido
+        result = await config_flow.async_step_room_config({
+            "room_volume": "abc",  # Valore non numerico
+        })
+        assert result["type"] == "form"
+        assert "room_volume_invalid" in result["errors"]["room_volume"]
 
     async def test_validation_logic_specific_behavior(self, config_flow):
-        """Test del comportamento esatto richiesto per la validazione."""
+        """Test validazione semplificata per volume."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
-        # MODALITÀ MANUAL: volume vuoto = errore, altri campi ignorati
+        # Test volume nel range valido
         result = await config_flow.async_step_room_config({
-            "input_method": "manual",
-            "room_volume": "",  # VUOTO - deve dare errore
-            "length": "abc",    # VALORE INVALIDO - deve essere IGNORATO
-            "width": "xyz",     # VALORE INVALIDO - deve essere IGNORATO
-            "height": "-99"     # VALORE INVALIDO - deve essere IGNORATO
+            "room_volume": "50.0"
         })
-        assert result["type"] == "form"
-        # Solo errore su room_volume
-        assert "room_volume_required" in result["errors"]["room_volume"]
-        # Altri campi devono essere IGNORATI (nessun errore)
-        assert "length" not in result["errors"]
-        assert "width" not in result["errors"]
-        assert "height" not in result["errors"]
+        assert result["type"] == "create_entry"
+        assert result["data"]["room_volume"] == 50.0
 
-        # MODALITÀ CALCULATE: dimensioni vuote = errori, volume ignorato
+        # Test volume troppo piccolo
         result = await config_flow.async_step_room_config({
-            "input_method": "calculate",
-            "room_volume": "abc",  # VALORE INVALIDO - deve essere IGNORATO
-            "length": "",          # VUOTO - deve dare errore
-            "width": "",           # VUOTO - deve dare errore
-            "height": ""           # VUOTO - deve dare errore
+            "room_volume": "2.0"  # Sotto MIN_ROOM_VOLUME (5.0)
         })
         assert result["type"] == "form"
-        # Errori solo sulle dimensioni
-        assert "length_required" in result["errors"]["length"]
-        assert "width_required" in result["errors"]["width"]
-        assert "height_required" in result["errors"]["height"]
-        # Volume deve essere IGNORATO (nessun errore)
-        assert "room_volume" not in result["errors"]
+        assert "room_volume_out_of_range" in result["errors"]["room_volume"]
 
-        # MODALITÀ CALCULATE: una dimensione mancante
+        # Test volume troppo grande
         result = await config_flow.async_step_room_config({
-            "input_method": "calculate",
-            "room_volume": "999",  # VALORE INVALIDO - deve essere IGNORATO
-            "length": "4.0",       # OK
-            "width": "3.0",        # OK
-            "height": ""           # VUOTO - deve dare errore
+            "room_volume": "2000.0"  # Sopra MAX_ROOM_VOLUME
         })
         assert result["type"] == "form"
-        # Solo height deve avere errore
-        assert "height_required" in result["errors"]["height"]
-        # Altri campi OK o ignorati
-        assert "length" not in result["errors"]
-        assert "width" not in result["errors"]
-        assert "room_volume" not in result["errors"]  # IGNORATO
+        assert "room_volume_out_of_range" in result["errors"]["room_volume"]
 
     async def test_discover_devices_async(self, config_flow):
         """Test async device discovery."""
@@ -669,57 +565,20 @@ class TestVmcHeltyFlowConfigFlow:
             assert config_flow._stop_after_current is True
 
     async def test_room_config_with_stop_flag(self, config_flow):
-        """Test room config step when _stop_after_current flag is set."""
-        # Setup flow state
-        config_flow.current_found_device = {
-            "ip": "192.168.1.100",
-            "name": "VMC Test Device",
+        """Test room configuration with simple volume input."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        
+        user_input = {
+            "room_volume": "75.5"
         }
-        config_flow._stop_after_current = True
-        config_flow.found_devices_session = []
 
-        with (
-            patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(config_flow, "async_set_unique_id"),
-            patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(
-                config_flow.hass.config_entries.flow,
-                "async_init",
-                new_callable=AsyncMock,
-            ) as mock_async_init,
-            patch.object(
-                config_flow, "_finalize_incremental_scan", new_callable=AsyncMock
-            ) as mock_finalize,
-        ):
-            expected_data = {
-                "ip": "192.168.1.100",
-                "name": "VMC Test Device",
-                "model": "VMC Flow",
-                "manufacturer": "Helty",
-                "port": 5001,
-                "timeout": 10,
-                "room_volume": 45.0,  # User configured volume
-            }
-            mock_finalize.return_value = {
-                "type": "create_entry",
-                "title": "Scan completed",
-                "data": {},
-            }
+        result = await config_flow.async_step_room_config(user_input)
 
-            user_input = {"input_method": "manual", "room_volume": 45.0}
-            result = await config_flow.async_step_room_config(user_input)
-
-            mock_async_init.assert_called_once_with(
-                DOMAIN,
-                context={"source": "discovered_device"},
-                data=expected_data,
-            )
-            mock_finalize.assert_called_once()
-            assert result["type"] == "create_entry"
-            # Flag should be reset after use
-            assert config_flow._stop_after_current is False
-            # Device should be added to session (twice)
-            assert len(config_flow.found_devices_session) >= 1
+        # Verifica che venga creata una entry
+        assert result["type"] == "create_entry"
+        assert result["title"] == "VMC Test1"
+        assert result["data"]["ip"] == "192.168.1.100"
+        assert result["data"]["room_volume"] == 75.5
 
     async def test_async_step_discovered_device_with_custom_volume(self, config_flow):
         """Test discovered_device step uses volume from discovery_info."""
