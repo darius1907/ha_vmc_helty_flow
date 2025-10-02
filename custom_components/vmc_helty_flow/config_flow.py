@@ -79,6 +79,54 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             errors["input_method"] = "input_method_required"
         return room_volume, errors
+
+    def _create_room_config_schema(self, user_input: dict | None = None) -> vol.Schema:
+        """Crea schema dinamico basato sul metodo di input selezionato."""
+        input_method = user_input.get("input_method", "manual") if user_input else "manual"
+        
+        # Schema base sempre presente
+        schema_dict = {
+            vol.Required(
+                "input_method",
+                default=input_method
+            ): vol.In(["manual", "calculate"]),
+        }
+        
+        # Aggiungi campi specifici in base al metodo
+        if input_method == "manual":
+            schema_dict[vol.Optional(
+                "room_volume",
+                default=user_input.get("room_volume") if user_input else None
+            )] = vol.All(
+                vol.Coerce(float),
+                vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
+            )
+        elif input_method == "calculate":
+            schema_dict.update({
+                vol.Optional(
+                    "length",
+                    default=user_input.get("length") if user_input else None
+                ): vol.All(
+                    vol.Coerce(float),
+                    vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
+                ),
+                vol.Optional(
+                    "width",
+                    default=user_input.get("width") if user_input else None
+                ): vol.All(
+                    vol.Coerce(float),
+                    vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
+                ),
+                vol.Optional(
+                    "height",
+                    default=user_input.get("height") if user_input else None
+                ): vol.All(
+                    vol.Coerce(float),
+                    vol.Range(min=MIN_DIMENSION, max=MAX_HEIGHT)
+                ),
+            })
+        
+        return vol.Schema(schema_dict)
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
 
     VERSION = 1
@@ -271,40 +319,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             room_volume, errors = self._validate_and_calculate_volume(user_input)
             if errors:
-                schema = vol.Schema({
-                    vol.Required(
-                        "input_method",
-                        default=user_input.get("input_method", "manual")
-                    ): vol.In(["manual", "calculate"]),
-                    vol.Optional(
-                        "room_volume",
-                        default=user_input.get("room_volume")
-                    ): vol.All(
-                        vol.Coerce(float),
-                        vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
-                    ),
-                    vol.Optional(
-                        "length",
-                        default=user_input.get("length")
-                    ): vol.All(
-                        vol.Coerce(float),
-                        vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
-                    ),
-                    vol.Optional(
-                        "width",
-                        default=user_input.get("width")
-                    ): vol.All(
-                        vol.Coerce(float),
-                        vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
-                    ),
-                    vol.Optional(
-                        "height",
-                        default=user_input.get("height")
-                    ): vol.All(
-                        vol.Coerce(float),
-                        vol.Range(min=MIN_DIMENSION, max=MAX_HEIGHT)
-                    ),
-                })
+                # Crea schema dinamico basato sul metodo selezionato
+                schema = self._create_room_config_schema(user_input)
                 suggested_text = "\n".join([
                     f"• {n}: {v} m³" for n, v in suggested_volumes.items()
                 ])
@@ -373,35 +389,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="unknown")
 
         # Prima visualizzazione del form
-        schema = vol.Schema({
-            vol.Required(
-                "input_method", default="manual"
-            ): vol.In(["manual", "calculate"]),
-            vol.Optional(
-                "room_volume", default=None
-            ): vol.All(
-                vol.Coerce(float),
-                vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
-            ),
-            vol.Optional(
-                "length", default=None
-            ): vol.All(
-                vol.Coerce(float),
-                vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
-            ),
-            vol.Optional(
-                "width", default=None
-            ): vol.All(
-                vol.Coerce(float),
-                vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
-            ),
-            vol.Optional(
-                "height", default=None
-            ): vol.All(
-                vol.Coerce(float),
-                vol.Range(min=MIN_DIMENSION, max=MAX_HEIGHT)
-            ),
-        })
+        schema = self._create_room_config_schema()
         suggested_text = "\n".join([
             f"• {n}: {v} m³" for n, v in suggested_volumes.items()
         ])
