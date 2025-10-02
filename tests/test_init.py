@@ -53,7 +53,10 @@ class TestVmcHeltyCoordinator:
         self.config_entry.data = {
             "ip": "192.168.1.100",
             "name": "Test VMC",
+            "port": 5001,
+            "room_volume": 60.0,
         }
+        self.config_entry.title = "VMC Test Device"
         self.config_entry.options = {"scan_interval": 60}
 
     @patch("custom_components.vmc_helty_flow.DataUpdateCoordinator.__init__")

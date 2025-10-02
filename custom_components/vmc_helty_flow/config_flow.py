@@ -291,17 +291,12 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         final_data = {
             "ip": device.get("ip") if device else "localhost",
-            "hostname": device.get("hostname") if device else "localhost",
+            "name": device.get("name") if device else "Unknown Device",
             "port": device.get("port") if device else 5001,
-            "mac": device.get("mac") if device else "aa:bb:cc:dd:ee:ff",
             "room_volume": room_volume,
         }
 
-        title = (
-            f"VMC {device.get('name', device.get('hostname', 'Unknown'))}"
-            if device
-            else "VMC Unknown Device"
-        )
+        title = device.get("name") if device else "VMC Unknown Device"
 
         return self.async_create_entry(title=title, data=final_data)
 

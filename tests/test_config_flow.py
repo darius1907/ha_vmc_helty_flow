@@ -291,27 +291,9 @@ class TestVmcHeltyFlowConfigFlow:
 
             # Verifica che venga creata una entry
             assert result["type"] == "create_entry"
-            assert result["title"] == "VMC Test1"
+            assert result["title"] == "Test1"
             assert result["data"]["ip"] == "192.168.1.100"
             assert result["data"]["room_volume"] == 120.0
-
-    async def test_async_step_room_config_success_calculated_volume(self, config_flow):
-        """Test successful room configuration step with volume input (no calculation anymore)."""
-        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
-        user_input = {
-            "room_volume": "60.0"
-        }
-
-        with (
-            patch.object(config_flow, "_async_current_entries", return_value=[]),
-        ):
-            result = await config_flow.async_step_room_config(user_input)
-
-            # Verifica che venga creata una entry
-            assert result["type"] == "create_entry"
-            assert result["title"] == "VMC Test1"
-            assert result["data"]["ip"] == "192.168.1.100"
-            assert result["data"]["room_volume"] == 60.0
 
     async def test_async_step_room_config_no_input(self, config_flow):
         """Test room configuration step without input shows form with room_volume field."""
@@ -576,7 +558,7 @@ class TestVmcHeltyFlowConfigFlow:
 
         # Verifica che venga creata una entry
         assert result["type"] == "create_entry"
-        assert result["title"] == "VMC Test1"
+        assert result["title"] == "Test1"
         assert result["data"]["ip"] == "192.168.1.100"
         assert result["data"]["room_volume"] == 75.5
 
