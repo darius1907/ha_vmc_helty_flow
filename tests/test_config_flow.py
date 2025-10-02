@@ -259,7 +259,7 @@ class TestVmcHeltyFlowConfigFlow:
             mock_room_config.assert_called_once()
             assert result["type"] == "form"
             assert result["step_id"] == "room_config"
-            
+
             # Verify that stop flag is set
             assert config_flow._stop_after_current is True
 
@@ -312,7 +312,7 @@ class TestVmcHeltyFlowConfigFlow:
                 "type": "form",
                 "step_id": "scanning"
             }
-            
+
             result = await config_flow.async_step_room_config(user_input)
 
             mock_async_init.assert_called_once_with(
@@ -362,7 +362,7 @@ class TestVmcHeltyFlowConfigFlow:
                 "type": "form",
                 "step_id": "scanning"
             }
-            
+
             result = await config_flow.async_step_room_config(user_input)
 
             mock_async_init.assert_called_once_with(
@@ -385,7 +385,7 @@ class TestVmcHeltyFlowConfigFlow:
         assert result["step_id"] == "room_config"
         schema_keys = list(result["data_schema"].schema.keys())
         schema_key_names = [str(key) for key in schema_keys]
-        
+
         # Verifica che tutti i campi necessari siano presenti
         assert any("input_method" in key_name for key_name in schema_key_names)
         assert any("room_volume" in key_name for key_name in schema_key_names)
@@ -638,7 +638,7 @@ class TestVmcHeltyFlowConfigFlow:
                     "room_volume": 85.5,  # Should use the custom volume
                 }
             )
-            
+
             assert result["type"] == "create_entry"
 
     async def test_async_step_discovered_device_default_volume(self, config_flow):
@@ -680,5 +680,5 @@ class TestVmcHeltyFlowConfigFlow:
                     "room_volume": DEFAULT_ROOM_VOLUME,  # Should use default volume
                 }
             )
-            
+
             assert result["type"] == "create_entry"
