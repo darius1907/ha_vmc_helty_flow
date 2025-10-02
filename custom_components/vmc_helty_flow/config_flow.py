@@ -97,8 +97,15 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """
         input_method = user_input.get("input_method", "manual") if user_input else "manual"
         
-        # Schema con tutti i campi sempre presenti, gestendo valori vuoti
+        # Schema con tutti i campi sempre presenti, senza validazione voluptuous
         # La validazione vera avviene in _validate_and_calculate_volume
+        # Funzione helper per gestire i default sicuri
+        def safe_default(value):
+            """Restituisce stringa vuota se value è None."""
+            if value is None:
+                return ""
+            return str(value)
+
         schema_dict = {
             vol.Required(
                 "input_method",
@@ -106,20 +113,22 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ): vol.In(["manual", "calculate"]),
             vol.Optional(
                 "room_volume",
-                default=user_input.get("room_volume", "") if user_input else ""
-            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
+                default=safe_default(
+                    user_input.get("room_volume") if user_input else ""
+                )
+            ): str,
             vol.Optional(
                 "length",
-                default=user_input.get("length", "") if user_input else ""
-            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
+                default=safe_default(user_input.get("length") if user_input else "")
+            ): str,
             vol.Optional(
                 "width",
-                default=user_input.get("width", "") if user_input else ""
-            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
+                default=safe_default(user_input.get("width") if user_input else "")
+            ): str,
             vol.Optional(
                 "height",
-                default=user_input.get("height", "") if user_input else ""
-            ): vol.Any(str, None, ""),  # Accetta stringa, None o vuoto
+                default=safe_default(user_input.get("height") if user_input else "")
+            ): str,
         }
         
         return vol.Schema(schema_dict)
@@ -299,7 +308,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     # Nel flow incrementale ogni dispositivo viene gestito singolarmente
 
 
-    async def async_step_room_config(self, user_input=None) -> config_entries.ConfigFlowResult:
+    async def async_step_room_config(
+        self, user_input=None
+    ) -> config_entries.ConfigFlowResult:
         """Step di configurazione stanza con validazione e calcolo volume separato."""
         suggested_volumes = {
             "Piccola (3x3x2.5m)": 22.5,
@@ -309,7 +320,11 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         }
 
         device = self.current_found_device
-        name = device.get("name", "Dispositivo sconosciuto") if device else "Dispositivo sconosciuto"
+        name = (
+            device.get("name", "Dispositivo sconosciuto")
+            if device
+            else "Dispositivo sconosciuto"
+        )
         ip = device.get("ip", "N/A") if device else "N/A"
 
         if user_input is not None:
@@ -555,7 +570,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_device_found(self, user_input=None) -> config_entries.ConfigFlowResult:
+    async def async_step_device_found(
+        self, user_input=None
+    ) -> config_entries.ConfigFlowResult:
         """Handle when a device is found during incremental scan."""
         if user_input is None:
             return await self._show_device_found_form()
@@ -587,7 +604,11 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         # Safely get device attributes, fallback to defaults if device is None
-        device_name = device.get("name", "Dispositivo sconosciuto") if device else "Dispositivo sconosciuto"
+        device_name = (
+            device.get("name", "Dispositivo sconosciuto")
+            if device
+            else "Dispositivo sconosciuto"
+        )
         device_ip = device.get("ip", "N/A") if device else "N/A"
         device_model = device.get("model", "VMC Flow") if device else "VMC Flow"
 
@@ -603,7 +624,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def _handle_device_found_action(self, action: str) -> config_entries.ConfigFlowResult:
+    async def _handle_device_found_action(
+        self, action: str
+    ) -> config_entries.ConfigFlowResult:
         """Handle the action selected for a found device."""
         device = self.current_found_device
 
@@ -619,7 +642,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Fallback - should not reach here
         return await self._scan_next_ip()
 
-    async def _handle_add_and_configure(self, device) -> config_entries.ConfigFlowResult:
+    async def _handle_add_and_configure(
+        self, device
+    ) -> config_entries.ConfigFlowResult:
         """Handle add device and configure volume."""
         _LOGGER.info(
             "User wants to add device %s, configuring room volume",
@@ -750,7 +775,9 @@ class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
                 ): vol.All(vol.Coerce(int), vol.Range(min=1, max=10)),
                 vol.Optional(
                     "room_volume",
-                    default=self.config_entry.data.get("room_volume", DEFAULT_ROOM_VOLUME),
+                    default=self.config_entry.data.get(
+                        "room_volume", DEFAULT_ROOM_VOLUME
+                    ),
                 ): vol.All(vol.Coerce(float), vol.Range(min=1.0, max=1000.0)),
             }
         )

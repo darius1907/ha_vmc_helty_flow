@@ -465,6 +465,58 @@ class TestVmcHeltyFlowConfigFlow:
         # Non dovrebbe esserci errore su room_volume (non rilevante per calculate)
         assert "room_volume" not in result["errors"]
 
+    async def test_validation_logic_specific_behavior(self, config_flow):
+        """Test del comportamento esatto richiesto per la validazione."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+
+        # MODALITÀ MANUAL: volume vuoto = errore, altri campi ignorati
+        result = await config_flow.async_step_room_config({
+            "input_method": "manual",
+            "room_volume": "",  # VUOTO - deve dare errore
+            "length": "abc",    # VALORE INVALIDO - deve essere IGNORATO
+            "width": "xyz",     # VALORE INVALIDO - deve essere IGNORATO
+            "height": "-99"     # VALORE INVALIDO - deve essere IGNORATO
+        })
+        assert result["type"] == "form"
+        # Solo errore su room_volume
+        assert "room_volume_required" in result["errors"]["room_volume"]
+        # Altri campi devono essere IGNORATI (nessun errore)
+        assert "length" not in result["errors"]
+        assert "width" not in result["errors"]
+        assert "height" not in result["errors"]
+
+        # MODALITÀ CALCULATE: dimensioni vuote = errori, volume ignorato
+        result = await config_flow.async_step_room_config({
+            "input_method": "calculate",
+            "room_volume": "abc",  # VALORE INVALIDO - deve essere IGNORATO
+            "length": "",          # VUOTO - deve dare errore
+            "width": "",           # VUOTO - deve dare errore
+            "height": ""           # VUOTO - deve dare errore
+        })
+        assert result["type"] == "form"
+        # Errori solo sulle dimensioni
+        assert "length_required" in result["errors"]["length"]
+        assert "width_required" in result["errors"]["width"]
+        assert "height_required" in result["errors"]["height"]
+        # Volume deve essere IGNORATO (nessun errore)
+        assert "room_volume" not in result["errors"]
+
+        # MODALITÀ CALCULATE: una dimensione mancante
+        result = await config_flow.async_step_room_config({
+            "input_method": "calculate",
+            "room_volume": "999",  # VALORE INVALIDO - deve essere IGNORATO
+            "length": "4.0",       # OK
+            "width": "3.0",        # OK
+            "height": ""           # VUOTO - deve dare errore
+        })
+        assert result["type"] == "form"
+        # Solo height deve avere errore
+        assert "height_required" in result["errors"]["height"]
+        # Altri campi OK o ignorati
+        assert "length" not in result["errors"]
+        assert "width" not in result["errors"]
+        assert "room_volume" not in result["errors"]  # IGNORATO
+
     async def test_discover_devices_async(self, config_flow):
         """Test async device discovery."""
         devices = [{"ip": "192.168.1.100", "name": "Test"}]
