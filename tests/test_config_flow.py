@@ -376,7 +376,7 @@ class TestVmcHeltyFlowConfigFlow:
             assert config_flow._continue_after_room_config is False
 
     async def test_async_step_room_config_no_input(self, config_flow):
-        """Test room configuration step without input shows form with default schema."""
+        """Test room configuration step without input shows form with all fields."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
         result = await config_flow.async_step_room_config()
@@ -386,14 +386,12 @@ class TestVmcHeltyFlowConfigFlow:
         schema_keys = list(result["data_schema"].schema.keys())
         schema_key_names = [str(key) for key in schema_keys]
 
-        # Verifica che i campi per il metodo manual siano presenti (default)
+        # Verifica che tutti i campi siano sempre presenti nel form
         assert any("input_method" in key_name for key_name in schema_key_names)
         assert any("room_volume" in key_name for key_name in schema_key_names)
-        # I campi per il calcolo non dovrebbero essere presenti nel form iniziale
-        # (metodo manual)
-        assert not any("length" in key_name for key_name in schema_key_names)
-        assert not any("width" in key_name for key_name in schema_key_names)
-        assert not any("height" in key_name for key_name in schema_key_names)
+        assert any("length" in key_name for key_name in schema_key_names)
+        assert any("width" in key_name for key_name in schema_key_names)
+        assert any("height" in key_name for key_name in schema_key_names)
 
     async def test_async_step_room_config_validation_modes(self, config_flow):
         """Test room configuration validation for different input methods."""
@@ -410,7 +408,7 @@ class TestVmcHeltyFlowConfigFlow:
         # Test modalità calculate - dovrebbe richiedere dimensioni, non room_volume
         result = await config_flow.async_step_room_config({
             "input_method": "calculate",
-            "room_volume": 50.0  # Fornito ma non dovrebbe causare errori
+            "room_volume": "50.0"  # Fornito ma non dovrebbe causare errori
             # Nessuna dimensione fornita - dovrebbe dare errori
         })
         assert result["type"] == "form"
@@ -418,31 +416,18 @@ class TestVmcHeltyFlowConfigFlow:
         assert "width_required" in result["errors"]["width"]
         assert "height_required" in result["errors"]["height"]
 
-        # Test che lo schema dinamico funzioni per modalità manual
+        # Test che tutti i campi siano sempre visibili
         result = await config_flow.async_step_room_config({
             "input_method": "manual"
         })
         assert result["type"] == "form"
         schema_keys = list(result["data_schema"].schema.keys())
         schema_key_names = [str(key) for key in schema_keys]
-        # Dovrebbe avere room_volume ma non dimensioni
+        # Tutti i campi dovrebbero essere sempre presenti
         assert any("room_volume" in key_name for key_name in schema_key_names)
-        assert not any("length" in key_name for key_name in schema_key_names)
-
-        # Test che lo schema dinamico funzioni per modalità calculate
-        result = await config_flow.async_step_room_config({
-            "input_method": "calculate",
-            "length": 1.0  # Valore troppo piccolo per testare validazione
-        })
-        assert result["type"] == "form"
-        assert "width_required" in result["errors"]["width"]
-        schema_keys = list(result["data_schema"].schema.keys())
-        schema_key_names = [str(key) for key in schema_keys]
-        # Dovrebbe avere dimensioni ma non room_volume
         assert any("length" in key_name for key_name in schema_key_names)
         assert any("width" in key_name for key_name in schema_key_names)
         assert any("height" in key_name for key_name in schema_key_names)
-        assert not any("room_volume" in key_name for key_name in schema_key_names)
 
     # Legacy test removed - method no longer exists
 

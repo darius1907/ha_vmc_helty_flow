@@ -81,50 +81,36 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return room_volume, errors
 
     def _create_room_config_schema(self, user_input: dict | None = None) -> vol.Schema:
-        """Crea schema dinamico basato sul metodo di input selezionato."""
+        """Crea schema con tutti i campi sempre visibili.
+
+        La validazione sui campi non rilevanti viene evitata.
+        """
         input_method = user_input.get("input_method", "manual") if user_input else "manual"
         
-        # Schema base sempre presente
+        # Schema con tutti i campi sempre presenti, ma senza vincoli di validazione
+        # La validazione vera avviene in _validate_and_calculate_volume
         schema_dict = {
             vol.Required(
                 "input_method",
                 default=input_method
             ): vol.In(["manual", "calculate"]),
-        }
-        
-        # Aggiungi campi specifici in base al metodo
-        if input_method == "manual":
-            schema_dict[vol.Optional(
+            vol.Optional(
                 "room_volume",
                 default=user_input.get("room_volume") if user_input else None
-            )] = vol.All(
-                vol.Coerce(float),
-                vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
-            )
-        elif input_method == "calculate":
-            schema_dict.update({
-                vol.Optional(
-                    "length",
-                    default=user_input.get("length") if user_input else None
-                ): vol.All(
-                    vol.Coerce(float),
-                    vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
-                ),
-                vol.Optional(
-                    "width",
-                    default=user_input.get("width") if user_input else None
-                ): vol.All(
-                    vol.Coerce(float),
-                    vol.Range(min=MIN_DIMENSION, max=MAX_DIMENSION)
-                ),
-                vol.Optional(
-                    "height",
-                    default=user_input.get("height") if user_input else None
-                ): vol.All(
-                    vol.Coerce(float),
-                    vol.Range(min=MIN_DIMENSION, max=MAX_HEIGHT)
-                ),
-            })
+            ): str,  # Nessuna validazione qui
+            vol.Optional(
+                "length",
+                default=user_input.get("length") if user_input else None
+            ): str,  # Nessuna validazione qui
+            vol.Optional(
+                "width",
+                default=user_input.get("width") if user_input else None
+            ): str,  # Nessuna validazione qui
+            vol.Optional(
+                "height",
+                default=user_input.get("height") if user_input else None
+            ): str,  # Nessuna validazione qui
+        }
         
         return vol.Schema(schema_dict)
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
