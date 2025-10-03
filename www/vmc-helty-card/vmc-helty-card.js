@@ -592,6 +592,8 @@ class VmcHeltyCard extends LitElement {
         </span>
         <span slot="description">Imposta la velocità di ventilazione</span>
         <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
+      </ha-settings-row>
+      <ha-settings-row>
         <ha-control-slider
           min="0"
           max="4"
@@ -663,12 +665,13 @@ class VmcHeltyCard extends LitElement {
     if (this.config.show_lights === false || (!lightState && !timerState)) return nothing;
 
     return html`
-      <ha-heading-badge type="text">
-        <ha-icon slot="icon" icon="mdi:lightbulb"></ha-icon>
-        Controlli Luci
-      </ha-heading-badge>
+
 
       ${lightState && this.config.show_lights !== false ? html`
+        <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:lightbulb"></ha-icon>
+          Controlli Luci
+        </ha-heading-badge>
         <ha-settings-row>
           <span slot="heading">
             <ha-heading-badge type="text">
@@ -714,7 +717,7 @@ class VmcHeltyCard extends LitElement {
               Timer Luci
             </ha-heading-badge>
           </span>
-          <span slot="description">Accendi/spegni il timer</span>
+          <span slot="description">Accendi/spegni il timer delle luci</span>
           <mwc-switch
             .checked="${timerState.state === 'on'}"
             @change="${() => this._toggleLight(timerEntity)}"
