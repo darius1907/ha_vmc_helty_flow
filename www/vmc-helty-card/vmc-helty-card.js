@@ -787,7 +787,7 @@ class VmcHeltyCard extends LitElement {
           const stateObj = this._getEntityState(entityId);
           console.log('Rendering sensor:', entityId, stateObj);
           return stateObj ? html`
-            <ha-state-label-badge .hass=${this.hass} .stateObj=${stateObj}></ha-state-label-badge>
+            <ha-state-label-badge .hass=${this.hass} .stateObj=${this.hass.states[entityId]}></ha-state-label-badge>
           ` : nothing;
         })}
       </div>
@@ -824,8 +824,9 @@ class VmcHeltyCard extends LitElement {
       <div style="display: flex; flex-wrap: wrap; gap: 8px;">
         ${advEntities.map(entityId => {
           const stateObj = this._getEntityState(entityId);
+          console.log('Rendering sensor:', entityId, stateObj);
           return stateObj ? html`
-            <ha-state-label-badge .hass=${this.hass} .stateObj=${stateObj}></ha-state-label-badge>
+            <ha-state-label-badge .hass=${this.hass} .stateObj=${this.hass.states[entityId]}></ha-state-label-badge>
           ` : nothing;
         })}
       </div>
