@@ -151,6 +151,9 @@ class VmcHeltyCardEditor extends LitElement {
     if (!this.hass) return;
 
     // Discover VMC entities - look for all fan entities first, then filter by integration
+
+    console.debug('hass keys:', Object.keys(this.hass.states));
+
     this._vmcEntities = Object.keys(this.hass.states)
       .filter(entityId => {
         if (!entityId.startsWith('fan.')) return false;

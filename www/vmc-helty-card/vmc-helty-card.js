@@ -508,6 +508,9 @@ class VmcHeltyCard extends LitElement {
 
   // Render methods
   render() {
+
+    console.debug('hass in ha-state-label-badge:', this.hass);
+
     if (this._error) {
       return this._renderError();
     }
