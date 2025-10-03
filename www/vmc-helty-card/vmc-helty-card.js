@@ -87,62 +87,58 @@ class VmcHeltyCard extends LitElement {
     const panelLedState = this._getEntityState(panelLedEntity);
     const sensorsState = this._getEntityState(sensorsEntity);
     return html`
-      <div class="controls-section">
-        <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:cog-clockwise" ></ha-icon>
-          Modalità Speciali
-        </ha-heading-badge>
-        <ha-chip-set>
-          ${specialModes.map(mode => {
-            const isOn = !!attrs[mode.attr];
-            return html`
-              <ha-chip
-                .selected=${isOn}
-                @click=${() => this._setSpecialMode(mode)}
-                aria-label="${mode.label}"
-                ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-              >
-                <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
-                ${mode.label}
-              </ha-chip>
-            `;
-          })}
-        </ha-chip-set>
-      </div>
-      <div class="controls-section">
-        <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
-          Controlli Dispositivo
-        </ha-heading-badge>
-        <ha-settings-row>
-          <span slot="heading">
-            <ha-heading-badge type="text">
-            <ha-icon slot="icon" icon="mdi:led"></ha-icon>
-              LED Pannello
-            </ha-heading-badge>
-          </span>
-          <span slot="description">Controllo LED del pannello frontale</span>
-          <ha-entity-toggle
-            .hass=${this.hass}
-            .stateObj=${panelLedState}
-            ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
-          ></ha-entity-toggle>
-        </ha-settings-row>
-        <ha-settings-row>
-          <span slot="heading">
-            <ha-heading-badge type="text">
-            <ha-icon slot="icon" icon="mdi:sensor"></ha-icon>
-              Sensori
-            </ha-heading-badge>
-          </span>
-          <span slot="description">Attivazione sensori ambientali</span>
-          <ha-entity-toggle
-            .hass=${this.hass}
-            .stateObj=${sensorsState}
-            ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
-          ></ha-entity-toggle>
-        </ha-settings-row>
-      </div>
+      <ha-heading-badge type="text">
+        <ha-icon slot="icon" icon="mdi:cog-clockwise" ></ha-icon>
+        Modalità Speciali
+      </ha-heading-badge>
+      <ha-chip-set>
+        ${specialModes.map(mode => {
+          const isOn = !!attrs[mode.attr];
+          return html`
+            <ha-chip
+              .selected=${isOn}
+              @click=${() => this._setSpecialMode(mode)}
+              aria-label="${mode.label}"
+              ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+            >
+              <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
+              ${mode.label}
+            </ha-chip>
+          `;
+        })}
+      </ha-chip-set>
+      <ha-heading-badge type="text">
+        <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
+        Controlli Dispositivo
+      </ha-heading-badge>
+      <ha-settings-row>
+        <span slot="heading">
+          <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:led"></ha-icon>
+            LED Pannello
+          </ha-heading-badge>
+        </span>
+        <span slot="description">Controllo LED del pannello frontale</span>
+        <ha-entity-toggle
+          .hass=${this.hass}
+          .stateObj=${panelLedState}
+          ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
+        ></ha-entity-toggle>
+      </ha-settings-row>
+      <ha-settings-row>
+        <span slot="heading">
+          <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:sensor"></ha-icon>
+            Sensori
+          </ha-heading-badge>
+        </span>
+        <span slot="description">Attivazione sensori ambientali</span>
+        <ha-entity-toggle
+          .hass=${this.hass}
+          .stateObj=${sensorsState}
+          ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
+        ></ha-entity-toggle>
+      </ha-settings-row>
     `;
   }
 
@@ -594,18 +590,21 @@ class VmcHeltyCard extends LitElement {
             Velocità Ventilazione
           </ha-heading-badge>
         </span>
-        <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
-        <ha-control-slider
-          min="0"
-          max="4"
-          step="1"
-          .value="${sliderValue}"
-          @input="${(e) => this._onFanSliderInput(e)}"
-          @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
-          ?disabled="${this._loading || vmcState.state === 'off'}"
-          style="flex: 1;"
-          dir="ltr"
-        ></ha-control-slider>
+        <span slot="description">Imposta la velocità di ventilazione</span>
+        <span>
+          <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
+          <ha-control-slider
+            min="0"
+            max="4"
+            step="1"
+            .value="${sliderValue}"
+            @input="${(e) => this._onFanSliderInput(e)}"
+            @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
+            ?disabled="${this._loading || vmcState.state === 'off'}"
+            style="flex: 1;"
+            dir="ltr"
+          ></ha-control-slider>
+        </span>
         <span style="min-width: 40px; text-align: right; font-weight: 600;">${sliderStep.pct}%</span>
       </ha-settings-row>
     `;
@@ -663,329 +662,169 @@ class VmcHeltyCard extends LitElement {
     const lightState = this._getEntityState(lightEntity);
     const timerState = this._getEntityState(timerEntity);
 
-    // Show light controls only if enabled in config and at least one light entity is available
     if (this.config.show_lights === false || (!lightState && !timerState)) return nothing;
 
     return html`
-      <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:lightbulb"></ha-icon>
-          <span>Controlli Luci</span>
-        </div>
-        <div class="light-controls">
-          ${lightState && this.config.show_lights !== false ? html`
-            <div class="light-control">
-              <ha-icon icon="mdi:lightbulb"></ha-icon>
-              <span>Luminosità</span>
-              <mwc-switch
-                .checked="${lightState.state === 'on'}"
-                @change="${() => this._toggleLight(lightEntity)}"
-                ?disabled="${this._loading}"
-              ></mwc-switch>
-            </div>
+      <ha-heading-badge type="text">
+        <ha-icon slot="icon" icon="mdi:lightbulb"></ha-icon>
+        Controlli Luci
+      </ha-heading-badge>
 
-            ${lightState.state === 'on' ? html`
-              <div class="light-slider">
-                <ha-icon icon="mdi:brightness-6"></ha-icon>
-                <ha-control-slider
-                  .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
-                  min="0"
-                  max="100"
-                  step="25"
-                  @value-changed="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
-                  ?disabled="${this._loading || vmcState.state === 'off'}"
-                ></ha-control-slider>
-                <span class="brightness-value">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
-              </div>
-            ` : nothing}
-          ` : nothing}
+      ${lightState && this.config.show_lights !== false ? html`
+        <ha-settings-row>
+          <span slot="heading">
+            <ha-heading-badge type="text">
+              <ha-icon slot="icon" icon="mdi:lightbulb"></ha-icon>
+              Luminosità
+            </ha-heading-badge>
+          </span>
+          <span slot="description">Accendi/spegni la luce</span>
+          <mwc-switch
+            .checked="${lightState.state === 'on'}"
+            @change="${() => this._toggleLight(lightEntity)}"
+            ?disabled="${this._loading}"
+          ></mwc-switch>
+        </ha-settings-row>
 
-          ${timerState && this.config.show_timer !== false ? html`
-            <div class="light-control">
-              <ha-icon icon="mdi:timer"></ha-icon>
-              <span>Timer Luci</span>
-              <mwc-switch
-                .checked="${timerState.state === 'on'}"
-                @change="${() => this._toggleLight(timerEntity)}"
-                ?disabled="${this._loading}"
-              ></mwc-switch>
-            </div>
+        ${lightState.state === 'on' ? html`
+          <ha-settings-row>
+            <span slot="heading">
+              <ha-heading-badge type="text">
+                <ha-icon slot="icon" icon="mdi:brightness-6"></ha-icon>
+                Luminosità
+              </ha-heading-badge>
+            </span>
+            <span slot="description">Regola la luminosità</span>
+            <ha-control-slider
+              .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
+              min="0"
+              max="100"
+              step="25"
+              @value-changed="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
+              ?disabled="${this._loading || vmcState.state === 'off'}"
+            ></ha-control-slider>
+            <span slot="description">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
+          </ha-settings-row>
+        ` : nothing}
+      ` : nothing}
 
-            ${timerState.state === 'on' && timerState.attributes.timer_seconds ? html`
-              <div class="timer-info">
-                <ha-icon icon="mdi:clock-outline"></ha-icon>
-                <span>${Math.round(timerState.attributes.timer_seconds / 60)} min rimanenti</span>
-              </div>
-            ` : nothing}
-          ` : nothing}
-        </div>
-      </div>
+      ${timerState && this.config.show_timer !== false ? html`
+        <ha-settings-row>
+          <span slot="heading">
+            <ha-heading-badge type="text">
+              <ha-icon slot="icon" icon="mdi:timer"></ha-icon>
+              Timer Luci
+            </ha-heading-badge>
+          </span>
+          <span slot="description">Accendi/spegni il timer</span>
+          <mwc-switch
+            .checked="${timerState.state === 'on'}"
+            @change="${() => this._toggleLight(timerEntity)}"
+            ?disabled="${this._loading}"
+          ></mwc-switch>
+        </ha-settings-row>
+
+        ${timerState.state === 'on' && timerState.attributes.timer_seconds ? html`
+          <ha-settings-row>
+            <span slot="heading">
+              <ha-heading-badge type="text">
+                <ha-icon slot="icon" icon="mdi:clock-outline"></ha-icon>
+                Timer
+              </ha-heading-badge>
+            </span>
+            <span slot="description">Tempo rimanente</span>
+            <span>${Math.round(timerState.attributes.timer_seconds / 60)} min rimanenti</span>
+          </ha-settings-row>
+        ` : nothing}
+      ` : nothing}
     `;
   }
 
   _renderSensors() {
     const tempState = this._getTemperatureState();
     const humidityState = this._getHumidityState();
-    const vmcState = this._getVmcState();
-
-    const sensors = [];
-
-    if (this.config.show_temperature && tempState) {
-      sensors.push({
-        label: 'Temperature',
-        icon: 'mdi:thermometer',
-        value: this._formatSensorValue(tempState.state, '°C'),
-        unit: '°C',
-        source: this.config.temperature_entity ? 'Custom' : 'VMC'
-      });
-    }
-
-    if (this.config.show_humidity && humidityState) {
-      sensors.push({
-        label: 'Humidity',
-        icon: 'mdi:water-percent',
-        value: this._formatSensorValue(humidityState.state, '%'),
-        unit: '%',
-        source: this.config.humidity_entity ? 'Custom' : 'VMC'
-      });
-    }
-
-    if (this.config.show_co2) {
-      const co2State = this._getEntityState(`sensor.${this.config.entity.replace('fan.', '')}_co2`);
-      if (co2State) {
-        sensors.push({
-          label: 'CO₂',
-          icon: 'mdi:molecule-co2',
-          value: this._formatSensorValue(co2State.state, 'ppm'),
-          unit: 'ppm',
-          source: 'VMC'
-        });
-      }
-    }
-
-    if (this.config.show_voc) {
-      const vocState = this._getEntityState(`sensor.${this.config.entity.replace('fan.', '')}_voc`);
-      if (vocState) {
-        sensors.push({
-          label: 'VOC',
-          icon: 'mdi:air-filter',
-          value: this._formatSensorValue(vocState.state, 'ppb'),
-          unit: 'ppb',
-          source: 'VMC'
-        });
-      }
-    }
-
-    // Sensori aggiuntivi configurabili
     const baseEntityId = this.config.entity.replace('fan.', '');
 
-    // Portata d'aria
+    const sensorEntities = [];
+    if (this.config.show_temperature && tempState) {
+      sensorEntities.push(tempState.entity_id);
+    }
+    if (this.config.show_humidity && humidityState) {
+      sensorEntities.push(humidityState.entity_id);
+    }
+    if (this.config.show_co2) {
+      const co2State = this._getEntityState(`sensor.${baseEntityId}_co2`);
+      if (co2State) sensorEntities.push(co2State.entity_id);
+    }
+    if (this.config.show_voc) {
+      const vocState = this._getEntityState(`sensor.${baseEntityId}_voc`);
+      if (vocState) sensorEntities.push(vocState.entity_id);
+    }
     if (this.config.show_airflow) {
       const airflowState = this._getEntityState(`sensor.${baseEntityId}_airflow`);
-      if (airflowState) {
-        sensors.push({
-          label: 'Portata aria',
-          icon: 'mdi:fan',
-          value: this._formatSensorValue(airflowState.state, 'm³/h'),
-          unit: 'm³/h',
-          source: 'VMC'
-        });
-      }
+      if (airflowState) sensorEntities.push(airflowState.entity_id);
     }
-
-    // Ore filtro
     if (this.config.show_filter_hours) {
       const filterHoursState = this._getEntityState(`sensor.${baseEntityId}_filter_hours`);
-      if (filterHoursState) {
-        sensors.push({
-          label: 'Ore filtro',
-          icon: 'mdi:air-filter',
-          value: this._formatSensorValue(filterHoursState.state, 'h'),
-          unit: 'h',
-          source: 'VMC'
-        });
-      }
+      if (filterHoursState) sensorEntities.push(filterHoursState.entity_id);
     }
-
-    // Stato dispositivo
     if (this.config.show_device_status) {
       const deviceState = this._getEntityState(`binary_sensor.${baseEntityId}_status`);
-      if (deviceState) {
-        sensors.push({
-          label: 'Stato',
-          icon: deviceState.state === 'on' ? 'mdi:power' : 'mdi:power-off',
-          value: deviceState.state === 'on' ? 'Acceso' : 'Spento',
-          unit: '',
-          source: 'VMC'
-        });
-      }
+      if (deviceState) sensorEntities.push(deviceState.entity_id);
     }
 
-    if (sensors.length === 0) return nothing;
+    if (sensorEntities.length === 0) return nothing;
 
     return html`
-      <div class="sensors-grid">
-        ${sensors.map(sensor => html`
-          <div class="sensor-card">
-            <div class="sensor-label">
-              <ha-icon icon="${sensor.icon}"></ha-icon>
-              <span>${sensor.label}</span>
-            </div>
-            <div class="sensor-value">
-              ${sensor.value}
-              <span class="sensor-unit">${sensor.unit}</span>
-            </div>
-          </div>
-        `)}
+      <ha-heading-badge type="text">
+        <ha-icon slot="icon" icon="mdi:chart-bar"></ha-icon>
+        Sensori Ambientali
+      </ha-heading-badge>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        ${sensorEntities.map(entityId => {
+          const stateObj = this._getEntityState(entityId);
+          return stateObj ? html`
+            <ha-state-label-badge .hass=${this.hass} .stateObj=${stateObj}></ha-state-label-badge>
+          ` : nothing;
+        })}
       </div>
     `;
   }
 
   _renderAdvancedSensors() {
     const baseEntityId = this.config.entity.replace('fan.', '');
-    const advancedSensors = [];
-
-    // Sensori avanzati dall'integrazione (preferiti rispetto ai calcoli client-side)
-
-    // Umidità assoluta
+    const advEntities = [];
     const absoluteHumidityState = this._getEntityState(`sensor.${baseEntityId}_absolute_humidity`);
-    if (absoluteHumidityState) {
-      advancedSensors.push({
-        label: 'Umidità assoluta',
-        icon: 'mdi:water',
-        value: this._formatSensorValue(absoluteHumidityState.state, 'g/m³'),
-        unit: 'g/m³',
-        comfort: this._getHumidityLevel(parseFloat(absoluteHumidityState.state))
-      });
-    }
-
-    // Dew Point (sensore integrazione)
+    if (absoluteHumidityState) advEntities.push(absoluteHumidityState.entity_id);
     const dewPointState = this._getEntityState(`sensor.${baseEntityId}_dew_point`);
-    if (dewPointState) {
-      advancedSensors.push({
-        label: 'Punto di rugiada',
-        icon: 'mdi:thermometer-water',
-        value: this._formatSensorValue(dewPointState.state, '°C'),
-        unit: '°C',
-        comfort: this._getDewPointLevel(parseFloat(dewPointState.state))
-      });
-    }
-
-    // Delta Dew Point
+    if (dewPointState) advEntities.push(dewPointState.entity_id);
     const dewPointDeltaState = this._getEntityState(`sensor.${baseEntityId}_dew_point_delta`);
-    if (dewPointDeltaState) {
-      const delta = parseFloat(dewPointDeltaState.state);
-      advancedSensors.push({
-        label: 'Delta punto rugiada',
-        icon: 'mdi:thermometer-minus',
-        value: this._formatSensorValue(dewPointDeltaState.state, '°C'),
-        unit: '°C',
-        comfort: delta > 0 ? 'good' : 'poor'
-      });
-    }
-
-    // Comfort Index (sensore integrazione)
+    if (dewPointDeltaState) advEntities.push(dewPointDeltaState.entity_id);
     const comfortIndexState = this._getEntityState(`sensor.${baseEntityId}_comfort_index`);
-    if (comfortIndexState) {
-      advancedSensors.push({
-        label: 'Indice comfort',
-        icon: 'mdi:account-check',
-        value: this._formatSensorValue(comfortIndexState.state, '%'),
-        unit: '%',
-        comfort: this._getComfortLevel(parseFloat(comfortIndexState.state))
-      });
-    }
-
-    // Air Exchange Time (sensore integrazione)
+    if (comfortIndexState) advEntities.push(comfortIndexState.entity_id);
     const airExchangeTimeState = this._getEntityState(`sensor.${baseEntityId}_air_exchange_time`);
-    if (airExchangeTimeState) {
-      const exchangeTime = parseFloat(airExchangeTimeState.state);
-      let category = 'poor';
-      if (exchangeTime <= 20) category = 'excellent';
-      else if (exchangeTime <= 30) category = 'good';
-      else if (exchangeTime <= 60) category = 'fair';
-
-      advancedSensors.push({
-        label: 'Tempo ricambio aria',
-        icon: 'mdi:clock-time-four',
-        value: this._formatSensorValue(airExchangeTimeState.state, 'min'),
-        unit: 'min',
-        comfort: category
-      });
-    }
-
-    // Daily Air Changes
+    if (airExchangeTimeState) advEntities.push(airExchangeTimeState.entity_id);
     const dailyAirChangesState = this._getEntityState(`sensor.${baseEntityId}_daily_air_changes`);
-    if (dailyAirChangesState) {
-      const dailyChanges = parseFloat(dailyAirChangesState.state);
-      let category = 'poor';
-      if (dailyChanges >= 20) category = 'excellent';
-      else if (dailyChanges >= 15) category = 'good';
-      else if (dailyChanges >= 10) category = 'fair';
-
-      advancedSensors.push({
-        label: 'Ricambi aria/giorno',
-        icon: 'mdi:refresh',
-        value: this._formatSensorValue(dailyAirChangesState.state, ''),
-        unit: 'ricambi',
-        comfort: category
-      });
-    }
-
-    // Informazioni di rete (solo se abilitato)
+    if (dailyAirChangesState) advEntities.push(dailyAirChangesState.entity_id);
     if (this.config.show_network_info) {
-      // Ultima risposta
       const lastResponseState = this._getEntityState(`sensor.${baseEntityId}_last_response`);
-      if (lastResponseState) {
-        advancedSensors.push({
-          label: 'Ultima comunicazione',
-          icon: 'mdi:clock-outline',
-          value: this._formatTimestamp(lastResponseState.state),
-          unit: '',
-          source: 'VMC'
-        });
-      }
-
-      // Indirizzo IP
+      if (lastResponseState) advEntities.push(lastResponseState.entity_id);
       const ipAddressState = this._getEntityState(`sensor.${baseEntityId}_ip_address`);
-      if (ipAddressState) {
-        advancedSensors.push({
-          label: 'Indirizzo IP',
-          icon: 'mdi:ip-network',
-          value: ipAddressState.state,
-          unit: '',
-          source: 'VMC'
-        });
-      }
+      if (ipAddressState) advEntities.push(ipAddressState.entity_id);
     }
-
-    if (advancedSensors.length === 0) return nothing;
-
+    if (advEntities.length === 0) return nothing;
     return html`
-      <div class="advanced-section">
-        <h3 class="advanced-title">
-          <ha-icon icon="mdi:chart-line"></ha-icon>
-          Advanced Analytics
-        </h3>
-        <div class="sensors-grid">
-          ${advancedSensors.map(sensor => html`
-            <div class="sensor-card">
-              <div class="sensor-label">
-                <ha-icon icon="${sensor.icon}"></ha-icon>
-                <span>${sensor.label}</span>
-              </div>
-              <div class="sensor-value">
-                ${sensor.value}
-                <span class="sensor-unit">${sensor.unit}</span>
-                ${sensor.comfort ? html`
-                  <div class="comfort-indicator comfort-${sensor.comfort}">
-                    ${sensor.comfort}
-                  </div>
-                ` : nothing}
-              </div>
-            </div>
-          `)}
-        </div>
+      <ha-heading-badge type="text">
+        <ha-icon slot="icon" icon="mdi:chart-line"></ha-icon>
+        Analisi Avanzate
+      </ha-heading-badge>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        ${advEntities.map(entityId => {
+          const stateObj = this._getEntityState(entityId);
+          return stateObj ? html`
+            <ha-state-label-badge .hass=${this.hass} .stateObj=${stateObj}></ha-state-label-badge>
+          ` : nothing;
+        })}
       </div>
     `;
   }
