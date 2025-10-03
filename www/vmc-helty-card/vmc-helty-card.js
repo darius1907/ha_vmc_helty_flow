@@ -534,7 +534,7 @@ class VmcHeltyCard extends LitElement {
           ${this.config.name}
         </ha-heading-badge>
         <ha-label-badge
-          label="${this.hass.states["sensor.time"] ? this.hass.states["sensor.time"].state : '--'}"
+          label="${this.hass.states["sensor.home_assistant_core_ultima_versione"] ? this.hass.states["sensor.home_assistant_core_ultima_versione"].state : '--'}"
           description="Ora di sistema"
           icon="mdi:clock-outline"
         ></ha-label-badge>
