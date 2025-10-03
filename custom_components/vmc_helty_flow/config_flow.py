@@ -307,21 +307,22 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "room_volume": room_volume,
         }
 
-        # Controlla flag per decidere cosa fare dopo room_config
-        if getattr(self, "_stop_after_current", False):
-            # User vuole aggiungere questo device e fermare scan
-            self._stop_after_current = False
-            return self.async_create_entry(title=device["name"], data=entry_data)
+        await self.hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": "discovered_device"},
+            data=entry_data,
+        )
 
-        if getattr(self, "_continue_after_room_config", False):
+        self.found_devices_session.append(device)
+
+        if self._stop_after_current:
+            self._stop_after_current = False
+            return await self._finalize_incremental_scan()
+        if self._continue_after_room_config:
             # Continua scan incrementale dopo aver configurato volume
             self._continue_after_room_config = False
-            # Salva device configurato nella sessione
-            self.found_devices_session.append(device)
             return await self._scan_next_ip()
-
-        # Entry diretta (discovery automatico o default)
-        return self.async_create_entry(title=device["name"], data=entry_data)
+        return self.async_abort(reason="unknown")
 
     async def _discover_devices_async(self, subnet, port, timeout):
         """Perform device discovery with progress tracking."""
