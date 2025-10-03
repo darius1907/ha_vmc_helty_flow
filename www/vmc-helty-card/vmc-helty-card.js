@@ -86,14 +86,6 @@ class VmcHeltyCard extends LitElement {
     const sensorsEntity = `switch.vmc_helty_${deviceSlug}_sensors`;
     const panelLedState = this._getEntityState(panelLedEntity);
     const sensorsState = this._getEntityState(sensorsEntity);
-    console.debug('Panel LED state:', panelLedState);
-    console.debug('Panel LED state.state:', panelLedState.state);
-    console.debug('Sensors state:', sensorsState);
-    console.debug('Sensors state.state:', sensorsState.state);
-    console.debug('_loading:', this._loading );
-    console.debug('vmcState state:', vmcState && vmcState.state === 'off');
-    console.debug('hass:', this.hass);
-
     return html`
       <div class="controls-section">
         <div class="section-title">
@@ -122,35 +114,24 @@ class VmcHeltyCard extends LitElement {
           <ha-icon icon="mdi:toggle-switch"></ha-icon>
           <span>Controlli Dispositivo</span>
         </div>
-        <div class="device-control-row">
-          <div class="control-info">
-            <div class="control-label">LED Pannello</div>
-            <div class="control-description">Controllo LED del pannello frontale ${panelLedState ? `(${panelLedState.state})` : '(non trovato)'}</div>
-          </div>
-          <div class="control-switch">
-            <ha-entity-toggle
-              .hass=${this.hass}
-              .stateObj=${panelLedState}
-              @change=${(e) => this._toggleSwitch(panelLedEntity)}
-              ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
-            ></ha-entity-toggle>
-          </div>
-        </div>
-        <div class="device-control-row">
-          <div class="control-info">
-            <div class="control-label">Sensori</div>
-            <div class="control-description">Attivazione sensori ambientali ${sensorsState ? `(${sensorsState.state})` : '(non trovato)'}</div>
-          </div>
-          <div class="control-switch">
-            <ha-entity-toggle
-              .hass=${this.hass}
-              .stateObj=${sensorsState}
-              @change=${(e) => this._toggleSwitch(sensorsEntity)}
-              @click=${(e) => this._toggleSwitch(sensorsEntity)}
-              ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
-            ></ha-entity-toggle>
-          </div>
-        </div>
+        <ha-settings-row>
+          <span slot="heading">LED Pannello</span>
+          <span slot="description">Controllo LED del pannello frontale"</span>
+          <ha-entity-toggle
+            .hass=${this.hass}
+            .stateObj=${panelLedState}
+            ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
+          ></ha-entity-toggle>
+        </ha-settings-row>
+        <ha-settings-row>
+          <span slot="heading">Sensori</span>
+          <span slot="description">Attivazione sensori ambientali</span>
+          <ha-entity-toggle
+            .hass=${this.hass}
+            .stateObj=${sensorsState}
+            ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
+          ></ha-entity-toggle>
+        </ha-settings-row>
       </div>
     `;
   }
