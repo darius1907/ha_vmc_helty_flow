@@ -118,24 +118,22 @@ class VmcHeltyCard extends LitElement {
         <ha-settings-row>
           <span slot="heading">LED Pannello</span>
           <span slot="description">Controllo LED del pannello frontale</span>
-          <ha-switch
+          <ha-entity-toggle
             slot="content"
-            .checked=${panelLedState && panelLedState.state === 'on'}
-            @click=${() => this._toggleSwitch(panelLedEntity)}
-            aria-label="LED Pannello"
+            .hass=${this.hass}
+            .stateObj=${panelLedState}
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          ></ha-switch>
+          ></ha-entity-toggle>
         </ha-settings-row>
         <ha-settings-row>
           <span slot="heading">Sensori</span>
           <span slot="description">Attivazione sensori ambientali</span>
-          <ha-switch
+          <ha-entity-toggle
             slot="content"
-            .checked=${sensorsState && sensorsState.state === 'on'}
-            @click=${() => this._toggleSwitch(sensorsEntity)}
-            aria-label="Sensori"
+            .hass=${this.hass}
+            .stateObj=${sensorsState}
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          ></ha-switch>
+          ></ha-entity-toggle>
         </ha-settings-row>
       </div>
     `;
@@ -240,35 +238,6 @@ class VmcHeltyCard extends LitElement {
         gap: 16px;
       }
     `;
-
-    this.config = {
-      entity: config.entity || "",
-      name: config.name || "VMC Helty Flow",
-      temperature_entity: config.temperature_entity || "",
-      humidity_entity: config.humidity_entity || "",
-      room_volume: this._validateRoomVolume(config.room_volume),
-      show_temperature: config.show_temperature !== false,
-      show_humidity: config.show_humidity !== false,
-      show_co2: config.show_co2 !== false,
-      show_voc: config.show_voc !== false,
-      show_advanced: config.show_advanced !== false,
-      show_airflow: config.show_airflow !== false,
-      show_filter_hours: config.show_filter_hours !== false,
-      show_device_status: config.show_device_status !== false,
-      show_network_info: config.show_network_info === true,
-      enable_comfort_calculations: config.enable_comfort_calculations !== false,
-      enable_air_exchange: config.enable_air_exchange !== false,
-      theme: config.theme || "default",
-      layout: config.layout || "auto"
-    };
-
-    // Validate required entity
-    if (!this.config.entity) {
-      throw new Error("Please define a VMC fan entity");
-    }
-
-    // Setup entity references
-    this._setupEntityReferences();
   }
 
   // Lifecycle methods
