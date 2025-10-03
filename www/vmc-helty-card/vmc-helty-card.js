@@ -128,12 +128,13 @@ class VmcHeltyCard extends LitElement {
             <div class="control-description">Controllo LED del pannello frontale ${panelLedState ? `(${panelLedState.state})` : '(non trovato)'}</div>
           </div>
           <div class="control-switch">
-            <mwc-switch
-              .checked=${panelLedState && panelLedState.state === 'on'}
+            <ha-entity-toggle
+              .hass=${this.hass}
+              .stateObj=${panelLedState}
               @change=${(e) => this._toggleSwitch(panelLedEntity)}
               ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
-              style="border: 2px solid red; background: yellow;"
-            ></mwc-switch>
+              style="border: 2px solid blue; background: cyan;"
+            ></ha-entity-toggle>
           </div>
         </div>
         <div class="device-control-row">
@@ -142,13 +143,14 @@ class VmcHeltyCard extends LitElement {
             <div class="control-description">Attivazione sensori ambientali ${sensorsState ? `(${sensorsState.state})` : '(non trovato)'}</div>
           </div>
           <div class="control-switch">
-            <mwc-switch
-              .checked=${sensorsState && sensorsState.state === 'on'}
+            <ha-entity-toggle
+              .hass=${this.hass}
+              .stateObj=${sensorsState}
               @change=${(e) => this._toggleSwitch(sensorsEntity)}
               @click=${(e) => this._toggleSwitch(sensorsEntity)}
               ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
-              style="border: 2px solid red; background: yellow;"
-            ></mwc-switch>
+              style="border: 2px solid blue; background: cyan;"
+            ></ha-entity-toggle>
           </div>
         </div>
       </div>
