@@ -88,10 +88,10 @@ class VmcHeltyCard extends LitElement {
     const sensorsState = this._getEntityState(sensorsEntity);
     return html`
       <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:cog"></ha-icon>
-          <span>Modalità Speciali</span>
-        </div>
+        <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:cog" color="var(--primary-color)"></ha-icon>
+          Modalità Speciali
+        </ha-heading-badge>
         <ha-chip-set>
           ${specialModes.map(mode => {
             const isOn = !!attrs[mode.attr];
@@ -110,13 +110,14 @@ class VmcHeltyCard extends LitElement {
         </ha-chip-set>
       </div>
       <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:toggle-switch"></ha-icon>
-          <span>Controlli Dispositivo</span>
-        </div>
+        <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:settings" color="var(--primary-color)"></ha-icon>
+          Controlli Dispositivo
+        </ha-heading-badge>
         <ha-settings-row>
+          <span slot="prefix"><ha-icon icon="mdi:led-on" color="var(--primary-color)"></ha-icon></span>
           <span slot="heading">LED Pannello</span>
-          <span slot="description">Controllo LED del pannello frontale"</span>
+          <span slot="description">Controllo LED del pannello frontale</span>
           <ha-entity-toggle
             .hass=${this.hass}
             .stateObj=${panelLedState}
@@ -124,6 +125,7 @@ class VmcHeltyCard extends LitElement {
           ></ha-entity-toggle>
         </ha-settings-row>
         <ha-settings-row>
+          <span slot="prefix"><ha-icon icon="mdi:sensor" color="var(--primary-color)"></ha-icon></span>
           <span slot="heading">Sensori</span>
           <span slot="description">Attivazione sensori ambientali</span>
           <ha-entity-toggle
@@ -661,7 +663,7 @@ class VmcHeltyCard extends LitElement {
 
   _renderFanControls() {
     const vmcState = this._getVmcState();
-    
+
     if (!vmcState) return nothing;
 
     // Discrete steps: 0-4, mapped to 0/25/50/75/100%
