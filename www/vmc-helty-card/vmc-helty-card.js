@@ -114,7 +114,7 @@ class VmcHeltyCard extends LitElement {
       <ha-settings-row>
         <span slot="heading">
           <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:led"></ha-icon>
+          <ha-icon slot="icon" icon="mdi:led-outline"></ha-icon>
             LED Pannello
           </ha-heading-badge>
         </span>
@@ -128,7 +128,7 @@ class VmcHeltyCard extends LitElement {
       <ha-settings-row>
         <span slot="heading">
           <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:sensor"></ha-icon>
+          <ha-icon slot="icon" icon="mdi:hub-outline"></ha-icon>
             Sensori
           </ha-heading-badge>
         </span>
@@ -591,20 +591,18 @@ class VmcHeltyCard extends LitElement {
           </ha-heading-badge>
         </span>
         <span slot="description">Imposta la velocità di ventilazione</span>
-        <span>
-          <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
-          <ha-control-slider
-            min="0"
-            max="4"
-            step="1"
-            .value="${sliderValue}"
-            @input="${(e) => this._onFanSliderInput(e)}"
-            @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
-            ?disabled="${this._loading || vmcState.state === 'off'}"
-            style="flex: 1;"
-            dir="ltr"
-          ></ha-control-slider>
-        </span>
+        <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
+        <ha-control-slider
+          min="0"
+          max="4"
+          step="1"
+          .value="${sliderValue}"
+          @input="${(e) => this._onFanSliderInput(e)}"
+          @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
+          ?disabled="${this._loading || vmcState.state === 'off'}"
+          style="flex: 1;"
+          dir="ltr"
+        ></ha-control-slider>
         <span style="min-width: 40px; text-align: right; font-weight: 600;">${sliderStep.pct}%</span>
       </ha-settings-row>
     `;
