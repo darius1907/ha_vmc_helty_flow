@@ -186,6 +186,64 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
+        :host {
+          background: var(
+            --ha-card-background,
+            var(--card-background-color, white)
+          );
+          -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
+          backdrop-filter: var(--ha-card-backdrop-filter, none);
+          box-shadow: var(--ha-card-box-shadow, none);
+          box-sizing: border-box;
+          border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
+          border-width: var(--ha-card-border-width, 1px);
+          border-style: solid;
+          border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
+          color: var(--primary-text-color);
+          display: block;
+          transition: all 0.3s ease-out;
+          position: relative;
+        }
+
+        :host([raised]) {
+          border: none;
+          box-shadow: var(
+            --ha-card-box-shadow,
+            0px 2px 1px -1px rgba(0, 0, 0, 0.2),
+            0px 1px 1px 0px rgba(0, 0, 0, 0.14),
+            0px 1px 3px 0px rgba(0, 0, 0, 0.12)
+          );
+        }
+
+        .card-header,
+        :host ::slotted(.card-header) {
+          color: var(--ha-card-header-color, var(--primary-text-color));
+          font-family: var(--ha-card-header-font-family, inherit);
+          font-size: var(--ha-card-header-font-size, var(--ha-font-size-2xl));
+          letter-spacing: -0.012em;
+          line-height: var(--ha-line-height-expanded);
+          padding: 12px 16px 16px;
+          display: block;
+          margin-block-start: 0px;
+          margin-block-end: 0px;
+          font-weight: var(--ha-font-weight-normal);
+        }
+
+        :host ::slotted(.card-content:not(:first-child)),
+        slot:not(:first-child)::slotted(.card-content) {
+          padding-top: 0px;
+          margin-top: -8px;
+        }
+
+        :host ::slotted(.card-content) {
+          padding: 16px;
+        }
+
+        :host ::slotted(.card-actions) {
+          border-top: 1px solid var(--divider-color, #e8e8e8);
+          padding: 8px;
+        }
+
         ha-icon {
          color: var(--state-icon-color);
           --state-inactive-color: var(--state-icon-color);
@@ -900,13 +958,23 @@ class VmcHeltyCard extends LitElement {
         <ha-icon slot="icon" icon="mdi:chart-line"></ha-icon>
         Analisi Avanzate
       </ha-heading-badge>
-      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
         ${advEntities.map(entityId => {
           const stateObj = this._getEntityState(entityId);
-          console.log('Rendering sensor:', entityId, stateObj);
-          return stateObj ? html`
-            <ha-state-label-badge .hass=${this.hass} .stateObj=${this.hass.states[entityId]}></ha-state-label-badge>
-          ` : nothing;
+          if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
+          const name = stateObj.attributes.friendly_name || entityId;
+          const value = stateObj.state;
+          const unit = stateObj.attributes.unit_of_measurement || "";
+          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('dew_point') ? 'water' : entityId.includes('comfort_index') ? 'emoticon-happy' : entityId.includes('air_exchange_time') ? 'autorenew' : entityId.includes('absolute_humidity') ? 'water-percent' : 'gauge'}`;
+          return html`
+            <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
+              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
+              <div style="flex: 1;">
+                <div style="font-weight: 500;">${name}</div>
+                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
+              </div>
+            </div>
+          `;
         })}
       </div>
     `;
