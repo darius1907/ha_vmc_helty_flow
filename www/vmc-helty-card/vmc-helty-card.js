@@ -799,36 +799,30 @@ class VmcHeltyCard extends LitElement {
             </ha-heading-badge>
           </span>
           <span slot="description">Accendi/spegni la luce</span>
-          <mwc-switch
-            .checked="${lightState.state === 'on'}"
-            @change="${() => this._toggleLight(lightEntity)}"
-            ?disabled="${this._loading}"
-          ></mwc-switch>
+          <ha-entity-toggle
+            .hass=${this.hass}
+            .stateObj=${lightState}
+            ?disabled=${this._loading || !lightState || lightState.state === 'unavailable'}
+          ></ha-entity-toggle>
         </ha-settings-row>
-
-        ${lightState.state === 'on' ? html`
-          <ha-settings-row>
-            <span slot="heading">
-              <ha-heading-badge type="text">
-                <ha-icon slot="icon" icon="mdi:brightness-6"></ha-icon>
-                Luminosità
-              </ha-heading-badge>
-            </span>
-            <span slot="description">Regola la luminosità</span>
-            <ha-control-slider
-              .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
-              min="0"
-              max="100"
-              step="25"
-              @value-changed="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
-              ?disabled="${this._loading || vmcState.state === 'off'}"
-            ></ha-control-slider>
-            <span slot="description">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
-          </ha-settings-row>
-        ` : nothing}
-      ` : nothing}
-
-      ${timerState && this.config.show_timer !== false ? html`
+        <ha-settings-row>
+          <span slot="heading">
+            <ha-heading-badge type="text">
+              <ha-icon slot="icon" icon="mdi:brightness-6"></ha-icon>
+              Luminosità
+            </ha-heading-badge>
+          </span>
+          <span slot="description">Regola la luminosità</span>
+          <ha-control-slider
+            .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
+            min="0"
+            max="100"
+            step="25"
+            @value-changed="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
+            ?disabled="${this._loading || vmcState.state === 'off'}"
+          ></ha-control-slider>
+          <span slot="description">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
+        </ha-settings-row>
         <ha-settings-row>
           <span slot="heading">
             <ha-heading-badge type="text">
@@ -843,8 +837,6 @@ class VmcHeltyCard extends LitElement {
             ?disabled="${this._loading}"
           ></mwc-switch>
         </ha-settings-row>
-
-        ${timerState.state === 'on' && timerState.attributes.timer_seconds ? html`
           <ha-settings-row>
             <span slot="heading">
               <ha-heading-badge type="text">
@@ -854,9 +846,7 @@ class VmcHeltyCard extends LitElement {
             </span>
             <span slot="description">Tempo rimanente</span>
             <span>${Math.round(timerState.attributes.timer_seconds / 60)} min rimanenti</span>
-          </ha-settings-row>
-        ` : nothing}
-      ` : nothing}
+          </ha-settings-row>`:nothing}
     `;
   }
 
