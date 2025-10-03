@@ -524,7 +524,7 @@ class VmcHeltyCard extends LitElement {
     return html`
       <ha-card">
         <ha-heading-badge icon="mdi:air-filter" label="${this.config.name}" color="blue"></ha-heading-badge>
-        <ha-state-label-badge .stateObj=${vmcState}></ha-state-label-badge>
+        <ha-state-label-badge .hass=${this.hass} .stateObj=${vmcState}></ha-state-label-badge>
 
 
         ${this._renderFanControls()}

@@ -179,6 +179,9 @@ class VmcHeltyCardEditor extends LitElement {
         }));
     }
 
+    // Log di debug: entità VMC trovate
+    console.debug('[VMC Editor] VMC trovati:', this._vmcEntities);
+
     // Discover temperature sensors
     this._temperatureSensors = Object.keys(this.hass.states)
       .filter(entityId => {
@@ -195,6 +198,9 @@ class VmcHeltyCardEditor extends LitElement {
         available: this.hass.states[entityId]?.state !== 'unavailable'
       }));
 
+    // Log di debug: sensori temperatura trovati
+    console.debug('[VMC Editor] Sensori temperatura:', this._temperatureSensors);
+
     // Discover humidity sensors
     this._humiditySensors = Object.keys(this.hass.states)
       .filter(entityId => {
@@ -210,6 +216,9 @@ class VmcHeltyCardEditor extends LitElement {
         currentValue: this.hass.states[entityId]?.state,
         available: this.hass.states[entityId]?.state !== 'unavailable'
       }));
+
+    // Log di debug: sensori umidità trovati
+    console.debug('[VMC Editor] Sensori umidità:', this._humiditySensors);
   }
 
   _getDeviceRoomVolume() {
