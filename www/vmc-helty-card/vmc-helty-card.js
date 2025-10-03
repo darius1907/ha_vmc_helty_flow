@@ -532,7 +532,7 @@ class VmcHeltyCard extends LitElement {
           <ha-icon slot="icon" icon="mdi:air-filter"></ha-icon>
           ${this.config.name}
         </ha-heading-badge>
-        
+        <ha-state-label-badge .hass=${this.hass} .stateObj=${this.hass.states["sensor.time"]}></ha-state-label-badge>
         <ha-state-label-badge .hass=${this.hass} .stateObj=${vmcState}></ha-state-label-badge>
 
 
