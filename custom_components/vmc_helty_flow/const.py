@@ -10,7 +10,7 @@ ENTITY_NAME_PREFIX = "VMC Helty"  # Prefisso per i nomi delle entità
 TCP_TIMEOUT = 3
 
 # Intervalli di aggiornamento (in secondi)
-SENSORS_UPDATE_INTERVAL = 60  # Sensori e stato
+SENSORS_UPDATE_INTERVAL = 180  # Sensori e stato
 NETWORK_INFO_UPDATE_INTERVAL = 900  # Nome e info rete (15 minuti)
 
 # Range di scansione IP
