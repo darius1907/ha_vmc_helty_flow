@@ -161,8 +161,7 @@ class VmcHeltyCardEditor extends LitElement {
           entityId.startsWith('fan.vmc_helty_') || // Prioritize new vmc_{name} prefix
           entityId.includes('vmc_helty') ||
           entityId.includes('helty') ||
-          state?.attributes?.integration === 'vmc_helty_flow' ||
-          state?.entity_id?.includes('_fan')
+          state?.attributes?.integration === 'vmc_helty_flow'
         );
       })
       .map(entityId => ({
