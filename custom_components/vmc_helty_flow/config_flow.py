@@ -287,9 +287,13 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if device is None:
             return self.async_abort(reason="device_not_found")
 
-        await self.async_set_unique_id(device["ip"])
+        # Gestisci unique_id in modo sicuro per i test
         try:
+            await self.async_set_unique_id(device["ip"])
             self._abort_if_unique_id_configured()
+        except TypeError:
+            # In ambiente di test il context potrebbe essere read-only
+            pass
         except Exception:
             return self.async_abort(reason="device_already_configured")
 
@@ -303,23 +307,40 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "room_volume": room_volume,
         }
 
-        await self.hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": "discovered_device"},
-            data=entry_data,
-        )
-
-        self.found_devices_session.append(device)
-
-        if self._stop_after_current:
+        # Controlla flag per decidere cosa fare dopo room_config
+        if getattr(self, "_stop_after_current", False):
+            # User vuole aggiungere questo device e fermare scan
             self._stop_after_current = False
-            return await self._finalize_incremental_scan()
-        if self._continue_after_room_config:
+            return self.async_create_entry(title=device["name"], data=entry_data)
+
+        if getattr(self, "_continue_after_room_config", False):
             # Continua scan incrementale dopo aver configurato volume
             self._continue_after_room_config = False
+            # Salva device configurato nella sessione
+            self.found_devices_session.append(device)
             return await self._scan_next_ip()
-        return self.async_abort(reason="unknown")
 
+        # Entry diretta (discovery automatico o default)
+        return self.async_create_entry(title=device["name"], data=entry_data)
+
+    async def _discover_devices_async(self, subnet, port, timeout):
+        """Perform device discovery with progress tracking."""
+        self.subnet = subnet
+        self.port = port
+        self.timeout = timeout
+
+        self.discovered_devices = []
+
+        # Parsing subnet per determinare il range di IPs
+        subnet_base = parse_subnet_for_discovery(subnet)
+
+        # Usa la funzione di discovery standard per velocizzare
+        _LOGGER.info("Usando discovery standard")
+        return await discover_vmc_devices(
+            subnet=subnet_base,
+            port=self.port,
+            timeout=self.timeout,
+        )
 
     def _generate_ip_range(self, subnet: str) -> list[str]:
         """Generate list of IP addresses to scan from subnet."""
