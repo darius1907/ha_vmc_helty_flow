@@ -186,9 +186,73 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-      ha-icon {
-        color: var(--primary-color, #1e88e5);
-      }
+        ha-icon {
+         color: var(--state-icon-color);
+          --state-inactive-color: var(--state-icon-color);
+          line-height: 40px;
+        }
+
+        ha-card {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          cursor: pointer;
+          outline: none;
+        }
+
+        .header {
+          display: flex;
+          padding: 8px 16px 0;
+          justify-content: space-between;
+        }
+
+        .name {
+          color: var(--secondary-text-color);
+          line-height: 40px;
+          font-size: var(--ha-font-size-l);
+          font-weight: var(--ha-font-weight-medium);
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .icon {
+          color: var(--state-icon-color);
+          --state-inactive-color: var(--state-icon-color);
+          line-height: 40px;
+        }
+
+        .info {
+          padding: 0px 16px 16px;
+          margin-top: -4px;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          line-height: var(--ha-line-height-condensed);
+        }
+
+        .value {
+          font-size: var(--ha-font-size-3xl);
+          margin-right: 4px;
+          margin-inline-end: 4px;
+          margin-inline-start: initial;
+        }
+
+        .measurement {
+          font-size: var(--ha-font-size-l);
+          color: var(--secondary-text-color);
+        }
+
+        .with-fixed-footer {
+          justify-content: flex-start;
+        }
+        .with-fixed-footer .footer {
+          position: absolute;
+          right: 0;
+          left: 0;
+          bottom: 0;
+        }
     `;
   }
 
@@ -787,13 +851,23 @@ class VmcHeltyCard extends LitElement {
         <ha-icon slot="icon" icon="mdi:chart-bar"></ha-icon>
         Sensori Ambientali
       </ha-heading-badge>
-      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
         ${sensorEntities.map(entityId => {
           const stateObj = this._getEntityState(entityId);
-          console.log('Rendering sensor:', entityId, stateObj);
-          return stateObj ? html`
-            <ha-state-label-badge .hass=${this.hass} .stateObj=${this.hass.states[entityId]}></ha-state-label-badge>
-          ` : nothing;
+          if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
+          const name = stateObj.attributes.friendly_name || entityId;
+          const value = stateObj.state;
+          const unit = stateObj.attributes.unit_of_measurement || "";
+          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('co2') ? 'molecule-co2' : entityId.includes('humidity') ? 'water-percent' : entityId.includes('temperature') ? 'thermometer' : 'gauge'}`;
+          return html`
+            <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
+              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
+              <div style="flex: 1;">
+                <div style="font-weight: 500;">${name}</div>
+                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
+              </div>
+            </div>
+          `;
         })}
       </div>
     `;
