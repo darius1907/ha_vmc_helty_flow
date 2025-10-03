@@ -656,7 +656,6 @@ class VmcHeltyCard extends LitElement {
         </ha-heading-badge>
         ${this._renderFanControls()}
         ${this._renderModeControls()}
-        ${this._renderLightControls()}
         ${this._renderSensors()}
         ${this.config.show_advanced ? this._renderAdvancedSensors() : nothing}
       </ha-card>
@@ -770,85 +769,6 @@ class VmcHeltyCard extends LitElement {
     }
   }
 
-  _renderLightControls() {
-    const deviceSlug = this._getDeviceSlug();
-    const vmcState = this._getVmcState();
-    if (!deviceSlug) return nothing;
-
-    const lightEntity = `light.vmc_helty_${deviceSlug}_light`;
-    const timerEntity = `light.vmc_helty_${deviceSlug}_light_timer`;
-
-    const lightState = this._getEntityState(lightEntity);
-    const timerState = this._getEntityState(timerEntity);
-
-    if (this.config.show_lights === false || (!lightState && !timerState)) return nothing;
-
-    return html`
-
-
-      ${lightState && this.config.show_lights !== false ? html`
-        <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:lightbulb"></ha-icon>
-          Controlli Luci
-        </ha-heading-badge>
-        <ha-settings-row>
-          <span slot="heading">
-            <ha-heading-badge type="text">
-              <ha-icon slot="icon" icon="mdi:lightbulb"></ha-icon>
-              Luminosità
-            </ha-heading-badge>
-          </span>
-          <span slot="description">Accendi/spegni la luce</span>
-          <ha-entity-toggle
-            .hass=${this.hass}
-            .stateObj=${lightState}
-            ?disabled=${this._loading || !lightState || lightState.state === 'unavailable'}
-          ></ha-entity-toggle>
-        </ha-settings-row>
-        <ha-settings-row>
-          <span slot="heading">
-            <ha-heading-badge type="text">
-              <ha-icon slot="icon" icon="mdi:brightness-6"></ha-icon>
-              Luminosità
-            </ha-heading-badge>
-          </span>
-          <span slot="description">Regola la luminosità</span>
-          <ha-control-slider
-            .value="${Math.round((lightState.attributes.brightness || 0) / 2.55)}"
-            min="0"
-            max="100"
-            step="25"
-            @value-changed="${(e) => this._setLightBrightness(lightEntity, e.target.value)}"
-            ?disabled="${this._loading || vmcState.state === 'off'}"
-          ></ha-control-slider>
-          <span slot="description">${Math.round((lightState.attributes.brightness || 0) / 2.55)}%</span>
-        </ha-settings-row>
-        <ha-settings-row>
-          <span slot="heading">
-            <ha-heading-badge type="text">
-              <ha-icon slot="icon" icon="mdi:timer"></ha-icon>
-              Timer Luci
-            </ha-heading-badge>
-          </span>
-          <span slot="description">Accendi/spegni il timer delle luci</span>
-          <mwc-switch
-            .checked="${timerState.state === 'on'}"
-            @change="${() => this._toggleLight(timerEntity)}"
-            ?disabled="${this._loading}"
-          ></mwc-switch>
-        </ha-settings-row>
-          <ha-settings-row>
-            <span slot="heading">
-              <ha-heading-badge type="text">
-                <ha-icon slot="icon" icon="mdi:clock-outline"></ha-icon>
-                Timer
-              </ha-heading-badge>
-            </span>
-            <span slot="description">Tempo rimanente</span>
-            <span>${Math.round(timerState.attributes.timer_seconds / 60)} min rimanenti</span>
-          </ha-settings-row>`:nothing}
-    `;
-  }
 
   _renderSensors() {
     const tempState = this._getTemperatureState();
@@ -895,15 +815,12 @@ class VmcHeltyCard extends LitElement {
           const stateObj = this._getEntityState(entityId);
           if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
           const name = stateObj.attributes.friendly_name || entityId;
-          const value = stateObj.state;
-          const unit = stateObj.attributes.unit_of_measurement || "";
-          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('co2') ? 'molecule-co2' : entityId.includes('humidity') ? 'water-percent' : entityId.includes('temperature') ? 'thermometer' : 'gauge'}`;
           return html`
             <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
-              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
+              <state-badge .stateObj=${stateObj} .hass=${this.hass}></state-badge>
               <div style="flex: 1;">
                 <div style="font-weight: 500;">${name}</div>
-                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
+                <ha-attribute-value .hass=${this.hass} .stateObj=${stateObj} attribute="state"></ha-attribute-value>
               </div>
             </div>
           `;
@@ -944,15 +861,12 @@ class VmcHeltyCard extends LitElement {
           const stateObj = this._getEntityState(entityId);
           if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
           const name = stateObj.attributes.friendly_name || entityId;
-          const value = stateObj.state;
-          const unit = stateObj.attributes.unit_of_measurement || "";
-          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('dew_point') ? 'water' : entityId.includes('comfort_index') ? 'emoticon-happy' : entityId.includes('air_exchange_time') ? 'autorenew' : entityId.includes('absolute_humidity') ? 'water-percent' : 'gauge'}`;
           return html`
             <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
-              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
+              <state-badge .stateObj=${stateObj} .hass=${this.hass}></state-badge>
               <div style="flex: 1;">
                 <div style="font-weight: 500;">${name}</div>
-                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
+                <ha-attribute-value .hass=${this.hass} .stateObj=${stateObj} attribute="state"></ha-attribute-value>
               </div>
             </div>
           `;
