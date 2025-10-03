@@ -526,6 +526,7 @@ class VmcHeltyCard extends LitElement {
       return this._renderError('VMC device not found. Please check your configuration.');
     }
     console.log('Rendering sensor:', vmcState.entity_id, vmcState);
+    console.log('Rendering hass:', this.hass);
     return html`
       <ha-card>
         <ha-heading-badge type="text">
