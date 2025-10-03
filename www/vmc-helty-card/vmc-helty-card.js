@@ -122,10 +122,12 @@ class VmcHeltyCard extends LitElement {
           <ha-icon icon="mdi:toggle-switch"></ha-icon>
           <span>Controlli Dispositivo</span>
         </div>
-        <ha-settings-row>
-          <span slot="heading">LED Pannello</span>
-          <span slot="description">Controllo LED del pannello frontale ${panelLedState ? `(${panelLedState.state})` : '(non trovato)'}</span>
-          <div slot="content">
+        <div class="device-control-row">
+          <div class="control-info">
+            <div class="control-label">LED Pannello</div>
+            <div class="control-description">Controllo LED del pannello frontale ${panelLedState ? `(${panelLedState.state})` : '(non trovato)'}</div>
+          </div>
+          <div class="control-switch">
             <mwc-switch
               .checked=${panelLedState && panelLedState.state === 'on'}
               @change=${(e) => this._toggleSwitch(panelLedEntity)}
@@ -133,11 +135,13 @@ class VmcHeltyCard extends LitElement {
               style="border: 2px solid red; background: yellow;"
             ></mwc-switch>
           </div>
-        </ha-settings-row>
-        <ha-settings-row>
-          <span slot="heading">Sensori</span>
-          <span slot="description">Attivazione sensori ambientali ${sensorsState ? `(${sensorsState.state})` : '(non trovato)'}</span>
-          <div slot="content">
+        </div>
+        <div class="device-control-row">
+          <div class="control-info">
+            <div class="control-label">Sensori</div>
+            <div class="control-description">Attivazione sensori ambientali ${sensorsState ? `(${sensorsState.state})` : '(non trovato)'}</div>
+          </div>
+          <div class="control-switch">
             <mwc-switch
               .checked=${sensorsState && sensorsState.state === 'on'}
               @change=${(e) => this._toggleSwitch(sensorsEntity)}
@@ -146,7 +150,7 @@ class VmcHeltyCard extends LitElement {
               style="border: 2px solid red; background: yellow;"
             ></mwc-switch>
           </div>
-        </ha-settings-row>
+        </div>
       </div>
     `;
   }
@@ -268,6 +272,32 @@ class VmcHeltyCard extends LitElement {
       .switch-description {
         font-size: 0.9rem;
         color: var(--secondary-text-color);
+      }
+      .device-control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--divider-color, #e0e0e0);
+      }
+      .control-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .control-label {
+        font-weight: 600;
+        color: var(--primary-text-color);
+        font-size: 1rem;
+      }
+      .control-description {
+        font-size: 0.9rem;
+        color: var(--secondary-text-color);
+        line-height: 1.3;
+      }
+      .control-switch {
+        margin-left: 16px;
       }
     `;
   }
