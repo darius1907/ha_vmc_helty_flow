@@ -133,7 +133,6 @@ class VmcHeltyCard extends LitElement {
               .stateObj=${panelLedState}
               @change=${(e) => this._toggleSwitch(panelLedEntity)}
               ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
-              style="border: 2px solid blue; background: cyan;"
             ></ha-entity-toggle>
           </div>
         </div>
@@ -149,7 +148,6 @@ class VmcHeltyCard extends LitElement {
               @change=${(e) => this._toggleSwitch(sensorsEntity)}
               @click=${(e) => this._toggleSwitch(sensorsEntity)}
               ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
-              style="border: 2px solid blue; background: cyan;"
             ></ha-entity-toggle>
           </div>
         </div>
