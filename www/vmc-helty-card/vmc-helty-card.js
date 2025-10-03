@@ -86,7 +86,13 @@ class VmcHeltyCard extends LitElement {
     const sensorsEntity = `switch.vmc_helty_${deviceSlug}_sensors`;
     const panelLedState = this._getEntityState(panelLedEntity);
     const sensorsState = this._getEntityState(sensorsEntity);
-
+    console.debug('Panel LED state:', panelLedState);
+    console.debug('Panel LED state.state:', panelLedState.state);
+    console.debug('Sensors state:', sensorsState);
+    console.debug('Sensors state.state:', sensorsState.state);
+    console.debug('_loading:', this._loading );
+    console.debug('vmcState state:', vmcState && vmcState.state === 'off');
+    console.debug('hass:', this.hass);
     return html`
       <div class="controls-section">
         <div class="section-title">
@@ -118,22 +124,24 @@ class VmcHeltyCard extends LitElement {
         <ha-settings-row>
           <span slot="heading">LED Pannello</span>
           <span slot="description">Controllo LED del pannello frontale</span>
-          <ha-entity-toggle
+          <ha-switch
             slot="content"
             .hass=${this.hass}
-            .stateObj=${panelLedState}
+            .checked=${panelLedState && panelLedState.state === 'on'}
+            @change=${(e) => this._toggleSwitch(panelLedEntity)}
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          ></ha-entity-toggle>
+          ></ha-switch>
         </ha-settings-row>
         <ha-settings-row>
           <span slot="heading">Sensori</span>
           <span slot="description">Attivazione sensori ambientali</span>
-          <ha-entity-toggle
+          <ha-switch
             slot="content"
             .hass=${this.hass}
-            .stateObj=${sensorsState}
+            .checked=${sensorsState && sensorsState.state === 'on'}
+            @change=${(e) => this._toggleSwitch(sensorsEntity)}
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          ></ha-entity-toggle>
+          ></ha-switch>
         </ha-settings-row>
       </div>
     `;
