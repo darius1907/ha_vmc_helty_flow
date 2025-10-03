@@ -1,5 +1,6 @@
 """Integrazione VMC Helty Flow per Home Assistant."""
 
+
 import logging
 import re
 import time
@@ -14,6 +15,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers import entity_registry
 
 from .const import (
     DEFAULT_PORT,
@@ -71,8 +73,8 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         new_volume = float(call.data["room_volume"])
 
         # Trova la config entry associata all'entità
-        entity_registry = hass.helpers.entity_registry.async_get(hass)
-        entity_entry = entity_registry.async_get(entity_id)
+        entity_registry_instance = entity_registry.async_get(hass)
+        entity_entry = entity_registry_instance.async_get(entity_id)
 
         if not entity_entry:
             raise HomeAssistantError(f"Entity {entity_id} not found")
