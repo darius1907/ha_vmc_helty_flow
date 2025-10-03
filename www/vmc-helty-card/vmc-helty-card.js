@@ -89,7 +89,7 @@ class VmcHeltyCard extends LitElement {
     return html`
       <div class="controls-section">
         <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:cog-clockwise" color="var(--primary-color)"></ha-icon>
+          <ha-icon slot="icon" icon="mdi:cog-clockwise" ></ha-icon>
           Modalità Speciali
         </ha-heading-badge>
         <ha-chip-set>
@@ -531,25 +531,20 @@ class VmcHeltyCard extends LitElement {
     }
 
     return html`
-      <div class="card-header">
-        <h2 class="card-title">
-          <ha-icon
-            icon="mdi:air-conditioner"
-            class="fan-icon ${vmcState.state === 'on' ? 'spinning' : ''}"
-          ></ha-icon>
+      <ha-card>
+        <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:air-filter"></ha-icon>
           ${this.config.name}
-        </h2>
-        <div class="device-status">
-          <div class="status-indicator ${vmcState.state === 'off' ? 'offline' : ''}"></div>
-          <span>${vmcState.state === 'on' ? 'Online' : 'Offline'}</span>
-        </div>
-      </div>
+        </ha-heading-badge>
+        <ha-state-label-badge .hass=${this.hass} .stateObj=${vmcState}></ha-state-label-badge>
 
-      ${this._renderFanControls()}
-      ${this._renderModeControls()}
-      ${this._renderLightControls()}
-      ${this._renderSensors()}
-      ${this.config.show_advanced ? this._renderAdvancedSensors() : nothing}
+
+        ${this._renderFanControls()}
+        ${this._renderModeControls()}
+        ${this._renderLightControls()}
+        ${this._renderSensors()}
+        ${this.config.show_advanced ? this._renderAdvancedSensors() : nothing}
+      </ha-card>
     `;
   }
 
@@ -574,10 +569,9 @@ class VmcHeltyCard extends LitElement {
 
   _renderFanControls() {
     const vmcState = this._getVmcState();
-
     if (!vmcState) return nothing;
 
-    // Discrete steps: 0-4, mapped to 0/25/50/75/100%
+    // Step di velocità
     const speedSteps = [
       { value: 0, pct: 0, icon: "mdi:fan-off", label: "Spento" },
       { value: 1, pct: 25, icon: "mdi:fan-speed-1", label: "Bassa" },
@@ -586,15 +580,22 @@ class VmcHeltyCard extends LitElement {
       { value: 4, pct: 100, icon: "mdi:fan", label: "Massima" },
     ];
     const currentPercentage = parseFloat(vmcState.attributes.percentage || 0);
-    // Find closest step
-    const currentStep = speedSteps.reduce((prev, curr) => Math.abs(curr.pct - currentPercentage) < Math.abs(prev.pct - currentPercentage) ? curr : prev);
-
-    // Track temporary slider value for optimistic UI
+    const currentStep = speedSteps.reduce((prev, curr) =>
+      Math.abs(curr.pct - currentPercentage) < Math.abs(prev.pct - currentPercentage) ? curr : prev
+    );
     const sliderValue = this._fanSliderValue !== undefined ? this._fanSliderValue : currentStep.value;
     const sliderStep = speedSteps[sliderValue] || currentStep;
 
-    // Slider element: supporta sia ha-slider che ha-control-slider
-    const slider =  html`<ha-control-slider
+    return html`
+      <ha-settings-row>
+        <span slot="heading">
+          <ha-heading-badge type="text">
+            <ha-icon slot="icon" icon="mdi:fan"></ha-icon>
+            Velocità Ventilazione
+          </ha-heading-badge>
+        </span>
+        <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
+        <ha-control-slider
           min="0"
           max="4"
           step="1"
@@ -604,23 +605,9 @@ class VmcHeltyCard extends LitElement {
           ?disabled="${this._loading || vmcState.state === 'off'}"
           style="flex: 1;"
           dir="ltr"
-        ></ha-control-slider>`;
-
-    return html`
-      <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:fan"></ha-icon>
-          <span>Velocità Ventilazione</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-          <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
-          ${slider}
-          <span style="min-width: 40px; text-align: right; font-weight: 600;">${sliderStep.pct}%</span>
-        </div>
-        <div class="speed-status">
-          Velocità attuale: <b>${sliderStep.label}</b> (${sliderStep.pct}%)
-        </div>
-      </div>
+        ></ha-control-slider>
+        <span style="min-width: 40px; text-align: right; font-weight: 600;">${sliderStep.pct}%</span>
+      </ha-settings-row>
     `;
   }
 
