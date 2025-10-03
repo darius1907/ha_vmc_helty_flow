@@ -122,29 +122,31 @@ class VmcHeltyCard extends LitElement {
           <ha-icon icon="mdi:toggle-switch"></ha-icon>
           <span>Controlli Dispositivo</span>
         </div>
-        <ha-settings-row>
-          <span slot="heading">LED Pannello</span>
-          <span slot="description">Controllo LED del pannello frontale</span>
+        <div class="switch-control">
+          <div class="switch-info">
+            <span class="switch-heading">LED Pannello</span>
+            <span class="switch-description">Controllo LED del pannello frontale ${panelLedState ? `(${panelLedState.state})` : '(non trovato)'}</span>
+          </div>
           <mwc-switch
-            slot="content"
             .checked=${panelLedState && panelLedState.state === 'on'}
             @change=${(e) => this._toggleSwitch(panelLedEntity)}
-            ?disabled=${this._loading}
-            style="border: 1px solid red; background: yellow;"
+            ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
+            style="border: 2px solid red; background: yellow; min-width: 50px; min-height: 30px;"
           ></mwc-switch>
-        </ha-settings-row>
-        <ha-settings-row>
-          <span slot="heading">Sensori</span>
-          <span slot="description">Attivazione sensori ambientali</span>
+        </div>
+        <div class="switch-control">
+          <div class="switch-info">
+            <span class="switch-heading">Sensori</span>
+            <span class="switch-description">Attivazione sensori ambientali ${sensorsState ? `(${sensorsState.state})` : '(non trovato)'}</span>
+          </div>
           <mwc-switch
-            slot="content"
             .checked=${sensorsState && sensorsState.state === 'on'}
             @change=${(e) => this._toggleSwitch(sensorsEntity)}
             @click=${(e) => this._toggleSwitch(sensorsEntity)}
-            ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-            style="border: 1px solid red; background: yellow;"
+            ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
+            style="border: 2px solid red; background: yellow; min-width: 50px; min-height: 30px;"
           ></mwc-switch>
-        </ha-settings-row>
+        </div>
       </div>
     `;
   }
@@ -246,6 +248,26 @@ class VmcHeltyCard extends LitElement {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
         gap: 16px;
+      }
+      .switch-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--divider-color, #e0e0e0);
+      }
+      .switch-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .switch-heading {
+        font-weight: 600;
+        color: var(--primary-text-color);
+      }
+      .switch-description {
+        font-size: 0.9rem;
+        color: var(--secondary-text-color);
       }
     `;
   }
