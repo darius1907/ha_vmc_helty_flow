@@ -815,11 +815,12 @@ class VmcHeltyCard extends LitElement {
           const stateObj = this._getEntityState(entityId);
           if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
           const name = stateObj.attributes.friendly_name || entityId;
+          console.log('basic sensor:', entityId, stateObj);
           return html`
             <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
               <state-badge .stateObj=${stateObj} .hass=${this.hass}></state-badge>
               <div style="flex: 1;">
-                <div style="font-weight: 500;">${name}</div>
+                <div style="font-weight: 300;">${name}</div>
                 <ha-attribute-value .hass=${this.hass} .stateObj=${stateObj} attribute="state"></ha-attribute-value>
               </div>
             </div>
@@ -861,11 +862,12 @@ class VmcHeltyCard extends LitElement {
           const stateObj = this._getEntityState(entityId);
           if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
           const name = stateObj.attributes.friendly_name || entityId;
+          console.log('Advanced sensor:', entityId, stateObj);
           return html`
             <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
               <state-badge .stateObj=${stateObj} .hass=${this.hass}></state-badge>
               <div style="flex: 1;">
-                <div style="font-weight: 500;">${name}</div>
+                <div style="font-weight: 300;">${name}</div>
                 <ha-attribute-value .hass=${this.hass} .stateObj=${stateObj} attribute="state"></ha-attribute-value>
               </div>
             </div>
