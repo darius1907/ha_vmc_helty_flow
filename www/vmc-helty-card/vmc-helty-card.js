@@ -525,13 +525,14 @@ class VmcHeltyCard extends LitElement {
     if (!vmcState) {
       return this._renderError('VMC device not found. Please check your configuration.');
     }
-
+    console.log('Rendering sensor:', vmcState.entity_id, vmcState);
     return html`
       <ha-card>
         <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:air-filter"></ha-icon>
           ${this.config.name}
         </ha-heading-badge>
+        
         <ha-state-label-badge .hass=${this.hass} .stateObj=${vmcState}></ha-state-label-badge>
 
 
@@ -590,10 +591,10 @@ class VmcHeltyCard extends LitElement {
             Velocità Ventilazione
           </ha-heading-badge>
         </span>
-        <span slot="description">Imposta la velocità di ventilazione</span>
-        <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
+        <span slot="description">Imposta la velocità di ventilazione</span>      
       </ha-settings-row>
       <ha-settings-row>
+        <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
         <ha-control-slider
           min="0"
           max="4"
@@ -784,6 +785,7 @@ class VmcHeltyCard extends LitElement {
       <div style="display: flex; flex-wrap: wrap; gap: 8px;">
         ${sensorEntities.map(entityId => {
           const stateObj = this._getEntityState(entityId);
+          console.log('Rendering sensor:', entityId, stateObj);
           return stateObj ? html`
             <ha-state-label-badge .hass=${this.hass} .stateObj=${stateObj}></ha-state-label-badge>
           ` : nothing;
