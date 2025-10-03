@@ -647,22 +647,13 @@ class VmcHeltyCard extends LitElement {
     if (!vmcState) {
       return this._renderError('VMC device not found. Please check your configuration.');
     }
-    console.log('Rendering sensor:', vmcState.entity_id, vmcState);
-    console.log('Rendering hass:', this.hass);
+
     return html`
       <ha-card>
         <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:air-filter"></ha-icon>
           ${this.config.name}
         </ha-heading-badge>
-        <ha-label-badge
-          label="${this.hass.states["sensor.home_assistant_core_ultima_versione"] ? this.hass.states["sensor.home_assistant_core_ultima_versione"].state : '--'}"
-          description="Ora di sistema"
-          icon="mdi:clock-outline"
-        ></ha-label-badge>
-        <ha-state-label-badge .hass=${this.hass} .stateObj=${vmcState}></ha-state-label-badge>
-
-
         ${this._renderFanControls()}
         ${this._renderModeControls()}
         ${this._renderLightControls()}
