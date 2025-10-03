@@ -219,7 +219,7 @@ async def get_device_info(
         try:
             modello = "VMC Helty Flow"
 
-            # Recupera nome e versione
+            # Recupera nome
             nome = await _get_device_name(ip, port, timeout)
 
         except Exception:

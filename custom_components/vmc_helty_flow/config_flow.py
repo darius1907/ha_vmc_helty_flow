@@ -10,6 +10,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 
 from .const import (
+    DEFAULT_PORT,
     DEFAULT_ROOM_VOLUME,
     DOMAIN,
     IP_NETWORK_PREFIX,
@@ -40,20 +41,19 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def _validate_room_volume(user_input: dict) -> tuple[float | None, dict]:
         """Validazione del volume stanza. Restituisce (volume, errors)."""
         errors = {}
-        room_volume = None
-        
-        rv = user_input.get("room_volume")
+
+        room_volume = user_input.get("room_volume")
         # Gestisci valori vuoti, None o stringa vuota
-        if not rv or rv == "" or rv is None:
+        if not room_volume or room_volume == "" or room_volume is None:
             errors["room_volume"] = "room_volume_required"
         else:
             try:
-                room_volume = float(rv)
+                room_volume = float(room_volume)
                 if not (MIN_ROOM_VOLUME <= room_volume <= MAX_ROOM_VOLUME):
                     errors["room_volume"] = "room_volume_out_of_range"
             except (ValueError, TypeError):
                 errors["room_volume"] = "room_volume_invalid"
-                
+
         return room_volume, errors
 
     def _create_room_config_schema(self, user_input: dict | None = None) -> vol.Schema:
@@ -61,15 +61,15 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         current_volume = ""
         if user_input and user_input.get("room_volume"):
             current_volume = str(user_input["room_volume"])
-        
+
         return vol.Schema({
             vol.Required(
                 "room_volume",
                 default=current_volume
             ): str,
         })
-    """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
 
+    """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
     VERSION = 1
 
     def __init__(self):
@@ -248,22 +248,17 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input=None
     ) -> config_entries.ConfigFlowResult:
         """Configura il volume della stanza."""
-        if user_input is None:
-            # Prima visualizzazione del form
-            device = getattr(self, "current_found_device", None)
-            if not device:
-                device = {
-                    "hostname": "localhost",
-                    "port": 5001,
-                    "mac": "aa:bb:cc:dd:ee:ff",
-                }
 
-            name = (
-                device.get("name", "Dispositivo sconosciuto")
-                if device
-                else "Dispositivo sconosciuto"
-            )
-            
+        # Prima visualizzazione del form
+        device = getattr(self, "current_found_device", None)
+
+        name = (
+            device.get("name", "Dispositivo sconosciuto")
+            if device
+            else "Dispositivo sconosciuto"
+        )
+
+        if user_input is None:
             return self.async_show_form(
                 step_id="room_config",
                 data_schema=self._create_room_config_schema(),
@@ -272,13 +267,8 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Validazione input
         room_volume, errors = self._validate_room_volume(user_input)
+
         if errors:
-            device = getattr(self, "current_found_device", None)
-            name = (
-                device.get("name", "Dispositivo sconosciuto")
-                if device
-                else "Dispositivo sconosciuto"
-            )
             return self.async_show_form(
                 step_id="room_config",
                 data_schema=self._create_room_config_schema(user_input),
@@ -286,63 +276,50 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 description_placeholders={"device_name": name},
             )
 
-        # Aggiorna device con volume configurato
-        device = getattr(self, "current_found_device", None)
-        if device:
-            device["room_volume"] = room_volume
+        # Se non ci sono errori, prosegui con la creazione della entry
+        existing_entries = [
+            entry
+            for entry in self._async_current_entries()
+            if device is not None and entry.data.get("ip") == device.get("ip")
+        ]
+        if existing_entries:
+            return self.async_abort(reason="device_already_configured")
+        if device is None:
+            return self.async_abort(reason="device_not_found")
 
-        # Controlla flag per decidere cosa fare dopo room_config
-        if getattr(self, "_stop_after_current", False):
-            # User vuole aggiungere questo device e fermare scan
-            final_data = {
-                "ip": device.get("ip") if device else "localhost",
-                "name": device.get("name") if device else "Unknown Device",
-                "port": device.get("port") if device else 5001,
-                "room_volume": room_volume,
-            }
-            title = device.get("name") if device else "VMC Unknown Device"
-            return self.async_create_entry(title=title, data=final_data)
+        await self.async_set_unique_id(device["ip"])
+        try:
+            self._abort_if_unique_id_configured()
+        except Exception:
+            return self.async_abort(reason="device_already_configured")
 
-        if getattr(self, "_continue_after_room_config", False):
+        entry_data = {
+            "ip": device["ip"],
+            "name": device["name"],
+            "model": device.get("model", "VMC Flow"),
+            "manufacturer": device.get("manufacturer", "Helty"),
+            "port": device.get("port", 5001),
+            "timeout": device.get("timeout", 10),
+            "room_volume": room_volume,
+        }
+
+        await self.hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": "discovered_device"},
+            data=entry_data,
+        )
+
+        self.found_devices_session.append(device)
+
+        if self._stop_after_current:
+            self._stop_after_current = False
+            return await self._finalize_incremental_scan()
+        if self._continue_after_room_config:
             # Continua scan incrementale dopo aver configurato volume
             self._continue_after_room_config = False
             return await self._scan_next_ip()
+        return self.async_abort(reason="unknown")
 
-        # Entry diretta (discovery automatico)
-        final_data = {
-            "ip": device.get("ip") if device else "localhost",
-            "name": device.get("name") if device else "Unknown Device",
-            "port": device.get("port") if device else 5001,
-            "room_volume": room_volume,
-        }
-        title = device.get("name") if device else "VMC Unknown Device"
-        return self.async_create_entry(title=title, data=final_data)
-
-    # _show_device_selection_form rimosso - non più necessario nel flow incrementale
-
-    async def _discover_devices_async(self, subnet, port, timeout):
-        """Perform device discovery with progress tracking."""
-        self.subnet = subnet
-        self.port = port
-        self.timeout = timeout
-
-        self.discovered_devices = []
-
-        # Parsing subnet per determinare il range di IPs
-        subnet_base = parse_subnet_for_discovery(subnet)
-
-        # Reset progress tracking
-        start_ip = 1
-        end_ip = 254
-        self.total_ips_scanned = end_ip - start_ip + 1
-
-        # Usa la funzione di discovery standard per velocizzare
-        _LOGGER.info("Usando discovery standard")
-        return await discover_vmc_devices(
-            subnet=subnet_base,
-            port=self.port,
-            timeout=self.timeout,
-        )
 
     def _generate_ip_range(self, subnet: str) -> list[str]:
         """Generate list of IP addresses to scan from subnet."""
@@ -386,6 +363,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Scan the next IP in the range. Returns a ConfigFlowResult."""
         while self.current_ip_index < len(self.ip_range):
             current_ip = self.ip_range[self.current_ip_index]
+            port = self.port if self.port else DEFAULT_PORT
             _LOGGER.debug(
                 "Scanning IP %s (%d/%d)",
                 current_ip,
@@ -395,7 +373,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             try:
                 # Try to get device info from this IP
-                device_info = await get_device_info(current_ip, self.port, self.timeout)
+                device_info = await get_device_info(current_ip, port, self.timeout)
 
                 if device_info:
                     _LOGGER.info(
@@ -541,6 +519,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Check if device is already configured
         if await self._is_device_already_configured(device["ip"]):
+            # TODO devo avvisare l'utente che il device è già configurato
             _LOGGER.warning("Device %s already configured, skipping", device["ip"])
             return await self._scan_next_ip()
 
