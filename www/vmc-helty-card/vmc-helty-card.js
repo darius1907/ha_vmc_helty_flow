@@ -815,13 +815,15 @@ class VmcHeltyCard extends LitElement {
           const stateObj = this._getEntityState(entityId);
           if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
           const name = stateObj.attributes.friendly_name || entityId;
-          console.log('basic sensor:', entityId, stateObj);
+          const value = stateObj.state;
+          const unit = stateObj.attributes.unit_of_measurement || "";
+          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('co2') ? 'molecule-co2' : entityId.includes('humidity') ? 'water-percent' : entityId.includes('temperature') ? 'thermometer' : 'gauge'}`;
           return html`
             <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
-              <state-badge .stateObj=${stateObj} .hass=${this.hass}></state-badge>
+              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
               <div style="flex: 1;">
-                <div style="font-weight: 300;">${name}</div>
-                <ha-attribute-value .hass=${this.hass} .stateObj=${stateObj} attribute="state"></ha-attribute-value>
+                <div style="font-weight: 500;">${name}</div>
+                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
               </div>
             </div>
           `;
@@ -862,13 +864,15 @@ class VmcHeltyCard extends LitElement {
           const stateObj = this._getEntityState(entityId);
           if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
           const name = stateObj.attributes.friendly_name || entityId;
-          console.log('Advanced sensor:', entityId, stateObj);
+          const value = stateObj.state;
+          const unit = stateObj.attributes.unit_of_measurement || "";
+          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('dew_point') ? 'water' : entityId.includes('comfort_index') ? 'emoticon-happy' : entityId.includes('air_exchange_time') ? 'autorenew' : entityId.includes('absolute_humidity') ? 'water-percent' : 'gauge'}`;
           return html`
             <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
-              <state-badge .stateObj=${stateObj} .hass=${this.hass}></state-badge>
+              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
               <div style="flex: 1;">
-                <div style="font-weight: 300;">${name}</div>
-                <ha-attribute-value .hass=${this.hass} .stateObj=${stateObj} attribute="state"></ha-attribute-value>
+                <div style="font-weight: 500;">${name}</div>
+                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
               </div>
             </div>
           `;
