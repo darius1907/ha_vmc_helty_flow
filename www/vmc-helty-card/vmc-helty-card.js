@@ -93,6 +93,7 @@ class VmcHeltyCard extends LitElement {
     console.debug('_loading:', this._loading );
     console.debug('vmcState state:', vmcState && vmcState.state === 'off');
     console.debug('hass:', this.hass);
+
     return html`
       <div class="controls-section">
         <div class="section-title">
@@ -124,24 +125,25 @@ class VmcHeltyCard extends LitElement {
         <ha-settings-row>
           <span slot="heading">LED Pannello</span>
           <span slot="description">Controllo LED del pannello frontale</span>
-          <ha-switch
+          <mwc-switch
             slot="content"
-            .hass=${this.hass}
             .checked=${panelLedState && panelLedState.state === 'on'}
             @change=${(e) => this._toggleSwitch(panelLedEntity)}
-            ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          ></ha-switch>
+            ?disabled=${this._loading}
+            style="border: 1px solid red; background: yellow;"
+          ></mwc-switch>
         </ha-settings-row>
         <ha-settings-row>
           <span slot="heading">Sensori</span>
           <span slot="description">Attivazione sensori ambientali</span>
-          <ha-switch
+          <mwc-switch
             slot="content"
-            .hass=${this.hass}
             .checked=${sensorsState && sensorsState.state === 'on'}
             @change=${(e) => this._toggleSwitch(sensorsEntity)}
+            @click=${(e) => this._toggleSwitch(sensorsEntity)}
             ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-          ></ha-switch>
+            style="border: 1px solid red; background: yellow;"
+          ></mwc-switch>
         </ha-settings-row>
       </div>
     `;
