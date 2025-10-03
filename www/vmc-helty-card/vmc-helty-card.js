@@ -89,10 +89,7 @@ class VmcHeltyCard extends LitElement {
 
     return html`
       <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:cog"></ha-icon>
-          <span>Modalità Speciali</span>
-        </div>
+        <ha-heading-badge icon="mdi:cog" label="Modalità Speciali" color="blue"></ha-heading-badge>
         <ha-chip-set>
           ${specialModes.map(mode => {
             const isOn = !!attrs[mode.attr];
@@ -101,7 +98,7 @@ class VmcHeltyCard extends LitElement {
                 .selected=${isOn}
                 @click=${() => this._setSpecialMode(mode)}
                 aria-label="${mode.label}"
-                ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+                ?disabled=${this._loading}
               >
                 <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
                 ${mode.label}
@@ -111,28 +108,29 @@ class VmcHeltyCard extends LitElement {
         </ha-chip-set>
       </div>
       <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:toggle-switch"></ha-icon>
-          <span>Controlli Dispositivo</span>
-        </div>
+        <ha-heading-badge icon="mdi:toggle-switch" label="Controlli Dispositivo" color="blue"></ha-heading-badge>
         <ha-settings-row>
-          <span slot="heading">LED Pannello</span>
+          <span slot="heading">
+            <ha-heading-badge icon="mdi:toggle-switch" label="Controllo LED del pannello frontale"></ha-heading-badge>
+          </span>
           <span slot="description">Controllo LED del pannello frontale</span>
           <ha-entity-toggle
             slot="content"
             .hass=${this.hass}
             .stateObj=${panelLedState}
-            ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+            ?disabled=${this._loading}
           ></ha-entity-toggle>
         </ha-settings-row>
         <ha-settings-row>
-          <span slot="heading">Sensori</span>
+          <span slot="heading">
+          <ha-heading-badge icon="mdi:toggle-switch" label="Sensori"></ha-heading-badge>
+          </span>
           <span slot="description">Attivazione sensori ambientali</span>
           <ha-entity-toggle
             slot="content"
             .hass=${this.hass}
             .stateObj=${sensorsState}
-            ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+            ?disabled=${this._loading}
           ></ha-entity-toggle>
         </ha-settings-row>
       </div>
@@ -186,37 +184,7 @@ class VmcHeltyCard extends LitElement {
       :host {
         display: block;
       }
-      /* Removed unused .controls-section, .section-title, and @keyframes spin styles */
     `;
-
-    this.config = {
-      entity: config.entity || "",
-      name: config.name || "VMC Helty Flow",
-      temperature_entity: config.temperature_entity || "",
-      humidity_entity: config.humidity_entity || "",
-      room_volume: this._validateRoomVolume(config.room_volume),
-      show_temperature: config.show_temperature !== false,
-      show_humidity: config.show_humidity !== false,
-      show_co2: config.show_co2 !== false,
-      show_voc: config.show_voc !== false,
-      show_advanced: config.show_advanced !== false,
-      show_airflow: config.show_airflow !== false,
-      show_filter_hours: config.show_filter_hours !== false,
-      show_device_status: config.show_device_status !== false,
-      show_network_info: config.show_network_info === true,
-      enable_comfort_calculations: config.enable_comfort_calculations !== false,
-      enable_air_exchange: config.enable_air_exchange !== false,
-      theme: config.theme || "default",
-      layout: config.layout || "auto"
-    };
-
-    // Validate required entity
-    if (!this.config.entity) {
-      throw new Error("Please define a VMC fan entity");
-    }
-
-    // Setup entity references
-    this._setupEntityReferences();
   }
 
   // Lifecycle methods
@@ -554,8 +522,8 @@ class VmcHeltyCard extends LitElement {
     }
 
     return html`
-      <ha-card header="${this.config.name}">
-        <ha-icon icon="mdi:air-filter"></ha-icon>
+      <ha-card">
+        <ha-heading-badge icon="mdi:air-filter" label="${this.config.name}" color="blue"></ha-heading-badge>
         <ha-state-label-badge .stateObj=${vmcState}></ha-state-label-badge>
 
 
@@ -608,7 +576,6 @@ class VmcHeltyCard extends LitElement {
     const sliderValue = this._fanSliderValue !== undefined ? this._fanSliderValue : currentStep.value;
     const sliderStep = speedSteps[sliderValue] || currentStep;
 
-    // Slider element: supporta sia ha-slider che ha-control-slider
     const slider =  html`<ha-control-slider
           slot="content"
           min="0"
@@ -617,16 +584,13 @@ class VmcHeltyCard extends LitElement {
           .value="${sliderValue}"
           @input="${(e) => this._onFanSliderInput(e)}"
           @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
-          ?disabled="${this._loading || vmcState.state === 'off'}"
+          ?disabled="${this._loading}"
           dir="ltr"
         ></ha-control-slider>`;
 
     return html`
       <ha-settings-row>
-        <span slot="heading">
-          <ha-icon icon="mdi:fan" style="vertical-align: middle; margin-right: 8px;"></ha-icon>
-          Velocità Ventilazione
-        </span>
+        <ha-heading-badge icon="mdi:fan" label="Velocità Ventilazione" color="blue"></ha-heading-badge>
         <span slot="description">
           <ha-icon icon="${sliderStep.icon}" style="font-size: 1.2rem; vertical-align: middle; margin-right: 4px;"></ha-icon>
           ${sliderStep.label} (${sliderStep.pct}%)
@@ -693,10 +657,7 @@ class VmcHeltyCard extends LitElement {
 
     return html`
       <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:lightbulb"></ha-icon>
-          <span>Controlli Luci</span>
-        </div>
+        <ha-heading-badge icon="mdi:lightbulb" label="Controlli Luci" color="blue"></ha-heading-badge>
         ${lightState && this.config.show_lights !== false ? html`
           <ha-settings-row>
             <span slot="heading">
@@ -731,7 +692,7 @@ class VmcHeltyCard extends LitElement {
                 step="25"
                 .value=${Math.round((lightState.attributes.brightness || 0) / 2.55)}
                 @value-changed=${(e) => this._setLightBrightness(lightEntity, e.target.value)}
-                ?disabled=${this._loading || vmcState.state === 'off'}
+                ?disabled=${this._loading}
               ></ha-control-slider>
             </ha-settings-row>
           ` : nothing}
@@ -873,10 +834,7 @@ class VmcHeltyCard extends LitElement {
 
     return html`
       <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:gauge"></ha-icon>
-          <span>Sensori Ambientali</span>
-        </div>
+        <ha-heading-badge icon="mdi:gauge" label="Sensori Ambientali" color="blue"></ha-heading-badge>
         ${sensors.map(sensor => html`
           <ha-settings-row>
             <span slot="heading">
@@ -1014,10 +972,7 @@ class VmcHeltyCard extends LitElement {
 
     return html`
       <div class="controls-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:chart-line"></ha-icon>
-          <span>Advanced Analytics</span>
-        </div>
+        <ha-heading-badge icon="mdi:chart-line" label="Advanced Analytics" color="blue"></ha-heading-badge>
         ${advancedSensors.map(sensor => html`
           <ha-settings-row>
             <span slot="heading">
