@@ -122,31 +122,31 @@ class VmcHeltyCard extends LitElement {
           <ha-icon icon="mdi:toggle-switch"></ha-icon>
           <span>Controlli Dispositivo</span>
         </div>
-        <div class="switch-control">
-          <div class="switch-info">
-            <span class="switch-heading">LED Pannello</span>
-            <span class="switch-description">Controllo LED del pannello frontale ${panelLedState ? `(${panelLedState.state})` : '(non trovato)'}</span>
+        <ha-settings-row>
+          <span slot="heading">LED Pannello</span>
+          <span slot="description">Controllo LED del pannello frontale ${panelLedState ? `(${panelLedState.state})` : '(non trovato)'}</span>
+          <div slot="content">
+            <mwc-switch
+              .checked=${panelLedState && panelLedState.state === 'on'}
+              @change=${(e) => this._toggleSwitch(panelLedEntity)}
+              ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
+              style="border: 2px solid red; background: yellow;"
+            ></mwc-switch>
           </div>
-          <mwc-switch
-            .checked=${panelLedState && panelLedState.state === 'on'}
-            @change=${(e) => this._toggleSwitch(panelLedEntity)}
-            ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
-            style="border: 2px solid red; background: yellow; min-width: 50px; min-height: 30px;"
-          ></mwc-switch>
-        </div>
-        <div class="switch-control">
-          <div class="switch-info">
-            <span class="switch-heading">Sensori</span>
-            <span class="switch-description">Attivazione sensori ambientali ${sensorsState ? `(${sensorsState.state})` : '(non trovato)'}</span>
+        </ha-settings-row>
+        <ha-settings-row>
+          <span slot="heading">Sensori</span>
+          <span slot="description">Attivazione sensori ambientali ${sensorsState ? `(${sensorsState.state})` : '(non trovato)'}</span>
+          <div slot="content">
+            <mwc-switch
+              .checked=${sensorsState && sensorsState.state === 'on'}
+              @change=${(e) => this._toggleSwitch(sensorsEntity)}
+              @click=${(e) => this._toggleSwitch(sensorsEntity)}
+              ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
+              style="border: 2px solid red; background: yellow;"
+            ></mwc-switch>
           </div>
-          <mwc-switch
-            .checked=${sensorsState && sensorsState.state === 'on'}
-            @change=${(e) => this._toggleSwitch(sensorsEntity)}
-            @click=${(e) => this._toggleSwitch(sensorsEntity)}
-            ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
-            style="border: 2px solid red; background: yellow; min-width: 50px; min-height: 30px;"
-          ></mwc-switch>
-        </div>
+        </ha-settings-row>
       </div>
     `;
   }
