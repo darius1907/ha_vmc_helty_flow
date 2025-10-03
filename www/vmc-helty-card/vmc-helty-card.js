@@ -89,7 +89,7 @@ class VmcHeltyCard extends LitElement {
     return html`
       <div class="controls-section">
         <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:cog" color="var(--primary-color)"></ha-icon>
+          <ha-icon slot="icon" icon="mdi:cog-clockwise" color="var(--primary-color)"></ha-icon>
           Modalità Speciali
         </ha-heading-badge>
         <ha-chip-set>
@@ -111,12 +111,16 @@ class VmcHeltyCard extends LitElement {
       </div>
       <div class="controls-section">
         <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:settings" color="var(--primary-color)"></ha-icon>
+          <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
           Controlli Dispositivo
         </ha-heading-badge>
         <ha-settings-row>
-          <span slot="prefix"><ha-icon icon="mdi:led-on" color="var(--primary-color)"></ha-icon></span>
-          <span slot="heading">LED Pannello</span>
+          <span slot="heading">
+            <ha-heading-badge type="text">
+            <ha-icon slot="icon" icon="mdi:led"></ha-icon>
+              LED Pannello
+            </ha-heading-badge>
+          </span>
           <span slot="description">Controllo LED del pannello frontale</span>
           <ha-entity-toggle
             .hass=${this.hass}
@@ -125,8 +129,12 @@ class VmcHeltyCard extends LitElement {
           ></ha-entity-toggle>
         </ha-settings-row>
         <ha-settings-row>
-          <span slot="prefix"><ha-icon icon="mdi:sensor" color="var(--primary-color)"></ha-icon></span>
-          <span slot="heading">Sensori</span>
+          <span slot="heading">
+            <ha-heading-badge type="text">
+            <ha-icon slot="icon" icon="mdi:sensor"></ha-icon>
+              Sensori
+            </ha-heading-badge>
+          </span>
           <span slot="description">Attivazione sensori ambientali</span>
           <ha-entity-toggle
             .hass=${this.hass}
@@ -182,105 +190,8 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-      :host {
-        display: block;
-      }
-      .controls-section {
-        margin-bottom: 20px;
-      }
-      .section-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--primary-text-color);
-        letter-spacing: 0.01em;
-      }
-      .fan-icon.spinning {
-        animation: spin 2s linear infinite;
-      }
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      .speed-status {
-        margin-top: 4px;
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--primary-color);
-        text-align: left;
-      }
-      .sensor-card {
-        border: 1px solid var(--divider-color, #e0e0e0);
-        border-radius: var(--ha-card-border-radius, 8px);
-        padding: 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .comfort-excellent { color: var(--success-color, green); }
-      .comfort-good { color: var(--primary-color, #03a9f4); }
-      .comfort-fair { color: var(--warning-color, orange); }
-      .comfort-poor { color: var(--error-color, red); }
-      .advanced-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        padding: 8px 0;
-      }
-      .gauges-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
-        gap: 16px;
-      }
-      .switch-control {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 0;
-        border-bottom: 1px solid var(--divider-color, #e0e0e0);
-      }
-      .switch-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .switch-heading {
-        font-weight: 600;
-        color: var(--primary-text-color);
-      }
-      .switch-description {
-        font-size: 0.9rem;
-        color: var(--secondary-text-color);
-      }
-      .device-control-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 0;
-        border-bottom: 1px solid var(--divider-color, #e0e0e0);
-      }
-      .control-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .control-label {
-        font-weight: 600;
-        color: var(--primary-text-color);
-        font-size: 1rem;
-      }
-      .control-description {
-        font-size: 0.9rem;
-        color: var(--secondary-text-color);
-        line-height: 1.3;
-      }
-      .control-switch {
-        margin-left: 16px;
+      ha-icon {
+        color: var(--primary-color, #1e88e5);
       }
     `;
   }
