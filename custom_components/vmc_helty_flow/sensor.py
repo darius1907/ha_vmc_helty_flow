@@ -1103,12 +1103,12 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
         return "Ricambio lento anche a velocità massima, verificare impianto"
 
 
-class VmcHeltyDailyAirChangesSensor(SensorEntity):
+class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
     """Sensore per ricambi d'aria giornalieri basato sulla velocità della ventola."""
 
     def __init__(self, coordinator: VmcHeltyCoordinator, device_id: str) -> None:
         """Inizializza il sensore dei ricambi d'aria giornalieri."""
-        self.coordinator = coordinator
+        super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_daily_air_changes"
         self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Daily Air Changes"
         self._attr_icon = "mdi:air-filter"
