@@ -832,7 +832,7 @@ window.customCards.push({
   name: 'VMC Helty Flow Control Card',
   description: 'Advanced control card for VMC Helty Flow devices with custom sensor support and room volume configuration',
   preview: true,
-  documentationURL: 'https://github.com/your-repo/vmc-helty-card',
+  documentationURL: 'https://github.com/dpezzoli/ha_vmc_helty_flow/www/vmc-helty-card/README.md',
 });
 
 console.info(`%c VMC HELTY CARD v2.1 LitElement %c Loaded successfully!`,
