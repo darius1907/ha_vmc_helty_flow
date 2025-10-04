@@ -668,6 +668,7 @@ class VmcHeltyCard extends LitElement {
       return this._renderError('VMC device not found. Please check your configuration.');
     }
 
+    // Card solo per la gestione dei comandi (ventilazione, modalità, luci, timer)
     return html`
       <ha-card>
         <ha-heading-badge type="text">
@@ -676,7 +677,6 @@ class VmcHeltyCard extends LitElement {
         </ha-heading-badge>
         ${this._renderFanControls()}
         ${this._renderModeControls()}
-        ${this.config.show_advanced ? this._renderAdvancedSensors() : nothing}
       </ha-card>
     `;
   }
@@ -789,120 +789,10 @@ class VmcHeltyCard extends LitElement {
   }
 
 
-  _renderSensors() {
-    const tempState = this._getTemperatureState();
-    const humidityState = this._getHumidityState();
-    const baseEntityId = this.config.entity.replace('fan.', '');
-
-    const sensorEntities = [];
-    if (this.config.show_temperature && tempState) {
-      sensorEntities.push(tempState.entity_id);
-    }
-    if (this.config.show_humidity && humidityState) {
-      sensorEntities.push(humidityState.entity_id);
-    }
-    if (this.config.show_co2) {
-      const co2State = this._getEntityState(`sensor.${baseEntityId}_co2`);
-      if (co2State) sensorEntities.push(co2State.entity_id);
-    }
-    if (this.config.show_voc) {
-      const vocState = this._getEntityState(`sensor.${baseEntityId}_voc`);
-      if (vocState) sensorEntities.push(vocState.entity_id);
-    }
-    if (this.config.show_airflow) {
-      const airflowState = this._getEntityState(`sensor.${baseEntityId}_airflow`);
-      if (airflowState) sensorEntities.push(airflowState.entity_id);
-    }
-    if (this.config.show_filter_hours) {
-      const filterHoursState = this._getEntityState(`sensor.${baseEntityId}_filter_hours`);
-      if (filterHoursState) sensorEntities.push(filterHoursState.entity_id);
-    }
-    if (this.config.show_device_status) {
-      const deviceState = this._getEntityState(`binary_sensor.${baseEntityId}_status`);
-      if (deviceState) sensorEntities.push(deviceState.entity_id);
-    }
-
-    if (sensorEntities.length === 0) return nothing;
-
-    return html`
-      <ha-heading-badge type="text">
-        <ha-icon slot="icon" icon="mdi:chart-bar"></ha-icon>
-        Sensori Ambientali
-      </ha-heading-badge>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        ${sensorEntities.map(entityId => {
-          const stateObj = this._getEntityState(entityId);
-          if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
-          const name = stateObj.attributes.friendly_name || entityId;
-          const value = stateObj.state;
-          const unit = stateObj.attributes.unit_of_measurement || "";
-          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('co2') ? 'molecule-co2' : entityId.includes('humidity') ? 'water-percent' : entityId.includes('temperature') ? 'thermometer' : 'gauge'}`;
-          return html`
-            <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
-              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
-              <div style="flex: 1;">
-                <div style="font-weight: 500;">${name}</div>
-                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
-              </div>
-            </div>
-          `;
-        })}
-      </div>
-    `;
-  }
-
-  _renderAdvancedSensors() {
-    const baseEntityId = this.config.entity.replace('fan.', '');
-    const advEntities = [];
-    const absoluteHumidityState = this._getEntityState(`sensor.${baseEntityId}_absolute_humidity`);
-    if (absoluteHumidityState) advEntities.push(absoluteHumidityState.entity_id);
-    const dewPointState = this._getEntityState(`sensor.${baseEntityId}_dew_point`);
-    if (dewPointState) advEntities.push(dewPointState.entity_id);
-    const dewPointDeltaState = this._getEntityState(`sensor.${baseEntityId}_dew_point_delta`);
-    if (dewPointDeltaState) advEntities.push(dewPointDeltaState.entity_id);
-    const comfortIndexState = this._getEntityState(`sensor.${baseEntityId}_comfort_index`);
-    if (comfortIndexState) advEntities.push(comfortIndexState.entity_id);
-    const airExchangeTimeState = this._getEntityState(`sensor.${baseEntityId}_air_exchange_time`);
-    if (airExchangeTimeState) advEntities.push(airExchangeTimeState.entity_id);
-    const dailyAirChangesState = this._getEntityState(`sensor.${baseEntityId}_daily_air_changes`);
-    if (dailyAirChangesState) advEntities.push(dailyAirChangesState.entity_id);
-    if (this.config.show_network_info) {
-      const lastResponseState = this._getEntityState(`sensor.${baseEntityId}_last_response`);
-      if (lastResponseState) advEntities.push(lastResponseState.entity_id);
-      const ipAddressState = this._getEntityState(`sensor.${baseEntityId}_ip_address`);
-      if (ipAddressState) advEntities.push(ipAddressState.entity_id);
-    }
-    if (advEntities.length === 0) return nothing;
-    return html`
-      <ha-heading-badge type="text">
-        <ha-icon slot="icon" icon="mdi:chart-line"></ha-icon>
-        Analisi Avanzate
-      </ha-heading-badge>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        ${advEntities.map(entityId => {
-          const stateObj = this._getEntityState(entityId);
-          if (!stateObj) return html`<div>Entità non trovata: ${entityId}</div>`;
-          const name = stateObj.attributes.friendly_name || entityId;
-          const value = stateObj.state;
-          const unit = stateObj.attributes.unit_of_measurement || "";
-          const icon = stateObj.attributes.icon || `mdi:${entityId.includes('dew_point') ? 'water' : entityId.includes('comfort_index') ? 'emoticon-happy' : entityId.includes('air_exchange_time') ? 'autorenew' : entityId.includes('absolute_humidity') ? 'water-percent' : 'gauge'}`;
-          return html`
-            <div class="entity-row" style="display: flex; align-items: center; gap: 12px; padding: 4px 0;">
-              <ha-icon icon="${icon}" style="color: var(--state-icon-color);"></ha-icon>
-              <div style="flex: 1;">
-                <div style="font-weight: 500;">${name}</div>
-                <div style="color: var(--secondary-text-color); font-size: 1.1em;">${value} ${unit}</div>
-              </div>
-            </div>
-          `;
-        })}
-      </div>
-    `;
-  }
 
   // Home Assistant integration methods
   getCardSize() {
-    return 4;
+    return 1;
   }
 
   static getConfigElement() {

@@ -148,7 +148,8 @@ async def tcp_send_command(
             command += "\n\r"
 
     try:
-        _LOGGER.debug("Connessione a %s:%s, comando: %s", ip, port, command.strip())
+        _LOGGER.debug("Connessione a %s:%s timeout: %s, comando: %s",
+                      ip, port, timeout, command.strip())
 
         reader, writer = await _establish_connection(ip, port, timeout)
 

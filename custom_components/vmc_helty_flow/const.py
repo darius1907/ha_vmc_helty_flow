@@ -7,7 +7,7 @@ DEFAULT_SUBNET = "192.168.1."
 ENTITY_NAME_PREFIX = "VMC Helty"  # Prefisso per i nomi delle entità
 
 # Timeout per le connessioni TCP
-TCP_TIMEOUT = 3
+TCP_TIMEOUT = 5
 
 # Intervalli di aggiornamento (in secondi)
 SENSORS_UPDATE_INTERVAL = 180  # Sensori e stato

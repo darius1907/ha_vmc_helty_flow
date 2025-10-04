@@ -36,7 +36,7 @@ class TestConstants:
 
     def test_tcp_timeout_constant(self):
         """Test che la costante TCP_TIMEOUT sia corretta."""
-        assert TCP_TIMEOUT == 3
+        assert TCP_TIMEOUT == 5
         assert isinstance(TCP_TIMEOUT, int)
         assert TCP_TIMEOUT > 0
 
