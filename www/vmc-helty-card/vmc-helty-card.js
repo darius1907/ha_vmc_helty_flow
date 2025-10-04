@@ -86,6 +86,7 @@ class VmcHeltyCard extends LitElement {
     const sensorsEntity = `switch.vmc_helty_${deviceSlug}_sensors`;
     const panelLedState = this._getEntityState(panelLedEntity);
     const sensorsState = this._getEntityState(sensorsEntity);
+
     return html`
       <ha-heading-badge type="text">
         <ha-icon slot="icon" icon="mdi:cog-clockwise" ></ha-icon>
@@ -182,6 +183,25 @@ class VmcHeltyCard extends LitElement {
     this._error = null;
     this._entityStates = {};
     this._entityIds = [];
+  }
+
+  /**
+   * Chiamata generica ai servizi Home Assistant
+   * @param {string} domain - Dominio del servizio (es: 'fan', 'switch', 'light')
+   * @param {string} service - Nome del servizio (es: 'turn_on', 'set_percentage')
+   * @param {object} data - Dati da inviare al servizio
+   * @returns {Promise<void>}
+   */
+  async callService(domain, service, data) {
+    if (!this.hass) throw new Error('Hass object non disponibile');
+    try {
+      await this.hass.callService(domain, service, data);
+    } catch (e) {
+      fireEvent(this, "hass-notification", {
+        message: `Errore chiamata servizio ${domain}.${service}: ${e.message}`
+      });
+      throw e;
+    }
   }
 
   static get styles() {
@@ -656,7 +676,6 @@ class VmcHeltyCard extends LitElement {
         </ha-heading-badge>
         ${this._renderFanControls()}
         ${this._renderModeControls()}
-        ${this._renderSensors()}
         ${this.config.show_advanced ? this._renderAdvancedSensors() : nothing}
       </ha-card>
     `;

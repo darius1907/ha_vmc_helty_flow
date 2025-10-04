@@ -141,9 +141,11 @@ async def tcp_send_command(
     if timeout is None:
         timeout = TCP_TIMEOUT
 
-    # Assicura che il comando termini con CRLF
-    if not command.endswith("\r\n"):
-        command += "\r\n"
+        # Assicura che il comando termini con NLCR (\n\r)
+        if not command.endswith("\n\r"):
+            # Rimuovi eventuali terminazioni errate
+            command = command.rstrip("\r\n")
+            command += "\n\r"
 
     try:
         _LOGGER.debug("Connessione a %s:%s, comando: %s", ip, port, command.strip())
