@@ -7,10 +7,10 @@ DEFAULT_SUBNET = "192.168.1."
 ENTITY_NAME_PREFIX = "VMC Helty"  # Prefisso per i nomi delle entità
 
 # Timeout per le connessioni TCP
-TCP_TIMEOUT = 3
+TCP_TIMEOUT = 5
 
 # Intervalli di aggiornamento (in secondi)
-SENSORS_UPDATE_INTERVAL = 60  # Sensori e stato
+SENSORS_UPDATE_INTERVAL = 180  # Sensori e stato
 NETWORK_INFO_UPDATE_INTERVAL = 900  # Nome e info rete (15 minuti)
 
 # Range di scansione IP
@@ -52,6 +52,18 @@ AIRFLOW_MAPPING = {
     6: 42,  # Hyperventilation
     7: 26,  # Free Cooling
 }
+
+FANSPEED_MAPPING = {
+    0: 0,  # Spenta
+    1: 1,  # Velocità 1
+    2: 2,  # Velocità 2
+    3: 3,  # Velocità 3
+    4: 4,  # Velocità 4
+    5: 1,  # Night Mode
+    6: 4,  # Hyperventilation
+    7: 3,  # Free Cooling
+}
+
 
 # Validazione lunghezza campi
 MAX_DEVICE_NAME_LENGTH = 32
@@ -139,10 +151,10 @@ AIR_EXCHANGE_POOR = "Poor"
 DEFAULT_ROOM_VOLUME = 60  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
 
 # Air Exchange Time Thresholds (minutes) - Tempo ideale per ricambio completo aria
-AIR_EXCHANGE_TIME_EXCELLENT = 20  # Meno di 20 minuti = eccellente
-AIR_EXCHANGE_TIME_GOOD = 30  # 20-30 minuti = buono
-AIR_EXCHANGE_TIME_ACCEPTABLE = 60  # 30-60 minuti = accettabile
-# Oltre 60 minuti = scarso
+AIR_EXCHANGE_TIME_EXCELLENT = 120  # Meno di 120 minuti = eccellente
+AIR_EXCHANGE_TIME_GOOD = 240  # 120-240 minuti = buono
+AIR_EXCHANGE_TIME_ACCEPTABLE = 480  # 240-480 minuti = accettabile
+# Oltre 480 minuti = scarso
 
 # Daily Air Changes Categories and thresholds
 DAILY_AIR_CHANGES_EXCELLENT = "Excellent"
@@ -151,10 +163,10 @@ DAILY_AIR_CHANGES_ADEQUATE = "Adequate"
 DAILY_AIR_CHANGES_POOR = "Poor"
 
 # Daily Air Changes Thresholds (changes per 24h) - Standard di ventilazione
-DAILY_AIR_CHANGES_EXCELLENT_MIN = 24  # 24+ ricambi/giorno = eccellente (1/ora)
-DAILY_AIR_CHANGES_GOOD_MIN = 12  # 12-24 ricambi/giorno = buono (0.5-1/ora)
-DAILY_AIR_CHANGES_ADEQUATE_MIN = 6  # 6-12 ricambi/giorno = adeguato (0.25-0.5/ora)
-# Meno di 6 ricambi/giorno = scarso
+DAILY_AIR_CHANGES_EXCELLENT_MIN = 12  # 12+ ricambi/giorno = eccellente
+DAILY_AIR_CHANGES_GOOD_MIN = 6  # 6-12 ricambi/giorno = buono
+DAILY_AIR_CHANGES_ADEQUATE_MIN = 3  # 3-6 ricambi/giorno = adeguato
+# Meno di 3 ricambi/giorno = scarso
 
 # Configuration constants
 CONF_DEVICE_ID = "device_id"
@@ -164,3 +176,11 @@ COMFORT_LEVEL_EXCELLENT = "Excellent"
 COMFORT_LEVEL_GOOD = "Good"
 COMFORT_LEVEL_FAIR = "Fair"
 COMFORT_LEVEL_POOR = "Poor"
+
+# Room volume validation (m³)
+MIN_ROOM_VOLUME = 5.0  # Minimo per una stanza abitabile (es. bagno piccolo)
+MAX_ROOM_VOLUME = 200.0  # Massimo ragionevole per ambiente domestico
+
+# Room volume validation (m³)
+MIN_ROOM_VOLUME = 5.0  # Minimo per una stanza abitabile (es. bagno piccolo)
+MAX_ROOM_VOLUME = 200.0  # Massimo ragionevole per ambiente domestico

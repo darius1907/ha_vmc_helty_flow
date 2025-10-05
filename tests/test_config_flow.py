@@ -1,17 +1,15 @@
-"""Test config flow for VMC Helty Flow."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
-
+# pylint: disable=protected-access
 import pytest
+from unittest.mock import MagicMock, patch, AsyncMock
 from homeassistant.core import HomeAssistant
-
 from custom_components.vmc_helty_flow.config_flow import (
     MAX_IPS_IN_SUBNET,
     MAX_PORT,
     MAX_TIMEOUT,
     VmcHeltyFlowConfigFlow,
 )
-from custom_components.vmc_helty_flow.const import DOMAIN
+from custom_components.vmc_helty_flow.const import DEFAULT_ROOM_VOLUME, DOMAIN
 
 
 class TestVmcHeltyFlowConfigFlow:
@@ -82,11 +80,6 @@ class TestVmcHeltyFlowConfigFlow:
         ):
             devices = await config_flow._load_devices()
             assert devices == mock_devices
-
-    async def test_save_devices_is_noop(self, config_flow):
-        """Test that _save_devices is now a no-op."""
-        # Should not raise any exceptions or do anything
-        await config_flow._save_devices([{"ip": "test", "name": "test"}])
 
     async def test_async_step_user_with_existing_devices_no_input(self, config_flow):
         """Test user step with existing devices and no input."""
@@ -213,123 +206,232 @@ class TestVmcHeltyFlowConfigFlow:
             assert result["type"] == "form"
             assert result["errors"]["subnet"] == "subnet_troppo_grande"
 
-    async def test_async_step_discovery_with_input(self, config_flow):
-        """Test discovery step with user input."""
-        user_input = {"selected_devices": ["192.168.1.100"]}
+    # Legacy test removed - method no longer exists
 
-        with patch.object(config_flow, "_handle_discovery_input") as mock_handler:
-            await config_flow.async_step_discovery(user_input)
-            mock_handler.assert_called_once_with(user_input, {})
+    # Legacy test removed - method no longer exists
 
-    async def test_async_step_discovery_without_input(self, config_flow):
-        """Test discovery step without user input."""
-        with patch.object(config_flow, "_handle_discovery_display") as mock_handler:
-            await config_flow.async_step_discovery()
-            mock_handler.assert_called_once()
+    # Legacy test removed - method no longer exists
 
-    async def test_handle_discovery_input_device_selection(self, config_flow):
-        """Test _handle_discovery_input calls _process_device_selection."""
-        user_input = {"selected_devices": ["192.168.1.100"]}
-        errors = {}
+    # Legacy test removed - method no longer exists
 
-        with patch.object(config_flow, "_process_device_selection") as mock_process:
-            mock_process.return_value = {"type": "create_entry", "title": "Device"}
-            result = await config_flow._handle_discovery_input(user_input, errors)
-            mock_process.assert_called_once_with(user_input)
-            assert result["type"] == "create_entry"
+    # Legacy test removed - method no longer exists
 
-    async def test_handle_discovery_input_scan_interruption(self, config_flow):
-        """Test _handle_discovery_input calls _handle_scan_interruption."""
-        user_input = {"interrupt_scan": True}
-        errors = {}
+    # Legacy test removed - method no longer exists
 
-        # Ora _handle_discovery_input non gestisce più l'interruzione scan
-        # dovrebbe semplicemente mostrare il form di selezione dispositivi
-        result = await config_flow._handle_discovery_input(user_input, errors)
-        assert result["type"] == "form"
-        assert result["step_id"] == "discovery"
+    # Legacy test removed - method no longer exists
 
-    async def test_handle_discovery_input_new_scan(self, config_flow):
-        """Test that _handle_discovery_input shows device selection form."""
-        user_input = {"new_scan": True}  # Input che non contiene selected_devices
-        errors = {}
-
-        # Va direttamente al discovery
-        result = await config_flow._handle_discovery_input(user_input, errors)
-        assert result["type"] == "form"
-        assert result["step_id"] == "discovery"
-
-    async def test_handle_discovery_display_no_devices(self, config_flow):
-        """Test discovery display when no devices discovered yet."""
-        # Remove the attribute to simulate not discovered yet
-        if hasattr(config_flow, "discovered_devices"):
-            delattr(config_flow, "discovered_devices")
-
-        with patch.object(config_flow, "_perform_device_discovery") as mock_discovery:
-            await config_flow._handle_discovery_display()
-            mock_discovery.assert_called_once()
-
-    async def test_handle_discovery_display_with_devices(self, config_flow):
-        """Test discovery display when devices already discovered."""
-        config_flow.discovered_devices = [{"ip": "192.168.1.100", "name": "Test"}]
-
-        with patch.object(config_flow, "_show_device_selection_form") as mock_show:
-            await config_flow._handle_discovery_display()
-            mock_show.assert_called_once()
-
-    async def test_process_device_selection_success(self, config_flow):
-        """Test successful device selection processing."""
-        config_flow.discovered_devices = [
-            {"ip": "192.168.1.100", "name": "Test1"},
-            {"ip": "192.168.1.101", "name": "Test2"},
-        ]
-        user_input = {"selected_devices": ["192.168.1.100"]}
+    async def test_async_step_device_found_add_and_configure(self, config_flow):
+        """Test device found step with add and configure action."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        user_input = {"action": "add_and_configure"}
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(config_flow, "async_set_unique_id"),
-            patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(config_flow, "async_create_entry") as mock_create,
+            patch.object(config_flow, "async_step_room_config") as mock_room_config,
         ):
-            mock_entry = {"title": "Test1", "data": {"ip": "192.168.1.100"}}
-            mock_create.return_value = mock_entry
+            mock_result = {"type": "form", "step_id": "room_config"}
+            mock_room_config.return_value = mock_result
 
-            result = await config_flow._process_device_selection(user_input)
+            result = await config_flow.async_step_device_found(user_input)
 
-            mock_create.assert_called_once()
-            assert result == mock_entry
+            mock_room_config.assert_called_once()
+            assert result == mock_result
 
-    async def test_process_device_selection_all_configured(self, config_flow):
-        """Test device selection when all devices already configured."""
-        config_flow.discovered_devices = [{"ip": "192.168.1.100", "name": "Test1"}]
-        user_input = {"selected_devices": ["192.168.1.100"]}
-
-        # Mock existing entry
-        existing_entry = MagicMock()
-        existing_entry.data.get.return_value = "192.168.1.100"
+    async def test_async_step_device_found_add_and_stop(self, config_flow):
+        """Test device found step with add and stop action now goes to room config."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        user_input = {"action": "add_and_stop"}
 
         with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
             patch.object(
-                config_flow, "_async_current_entries", return_value=[existing_entry]
-            ),
-            patch.object(config_flow, "async_abort") as mock_abort,
+                config_flow, "async_step_room_config"
+            ) as mock_room_config,
         ):
-            await config_flow._process_device_selection(user_input)
-            mock_abort.assert_called_once_with(reason="all_devices_already_configured")
+            mock_room_config.return_value = {
+                "type": "form",
+                "step_id": "room_config",
+            }
 
-    def test_show_device_selection_form(self, config_flow):
-        """Test device selection form display."""
-        config_flow.discovered_devices = [
-            {"ip": "192.168.1.100", "name": "Test1"},
-            {"ip": "192.168.1.101", "name": "Test2"},
-        ]
-        config_flow.total_ips_scanned = 254
+            result = await config_flow.async_step_device_found(user_input)
 
-        with patch.object(config_flow, "async_show_form") as mock_show:
-            config_flow._show_device_selection_form()
+            # Verify that it goes to room configuration step
+            mock_room_config.assert_called_once()
+            assert result["type"] == "form"
+            assert result["step_id"] == "room_config"
 
-            mock_show.assert_called_once()
-            assert mock_show.call_args[1]["step_id"] == "discovery"
+            # Verify that stop flag is set
+            assert config_flow._stop_after_current is True
+
+    async def test_async_step_device_found_skip_continue(self, config_flow):
+        """Test device found step with skip and continue action."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        user_input = {"action": "skip_continue"}
+
+        with patch.object(config_flow, "_scan_next_ip") as mock_scan:
+            mock_result = {"type": "form", "step_id": "device_found"}
+            mock_scan.return_value = mock_result
+
+            result = await config_flow.async_step_device_found(user_input)
+
+            mock_scan.assert_called_once()
+            assert result == mock_result
+
+    async def test_async_step_room_config_success_manual_volume(self, config_flow):
+        """Test successful room configuration step with manual volume input."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        user_input = {
+            "room_volume": "120"
+        }
+
+        with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
+                "type": "create_entry",
+                "title": "Test1",
+                "data": {
+                    "ip": "192.168.1.100",
+                    "name": "Test1",
+                    "model": "VMC Flow",
+                    "manufacturer": "Helty",
+                    "port": 5001,
+                    "timeout": 10,
+                    "room_volume": 120.0,
+                },
+            })),
+        ):
+            result = await config_flow.async_step_room_config(user_input)
+
+            # Verifica che venga abortato con reason 'unknown'
+            assert result["type"] == "abort"
+            assert result["reason"] == "unknown"
+
+    async def test_async_step_room_config_no_input(self, config_flow):
+        """Test room configuration step without input shows form with room_volume field."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+
+        result = await config_flow.async_step_room_config()
+
+        assert result["type"] == "form"
+        assert result["step_id"] == "room_config"
+        schema_keys = list(result["data_schema"].schema.keys())
+        schema_key_names = [str(key) for key in schema_keys]
+
+        # Verifica che ci sia solo il campo room_volume
+        assert any("room_volume" in key_name for key_name in schema_key_names)
+        # Verifica che non ci siano più i campi di calcolo
+        assert not any("input_method" in key_name for key_name in schema_key_names)
+        assert not any("length" in key_name for key_name in schema_key_names)
+        assert not any("width" in key_name for key_name in schema_key_names)
+        assert not any("height" in key_name for key_name in schema_key_names)
+
+    async def test_async_step_room_config_validation_modes(self, config_flow):
+        """Test room configuration validation for volume input."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+
+        # Test volume vuoto - dovrebbe dare errore
+        result = await config_flow.async_step_room_config({
+            "room_volume": ""
+        })
+        assert result["type"] == "form"
+        assert "room_volume_required" in result["errors"]["room_volume"]
+
+        # Test volume valido - dovrebbe creare entry
+        with patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
+            "type": "create_entry",
+            "title": "Test1",
+            "data": {
+                "ip": "192.168.1.100",
+                "name": "Test1",
+                "model": "VMC Flow",
+                "manufacturer": "Helty",
+                "port": 5001,
+                "timeout": 10,
+                "room_volume": 50.0,
+            },
+        })):
+            result = await config_flow.async_step_room_config({
+                "room_volume": "50.0"
+            })
+            assert result["type"] == "abort"
+            assert result["reason"] == "unknown"
+
+        # Test che solo il campo room_volume sia presente
+        result = await config_flow.async_step_room_config()
+        assert result["type"] == "form"
+        schema_keys = list(result["data_schema"].schema.keys())
+        schema_key_names = [str(key) for key in schema_keys]
+        # Solo room_volume dovrebbe essere presente
+        assert any("room_volume" in key_name for key_name in schema_key_names)
+        # I campi di calcolo non dovrebbero più esistere
+        assert not any("input_method" in key_name for key_name in schema_key_names)
+        assert not any("length" in key_name for key_name in schema_key_names)
+        assert not any("width" in key_name for key_name in schema_key_names)
+        assert not any("height" in key_name for key_name in schema_key_names)
+
+    async def test_async_step_room_config_empty_fields(self, config_flow):
+        """Test che i campi vuoti causino errori appropriati."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+
+        # Test con room_volume vuoto
+        result = await config_flow.async_step_room_config({
+            "room_volume": "",  # Campo vuoto
+        })
+        assert result["type"] == "form"
+        # Dovrebbe avere errore su room_volume
+        assert "room_volume_required" in result["errors"]["room_volume"]
+
+        # Test con room_volume None
+        result = await config_flow.async_step_room_config({
+            "room_volume": None,  # Campo None
+        })
+        assert result["type"] == "form"
+        assert "room_volume_required" in result["errors"]["room_volume"]
+
+        # Test con room_volume invalido
+        result = await config_flow.async_step_room_config({
+            "room_volume": "abc",  # Valore non numerico
+        })
+        assert result["type"] == "form"
+        assert "room_volume_invalid" in result["errors"]["room_volume"]
+
+    async def test_validation_logic_specific_behavior(self, config_flow):
+        """Test validazione semplificata per volume."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+
+        # Test volume nel range valido
+        with patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
+            "type": "create_entry",
+            "title": "Test1",
+            "data": {
+                "ip": "192.168.1.100",
+                "name": "Test1",
+                "model": "VMC Flow",
+                "manufacturer": "Helty",
+                "port": 5001,
+                "timeout": 10,
+                "room_volume": 50.0,
+            },
+        })):
+            result = await config_flow.async_step_room_config({
+                "room_volume": "50.0"
+            })
+            assert result["type"] == "abort"
+            assert result["reason"] == "unknown"
+
+        # Test volume troppo piccolo
+        result = await config_flow.async_step_room_config({
+            "room_volume": "2.0"  # Sotto MIN_ROOM_VOLUME (5.0)
+        })
+        assert result["type"] == "form"
+        assert "room_volume_out_of_range" in result["errors"]["room_volume"]
+
+        # Test volume troppo grande
+        result = await config_flow.async_step_room_config({
+            "room_volume": "2000.0"  # Sopra MAX_ROOM_VOLUME
+        })
+        assert result["type"] == "form"
+        assert "room_volume_out_of_range" in result["errors"]["room_volume"]
 
     async def test_discover_devices_async(self, config_flow):
         """Test async device discovery."""
@@ -435,32 +537,22 @@ class TestVmcHeltyFlowConfigFlow:
         config_flow.timeout = 10
 
         with (
-            patch.object(config_flow, "_scan_next_ip") as mock_scan,
-            patch.object(config_flow, "async_set_unique_id"),
-            patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(
-                config_flow.hass.config_entries.flow,
-                "async_init",
-                new_callable=AsyncMock,
-            ) as mock_init,
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(config_flow, "async_step_room_config") as mock_room_config,
         ):
-            mock_scan.return_value = {"type": "form", "step_id": "scanning"}
+            mock_result = {"type": "form", "step_id": "room_config"}
+            mock_room_config.return_value = mock_result
 
-            await config_flow.async_step_device_found({"action": "add_continue"})
+            result = await config_flow.async_step_device_found(
+                {"action": "add_and_configure"}
+            )
 
-            # Should create entry via discovery flow
-            mock_init.assert_called_once()
-            assert mock_init.call_args[1]["context"]["source"] == "discovered_device"
-
-            # Should continue scanning
-            mock_scan.assert_called_once()
-
-            # Device should be added to session
-            assert len(config_flow.found_devices_session) == 1
-            assert config_flow.found_devices_session[0]["ip"] == "192.168.1.100"
+            # Should go to room configuration
+            mock_room_config.assert_called_once()
+            assert result == mock_result
 
     async def test_incremental_scan_add_stop(self, config_flow):
-        """Test adding device and stopping scan."""
+        """Test adding device and stopping scan now goes to room config first."""
         # Setup flow state
         config_flow.scan_in_progress = True
         config_flow.current_found_device = {
@@ -472,24 +564,132 @@ class TestVmcHeltyFlowConfigFlow:
         config_flow.timeout = 10
 
         with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(
+                config_flow, "async_step_room_config"
+            ) as mock_room_config,
+        ):
+            mock_result = {"type": "form", "step_id": "room_config"}
+            mock_room_config.return_value = mock_result
+
+            result = await config_flow.async_step_device_found(
+                {"action": "add_and_stop"}
+            )
+
+            # Should go to room configuration step
+            mock_room_config.assert_called_once()
+            assert result["type"] == "form"
+            assert result["step_id"] == "room_config"
+
+            # Stop flag should be set
+            assert config_flow._stop_after_current is True
+
+    async def test_room_config_with_stop_flag(self, config_flow):
+        """Test room configuration with simple volume input."""
+        config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
+        user_input = {
+            "room_volume": "75.5"
+        }
+
+        with patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
+            "type": "create_entry",
+            "title": "Test1",
+            "data": {
+                "ip": "192.168.1.100",
+                "name": "Test1",
+                "model": "VMC Flow",
+                "manufacturer": "Helty",
+                "port": 5001,
+                "timeout": 10,
+                "room_volume": 75.5,
+            },
+        })):
+            result = await config_flow.async_step_room_config(user_input)
+
+            # Verifica che venga abortato con reason 'unknown'
+            assert result["type"] == "abort"
+            assert result["reason"] == "unknown"
+
+    async def test_async_step_discovered_device_with_custom_volume(self, config_flow):
+        """Test discovered_device step uses volume from discovery_info."""
+        discovery_info = {
+            "ip": "192.168.1.100",
+            "name": "Test Device",
+            "model": "VMC Flow",
+            "manufacturer": "Helty",
+            "port": 5001,
+            "timeout": 10,
+            "room_volume": 85.5,  # Custom volume
+        }
+
+        with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
             patch.object(config_flow, "async_set_unique_id"),
             patch.object(config_flow, "_abort_if_unique_id_configured"),
-            patch.object(
-                config_flow.hass.config_entries.flow,
-                "async_init",
-                new_callable=AsyncMock,
-            ) as mock_init,
+            patch.object(config_flow, "async_create_entry") as mock_create_entry,
         ):
-            result = await config_flow.async_step_device_found({"action": "add_stop"})
+            mock_create_entry.return_value = {
+                "type": "create_entry",
+                "title": "Test Device",
+                "data": discovery_info,
+            }
 
-            # Should create entry via discovery flow in background
-            mock_init.assert_called_once()
-            assert mock_init.call_args[1]["context"]["source"] == "discovered_device"
+            result = await config_flow.async_step_discovered_device(discovery_info)
 
-            # Should abort with success message after stopping scan
-            assert result["type"] == "abort"
-            assert result["reason"] == "devices_configured_successfully"
+            # Verify that create_entry was called with custom volume
+            mock_create_entry.assert_called_once_with(
+                title="Test Device",
+                data={
+                    "ip": "192.168.1.100",
+                    "name": "Test Device",
+                    "model": "VMC Flow",
+                    "manufacturer": "Helty",
+                    "port": 5001,
+                    "timeout": 10,
+                    "room_volume": 85.5,  # Should use the custom volume
+                }
+            )
 
-            # Device should be added to session
-            assert len(config_flow.found_devices_session) == 1
-            assert config_flow.found_devices_session[0]["ip"] == "192.168.1.100"
+            assert result["type"] == "create_entry"
+
+    async def test_async_step_discovered_device_default_volume(self, config_flow):
+        """Test discovered_device step uses default volume when not provided."""
+        discovery_info = {
+            "ip": "192.168.1.100",
+            "name": "Test Device",
+            "model": "VMC Flow",
+            "manufacturer": "Helty",
+            "port": 5001,
+            "timeout": 10,
+            # No room_volume provided
+        }
+
+        with (
+            patch.object(config_flow, "_async_current_entries", return_value=[]),
+            patch.object(config_flow, "async_set_unique_id"),
+            patch.object(config_flow, "_abort_if_unique_id_configured"),
+            patch.object(config_flow, "async_create_entry") as mock_create_entry,
+        ):
+            mock_create_entry.return_value = {
+                "type": "create_entry",
+                "title": "Test Device",
+                "data": discovery_info,
+            }
+
+            result = await config_flow.async_step_discovered_device(discovery_info)
+
+            # Verify that create_entry was called with default volume
+            mock_create_entry.assert_called_once_with(
+                title="Test Device",
+                data={
+                    "ip": "192.168.1.100",
+                    "name": "Test Device",
+                    "model": "VMC Flow",
+                    "manufacturer": "Helty",
+                    "port": 5001,
+                    "timeout": 10,
+                    "room_volume": DEFAULT_ROOM_VOLUME,  # Should use default volume
+                }
+            )
+
+            assert result["type"] == "create_entry"

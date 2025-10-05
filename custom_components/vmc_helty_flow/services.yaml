@@ -1,5 +1,54 @@
 # Services for VMC Helty Flow integration
 
+update_room_volume:
+  name: "Update room volume"
+  description: "Update the room volume for air exchange calculations"
+  fields:
+    entity_id:
+      name: "Entity ID"
+      description: "The entity ID of any VMC Helty device in the room"
+      required: true
+      example: "fan.vmc_helty_192_168_1_100"
+      selector:
+        entity:
+          domain: 
+            - fan
+            - sensor
+          integration: vmc_helty_flow
+    room_volume:
+      name: "Room Volume"
+      description: "The new room volume in cubic meters"
+      required: true
+      example: 75.5
+      selector:
+        number:
+          min: 1.0
+          max: 1000.0
+          step: 0.1
+          unit_of_measurement: "m³"
+
+network_diagnostics:
+  name: "Network diagnostics"
+  description: "Run network connectivity diagnostics for a VMC Helty device"
+  fields:
+    ip:
+      name: "IP Address"
+      description: "The IP address of the VMC Helty device to test"
+      required: true
+      example: "192.168.1.117"
+      selector:
+        text:
+    port:
+      name: "TCP Port"
+      description: "The TCP port to test (default: 5001)"
+      required: false
+      default: 5001
+      example: 5001
+      selector:
+        number:
+          min: 1
+          max: 65535
+
 device_action:
   name: "Device action"
   description: "Execute a specific action on a VMC Helty device"

@@ -70,7 +70,7 @@ jobs:
             $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
           kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/QUICK-START.md \
             $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
-          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/examples.yaml \
+          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/examples.md \
             $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
 
       - name: Add Lovelace resource configuration

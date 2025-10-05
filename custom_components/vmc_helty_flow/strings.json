@@ -55,6 +55,24 @@
           "proceed": "Continua con il processo di ricerca dispositivi"
         }
       },
+      "room_config": {
+        "title": "Configurazione Volume Stanza",
+        "description": "Configura il volume della stanza per calcoli accurati di ricambio d'aria",
+        "data": {
+          "input_method": "Metodo di inserimento volume",
+          "room_volume": "Volume stanza (m³)",
+          "length": "Lunghezza stanza (m)",
+          "width": "Larghezza stanza (m)",
+          "height": "Altezza stanza (m)"
+        },
+        "data_description": {
+          "input_method": "Scegli come inserire il volume: manuale diretto o calcolo automatico da dimensioni",
+          "room_volume": "Inserisci il volume totale della stanza in metri cubi",
+          "length": "Lunghezza della stanza in metri (es. 4.0)",
+          "width": "Larghezza della stanza in metri (es. 4.0)",
+          "height": "Altezza della stanza in metri (es. 2.7)"
+        }
+      },
       "device_found": {
         "title": "Dispositivo Trovato",
         "description": "Trovato dispositivo VMC: {device_name} ({device_ip})\nModello: {device_model}\n\nScansione: {progress}\nDispositivi trovati finora: {found_count}\n\nCosa vuoi fare?",
@@ -85,6 +103,7 @@
     },
     "abort": {
       "already_configured": "Questo dispositivo è già configurato",
+      "device_already_configured": "Questo dispositivo è già configurato",
       "all_devices_already_configured": "Tutti i dispositivi selezionati sono già configurati",
       "no_devices": "Nessun dispositivo trovato",
       "devices_configured_successfully": "Dispositivi configurati con successo: {device_count} dispositivo/i VMC Helty"
@@ -98,12 +117,14 @@
         "data": {
           "scan_interval": "Intervallo di aggiornamento (secondi)",
           "timeout": "Timeout connessioni (secondi)",
-          "retry_attempts": "Tentativi di riconnessione"
+          "retry_attempts": "Tentativi di riconnessione",
+          "room_volume": "Volume stanza (m³)"
         },
         "data_description": {
           "scan_interval": "Frequenza di aggiornamento dei dati dal dispositivo VMC (30-600 secondi)",
           "timeout": "Timeout per le connessioni TCP al dispositivo (5-60 secondi)",
-          "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)"
+          "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)",
+          "room_volume": "Volume della stanza in metri cubi per calcoli accurati dei ricambi d'aria (1-1000 m³)"
         }
       }
     }
@@ -115,11 +136,17 @@
         "incremental": "Scansione incrementale"
       }
     },
+    "input_method": {
+      "options": {
+        "manual": "Inserimento manuale",
+        "calculate": "Calcolo automatico"
+      }
+    },
     "action": {
       "options": {
-        "add_continue": "Aggiungi e continua",
+        "add_and_configure": "Aggiungi e configura volume",
+        "add_and_stop": "Aggiungi e termina (configura volume)",
         "skip_continue": "Salta e continua",
-        "add_stop": "Aggiungi e termina",
         "stop_scan": "Termina scansione"
       }
     }
@@ -241,6 +268,20 @@
     }
   },
   "services": {
+    "update_room_volume": {
+      "name": "Aggiorna Volume Stanza",
+      "description": "Aggiorna il volume della stanza per i calcoli di ricambio d'aria",
+      "fields": {
+        "entity_id": {
+          "name": "ID Entità",
+          "description": "L'ID di qualsiasi entità VMC Helty nella stanza"
+        },
+        "room_volume": {
+          "name": "Volume Stanza",
+          "description": "Il nuovo volume della stanza in metri cubi"
+        }
+      }
+    },
     "set_fan_speed": {
       "name": "Imposta Velocità Ventola",
       "description": "Imposta la velocità della ventola VMC",

@@ -1,0 +1,33 @@
+= Sequence Diagram: VMC Helty Flow Config Flow
+:toc:
+:icons: font
+:source-highlighter: coderay
+
+== Config Flow Sequence Diagram
+
+[mermaid,config_flow_sequence,svg]
+----
+sequenceDiagram
+    participant User
+    participant HA_UI as Home Assistant UI
+    participant ConfigFlow
+    participant Device
+
+    User->>HA_UI: Avvia configurazione integrazione
+    HA_UI->>ConfigFlow: async_step_user()
+    ConfigFlow->>Device: _load_devices()
+    Device-->>ConfigFlow: Lista dispositivi
+    ConfigFlow->>HA_UI: Mostra form di configurazione
+    User->>HA_UI: Inserisce dati (host, token, ecc.)
+    HA_UI->>ConfigFlow: async_step_user(user_input)
+    ConfigFlow->>Device: Test connessione
+    Device-->>ConfigFlow: Esito connessione
+    alt Connessione OK
+        ConfigFlow->>HA_UI: Crea config entry
+    else Errore connessione
+        ConfigFlow->>HA_UI: Mostra errore (cannot_connect, invalid_auth, ecc.)
+    end
+----
+
+== Descrizione
+Questo diagramma mostra la sequenza tipica del config flow per l'integrazione VMC Helty Flow in Home Assistant. L'utente avvia la configurazione, inserisce i dati richiesti, e il sistema verifica la connessione al dispositivo prima di creare la config entry o mostrare eventuali errori.

@@ -7,11 +7,11 @@ import pytest
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from custom_components.vmc_helty_flow import VmcHeltyCoordinator
 from custom_components.vmc_helty_flow.const import (
     NETWORK_INFO_UPDATE_INTERVAL,
     SENSORS_UPDATE_INTERVAL,
 )
+from custom_components.vmc_helty_flow.coordinator import VmcHeltyCoordinator
 from custom_components.vmc_helty_flow.helpers import VMCConnectionError
 
 
@@ -40,7 +40,7 @@ def mock_config_entry():
 def coordinator(mock_hass, mock_config_entry):
     """Crea un coordinatore mock per i test."""
     with patch(
-        "custom_components.vmc_helty_flow.DataUpdateCoordinator.__init__"
+        "custom_components.vmc_helty_flow.coordinator.DataUpdateCoordinator.__init__"
     ) as mock_super_init:
         mock_super_init.return_value = None
         coord = VmcHeltyCoordinator(mock_hass, mock_config_entry)
@@ -59,7 +59,7 @@ class TestUpdateIntervals:
             "00112,04354,00140,00203,00249,00510,00000,00001"
         )
 
-        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command") as mock_tcp:
             mock_tcp.return_value = sensors_response
 
             result = await coordinator._get_additional_data()
@@ -86,7 +86,7 @@ class TestUpdateIntervals:
             "00112,04354,00140,00203,00249,00510,00000,00001"
         )
 
-        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command") as mock_tcp:
             mock_tcp.return_value = sensors_response
 
             with patch("time.time", return_value=current_time):
@@ -120,7 +120,7 @@ class TestUpdateIntervals:
             "new_network_data",
         ]
 
-        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command") as mock_tcp:
             mock_tcp.side_effect = responses
 
             with patch("time.time", return_value=current_time):
@@ -171,5 +171,5 @@ class TestUpdateIntervals:
 
     def test_update_intervals_constants(self):
         """Test che le costanti degli intervalli siano configurate correttamente."""
-        assert SENSORS_UPDATE_INTERVAL == 60
+        assert SENSORS_UPDATE_INTERVAL == 180  # 3 minuti
         assert NETWORK_INFO_UPDATE_INTERVAL == 900  # 15 minuti

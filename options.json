@@ -1,0 +1,12 @@
+{
+  "backup_folder": "/backup",
+  "google_drive_folder": "HomeAssistantBackups",
+  "full_backup": true,
+  "frequency": "daily",
+  "keep": 5,
+  "google": {
+    "client_id": "831005651909-5oltfnsfm5f80emc2fdcba74qg64qgf6.apps.googleusercontent.com",
+    "client_secret": "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",
+    "refresh_token": "1//09uI8yF8Nn0tCCgYIARAAGAkSNwF-L9Ir_UbV6FTpere9tUCs6Qly1T4zQrfomqts1rTFMa34s2JPk1qKxQVgNNPXbknF6b1IaGI"
+  }
+}

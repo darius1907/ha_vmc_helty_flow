@@ -55,6 +55,24 @@
           "proceed": "Continue with the device discovery process"
         }
       },
+      "room_config": {
+        "title": "Room Volume Configuration",
+        "description": "Configure the room volume for accurate air change calculations",
+        "data": {
+          "input_method": "Volume input method",
+          "room_volume": "Room volume (m³)",
+          "length": "Room length (m)",
+          "width": "Room width (m)",
+          "height": "Room height (m)"
+        },
+        "data_description": {
+          "input_method": "Choose how to enter the volume: manual input or automatic calculation from dimensions",
+          "room_volume": "Enter the total room volume in cubic meters",
+          "length": "Room length in meters (e.g. 4.0)",
+          "width": "Room width in meters (e.g. 4.0)",
+          "height": "Room height in meters (e.g. 2.7)"
+        }
+      },
       "device_found": {
         "title": "Device Found",
         "description": "Found VMC device: {device_name} ({device_ip})\nModel: {device_model}\n\nScanning: {progress}\nDevices found so far: {found_count}\n\nWhat do you want to do?",
@@ -85,6 +103,7 @@
     },
     "abort": {
       "already_configured": "This device is already configured",
+      "device_already_configured": "This device is already configured",
       "all_devices_already_configured": "All selected devices are already configured",
       "no_devices": "No devices found",
       "devices_configured_successfully": "Devices successfully configured: {device_count} VMC Helty device(s)"
@@ -98,12 +117,14 @@
         "data": {
           "scan_interval": "Update interval (seconds)",
           "timeout": "Connection timeout (seconds)",
-          "retry_attempts": "Reconnect attempts"
+          "retry_attempts": "Reconnect attempts",
+          "room_volume": "Room volume (m³)"
         },
         "data_description": {
           "scan_interval": "Data update frequency from VMC device (30-600 seconds)",
           "timeout": "TCP connection timeout to device (5-60 seconds)",
-          "retry_attempts": "Number of attempts in case of communication error (1-10)"
+          "retry_attempts": "Number of attempts in case of communication error (1-10)",
+          "room_volume": "Room volume in cubic meters for accurate air change calculations (1-1000 m³)"
         }
       }
     }
@@ -115,11 +136,17 @@
         "incremental": "Incremental scan"
       }
     },
+    "input_method": {
+      "options": {
+        "manual": "Manual input",
+        "calculate": "Automatic calculation"
+      }
+    },
     "action": {
       "options": {
-        "add_continue": "Add and continue",
+        "add_and_configure": "Add and configure volume",
+        "add_and_stop": "Add and stop (configure volume)",
         "skip_continue": "Skip and continue",
-        "add_stop": "Add and stop",
         "stop_scan": "Stop scan"
       }
     }
@@ -241,6 +268,20 @@
     }
   },
   "services": {
+    "update_room_volume": {
+      "name": "Update Room Volume",
+      "description": "Update the room volume for air exchange calculations",
+      "fields": {
+        "entity_id": {
+          "name": "Entity ID",
+          "description": "The ID of any VMC Helty entity in the room"
+        },
+        "room_volume": {
+          "name": "Room Volume",
+          "description": "The new room volume in cubic meters"
+        }
+      }
+    },
     "set_fan_speed": {
       "name": "Set Fan Speed",
       "description": "Set the VMC fan speed",

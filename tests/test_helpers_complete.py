@@ -57,7 +57,7 @@ class TestTcpSendCommand:
             result = await tcp_send_command("192.168.1.100", 5001, "TEST")
 
         assert result == "OK"
-        mock_writer.write.assert_called_once_with(b"TEST\r\n")
+        mock_writer.write.assert_called_once_with(b"TEST\n\r")
         mock_writer.drain.assert_called_once()
         mock_writer.close.assert_called_once()
 
@@ -72,7 +72,7 @@ class TestTcpSendCommand:
             result = await tcp_send_command("192.168.1.100", 5001, "TEST\r\n")
 
         assert result == "OK"
-        mock_writer.write.assert_called_once_with(b"TEST\r\n")
+        mock_writer.write.assert_called_once_with(b"TEST\n\r")
 
     @pytest.mark.asyncio
     async def test_custom_timeout(self):
@@ -127,7 +127,7 @@ class TestTcpSendCommand:
             with pytest.raises(VMCConnectionError) as exc_info:
                 await tcp_send_command("invalid.host", 5001, "TEST")
 
-            assert "Errore di connessione" in str(exc_info.value)
+            assert "Errore di rete" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_response_timeout(self):
