@@ -119,7 +119,7 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
             try:
                 parts = status.split(",")
                 return (
-                    parts[PART_INDEX_PANEL_LED] == "1"
+                    parts[PART_INDEX_PANEL_LED] == "10"
                     if len(parts) > PART_INDEX_PANEL_LED
                     else False
                 )
