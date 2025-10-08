@@ -438,7 +438,7 @@ class VmcHeltyCardEditor extends LitElement {
     return html`
       <div class="config-section">
         <div class="section-title">
-          <ha-icon icon="mdi:air-conditioner"></ha-icon>
+          <ha-icon icon="mdi:air-filter"></ha-icon>
           Device Selection
         </div>
 

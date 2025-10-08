@@ -1,0 +1,124 @@
+blueprint:
+  name: Roborock - Pulizia programmata feriale
+  description: >
+    Avvia automaticamente la pulizia di stanze selezionate nei giorni feriali
+    a un orario specifico. Se il vacuum è unavailable, riavvia l'integrazione
+    e attende un tempo configurabile prima di procedere alla pulizia.
+  domain: automation
+  input:
+    vacuum_entity:
+      name: Entità del robot aspirapolvere
+      description: Entità del dispositivo vacuum (es. vacuum.roborock_s5_max)
+      selector:
+        entity:
+          domain: vacuum
+
+    water_sensor:
+      name: Sensore acqua collegato
+      description: Sensore binario che indica se il serbatoio acqua è collegato
+      selector:
+        entity:
+          domain: binary_sensor
+
+    booleans_rooms:
+      name: Input boolean stanze da attivare
+      description: Lista di input_boolean che rappresentano le stanze da pulire
+      selector:
+        entity:
+          multiple: true
+          domain: input_boolean
+
+    input_repeat:
+      name: Input number ripetizioni
+      description: Entità input_number per impostare il numero di cicli di pulizia
+      selector:
+        entity:
+          domain: input_number
+
+    script_restart_integration:
+      name: Script di riavvio integrazione
+      description: Script da eseguire se il vacuum è unavailable
+      selector:
+        entity:
+          domain: script
+
+    script_clean_rooms:
+      name: Script di pulizia stanze
+      description: Script che avvia la pulizia delle stanze selezionate
+      selector:
+        entity:
+          domain: script
+
+    trigger_time:
+      name: Ora di avvio
+      description: Orario di inizio pulizia nei giorni feriali
+      default: "08:20"
+      selector:
+        time: {}
+
+    weekdays:
+      name: Giorni feriali
+      description: Giorni in cui attivare l’automazione
+      default: [mon, tue, wed, thu, fri]
+      selector:
+        select:
+          multiple: true
+          options:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+
+    restart_delay:
+      name: Ritardo dopo riavvio integrazione (secondi)
+      description: Tempo di attesa dopo il riavvio dell’integrazione prima di avviare la pulizia
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: secondi
+          mode: box
+
+mode: single
+
+trigger:
+  - platform: time
+    at: !input trigger_time
+
+condition:
+  - condition: time
+    weekday: !input weekdays
+
+action:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: !input booleans_rooms
+
+  - action: input_number.set_value
+    target:
+      entity_id: !input input_repeat
+    data:
+      value: >
+        {% if is_state((inputs.water_sensor), 'on') %}
+          2
+        {% else %}
+          1
+        {% endif %}
+
+  - variables:
+      delay_seconds: !input restart_delay
+
+  - if:
+      - condition: state
+        entity_id: !input vacuum_entity
+        state: unavailable
+    then:
+      - action: !input script_restart_integration
+      - delay:
+          seconds: "{{ delay_seconds }}"
+
+  - action: !input script_clean_rooms
