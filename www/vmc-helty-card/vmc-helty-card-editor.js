@@ -71,42 +71,6 @@ class VmcHeltyCardEditor extends LitElement {
           }
         }
         font-weight: 500;
-        _discoverEntities() {
-          if (!this.hass) return;
-          this._vmcEntities = Object.keys(this.hass.states)
-            .filter(entityId => entityId.startsWith('fan.vmc_helty_'))
-            .map(entityId => ({
-              value: entityId,
-              label: this.hass.states[entityId]?.attributes?.friendly_name || entityId
-            }));
-          if (this._vmcEntities.length === 0) {
-            this._vmcEntities = Object.keys(this.hass.states)
-              .filter(entityId => entityId.startsWith('fan.'))
-              .map(entityId => ({
-                value: entityId,
-                label: this.hass.states[entityId]?.attributes?.friendly_name || entityId
-              }));
-          }
-        }
-
-        _valueChanged(ev) {
-          const target = ev.target;
-          const key = target.configValue;
-          if (!key) return;
-          let value = target.value;
-          const newConfig = { ...this.config, [key]: value };
-          this.config = newConfig;
-          this._fireConfigChanged();
-        }
-      }
-        _fireConfigChanged() {
-          const event = new CustomEvent('config-changed', {
-            detail: { config: this.config },
-            bubbles: true,
-            composed: true,
-          });
-          this.dispatchEvent(event);
-        }
         gap: 8px;
         font-size: 12px;
       }
