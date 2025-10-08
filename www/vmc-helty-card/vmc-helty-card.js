@@ -88,11 +88,14 @@ class VmcHeltyCard extends LitElement {
     const sensorsState = this._getEntityState(sensorsEntity);
 
     return html`
-      <ha-settings-row>
+    
+      <div class="card-header">
         <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:cog-clockwise" ></ha-icon>
           Modalità Speciali
         </ha-heading-badge>
+      </div>
+      <ha-settings-row>
         <ha-chip-set>
           ${specialModes.map(mode => {
             const isOn = !!attrs[mode.attr];
@@ -110,11 +113,13 @@ class VmcHeltyCard extends LitElement {
           })}
         </ha-chip-set>
       </ha-settings-row>
-      <ha-settings-row>
+      <div class="card-header">
         <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
           Controlli Dispositivo
         </ha-heading-badge>
+      </div>
+      <ha-settings-row>
         <span slot="heading">
           <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:led-outline"></ha-icon>
@@ -208,131 +213,7 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-        :host {
-          background: var(
-            --ha-card-background,
-            var(--card-background-color, white)
-          );
-          -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
-          backdrop-filter: var(--ha-card-backdrop-filter, none);
-          box-shadow: var(--ha-card-box-shadow, none);
-          box-sizing: border-box;
-          border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg));
-          border-width: var(--ha-card-border-width, 1px);
-          border-style: solid;
-          border-color: var(--ha-card-border-color, var(--divider-color, #e0e0e0));
-          color: var(--primary-text-color);
-          display: block;
-          transition: all 0.3s ease-out;
-          position: relative;
-        }
-
-        :host([raised]) {
-          border: none;
-          box-shadow: var(
-            --ha-card-box-shadow,
-            0px 2px 1px -1px rgba(0, 0, 0, 0.2),
-            0px 1px 1px 0px rgba(0, 0, 0, 0.14),
-            0px 1px 3px 0px rgba(0, 0, 0, 0.12)
-          );
-        }
-
-        .card-header,
-        :host ::slotted(.card-header) {
-          color: var(--ha-card-header-color, var(--primary-text-color));
-          font-family: var(--ha-card-header-font-family, inherit);
-          font-size: var(--ha-card-header-font-size, var(--ha-font-size-2xl));
-          letter-spacing: -0.012em;
-          line-height: var(--ha-line-height-expanded);
-          padding: 12px 16px 16px;
-          display: block;
-          margin-block-start: 0px;
-          margin-block-end: 0px;
-          font-weight: var(--ha-font-weight-normal);
-        }
-
-        :host ::slotted(.card-content:not(:first-child)),
-        slot:not(:first-child)::slotted(.card-content) {
-          padding-top: 0px;
-          margin-top: -8px;
-        }
-
-        :host ::slotted(.card-content) {
-          padding: 16px;
-        }
-
-        :host ::slotted(.card-actions) {
-          border-top: 1px solid var(--divider-color, #e8e8e8);
-          padding: 8px;
-        }
-
-        ha-icon {
-         color: var(--state-icon-color);
-          --state-inactive-color: var(--state-icon-color);
-          line-height: 40px;
-        }
-
-        ha-card {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          cursor: pointer;
-          outline: none;
-        }
-
-        .header {
-          display: flex;
-          padding: 8px 16px 0;
-          justify-content: space-between;
-        }
-
-        .name {
-          color: var(--secondary-text-color);
-          line-height: 40px;
-          font-size: var(--ha-font-size-l);
-          font-weight: var(--ha-font-weight-medium);
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-        }
-
-        .icon {
-          color: var(--state-icon-color);
-          --state-inactive-color: var(--state-icon-color);
-          line-height: 40px;
-        }
-
-        .info {
-          padding: 0px 16px 16px;
-          margin-top: -4px;
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          line-height: var(--ha-line-height-condensed);
-        }
-
-        .value {
-          font-size: var(--ha-font-size-3xl);
-          margin-right: 4px;
-          margin-inline-end: 4px;
-          margin-inline-start: initial;
-        }
-
-        .measurement {
-          font-size: var(--ha-font-size-l);
-          color: var(--secondary-text-color);
-        }
-
-        .with-fixed-footer {
-          justify-content: flex-start;
-        }
-        .with-fixed-footer .footer {
-          position: absolute;
-          right: 0;
-          left: 0;
-          bottom: 0;
-        }
+        
     `;
   }
 
