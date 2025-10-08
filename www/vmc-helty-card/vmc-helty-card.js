@@ -213,7 +213,10 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-        
+      :host {
+        font-family: var(--ha-card-font-family, inherit);
+        color: var(--primary-text-color);
+      }
     `;
   }
 
