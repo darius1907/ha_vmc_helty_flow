@@ -44,35 +44,20 @@ class VmcHeltyCardEditor extends LitElement {
         display: block;
         padding: 16px;
         background: var(--card-background-color);
-        static get properties() {
-          return {
-            hass: { type: Object },
-            config: { type: Object },
-            _vmcEntities: { type: Array, state: true },
-          };
-        }
+        color: var(--primary-text-color);
+      }
       .config-section:last-child {
-        constructor() {
-          super();
-          this.config = {};
-          this.hass = null;
-          this._vmcEntities = [];
-        }
         display: flex;
-        setConfig(config) {
-          this.config = { ...config };
-          this._discoverEntities();
-        }
+        flex-direction: column;
+        gap: 16px;
+      }
       .form-group {
-        willUpdate(changedProps) {
-          super.willUpdate(changedProps);
-          if (changedProps.has('hass') && this.hass) {
-            this._discoverEntities();
-          }
-        }
         font-weight: 500;
         gap: 8px;
         font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 16px;
       }
 
       .sensor-preview.available {
