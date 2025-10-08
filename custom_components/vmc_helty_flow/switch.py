@@ -119,7 +119,7 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
             try:
                 parts = status.split(",")
                 return (
-                    parts[PART_INDEX_PANEL_LED] == "1"
+                    parts[PART_INDEX_PANEL_LED] == "00010"
                     if len(parts) > PART_INDEX_PANEL_LED
                     else False
                 )
@@ -182,7 +182,7 @@ class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
                 parts = status.split(",")
                 # Sensori attivi se il valore è 0, inattivi se 1
                 return (
-                    parts[PART_INDEX_SENSORS] == "0"
+                    parts[PART_INDEX_SENSORS] == "00000"
                     if len(parts) > PART_INDEX_SENSORS
                     else True
                 )
