@@ -108,55 +108,6 @@ class VmcHeltyCardEditor extends LitElement {
           this.dispatchEvent(event);
         }
         gap: 8px;
-        render() {
-          if (!this.hass) {
-            return html`
-              <div class="error-message">
-                <ha-icon icon="mdi:loading"></ha-icon>
-                <span>Loading Home Assistant data...</span>
-              </div>
-            `;
-          }
-          return html`
-            <div class="config-section">
-              <div class="section-title">
-                <ha-icon icon="mdi:air-conditioner"></ha-icon>
-                Device Selection
-              </div>
-              <div class="form-group">
-                <label class="form-label">VMC Device</label>
-                <div class="form-description">
-                  Select which VMC Helty Flow device this card should control
-                </div>
-                <ha-select
-                  .label=${"Choose VMC Device"}
-                  .value=${this.config.entity || ""}
-                  .configValue=${"entity"}
-                  @selected=${this._valueChanged}
-                  @closed=${(ev) => ev.stopPropagation()}
-                >
-                  ${this._vmcEntities.map(entity => html`
-                    <mwc-list-item .value=${entity.value}>
-                      ${entity.label}
-                    </mwc-list-item>
-                  `)}
-                </ha-select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Card Name</label>
-                <div class="form-description">
-                  Display name for this card (optional)
-                </div>
-                <ha-textfield
-                  .label=${"Card Name"}
-                  .value=${this.config.name || ""}
-                  .configValue=${"name"}
-                  @input=${this._valueChanged}
-                ></ha-textfield>
-              </div>
-            </div>
-          `;
-        }
         font-size: 12px;
       }
 
