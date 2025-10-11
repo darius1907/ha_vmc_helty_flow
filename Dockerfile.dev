@@ -51,8 +51,13 @@ RUN git clone --depth 1 https://github.com/home-assistant/hass-release ~/hass-re
 COPY requirements.txt ./
 COPY package_constraints.txt homeassistant/package_constraints.txt
 RUN uv pip install -r requirements.txt
-COPY requirements_test.txt requirements_test_pre_commit.txt ./
-RUN uv pip install -r requirements_test.txt
+
+# Install test dependencies step by step for better debugging
+COPY requirements_test_pre_commit.txt requirements_test_minimal.txt ./
+RUN uv pip install -r requirements_test_pre_commit.txt
+
+# Install minimal test requirements for debugging
+RUN uv pip install -r requirements_test_minimal.txt
 
 WORKDIR /workspaces
 
