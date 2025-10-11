@@ -56,8 +56,8 @@ class TestUpdateRoomVolumeService:
         """Test that service setup registers the service correctly."""
         await async_setup_services(mock_hass)
 
-        # Verify services were registered (update_room_volume and network_diagnostics)
-        assert mock_hass.services.async_register.call_count == 2
+        # Verify services were registered (update_room_volume, network_diagnostics, and set_special_mode)
+        assert mock_hass.services.async_register.call_count == 3
         
         # Check that update_room_volume service was registered
         calls = mock_hass.services.async_register.call_args_list
