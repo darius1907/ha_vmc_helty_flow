@@ -159,7 +159,7 @@ class TestUpdateIntervals:
             VMCConnectionError("Error getting network"),
         ]
 
-        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
+        with patch("custom_components.vmc_helty_flow.helpers.tcp_send_command") as mock_tcp:
             mock_tcp.side_effect = responses
 
             with patch("time.time", return_value=current_time):

@@ -12,7 +12,7 @@ from custom_components.vmc_helty_flow.coordinator import VmcHeltyCoordinator
 from custom_components.vmc_helty_flow.helpers import VMCConnectionError
 
 
-@patch("custom_components.vmc_helty_flow.tcp_send_command")
+@patch("custom_components.vmc_helty_flow.helpers.tcp_send_command")
 class TestVmcHeltyCoordinator:
     """Test per la classe VmcHeltyCoordinator."""
 

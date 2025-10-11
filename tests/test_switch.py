@@ -247,7 +247,7 @@ class TestVmcHeltyPanelLedSwitch:
     def test_is_on_led_active(self, mock_coordinator):
         """Test is_on property when LED is active."""
         # LED on (position 2 = "1")
-        mock_coordinator.data = {"status": "VMGO,3,1,25,0,24"}
+        mock_coordinator.data = {"status": "VMGO,3,00010,25,0,24"}
         switch_entity = VmcHeltyPanelLedSwitch(mock_coordinator)
 
         assert switch_entity.is_on is True
@@ -255,7 +255,7 @@ class TestVmcHeltyPanelLedSwitch:
     def test_is_on_led_inactive(self, mock_coordinator):
         """Test is_on property when LED is inactive."""
         # LED off (position 2 = "0")
-        mock_coordinator.data = {"status": "VMGO,3,0,25,0,24"}
+        mock_coordinator.data = {"status": "VMGO,3,0000,25,0,24"}
         switch_entity = VmcHeltyPanelLedSwitch(mock_coordinator)
 
         assert switch_entity.is_on is False
@@ -343,7 +343,7 @@ class TestVmcHeltySensorsSwitch:
     def test_is_on_sensors_active(self, mock_coordinator):
         """Test is_on property when sensors are active."""
         # Sensors active (position 4 = "0")
-        mock_coordinator.data = {"status": "VMGO,3,1,25,0,24"}
+        mock_coordinator.data = {"status": "VMGO,3,1,25,00000,24"}
         switch_entity = VmcHeltySensorsSwitch(mock_coordinator)
 
         assert switch_entity.is_on is True
@@ -351,7 +351,7 @@ class TestVmcHeltySensorsSwitch:
     def test_is_on_sensors_inactive(self, mock_coordinator):
         """Test is_on property when sensors are inactive."""
         # Sensors inactive (position 4 = "1")
-        mock_coordinator.data = {"status": "VMGO,3,1,25,1,24"}
+        mock_coordinator.data = {"status": "VMGO,3,1,25,00001,24"}
         switch_entity = VmcHeltySensorsSwitch(mock_coordinator)
 
         assert switch_entity.is_on is False
