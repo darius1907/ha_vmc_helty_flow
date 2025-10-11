@@ -48,8 +48,8 @@ AIRFLOW_MAPPING = {
     2: 17,  # Velocità 2
     3: 26,  # Velocità 3
     4: 37,  # Velocità 4
-    5: 7,  # Night Mode
-    6: 42,  # Hyperventilation
+    5: 42,  # Hyperventilation
+    6: 7,  # Night Mode
     7: 26,  # Free Cooling
 }
 
@@ -59,8 +59,8 @@ FANSPEED_MAPPING = {
     2: 2,  # Velocità 2
     3: 3,  # Velocità 3
     4: 4,  # Velocità 4
-    5: 1,  # Night Mode
-    6: 4,  # Hyperventilation
+    5: 4,  # Hyperventilation
+    6: 0,  # Night Mode
     7: 3,  # Free Cooling
 }
 

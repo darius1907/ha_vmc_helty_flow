@@ -81,15 +81,15 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
         assert self.sensor.native_value == expected
 
     def test_calculation_night_mode(self):
-        """Test calcolo con modalità notturna (velocità 5 -> 7 m³/h)."""
-        self.coordinator.data = {"status": "VMGO,5,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
+        """Test calcolo con modalità notturna (velocità 6 -> 7 m³/h)."""
+        self.coordinator.data = {"status": "VMGO,6,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 7 m³/h, Ricambi/ora: 7/60 = 0.117, Ricambi/giorno: 0.117*24 = 2.8
         expected = round((7 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_hyperventilation(self):
-        """Test calcolo con iperventilazione (velocità 6 -> 42 m³/h)."""
-        self.coordinator.data = {"status": "VMGO,6,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
+        """Test calcolo con iperventilazione (velocità 5 -> 42 m³/h)."""
+        self.coordinator.data = {"status": "VMGO,5,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 42 m³/h, Ricambi/ora: 42/60 = 0.7, Ricambi/giorno: 0.7*24 = 16.8
         expected = round((42 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected

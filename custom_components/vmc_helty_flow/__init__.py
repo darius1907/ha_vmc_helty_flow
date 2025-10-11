@@ -161,8 +161,8 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
         # Mapping mode to speed values come da protocollo VMC
         mode_mapping = {
-            "night_mode": 5,  # 125% -> comando VMWH0000005
-            "hyperventilation": 6,  # 150% -> comando VMWH0000006
+            "night_mode": 6,  # 150% -> comando VMWH0000006
+            "hyperventilation": 5,  # 125% -> comando VMWH0000005
             "free_cooling": 7,  # 175% -> comando VMWH0000007
         }
 

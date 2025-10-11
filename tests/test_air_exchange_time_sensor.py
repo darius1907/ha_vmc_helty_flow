@@ -97,17 +97,17 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_night_mode(self):
-        """Test calculation with fan speed 5 (7 m³/h) for night mode."""
-        # Fan speed 5 (night mode), 16 parts
-        self.coordinator.data = {"status": "VMGO,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0"}
+        """Test calculation with fan speed 6 (7 m³/h) for night mode."""
+        # Fan speed 6 (night mode), 16 parts
+        self.coordinator.data = {"status": "VMGO,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0"}
         # Expected: (self.TEST_ROOM_VOLUME / 7) * 60 = (60 / 7) * 60 = 514.3 minutes
         expected = (self.TEST_ROOM_VOLUME / 7) * 60
         assert self.sensor.native_value == round(expected, 1)
 
     def test_calculation_fan_speed_hyperventilation(self):
-        """Test calculation with fan speed 6 (42 m³/h) for hyperventilation."""
-        # Fan speed 6 (hyperventilation), 16 parts
-        self.coordinator.data = {"status": "VMGO,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0"}
+        """Test calculation with fan speed 5 (42 m³/h) for hyperventilation."""
+        # Fan speed 5 (hyperventilation), 16 parts
+        self.coordinator.data = {"status": "VMGO,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0"}
         # Expected: (self.TEST_ROOM_VOLUME / 42) * 60 = (60 / 42) * 60 = 85.7 minutes
         expected = (self.TEST_ROOM_VOLUME / 42) * 60
         assert self.sensor.native_value == round(expected, 1)
@@ -266,7 +266,7 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         """Test sensor behavior under extreme conditions."""
         # Test with very high fan speed (edge case) - uses 42 m³/h
         # Use 16 parts for valid VMGO data
-        self.coordinator.data = {"status": "VMGO,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0"}
+        self.coordinator.data = {"status": "VMGO,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0"}
         # Expected: (self.TEST_ROOM_VOLUME / 42) * 60 = (60 / 42) * 60 = 85.7 minutes
         expected = (self.TEST_ROOM_VOLUME / 42) * 60
         assert self.sensor.native_value == round(expected, 1)

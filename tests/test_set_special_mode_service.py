@@ -93,12 +93,12 @@ class TestSetSpecialModeService:
             await handler(call)
 
             # Verify tcp_send_command was called with correct parameters
-            mock_tcp.assert_called_once_with("192.168.1.100", DEFAULT_PORT, "VMWH0000006")
+            mock_tcp.assert_called_once_with("192.168.1.100", DEFAULT_PORT, "VMWH0000005")
 
     async def test_special_mode_mappings(self):
         """Test that the mode mappings are correct."""
         # This verifies our understanding of the mappings used in the service
-        expected_mappings = {"night_mode": 5, "hyperventilation": 6, "free_cooling": 7}
+        expected_mappings = {"night_mode": 6, "hyperventilation": 5, "free_cooling": 7}
 
         # The actual mapping is tested through integration test above
         assert len(expected_mappings) == 3
