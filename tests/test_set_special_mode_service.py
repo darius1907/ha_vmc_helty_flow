@@ -84,8 +84,8 @@ class TestSetSpecialModeService:
         # Call the handler directly
         await handler(call)
 
-        # Verify coordinator.send_command was called with correct command
-        mock_coordinator.send_command.assert_called_once_with("VMWH0000006")
+        # Verify coordinator.tcp_send_command was called with correct command
+        mock_coordinator.tcp_send_command.assert_called_once_with("VMWH0000006")
 
     async def test_special_mode_mappings(self):
         """Test that the mode mappings are correct."""

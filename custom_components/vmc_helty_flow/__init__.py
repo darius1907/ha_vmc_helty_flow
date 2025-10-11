@@ -21,6 +21,7 @@ from .coordinator import VmcHeltyCoordinator
 from .device_action import async_setup_device_actions
 from .device_registry import async_get_or_create_device, async_remove_orphaned_devices
 from .helpers import (
+    tcp_send_command,
     validate_network_connectivity,
 )
 
@@ -171,9 +172,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         speed = mode_mapping[mode]
 
         try:
-            # Usa il coordinatore per inviare il comando
+            # Use tcp_send_command directly
             command = f"VMWH{speed:07d}"
-            result = await coordinator.send_command(command)
+            result = await tcp_send_command(coordinator.ip, DEFAULT_PORT, command)
 
             _LOGGER.info(
                 "Set special mode %s (speed %d) for %s: %s",

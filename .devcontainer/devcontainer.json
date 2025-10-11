@@ -54,6 +54,13 @@
         },
         "pylint.args": ["--rcfile=.pylintrc"]
       }
+    },
+    "intellij": {
+      "settings": {
+        "python.interpreter": "/home/vscode/.local/ha-venv/bin/python",
+        "project.source.roots": ["/workspaces/vmc_helty_flow", "/usr/src/homeassistant"],
+        "test.framework": "pytest"
+      }
     }
   },
   "remoteEnv": {

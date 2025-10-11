@@ -288,7 +288,7 @@ async def test_discovery_flow(hass, mock_discovery):
 ### Development Workflows
 
 #### Dev Container Setup
-- **Environment**: Python 3.14 with UV package manager
+- **Environment**: Python 3.13 with UV package manager
 - **Home Assistant**: Development version for testing
 - **Network**: Host networking for VMC device communication
 - **Tools**: pylint, mypy, pytest, black, ruff, pre-commit

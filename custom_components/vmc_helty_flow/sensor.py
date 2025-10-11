@@ -489,7 +489,7 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
                 return None
 
             parts = sensors_data.split(",")
-            if len(parts) < 4:  # Serve almeno temp_int, temp_ext, humidity, co2
+            if len(parts) < MIN_RESPONSE_PARTS:  # Serve almeno temp_int, temp_ext, humidity, co2
                 return None
 
             # Estrai temperatura interna (pos 1) e umidità (pos 3)
@@ -536,7 +536,7 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
 
         try:
             parts = sensors_data.split(",")
-            if len(parts) < 4:
+            if len(parts) < MIN_RESPONSE_PARTS:
                 return None
 
             temp_internal = float(parts[1]) / 10  # Decimi di °C
@@ -1093,7 +1093,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             return "Buone prestazioni, ricambio efficace"
         if exchange_time <= AIR_EXCHANGE_TIME_ACCEPTABLE:
             return "Prestazioni accettabili, considerare aumento velocità"
-        if fan_speed < 4:
+        if fan_speed < FAN_SPEED_MAX_NORMAL:
             return f"Ricambio lento, aumentare velocità da {fan_speed} per migliorare"
         return "Ricambio lento anche a velocità massima, verificare impianto"
 

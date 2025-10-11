@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Test VMC Helty Flow" type="tests" factoryName="py.test">
+    <module name="vmc_helty_flow" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONPATH" value="/workspaces/vmc_helty_flow:/usr/src/homeassistant" />
+    </envs>
+    <option name="SDK_HOME" value="/home/vscode/.local/ha-venv/bin/python" />
+    <option name="WORKING_DIRECTORY" value="/usr/src/homeassistant" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="testType" value="TEST_SCRIPT" />
+    <option name="scriptName" value="./tests/components/vmc_helty_flow" />
+    <option name="className" value="" />
+    <option name="methodName" value="" />
+    <option name="folderName" value="" />
+    <option name="keywords" value="" />
+    <option name="params" value="--cov=homeassistant.components.vmc_helty_flow --cov-report term-missing" />
+    <option name="runner" value="/home/vscode/.local/ha-venv/bin/python" />
+  </configuration>
+</component>

@@ -1,9 +1,9 @@
 # Minimal test requirements for debugging
 
-pytest==8.4.2
-pytest-asyncio==1.2.0
-pytest-cov==6.0.0
-coverage==7.10.6
+pytest==8.4.1
+pytest-asyncio==1.1.0
+pytest-cov==6.2.1
+coverage==7.10.0
 pylint==3.3.8
 black==24.8.0
 mypy==1.11.2
