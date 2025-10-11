@@ -2,34 +2,26 @@
 
 
 import logging
-import re
-import time
 from datetime import timedelta
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.device_registry import DeviceEntry
-from .coordinator import VmcHeltyCoordinator
 from homeassistant.helpers import entity_registry
 
 from .const import (
     DEFAULT_PORT,
-    DEFAULT_ROOM_VOLUME,
     DOMAIN,
     NETWORK_INFO_UPDATE_INTERVAL,
     SENSORS_UPDATE_INTERVAL,
 )
+from .coordinator import VmcHeltyCoordinator
 from .device_action import async_setup_device_actions
 from .device_registry import async_get_or_create_device, async_remove_orphaned_devices
 from .helpers import (
-    VMCConnectionError,
-    VMCTimeoutError,
-    tcp_send_command,
     validate_network_connectivity,
 )
 
