@@ -1,0 +1,62 @@
+{
+  "card": {
+    "title": "VMC Helty Flow Control",
+    "loading": "Loading...",
+    "unavailable": "Unavailable"
+  },
+  "modes": {
+    "hyperventilation": "Hyperventilation",
+    "night_mode": "Night Mode",
+    "free_cooling": "Free Cooling"
+  },
+  "fan_speeds": {
+    "off": "Off",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "max": "Maximum"
+  },
+  "controls": {
+    "panel_led": {
+      "title": "Panel LED",
+      "description": "Front panel LED control"
+    },
+    "sensors": {
+      "title": "Sensors",
+      "description": "Environmental sensors activation"
+    },
+    "fan_speed": {
+      "description": "Set ventilation speed"
+    },
+    "lights": {
+      "title": "Lights",
+      "description": "Light control",
+      "brightness": "Brightness",
+      "timer": "Timer"
+    }
+  },
+  "sensors": {
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "air_quality": "Air Quality",
+    "filter_hours": "Filter Hours",
+    "airflow": "Airflow",
+    "comfort_index": "Comfort Index",
+    "air_exchange_time": "Air Exchange Time",
+    "daily_air_changes": "Daily Air Changes"
+  },
+  "units": {
+    "celsius": "°C",
+    "percent": "%",
+    "cubic_meters_hour": "M³/h",
+    "hours": "hours",
+    "minutes": "minutes",
+    "changes_per_day": "changes/day"
+  },
+  "states": {
+    "on": "On",
+    "off": "Off",
+    "auto": "Auto",
+    "manual": "Manual"
+  }
+}

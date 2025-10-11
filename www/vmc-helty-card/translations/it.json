@@ -1,0 +1,62 @@
+{
+  "card": {
+    "title": "Controllo VMC Helty Flow",
+    "loading": "Caricamento...",
+    "unavailable": "Non disponibile"
+  },
+  "modes": {
+    "hyperventilation": "Iperventilazione",
+    "night_mode": "Modalità Notte",
+    "free_cooling": "Raffreddamento Libero"
+  },
+  "fan_speeds": {
+    "off": "Spento",
+    "low": "Bassa",
+    "medium": "Media",
+    "high": "Alta",
+    "max": "Massima"
+  },
+  "controls": {
+    "panel_led": {
+      "title": "LED Pannello",
+      "description": "Controllo LED del pannello frontale"
+    },
+    "sensors": {
+      "title": "Sensori",
+      "description": "Attivazione sensori ambientali"
+    },
+    "fan_speed": {
+      "description": "Imposta la velocità di ventilazione"
+    },
+    "lights": {
+      "title": "Luci",
+      "description": "Controllo luci",
+      "brightness": "Luminosità",
+      "timer": "Timer"
+    }
+  },
+  "sensors": {
+    "temperature": "Temperatura",
+    "humidity": "Umidità",
+    "air_quality": "Qualità dell'Aria",
+    "filter_hours": "Ore Filtro",
+    "airflow": "Flusso d'Aria",
+    "comfort_index": "Indice di Comfort",
+    "air_exchange_time": "Tempo Ricambio Aria",
+    "daily_air_changes": "Ricambi Giornalieri"
+  },
+  "units": {
+    "celsius": "°C",
+    "percent": "%",
+    "cubic_meters_hour": "M³/h",
+    "hours": "ore",
+    "minutes": "minuti",
+    "changes_per_day": "ricambi/giorno"
+  },
+  "states": {
+    "on": "Acceso",
+    "off": "Spento",
+    "auto": "Automatico",
+    "manual": "Manuale"
+  }
+}

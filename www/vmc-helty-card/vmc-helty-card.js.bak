@@ -60,21 +60,21 @@ class VmcHeltyCard extends LitElement {
     const specialModes = [
       {
         key: 'hyperventilation',
-        label: this._t('modes.hyperventilation'),
+        label: 'Iperventilazione',
         icon: 'mdi:fan-plus',
         attr: 'hyperventilation',
         speed: 6
       },
       {
         key: 'night_mode',
-        label: this._t('modes.night_mode'),
+        label: 'Modalità Notte',
         icon: 'mdi:weather-night',
         attr: 'night_mode',
         speed: 5
       },
       {
         key: 'free_cooling',
-        label: this._t('modes.free_cooling'),
+        label: 'Free Cooling',
         icon: 'mdi:snowflake',
         attr: 'free_cooling',
         speed: 7
@@ -122,10 +122,10 @@ class VmcHeltyCard extends LitElement {
         <span slot="heading">
           <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:led-outline"></ha-icon>
-            ${this._t("controls.panel_led.title")}
+            LED Pannello
           </ha-heading-badge>
         </span>
-        <span slot="description">${this._t("controls.panel_led.description")}</span>
+        <span slot="description">Controllo LED del pannello frontale</span>
         <ha-entity-toggle
           .hass=${this.hass}
           .stateObj=${panelLedState}
@@ -136,10 +136,10 @@ class VmcHeltyCard extends LitElement {
         <span slot="heading">
           <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:hub-outline"></ha-icon>
-            ${this._t("controls.sensors.title")}
+            Sensori
           </ha-heading-badge>
         </span>
-        <span slot="description">${this._t("controls.sensors.description")}</span>
+        <span slot="description">Attivazione sensori ambientali</span>
         <ha-entity-toggle
           .hass=${this.hass}
           .stateObj=${sensorsState}
@@ -178,8 +178,6 @@ class VmcHeltyCard extends LitElement {
       _loading: { type: Boolean, state: true },
       _error: { type: String, state: true },
       _entityStates: { type: Object, state: true },
-      _translations: { type: Object, state: true },
-      _language: { type: String, state: true }
     };
   }
 
@@ -191,8 +189,6 @@ class VmcHeltyCard extends LitElement {
     this._error = null;
     this._entityStates = {};
     this._entityIds = [];
-    this._translations = {};
-    this._language = "en";
   }
 
   /**
@@ -201,88 +197,6 @@ class VmcHeltyCard extends LitElement {
    * @param {string} service - Nome del servizio (es: 'turn_on', 'set_percentage')
    * @param {object} data - Dati da inviare al servizio
    * @returns {Promise<void>}
-
-  // Translation methods
-  async connectedCallback() {
-    super.connectedCallback();
-    if (this.hass) {
-      await this._loadTranslations();
-    }
-  }
-
-  async _loadTranslations() {
-    try {
-      this._language = this.hass?.language || "en";
-
-      const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
-      const enTranslations = await enResponse.json();
-
-      let translations = enTranslations;
-      if (this._language !== "en") {
-        try {
-          const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
-          if (response.ok) {
-            const langTranslations = await response.json();
-            translations = { ...enTranslations, ...langTranslations };
-          }
-        } catch (e) {
-          console.warn(`Translations for ${this._language} not found, using English`);
-        }
-      }
-
-      this._translations = translations;
-      this.requestUpdate();
-    } catch (error) {
-      console.error("Failed to load translations:", error);
-      this._translations = this._getDefaultTranslations();
-    }
-  }
-
-  _getDefaultTranslations() {
-    return {
-      modes: {
-        hyperventilation: "Hyperventilation",
-        night_mode: "Night Mode",
-        free_cooling: "Free Cooling"
-      },
-      fan_speeds: {
-        off: "Off",
-        low: "Low",
-        medium: "Medium",
-        high: "High",
-        max: "Maximum"
-      },
-      controls: {
-        panel_led: {
-          title: "Panel LED",
-          description: "Front panel LED control"
-        },
-        sensors: {
-          title: "Sensors",
-          description: "Environmental sensors activation"
-        },
-        fan_speed: {
-          description: "Set ventilation speed"
-        }
-      }
-    };
-  }
-
-  _t(key) {
-    const keys = key.split(".");
-    let translation = this._translations;
-
-    for (const k of keys) {
-      if (translation && typeof translation === "object" && k in translation) {
-        translation = translation[k];
-      } else {
-        return key;
-      }
-    }
-
-    return translation || key;
-  }
-
    */
   async callService(domain, service, data) {
     if (!this.hass) throw new Error('Hass object non disponibile');
@@ -798,11 +712,11 @@ class VmcHeltyCard extends LitElement {
 
     // Step di velocità
     const speedSteps = [
-      { value: 0, pct: 0, icon: "mdi:fan-off", label: this._t("fan_speeds.off") },
-      { value: 1, pct: 25, icon: "mdi:fan-speed-1", label: this._t("fan_speeds.low") },
-      { value: 2, pct: 50, icon: "mdi:fan-speed-2", label: this._t("fan_speeds.medium") },
-      { value: 3, pct: 75, icon: "mdi:fan-speed-3", label: this._t("fan_speeds.high") },
-      { value: 4, pct: 100, icon: "mdi:fan", label: this._t("fan_speeds.max") },
+      { value: 0, pct: 0, icon: "mdi:fan-off", label: "Spento" },
+      { value: 1, pct: 25, icon: "mdi:fan-speed-1", label: "Bassa" },
+      { value: 2, pct: 50, icon: "mdi:fan-speed-2", label: "Media" },
+      { value: 3, pct: 75, icon: "mdi:fan-speed-3", label: "Alta" },
+      { value: 4, pct: 100, icon: "mdi:fan", label: "Massima" },
     ];
     const currentPercentage = parseFloat(vmcState.attributes.percentage || 0);
     const currentStep = speedSteps.reduce((prev, curr) =>
@@ -819,7 +733,7 @@ class VmcHeltyCard extends LitElement {
             Velocità Ventilazione
           </ha-heading-badge>
         </span>
-        <span slot="description">${this._t("controls.fan_speed.description")}</span>
+        <span slot="description">Imposta la velocità di ventilazione</span>
       </ha-settings-row>
       <ha-settings-row>
         <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
@@ -910,9 +824,6 @@ class VmcHeltyCard extends LitElement {
 
   setConfig(config) {
     this.config = config;
-    if (this.hass) {
-      this._loadTranslations();
-    }
     this.requestUpdate();
   }
 }

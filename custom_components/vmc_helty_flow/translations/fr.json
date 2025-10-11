@@ -1,0 +1,324 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuration VMC Helty Flow",
+        "description": "Configurez vos appareils VMC Helty",
+        "data": {
+          "subnet": "Sous-réseau (format CIDR, ex. 192.168.1.0/24)",
+          "port": "Port TCP",
+          "timeout": "Délai d'attente (secondes)",
+          "scan_mode": "Mode de balayage",
+          "confirm": "Confirmer nouveau balayage"
+        },
+        "data_description": {
+          "subnet": "Entrez le sous-réseau de votre réseau au format CIDR pour rechercher les appareils VMC",
+          "port": "Port TCP utilisé par les appareils VMC Helty (défaut : 5001)",
+          "timeout": "Délai d'attente pour les connexions TCP en secondes (1-60)",
+          "scan_mode": "Choisissez le mode de balayage des appareils",
+          "confirm": "Certains appareils sont déjà configurés. Voulez-vous lancer un nouveau balayage ?"
+        }
+      },
+      "discovery": {
+        "title": "Sélection d'Appareils VMC",
+        "description": "Sélectionnez les appareils VMC à configurer",
+        "data": {
+          "selected_devices": "Appareils à configurer",
+          "interrupt_scan": "Interrompre le balayage"
+        },
+        "data_description": {
+          "selected_devices": "Sélectionnez un ou plusieurs appareils VMC de la liste pour les ajouter à Home Assistant",
+          "interrupt_scan": "Cochez pour interrompre le balayage en cours"
+        }
+      },
+      "progress": {
+        "title": "Balayage d'Appareils VMC",
+        "description": "Recherche d'appareils VMC en cours...",
+        "data": {
+          "interrupt_scan": "Interrompre le balayage"
+        },
+        "data_description": {
+          "interrupt_scan": "Cochez pour interrompre le balayage en cours"
+        }
+      },
+      "discovery_results": {
+        "title": "Résultats du Balayage",
+        "description": "Le balayage a été terminé"
+      },
+      "scanning": {
+        "title": "Balayage en Cours",
+        "description": "Recherche d'appareils VMC sur le sous-réseau {subnet}.0/24 port {port}.\n\nTemps estimé : {estimated_time}\n\nAppuyez sur 'Envoyer' pour continuer ou attendez la fin automatique.",
+        "data": {
+          "proceed": "Continuer le balayage"
+        },
+        "data_description": {
+          "proceed": "Continuer le processus de découverte d'appareils"
+        }
+      },
+      "room_config": {
+        "title": "Configuration du Volume de la Pièce",
+        "description": "Configurez le volume de la pièce pour des calculs précis de renouvellement d'air",
+        "data": {
+          "input_method": "Méthode de saisie du volume",
+          "room_volume": "Volume de la pièce (m³)",
+          "length": "Longueur de la pièce (m)",
+          "width": "Largeur de la pièce (m)",
+          "height": "Hauteur de la pièce (m)"
+        },
+        "data_description": {
+          "input_method": "Choisissez comment saisir le volume : saisie manuelle ou calcul automatique à partir des dimensions",
+          "room_volume": "Entrez le volume total de la pièce en mètres cubes",
+          "length": "Longueur de la pièce en mètres (ex. 4.0)",
+          "width": "Largeur de la pièce en mètres (ex. 4.0)",
+          "height": "Hauteur de la pièce en mètres (ex. 2.7)"
+        }
+      },
+      "device_found": {
+        "title": "Appareil Trouvé",
+        "description": "Appareil VMC trouvé : {device_name} ({device_ip})\nModèle : {device_model}\n\nBalayage : {progress}\nAppareils trouvés jusqu'à présent : {found_count}\n\nQue voulez-vous faire ?",
+        "data": {
+          "action": "Action à effectuer"
+        },
+        "data_description": {
+          "action": "Choisissez l'action à effectuer pour cet appareil"
+        }
+      }
+    },
+    "error": {
+      "subnet_non_valida": "Format de sous-réseau invalide. Utilisez le format CIDR (ex. 192.168.1.0/24)",
+      "porta_non_valida": "Le port doit être compris entre 1 et 65535",
+      "timeout_non_valido": "Le délai d'attente doit être compris entre 1 et 60 secondes",
+      "subnet_troppo_grande": "Le sous-réseau ne peut pas générer plus de 254 adresses IP",
+      "discovery_failed": "Erreur lors de la recherche d'appareils VMC",
+      "errore_discovery": "Erreur lors de la recherche d'appareils VMC",
+      "nessun_dispositivo_trovato": "Aucun appareil VMC trouvé dans le sous-réseau spécifié",
+      "scan_interrotta": "Balayage interrompu par l'utilisateur",
+      "no_devices_found": "Aucun appareil VMC trouvé dans le sous-réseau spécifié",
+      "scan_annullata": "Balayage annulé. Appareils existants conservés.",
+      "cannot_connect": "Impossible de se connecter à l'appareil VMC",
+      "invalid_response": "Réponse invalide de l'appareil VMC",
+      "timeout": "Délai d'attente dépassé lors de la communication avec l'appareil",
+      "unknown": "Erreur inconnue",
+      "retry_configuration": "Modifiez la configuration réseau et relancez le balayage"
+    },
+    "abort": {
+      "already_configured": "Cet appareil est déjà configuré",
+      "device_already_configured": "Cet appareil est déjà configuré",
+      "all_devices_already_configured": "Tous les appareils sélectionnés sont déjà configurés",
+      "no_devices": "Aucun appareil trouvé",
+      "devices_configured_successfully": "Appareils configurés avec succès : {device_count} appareil(s) VMC Helty"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options VMC Helty Flow",
+        "description": "Configurez les options avancées de l'intégration",
+        "data": {
+          "scan_interval": "Intervalle de mise à jour (secondes)",
+          "timeout": "Délai d'attente des connexions (secondes)",
+          "retry_attempts": "Tentatives de reconnexion",
+          "room_volume": "Volume de la pièce (m³)"
+        },
+        "data_description": {
+          "scan_interval": "Fréquence de mise à jour des données depuis l'appareil VMC (30-600 secondes)",
+          "timeout": "Délai d'attente pour les connexions TCP à l'appareil (5-60 secondes)",
+          "retry_attempts": "Nombre de tentatives en cas d'erreur de communication (1-10)",
+          "room_volume": "Volume de la pièce en mètres cubes pour des calculs précis de renouvellement d'air (1-1000 m³)"
+        }
+      }
+    }
+  },
+  "selector": {
+    "scan_mode": {
+      "options": {
+        "full": "Balayage complet",
+        "incremental": "Balayage incrémental"
+      }
+    },
+    "input_method": {
+      "options": {
+        "manual": "Saisie manuelle",
+        "calculate": "Calcul automatique"
+      }
+    },
+    "action": {
+      "options": {
+        "add_and_configure": "Ajouter et configurer le volume",
+        "add_and_stop": "Ajouter et arrêter (configurer le volume)",
+        "skip_continue": "Ignorer et continuer",
+        "stop_scan": "Arrêter le balayage"
+      }
+    }
+  },
+  "entity": {
+    "fan": {
+      "vmc_helty_flow": {
+        "state_attributes": {
+          "night_mode": {
+            "name": "Mode Nuit"
+          },
+          "hyperventilation": {
+            "name": "Hyperventilation"
+          },
+          "free_cooling": {
+            "name": "Refroidissement Libre"
+          },
+          "manual_speed": {
+            "name": "Vitesse Manuelle"
+          },
+          "panel_led": {
+            "name": "LED Panneau"
+          },
+          "sensors_active": {
+            "name": "Capteurs Actifs"
+          }
+        }
+      }
+    },
+    "sensor": {
+      "vmc_helty_flow": {
+        "temperature_internal": {
+          "name": "Température Interne"
+        },
+        "temperature_external": {
+          "name": "Température Externe"
+        },
+        "humidity": {
+          "name": "Humidité"
+        },
+        "co2": {
+          "name": "CO2"
+        },
+        "voc": {
+          "name": "COV"
+        },
+        "filter_hours": {
+          "name": "Heures Filtre"
+        },
+        "ip_address": {
+          "name": "Adresse IP"
+        },
+        "network_ssid": {
+          "name": "SSID Réseau"
+        },
+        "network_password": {
+          "name": "Mot de Passe Réseau"
+        },
+        "last_response": {
+          "name": "Dernière Réponse"
+        }
+      }
+    },
+    "binary_sensor": {
+      "vmc_helty_flow": {
+        "online": {
+          "name": "En Ligne"
+        }
+      }
+    },
+    "switch": {
+      "vmc_helty_flow": {
+        "hyperventilation": {
+          "name": "Hyperventilation"
+        },
+        "night": {
+          "name": "Mode Nuit"
+        },
+        "free_cooling": {
+          "name": "Refroidissement Libre"
+        },
+        "panel_led": {
+          "name": "LED Panneau"
+        },
+        "sensors": {
+          "name": "Capteurs"
+        }
+      }
+    },
+    "light": {
+      "vmc_helty_flow": {
+        "light": {
+          "name": "Éclairage"
+        },
+        "light_timer": {
+          "name": "Minuterie Éclairage"
+        }
+      }
+    },
+    "button": {
+      "vmc_helty_flow": {
+        "reset_filter": {
+          "name": "Réinitialiser Filtre"
+        }
+      }
+    },
+    "text": {
+      "vmc_helty_flow": {
+        "device_name": {
+          "name": "Nom de l'Appareil"
+        },
+        "wifi_ssid": {
+          "name": "SSID WiFi"
+        },
+        "wifi_password": {
+          "name": "Mot de Passe WiFi"
+        }
+      }
+    }
+  },
+  "services": {
+    "update_room_volume": {
+      "name": "Mettre à Jour le Volume de la Pièce",
+      "description": "Met à jour le volume de la pièce pour les calculs de renouvellement d'air",
+      "fields": {
+        "entity_id": {
+          "name": "ID d'Entité",
+          "description": "L'ID de n'importe quelle entité VMC Helty dans la pièce"
+        },
+        "room_volume": {
+          "name": "Volume de la Pièce",
+          "description": "Le nouveau volume de la pièce en mètres cubes"
+        }
+      }
+    },
+    "set_fan_speed": {
+      "name": "Régler la Vitesse du Ventilateur",
+      "description": "Règle la vitesse du ventilateur VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entité",
+          "description": "Ventilateur VMC à contrôler"
+        },
+        "speed": {
+          "name": "Vitesse",
+          "description": "Vitesse du ventilateur (0-4)"
+        }
+      }
+    },
+    "set_mode": {
+      "name": "Régler le Mode",
+      "description": "Règle un mode spécial du VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entité",
+          "description": "Appareil VMC à contrôler"
+        },
+        "mode": {
+          "name": "Mode",
+          "description": "Mode à activer"
+        }
+      }
+    },
+    "reset_filter": {
+      "name": "Réinitialiser le Filtre",
+      "description": "Remet à zéro le compteur de filtre du VMC",
+      "fields": {
+        "entity_id": {
+          "name": "Entité",
+          "description": "Appareil VMC à contrôler"
+        }
+      }
+    }
+  }
+}
