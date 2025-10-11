@@ -154,10 +154,10 @@ class VmcHeltyCard extends LitElement {
     if (!this.hass || !this.config.entity) return;
     try {
       this._loading = true;
-      await this.hass.callService("fan", "set_percentage", {
+      await this.hass.callService("vmc_helty_flow", "set_special_mode", {
         entity_id: this.config.entity,
         // La fan speed speciale va da 5 a 7, la percentuale non è usata realmente ma Home Assistant la mappa
-        percentage: mode.speed * 25,
+        mode: mode.key,
       });
       fireEvent(this, "hass-notification", {
         message: `Modalità impostata: ${mode.label}`,
@@ -449,7 +449,6 @@ class VmcHeltyCard extends LitElement {
 
     try {
       this._loading = true;
-      try {
         await this.hass.callService("fan", "set_percentage", {
           entity_id: this.config.entity,
           percentage: speed * 25,

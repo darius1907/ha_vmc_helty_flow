@@ -84,3 +84,30 @@ device_action:
       example: '{"speed": 3}'
       selector:
         object:
+set_special_mode:
+  name: "Set special mode"
+  description: "Set special operating mode for VMC device (hyperventilation, night mode, or free cooling)"
+  fields:
+    entity_id:
+      name: "Entity ID"
+      description: "The entity ID of the VMC fan to control"
+      required: true
+      example: "fan.vmc_helty_192_168_1_100"
+      selector:
+        entity:
+          domain: fan
+          integration: vmc_helty_flow
+    mode:
+      name: "Special mode"
+      description: "Special operating mode to activate"
+      required: true
+      example: "hyperventilation"
+      selector:
+        select:
+          options:
+            - value: "hyperventilation"
+              label: "Hyperventilation (150% - Speed 6)"
+            - value: "night_mode"
+              label: "Night mode (125% - Speed 5)"
+            - value: "free_cooling"
+              label: "Free cooling (175% - Speed 7)"
