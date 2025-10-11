@@ -88,30 +88,36 @@ class VmcHeltyCard extends LitElement {
     const sensorsState = this._getEntityState(sensorsEntity);
 
     return html`
-      <ha-heading-badge type="text">
-        <ha-icon slot="icon" icon="mdi:cog-clockwise" ></ha-icon>
-        Modalità Speciali
-      </ha-heading-badge>
-      <ha-chip-set>
-        ${specialModes.map(mode => {
-          const isOn = !!attrs[mode.attr];
-          return html`
-            <ha-chip
-              .selected=${isOn}
-              @click=${() => this._setSpecialMode(mode)}
-              aria-label="${mode.label}"
-              ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
-            >
-              <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
-              ${mode.label}
-            </ha-chip>
-          `;
-        })}
-      </ha-chip-set>
-      <ha-heading-badge type="text">
-        <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
-        Controlli Dispositivo
-      </ha-heading-badge>
+
+      <div class="card-header">
+        <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:cog-clockwise"></ha-icon>
+          Modalità Speciali
+        </ha-heading-badge>
+      </div>
+      <ha-settings-row>
+        <ha-chip-set>
+          ${specialModes.map(mode => {
+            const isOn = !!attrs[mode.attr];
+            return html`
+              <ha-assist-chip
+                .selected=${isOn}
+                @click=${() => this._setSpecialMode(mode)}
+                label="${mode.label}"
+                ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+              >
+                <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
+              </ha-assist-chip>
+            `;
+          })}
+        </ha-chip-set>
+      </ha-settings-row>
+      <div class="card-header">
+        <ha-heading-badge type="text">
+          <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
+          Controlli Dispositivo
+        </ha-heading-badge>
+      </div>
       <ha-settings-row>
         <span slot="heading">
           <ha-heading-badge type="text">
@@ -148,10 +154,10 @@ class VmcHeltyCard extends LitElement {
     if (!this.hass || !this.config.entity) return;
     try {
       this._loading = true;
-      await this.hass.callService("fan", "set_percentage", {
+      await this.hass.callService("vmc_helty_flow", "set_special_mode", {
         entity_id: this.config.entity,
         // La fan speed speciale va da 5 a 7, la percentuale non è usata realmente ma Home Assistant la mappa
-        percentage: mode.speed * 25,
+        mode: mode.key,
       });
       fireEvent(this, "hass-notification", {
         message: `Modalità impostata: ${mode.label}`,
@@ -206,7 +212,7 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-        :host {
+:host {
           background: var(
             --ha-card-background,
             var(--card-background-color, white)
@@ -443,25 +449,21 @@ class VmcHeltyCard extends LitElement {
 
     try {
       this._loading = true;
-      try {
-        await this.hass.callService("fan", "set_percentage", {
-          entity_id: this.config.entity,
-          percentage: speed * 25,
-        });
-        fireEvent(this, "hass-notification", {
-          message: `Velocità impostata: ${speed * 25}%`,
-        });
-        // Evidenzia temporaneamente il chip attivo
-        this._lastSpeedSet = speed;
-        setTimeout(() => { this._lastSpeedSet = null; this.requestUpdate(); }, 800);
-        if ("vibrate" in navigator) navigator.vibrate(40);
-      } catch (e) {
-        fireEvent(this, "hass-notification", {
-          message: `Errore: ${e.message}`,
-        });
-      } finally {
-        this._loading = false;
-      }
+      await this.hass.callService("fan", "set_percentage", {
+        entity_id: this.config.entity,
+        percentage: speed * 25,
+      });
+      fireEvent(this, "hass-notification", {
+        message: `Velocità impostata: ${speed * 25}%`,
+      });
+      // Evidenzia temporaneamente il chip attivo
+      this._lastSpeedSet = speed;
+      setTimeout(() => { this._lastSpeedSet = null; this.requestUpdate(); }, 800);
+      if ("vibrate" in navigator) navigator.vibrate(40);
+    } catch (e) {
+      fireEvent(this, "hass-notification", {
+        message: `Errore: ${e.message}`,
+      });
     } finally {
       this._loading = false;
     }
@@ -671,12 +673,16 @@ class VmcHeltyCard extends LitElement {
     // Card solo per la gestione dei comandi (ventilazione, modalità, luci, timer)
     return html`
       <ha-card>
-        <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:air-filter"></ha-icon>
-          ${this.config.name}
-        </ha-heading-badge>
-        ${this._renderFanControls()}
-        ${this._renderModeControls()}
+        <div class="card-content">
+          <h1 class="card-header">
+            <ha-heading-badge type="text">
+              <ha-icon slot="icon" icon="mdi:air-filter"></ha-icon>
+              ${this.config.name}
+            </ha-heading-badge>
+          </h1>
+          ${this._renderFanControls()}
+          ${this._renderModeControls()}
+        </div>
       </ha-card>
     `;
   }
@@ -727,7 +733,7 @@ class VmcHeltyCard extends LitElement {
             Velocità Ventilazione
           </ha-heading-badge>
         </span>
-        <span slot="description">Imposta la velocità di ventilazione</span>      
+        <span slot="description">Imposta la velocità di ventilazione</span>
       </ha-settings-row>
       <ha-settings-row>
         <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>

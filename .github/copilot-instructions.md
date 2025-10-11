@@ -1,6 +1,361 @@
 # GitHub Copilot & Claude Code Instructions
 
-This repository contains the core of Home Assistant, a Python 3 based home automation application.
+This repository contains the VMC Helty Flow Home Assistant integration, a custom component for controlling Helty ventilation systems.
+
+## VMC Helty Flow Integration Architecture
+
+### Project Overview
+- **Purpose**: Home Assistant custom integration for Helty VMC (Ventilation Mécanique Contrôlée) systems
+- **Protocol**: TCP-based communication over local network (port 5001)
+- **Device Type**: Local polling integration for air ventilation control
+- **Quality Scale**: Silver level integration with comprehensive device management
+
+### Core Components
+
+#### Integration Structure
+```
+custom_components/vmc_helty_flow/
+├── __init__.py              # Entry point, services registration
+├── manifest.json            # Integration metadata (Silver quality scale)
+├── const.py                 # VMC-specific constants and mappings
+├── coordinator.py           # Data update coordinator with TCP communication
+├── config_flow.py          # Discovery and configuration UI
+├── helpers.py              # TCP protocol implementation
+├── helpers_net.py          # Network utilities and discovery
+├── discovery.py            # Device auto-discovery via network scanning
+├── device_registry.py      # Device management and cleanup
+├── device_info.py          # Device information and identification
+├── device_action.py        # Device actions (reset filters, etc.)
+├── diagnostics.py          # Integration diagnostics and troubleshooting
+├── fan.py                  # Fan platform (main VMC control)
+├── sensor.py               # Sensors (temperature, humidity, airflow, etc.)
+├── light.py                # Light platform (VMC indicator lights)
+├── switch.py               # Switches (panel LED, sensors on/off)
+├── button.py               # Buttons (filter reset)
+├── strings.json            # UI text and translations
+└── services.yaml           # Service definitions
+```
+
+#### VMC Helty Protocol Implementation
+- **Communication**: Raw TCP sockets with custom protocol
+- **Commands**: Format `VMWH{parameter:07d}` (e.g., `VMWH0000001` for speed 1)
+- **Response**: Multi-part status data separated by semicolons
+- **Connection**: Non-persistent connections (connect, send, receive, close)
+- **Port**: Default 5001, configurable during setup
+
+#### Key Protocol Constants
+```python
+# Fan speed mappings (VMC protocol specific)
+FAN_SPEED_NIGHT_MODE = 5        # Special mode for quiet operation
+FAN_SPEED_HYPERVENTILATION = 6  # High-speed ventilation
+FAN_SPEED_FREE_COOLING = 7      # Natural cooling mode
+FAN_SPEED_MAX_NORMAL = 4        # Maximum normal operation
+
+# Airflow mappings (M³/h based on Helty specifications)
+AIRFLOW_MAPPING = {
+    0: 0,   # Off
+    1: 10,  # Speed 1
+    2: 17,  # Speed 2
+    3: 26,  # Speed 3
+    4: 37,  # Speed 4
+    5: 7,   # Night Mode (quiet)
+    6: 42,  # Hyperventilation
+    7: 26,  # Free Cooling
+}
+
+# Response parsing indices
+PART_INDEX_FAN_SPEED = 1        # Fan speed in response
+PART_INDEX_PANEL_LED = 2        # LED state
+PART_INDEX_SENSORS = 4          # Sensor readings
+PART_INDEX_LIGHTS_LEVEL = 11    # Light intensity
+PART_INDEX_LIGHTS_TIMER = 15    # Light timer
+```
+
+### Development Patterns
+
+#### TCP Communication Pattern
+```python
+async def tcp_send_command(ip: str, port: int, command: str, timeout: int = None) -> str:
+    """Send TCP command to VMC device with proper error handling."""
+    # Ensure command ends with NLCR (\n\r)
+    if not command.endswith("\n\r"):
+        command = command.rstrip("\r\n") + "\n\r"
+
+    try:
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(ip, port), timeout=timeout
+        )
+        # Send command and receive response
+        # Handle VMCConnectionError, VMCTimeoutError, VMCResponseError
+    except Exception as err:
+        # Convert to VMC-specific exceptions
+        raise VMCConnectionError(f"Connection failed: {err}") from err
+```
+
+#### Coordinator Pattern
+```python
+class VmcHeltyCoordinator(DataUpdateCoordinator):
+    """Manages data updates with consecutive error tracking."""
+
+    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
+        super().__init__(
+            hass, _LOGGER, name=DOMAIN,
+            update_interval=timedelta(seconds=SENSORS_UPDATE_INTERVAL),
+            config_entry=config_entry,
+        )
+        self._consecutive_errors = 0
+        self._max_consecutive_errors = 5
+
+    async def _async_update_data(self):
+        """Fetch data from VMC with protocol-specific error handling."""
+        try:
+            # Send status command and parse response
+            data = await self.fetch_vmc_status()
+            self._consecutive_errors = 0
+            return data
+        except (VMCConnectionError, VMCTimeoutError) as err:
+            self._consecutive_errors += 1
+            if self._consecutive_errors >= self._max_consecutive_errors:
+                raise UpdateFailed(f"Device offline: {err}") from err
+            raise UpdateFailed(f"Communication error: {err}") from err
+```
+
+#### Device Discovery Pattern
+```python
+async def async_discover_devices(hass: HomeAssistant, subnet: str, port: int) -> list:
+    """Discover VMC devices via network scanning."""
+    # Scan subnet for responsive devices
+    # Test each IP with VMC-specific command
+    # Return list of discovered devices with metadata
+    for ip in generate_ip_range(subnet):
+        try:
+            if await check_helty_device(ip, port):
+                device_name = await get_device_name(ip, port)
+                devices.append({"ip": ip, "name": device_name})
+        except (VMCConnectionError, VMCTimeoutError):
+            continue  # Skip non-responsive IPs
+```
+
+#### Air Quality Calculations
+```python
+# Comfort index calculation based on temperature and humidity
+def calculate_comfort_index(temperature: float, humidity: float) -> dict:
+    """Calculate comfort index using ASHRAE standards."""
+    # Temperature factor (optimal 20-24°C)
+    temp_factor = calculate_temperature_factor(temperature)
+    # Humidity factor (optimal 40-60%)
+    humidity_factor = calculate_humidity_factor(humidity)
+    # Combined comfort index (0-100%)
+    comfort_index = (temp_factor + humidity_factor) / 2
+
+# Air exchange time calculation
+def calculate_air_exchange_time(airflow: float, room_volume: float) -> dict:
+    """Calculate time for complete air exchange."""
+    if airflow <= 0:
+        return {"time_minutes": None, "category": "Off"}
+
+    # Time = Volume / Airflow * 60 (convert to minutes)
+    exchange_time = (room_volume / airflow) * 60
+    return {
+        "time_minutes": round(exchange_time, 1),
+        "category": categorize_air_exchange_time(exchange_time)
+    }
+```
+
+### Service Integration
+```python
+# Custom services for VMC control
+SERVICE_UPDATE_ROOM_VOLUME = "update_room_volume"
+SERVICE_NETWORK_DIAGNOSTICS = "network_diagnostics"
+SERVICE_SET_SPECIAL_MODE = "set_special_mode"
+
+# Service schemas with VMC-specific validation
+update_room_volume_schema = vol.Schema({
+    vol.Required("entity_id"): cv.entity_id,
+    vol.Required("room_volume"): vol.All(
+        vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
+    ),
+})
+
+set_special_mode_schema = vol.Schema({
+    vol.Required("entity_id"): cv.entity_id,
+    vol.Required("mode"): vol.In([
+        "hyperventilation",  # Speed 6
+        "night_mode",        # Speed 5
+        "free_cooling"       # Speed 7
+    ]),
+})
+```
+
+### Entity Implementation Patterns
+
+#### VMC Fan Entity
+```python
+class VmcHeltyFan(CoordinatorEntity, FanEntity):
+    """Main VMC fan control with special modes."""
+
+    @property
+    def percentage(self) -> int | None:
+        """Return fan speed percentage (0-100%)."""
+        speed = self.coordinator.data.get("fan_speed", 0)
+        # Handle special modes (5, 6, 7) separately
+        if speed in [5, 6, 7]:
+            return FANSPEED_MAPPING.get(speed, 0) * 25
+        return speed * 25 if speed <= 4 else 0
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set fan speed percentage with VMC protocol."""
+        speed = percentage // 25  # Convert to 0-4 scale
+        command = f"VMWH{speed:07d}"
+        await self.coordinator.send_command(command)
+```
+
+#### Sensor Implementation
+```python
+class VmcHeltyComfortIndexSensor(VmcHeltySensorBase):
+    """Comfort index sensor with air quality calculations."""
+
+    @property
+    def native_value(self) -> float | None:
+        """Return calculated comfort index."""
+        temp = self.coordinator.data.get("temperature")
+        humidity = self.coordinator.data.get("humidity")
+        if temp is None or humidity is None:
+            return None
+
+        comfort_data = calculate_comfort_index(temp, humidity)
+        return comfort_data.get("index")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return detailed comfort analysis."""
+        temp = self.coordinator.data.get("temperature")
+        humidity = self.coordinator.data.get("humidity")
+        if temp is None or humidity is None:
+            return None
+
+        return {
+            "comfort_level": self._get_comfort_level(),
+            "temperature_factor": self._get_temperature_factor(),
+            "humidity_factor": self._get_humidity_factor(),
+            "recommendations": self._get_recommendations(),
+        }
+```
+
+### Testing Patterns
+
+#### Integration Testing Setup
+```python
+@pytest.fixture
+def mock_vmc_device():
+    """Mock VMC device responses for testing."""
+    return {
+        "status_response": "1;2;1;0;1;22.5;65;0;0;0;0;50;0;0;0;300;",
+        "device_name": "VMC Helty Test",
+        "network_info": {"ssid": "TestSSID", "password": "TestPass"},
+    }
+
+@pytest.fixture
+async def init_integration(hass, mock_config_entry, mock_vmc_device):
+    """Set up integration for testing."""
+    with patch("custom_components.vmc_helty_flow.helpers.tcp_send_command") as mock_tcp:
+        mock_tcp.return_value = mock_vmc_device["status_response"]
+        mock_config_entry.add_to_hass(hass)
+        await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await hass.async_block_till_done()
+        return mock_config_entry
+```
+
+#### Config Flow Testing
+```python
+async def test_discovery_flow(hass, mock_discovery):
+    """Test device discovery flow."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    # Test subnet validation, device discovery, and configuration
+    assert result["type"] == "form"
+    assert result["step_id"] == "user"
+
+    # Submit discovery parameters
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={"subnet": "192.168.1.0/24", "port": 5001, "timeout": 10}
+    )
+    # Verify scanning process and device selection
+```
+
+### Development Workflows
+
+#### Dev Container Setup
+- **Environment**: Python 3.13 with UV package manager
+- **Home Assistant**: Development version for testing
+- **Network**: Host networking for VMC device communication
+- **Tools**: pylint, mypy, pytest, black, ruff, pre-commit
+
+#### Testing Commands
+```bash
+# Integration-specific tests
+pytest tests/ --cov=custom_components.vmc_helty_flow --cov-report=html
+
+# VMC protocol testing
+pytest tests/test_helpers.py -v -k "tcp_send_command"
+
+# Discovery testing with network mocking
+pytest tests/test_discovery.py -v -k "async_discover_devices"
+
+# Config flow testing
+pytest tests/test_config_flow.py -v -k "discovery"
+```
+
+#### Debugging VMC Communication
+```python
+# Enable debug logging for VMC communication
+logger:
+  default: info
+  logs:
+    custom_components.vmc_helty_flow: debug
+    custom_components.vmc_helty_flow.helpers: debug
+    custom_components.vmc_helty_flow.coordinator: debug
+
+# Log VMC responses for analysis
+_LOGGER.debug("VMC response: %s", raw_response)
+_LOGGER.debug("Parsed data: %s", parsed_data)
+```
+
+### VMC-Specific Error Handling
+```python
+class VMCConnectionError(HomeAssistantError):
+    """VMC device connection error."""
+
+class VMCTimeoutError(VMCConnectionError):
+    """VMC communication timeout."""
+
+class VMCResponseError(VMCConnectionError):
+    """Invalid VMC response format."""
+
+class VMCProtocolError(VMCConnectionError):
+    """VMC protocol violation."""
+
+# Error handling in coordinator
+try:
+    response = await tcp_send_command(self.ip, self.port, command)
+    return self.parse_vmc_response(response)
+except VMCTimeoutError as err:
+    self._consecutive_errors += 1
+    raise UpdateFailed(f"Device timeout: {err}") from err
+except VMCConnectionError as err:
+    raise UpdateFailed(f"Connection failed: {err}") from err
+```
+
+### Performance Considerations
+- **Update Intervals**: 180s for sensors, 900s for network info
+- **Connection Management**: No persistent connections, connect per command
+- **Error Recovery**: Track consecutive errors, mark unavailable after 5 failures
+- **Network Scanning**: Limit concurrent connections during discovery
+- **Memory Usage**: Use `__slots__` in entity classes for efficiency
+
+---
 
 ## Integration Quality Scale
 

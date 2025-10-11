@@ -69,9 +69,9 @@ class VmcHeltyAdvancedSensorsCardEditor extends LitElement {
           <label class="form-label">
             Room Volume
             ${this.config.entity ? html`
-              <ha-icon 
-                icon="mdi:sync" 
-                style="color: var(--success-color, #4caf50); margin-left: 8px; --mdc-icon-size: 16px;" 
+              <ha-icon
+                icon="mdi:sync"
+                style="color: var(--success-color, #4caf50); margin-left: 8px; --mdc-icon-size: 16px;"
                 title="Volume will be synced with device configuration"
               ></ha-icon>
             ` : ''}

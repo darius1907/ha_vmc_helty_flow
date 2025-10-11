@@ -3,12 +3,6 @@
 import unittest
 from unittest.mock import Mock
 
-from custom_components.vmc_helty_flow.const import (
-    DAILY_AIR_CHANGES_EXCELLENT,
-    DAILY_AIR_CHANGES_ADEQUATE,
-    DAILY_AIR_CHANGES_GOOD,
-    DAILY_AIR_CHANGES_POOR,
-)
 from custom_components.vmc_helty_flow.sensor import VmcHeltyDailyAirChangesSensor
 
 
@@ -55,79 +49,61 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
 
     def test_calculation_fan_speed_0(self):
         """Test calcolo con velocità ventola 0 (off)."""
-        self.coordinator.data = {
-            "status": "VMGO,0,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,0,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         assert self.sensor.native_value == 0.0
 
     def test_calculation_fan_speed_1(self):
         """Test calcolo con velocità ventola 1 (10 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,1,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,1,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 10 m³/h, Ricambi/ora: 10/60 = 0.167, Ricambi/giorno: 0.167*24 = 4.0
         expected = round((10 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_fan_speed_2(self):
         """Test calcolo con velocità ventola 2 (17 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 17 m³/h, Ricambi/ora: 17/60 = 0.283, Ricambi/giorno: 0.283*24 = 6.8
         expected = round((17 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_fan_speed_3(self):
         """Test calcolo con velocità ventola 3 (26 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,3,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,3,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 26 m³/h, Ricambi/ora: 26/60 = 0.433, Ricambi/giorno: 0.433*24 = 10.4
         expected = round((26 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_fan_speed_4(self):
         """Test calcolo con velocità ventola 4 (37 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,4,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,4,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 37 m³/h, Ricambi/ora: 37/60 = 0.617, Ricambi/giorno: 0.617*24 = 14.8
         expected = round((37 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_night_mode(self):
         """Test calcolo con modalità notturna (velocità 5 -> 7 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,5,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,5,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 7 m³/h, Ricambi/ora: 7/60 = 0.117, Ricambi/giorno: 0.117*24 = 2.8
         expected = round((7 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_hyperventilation(self):
         """Test calcolo con iperventilazione (velocità 6 -> 42 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,6,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,6,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 42 m³/h, Ricambi/ora: 42/60 = 0.7, Ricambi/giorno: 0.7*24 = 16.8
         expected = round((42 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_free_cooling(self):
         """Test calcolo con free cooling (velocità 7 -> 26 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,7,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,7,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 26 m³/h, Ricambi/ora: 26/60 = 0.433, Ricambi/giorno: 0.433*24 = 10.4
         expected = round((26 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 
     def test_calculation_invalid_fan_speed(self):
         """Test calcolo con velocità ventola non valida (fallback 10 m³/h)."""
-        self.coordinator.data = {
-            "status": "VMGO,999,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,999,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         # Portata: 10 m³/h (fallback), Ricambi/ora: 10/60 = 0.167, Ricambi/giorno: 0.167*24 = 4.0
         expected = round((10 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
@@ -148,9 +124,7 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
 
     def test_extra_state_attributes_complete(self):
         """Test extra_state_attributes with valid data."""
-        self.coordinator.data = {
-            "status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"
-        }
+        self.coordinator.data = {"status": "VMGO,2,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
         attrs = self.sensor.extra_state_attributes
 
         assert "air_changes_per_hour" in attrs

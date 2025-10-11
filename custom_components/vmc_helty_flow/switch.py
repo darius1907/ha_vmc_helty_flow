@@ -131,7 +131,7 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
         """Turn on panel LED."""
         _LOGGER.debug(
             "Panel LED Switch: Sending turn_on command VMWH0100010 to %s",
-            self.coordinator.ip
+            self.coordinator.ip,
         )
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100010")
         _LOGGER.debug("Panel LED Switch: Turn_on response: %s", response)
@@ -147,7 +147,7 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
         """Turn off panel LED."""
         _LOGGER.debug(
             "Panel LED Switch: Sending turn_off command VMWH0100000 to %s",
-            self.coordinator.ip
+            self.coordinator.ip,
         )
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0100000")
         _LOGGER.debug("Panel LED Switch: Turn_off response: %s", response)

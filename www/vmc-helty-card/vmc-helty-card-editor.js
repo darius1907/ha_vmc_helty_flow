@@ -44,120 +44,20 @@ class VmcHeltyCardEditor extends LitElement {
         display: block;
         padding: 16px;
         background: var(--card-background-color);
-        static get properties() {
-          return {
-            hass: { type: Object },
-            config: { type: Object },
-            _vmcEntities: { type: Array, state: true },
-          };
-        }
-      .config-section:last-child {
-        constructor() {
-          super();
-          this.config = {};
-          this.hass = null;
-          this._vmcEntities = [];
-        }
-        display: flex;
-        setConfig(config) {
-          this.config = { ...config };
-          this._discoverEntities();
-        }
-      .form-group {
-        willUpdate(changedProps) {
-          super.willUpdate(changedProps);
-          if (changedProps.has('hass') && this.hass) {
-            this._discoverEntities();
-          }
-        }
-        font-weight: 500;
-        _discoverEntities() {
-          if (!this.hass) return;
-          this._vmcEntities = Object.keys(this.hass.states)
-            .filter(entityId => entityId.startsWith('fan.vmc_helty_'))
-            .map(entityId => ({
-              value: entityId,
-              label: this.hass.states[entityId]?.attributes?.friendly_name || entityId
-            }));
-          if (this._vmcEntities.length === 0) {
-            this._vmcEntities = Object.keys(this.hass.states)
-              .filter(entityId => entityId.startsWith('fan.'))
-              .map(entityId => ({
-                value: entityId,
-                label: this.hass.states[entityId]?.attributes?.friendly_name || entityId
-              }));
-          }
-        }
-
-        _valueChanged(ev) {
-          const target = ev.target;
-          const key = target.configValue;
-          if (!key) return;
-          let value = target.value;
-          const newConfig = { ...this.config, [key]: value };
-          this.config = newConfig;
-          this._fireConfigChanged();
-        }
+        color: var(--primary-text-color);
       }
-        _fireConfigChanged() {
-          const event = new CustomEvent('config-changed', {
-            detail: { config: this.config },
-            bubbles: true,
-            composed: true,
-          });
-          this.dispatchEvent(event);
-        }
+      .config-section:last-child {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .form-group {
+        font-weight: 500;
         gap: 8px;
-        render() {
-          if (!this.hass) {
-            return html`
-              <div class="error-message">
-                <ha-icon icon="mdi:loading"></ha-icon>
-                <span>Loading Home Assistant data...</span>
-              </div>
-            `;
-          }
-          return html`
-            <div class="config-section">
-              <div class="section-title">
-                <ha-icon icon="mdi:air-conditioner"></ha-icon>
-                Device Selection
-              </div>
-              <div class="form-group">
-                <label class="form-label">VMC Device</label>
-                <div class="form-description">
-                  Select which VMC Helty Flow device this card should control
-                </div>
-                <ha-select
-                  .label=${"Choose VMC Device"}
-                  .value=${this.config.entity || ""}
-                  .configValue=${"entity"}
-                  @selected=${this._valueChanged}
-                  @closed=${(ev) => ev.stopPropagation()}
-                >
-                  ${this._vmcEntities.map(entity => html`
-                    <mwc-list-item .value=${entity.value}>
-                      ${entity.label}
-                    </mwc-list-item>
-                  `)}
-                </ha-select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Card Name</label>
-                <div class="form-description">
-                  Display name for this card (optional)
-                </div>
-                <ha-textfield
-                  .label=${"Card Name"}
-                  .value=${this.config.name || ""}
-                  .configValue=${"name"}
-                  @input=${this._valueChanged}
-                ></ha-textfield>
-              </div>
-            </div>
-          `;
-        }
         font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 16px;
       }
 
       .sensor-preview.available {
@@ -260,9 +160,9 @@ class VmcHeltyCardEditor extends LitElement {
     }
 
     // Try to get room volume from any sensor of the same device
-    const deviceEntities = Object.keys(this.hass.states).filter(entityId => 
-      entityId.includes('vmc_helty') && 
-      this.hass.states[entityId].attributes.device_id === 
+    const deviceEntities = Object.keys(this.hass.states).filter(entityId =>
+      entityId.includes('vmc_helty') &&
+      this.hass.states[entityId].attributes.device_id ===
       this.hass.states[this.config.entity]?.attributes.device_id
     );
 
@@ -281,7 +181,7 @@ class VmcHeltyCardEditor extends LitElement {
           return volumeStr;
         }
       }
-      
+
       // Also check for room_volume_m3 attribute
       if (entity.attributes && entity.attributes.room_volume_m3) {
         return parseFloat(entity.attributes.room_volume_m3);
@@ -356,7 +256,7 @@ class VmcHeltyCardEditor extends LitElement {
       console.error('Failed to sync room volume with device:', error);
       // Show error notification
       this._showNotification(
-        `Failed to update room volume: ${error.message || 'Unknown error'}`, 
+        `Failed to update room volume: ${error.message || 'Unknown error'}`,
         'error'
       );
     }
@@ -438,7 +338,7 @@ class VmcHeltyCardEditor extends LitElement {
     return html`
       <div class="config-section">
         <div class="section-title">
-          <ha-icon icon="mdi:air-conditioner"></ha-icon>
+          <ha-icon icon="mdi:air-filter"></ha-icon>
           Device Selection
         </div>
 

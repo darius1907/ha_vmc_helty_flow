@@ -2,9 +2,6 @@
   "name": "VMC Helty Flow Development",
   "dockerFile": "../Dockerfile.dev",
   "features": {},
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspaces/vmc_helty_flow,type=bind,consistency=cached"
-  ],
   "workspaceFolder": "/workspaces/vmc_helty_flow",
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "forwardPorts": [8123, 5683],
@@ -30,6 +27,7 @@
         "esbenp.prettier-vscode",
         "GitHub.vscode-pull-request-github",
         "GitHub.copilot",
+        "github.copilot-chat",
         "ms-python.pytest"
       ],
       "settings": {
@@ -55,6 +53,13 @@
           ]
         },
         "pylint.args": ["--rcfile=.pylintrc"]
+      }
+    },
+    "intellij": {
+      "settings": {
+        "python.interpreter": "/home/vscode/.local/ha-venv/bin/python",
+        "project.source.roots": ["/workspaces/vmc_helty_flow", "/usr/src/homeassistant"],
+        "test.framework": "pytest"
       }
     }
   },

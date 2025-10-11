@@ -75,6 +75,26 @@ recorder:
 history:
 EOF
 
+# Setup per IntelliJ IDEA
+IDEA_DIR="/workspaces/vmc_helty_flow/.idea"
+INTELLIJ_CONFIG_DIR="/workspaces/vmc_helty_flow/.devcontainer/intellij"
+
+# Crea la cartella .idea se non esiste
+mkdir -p "$IDEA_DIR"
+
+# Crea un file misc.xml minimale per l'interprete Python
+cat > "$IDEA_DIR/misc.xml" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectRootManager" version="2" project-jdk-name="Home Assistant Python" project-jdk-type="Python SDK" />
+</project>
+EOF
+
+# Copia configurazioni aggiuntive se presenti
+if [ -d "$INTELLIJ_CONFIG_DIR" ]; then
+    cp -r "$INTELLIJ_CONFIG_DIR"/* "$IDEA_DIR/"
+fi
+
 echo "✅ Ambiente di sviluppo configurato!"
 echo ""
 echo "🔍 Comandi utili:"

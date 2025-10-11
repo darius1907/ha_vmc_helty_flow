@@ -35,6 +35,7 @@ class TestConstants:
         assert timedelta(seconds=180) == DEFAULT_SCAN_INTERVAL
         assert isinstance(DEFAULT_SCAN_INTERVAL, timedelta)
 
+
 class TestAsyncSetupEntry:
     """Test per la funzione async_setup_entry."""
 

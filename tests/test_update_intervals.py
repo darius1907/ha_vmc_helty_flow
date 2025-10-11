@@ -59,7 +59,9 @@ class TestUpdateIntervals:
             "00112,04354,00140,00203,00249,00510,00000,00001"
         )
 
-        with patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command") as mock_tcp:
+        with patch(
+            "custom_components.vmc_helty_flow.coordinator.tcp_send_command"
+        ) as mock_tcp:
             mock_tcp.return_value = sensors_response
 
             result = await coordinator._get_additional_data()
@@ -86,7 +88,9 @@ class TestUpdateIntervals:
             "00112,04354,00140,00203,00249,00510,00000,00001"
         )
 
-        with patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command") as mock_tcp:
+        with patch(
+            "custom_components.vmc_helty_flow.coordinator.tcp_send_command"
+        ) as mock_tcp:
             mock_tcp.return_value = sensors_response
 
             with patch("time.time", return_value=current_time):
@@ -120,7 +124,9 @@ class TestUpdateIntervals:
             "new_network_data",
         ]
 
-        with patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command") as mock_tcp:
+        with patch(
+            "custom_components.vmc_helty_flow.coordinator.tcp_send_command"
+        ) as mock_tcp:
             mock_tcp.side_effect = responses
 
             with patch("time.time", return_value=current_time):
@@ -159,7 +165,9 @@ class TestUpdateIntervals:
             VMCConnectionError("Error getting network"),
         ]
 
-        with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
+        with patch(
+            "custom_components.vmc_helty_flow.helpers.tcp_send_command"
+        ) as mock_tcp:
             mock_tcp.side_effect = responses
 
             with patch("time.time", return_value=current_time):

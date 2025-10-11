@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RunManager">
+    <configuration name="Home Assistant" type="PythonConfigurationType" factoryName="Python">
+      <module name="vmc_helty_flow" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONPATH" value="/workspaces/vmc_helty_flow:/usr/src/homeassistant" />
+        <env name="HASSIO_TOKEN" value="dev_token" />
+        <env name="SUPERVISOR_TOKEN" value="dev_token" />
+      </envs>
+      <option name="SDK_HOME" value="/home/vscode/.local/ha-venv/bin/python" />
+      <option name="WORKING_DIRECTORY" value="/usr/src/homeassistant" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="/usr/src/homeassistant/homeassistant/__main__.py" />
+      <option name="PARAMETERS" value="--config /config" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
+  </component>
+</project>
