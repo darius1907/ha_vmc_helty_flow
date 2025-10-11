@@ -1,8 +1,9 @@
-
 # pylint: disable=protected-access
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 from homeassistant.core import HomeAssistant
+
 from custom_components.vmc_helty_flow.config_flow import (
     MAX_IPS_IN_SUBNET,
     MAX_PORT,
@@ -244,9 +245,7 @@ class TestVmcHeltyFlowConfigFlow:
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(
-                config_flow, "async_step_room_config"
-            ) as mock_room_config,
+            patch.object(config_flow, "async_step_room_config") as mock_room_config,
         ):
             mock_room_config.return_value = {
                 "type": "form",
@@ -280,25 +279,29 @@ class TestVmcHeltyFlowConfigFlow:
     async def test_async_step_room_config_success_manual_volume(self, config_flow):
         """Test successful room configuration step with manual volume input."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
-        user_input = {
-            "room_volume": "120"
-        }
+        user_input = {"room_volume": "120"}
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
-                "type": "create_entry",
-                "title": "Test1",
-                "data": {
-                    "ip": "192.168.1.100",
-                    "name": "Test1",
-                    "model": "VMC Flow",
-                    "manufacturer": "Helty",
-                    "port": 5001,
-                    "timeout": 10,
-                    "room_volume": 120.0,
-                },
-            })),
+            patch.object(
+                config_flow.hass.config_entries.flow,
+                "async_init",
+                AsyncMock(
+                    return_value={
+                        "type": "create_entry",
+                        "title": "Test1",
+                        "data": {
+                            "ip": "192.168.1.100",
+                            "name": "Test1",
+                            "model": "VMC Flow",
+                            "manufacturer": "Helty",
+                            "port": 5001,
+                            "timeout": 10,
+                            "room_volume": 120.0,
+                        },
+                    }
+                ),
+            ),
         ):
             result = await config_flow.async_step_room_config(user_input)
 
@@ -330,29 +333,31 @@ class TestVmcHeltyFlowConfigFlow:
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
         # Test volume vuoto - dovrebbe dare errore
-        result = await config_flow.async_step_room_config({
-            "room_volume": ""
-        })
+        result = await config_flow.async_step_room_config({"room_volume": ""})
         assert result["type"] == "form"
         assert "room_volume_required" in result["errors"]["room_volume"]
 
         # Test volume valido - dovrebbe creare entry
-        with patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
-            "type": "create_entry",
-            "title": "Test1",
-            "data": {
-                "ip": "192.168.1.100",
-                "name": "Test1",
-                "model": "VMC Flow",
-                "manufacturer": "Helty",
-                "port": 5001,
-                "timeout": 10,
-                "room_volume": 50.0,
-            },
-        })):
-            result = await config_flow.async_step_room_config({
-                "room_volume": "50.0"
-            })
+        with patch.object(
+            config_flow.hass.config_entries.flow,
+            "async_init",
+            AsyncMock(
+                return_value={
+                    "type": "create_entry",
+                    "title": "Test1",
+                    "data": {
+                        "ip": "192.168.1.100",
+                        "name": "Test1",
+                        "model": "VMC Flow",
+                        "manufacturer": "Helty",
+                        "port": 5001,
+                        "timeout": 10,
+                        "room_volume": 50.0,
+                    },
+                }
+            ),
+        ):
+            result = await config_flow.async_step_room_config({"room_volume": "50.0"})
             assert result["type"] == "abort"
             assert result["reason"] == "unknown"
 
@@ -374,24 +379,30 @@ class TestVmcHeltyFlowConfigFlow:
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
         # Test con room_volume vuoto
-        result = await config_flow.async_step_room_config({
-            "room_volume": "",  # Campo vuoto
-        })
+        result = await config_flow.async_step_room_config(
+            {
+                "room_volume": "",  # Campo vuoto
+            }
+        )
         assert result["type"] == "form"
         # Dovrebbe avere errore su room_volume
         assert "room_volume_required" in result["errors"]["room_volume"]
 
         # Test con room_volume None
-        result = await config_flow.async_step_room_config({
-            "room_volume": None,  # Campo None
-        })
+        result = await config_flow.async_step_room_config(
+            {
+                "room_volume": None,  # Campo None
+            }
+        )
         assert result["type"] == "form"
         assert "room_volume_required" in result["errors"]["room_volume"]
 
         # Test con room_volume invalido
-        result = await config_flow.async_step_room_config({
-            "room_volume": "abc",  # Valore non numerico
-        })
+        result = await config_flow.async_step_room_config(
+            {
+                "room_volume": "abc",  # Valore non numerico
+            }
+        )
         assert result["type"] == "form"
         assert "room_volume_invalid" in result["errors"]["room_volume"]
 
@@ -400,36 +411,40 @@ class TestVmcHeltyFlowConfigFlow:
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
         # Test volume nel range valido
-        with patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
-            "type": "create_entry",
-            "title": "Test1",
-            "data": {
-                "ip": "192.168.1.100",
-                "name": "Test1",
-                "model": "VMC Flow",
-                "manufacturer": "Helty",
-                "port": 5001,
-                "timeout": 10,
-                "room_volume": 50.0,
-            },
-        })):
-            result = await config_flow.async_step_room_config({
-                "room_volume": "50.0"
-            })
+        with patch.object(
+            config_flow.hass.config_entries.flow,
+            "async_init",
+            AsyncMock(
+                return_value={
+                    "type": "create_entry",
+                    "title": "Test1",
+                    "data": {
+                        "ip": "192.168.1.100",
+                        "name": "Test1",
+                        "model": "VMC Flow",
+                        "manufacturer": "Helty",
+                        "port": 5001,
+                        "timeout": 10,
+                        "room_volume": 50.0,
+                    },
+                }
+            ),
+        ):
+            result = await config_flow.async_step_room_config({"room_volume": "50.0"})
             assert result["type"] == "abort"
             assert result["reason"] == "unknown"
 
         # Test volume troppo piccolo
-        result = await config_flow.async_step_room_config({
-            "room_volume": "2.0"  # Sotto MIN_ROOM_VOLUME (5.0)
-        })
+        result = await config_flow.async_step_room_config(
+            {"room_volume": "2.0"}  # Sotto MIN_ROOM_VOLUME (5.0)
+        )
         assert result["type"] == "form"
         assert "room_volume_out_of_range" in result["errors"]["room_volume"]
 
         # Test volume troppo grande
-        result = await config_flow.async_step_room_config({
-            "room_volume": "2000.0"  # Sopra MAX_ROOM_VOLUME
-        })
+        result = await config_flow.async_step_room_config(
+            {"room_volume": "2000.0"}  # Sopra MAX_ROOM_VOLUME
+        )
         assert result["type"] == "form"
         assert "room_volume_out_of_range" in result["errors"]["room_volume"]
 
@@ -565,9 +580,7 @@ class TestVmcHeltyFlowConfigFlow:
 
         with (
             patch.object(config_flow, "_async_current_entries", return_value=[]),
-            patch.object(
-                config_flow, "async_step_room_config"
-            ) as mock_room_config,
+            patch.object(config_flow, "async_step_room_config") as mock_room_config,
         ):
             mock_result = {"type": "form", "step_id": "room_config"}
             mock_room_config.return_value = mock_result
@@ -587,23 +600,27 @@ class TestVmcHeltyFlowConfigFlow:
     async def test_room_config_with_stop_flag(self, config_flow):
         """Test room configuration with simple volume input."""
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
-        user_input = {
-            "room_volume": "75.5"
-        }
+        user_input = {"room_volume": "75.5"}
 
-        with patch.object(config_flow.hass.config_entries.flow, "async_init", AsyncMock(return_value={
-            "type": "create_entry",
-            "title": "Test1",
-            "data": {
-                "ip": "192.168.1.100",
-                "name": "Test1",
-                "model": "VMC Flow",
-                "manufacturer": "Helty",
-                "port": 5001,
-                "timeout": 10,
-                "room_volume": 75.5,
-            },
-        })):
+        with patch.object(
+            config_flow.hass.config_entries.flow,
+            "async_init",
+            AsyncMock(
+                return_value={
+                    "type": "create_entry",
+                    "title": "Test1",
+                    "data": {
+                        "ip": "192.168.1.100",
+                        "name": "Test1",
+                        "model": "VMC Flow",
+                        "manufacturer": "Helty",
+                        "port": 5001,
+                        "timeout": 10,
+                        "room_volume": 75.5,
+                    },
+                }
+            ),
+        ):
             result = await config_flow.async_step_room_config(user_input)
 
             # Verifica che venga abortato con reason 'unknown'
@@ -647,7 +664,7 @@ class TestVmcHeltyFlowConfigFlow:
                     "port": 5001,
                     "timeout": 10,
                     "room_volume": 85.5,  # Should use the custom volume
-                }
+                },
             )
 
             assert result["type"] == "create_entry"
@@ -689,7 +706,7 @@ class TestVmcHeltyFlowConfigFlow:
                     "port": 5001,
                     "timeout": 10,
                     "room_volume": DEFAULT_ROOM_VOLUME,  # Should use default volume
-                }
+                },
             )
 
             assert result["type"] == "create_entry"

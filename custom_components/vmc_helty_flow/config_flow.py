@@ -14,8 +14,8 @@ from .const import (
     DEFAULT_ROOM_VOLUME,
     DOMAIN,
     IP_NETWORK_PREFIX,
-    MIN_ROOM_VOLUME,
     MAX_ROOM_VOLUME,
+    MIN_ROOM_VOLUME,
 )
 from .helpers import discover_vmc_devices, get_device_info
 from .helpers_net import (
@@ -23,7 +23,6 @@ from .helpers_net import (
     parse_subnet_for_discovery,
     validate_subnet,
 )
-
 
 # Costanti per i limiti di validazione
 MAX_PORT = 65535
@@ -37,6 +36,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
+
     @staticmethod
     def _validate_room_volume(user_input: dict) -> tuple[float | None, dict]:
         """Validazione del volume stanza. Restituisce (volume, errors)."""
@@ -62,12 +62,11 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input and user_input.get("room_volume"):
             current_volume = str(user_input["room_volume"])
 
-        return vol.Schema({
-            vol.Required(
-                "room_volume",
-                default=current_volume
-            ): str,
-        })
+        return vol.Schema(
+            {
+                vol.Required("room_volume", default=current_volume): str,
+            }
+        )
 
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
     VERSION = 1
@@ -243,12 +242,10 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     # Nel flow incrementale ogni dispositivo viene gestito singolarmente
 
-
     async def async_step_room_config(
         self, user_input=None
     ) -> config_entries.ConfigFlowResult:
         """Configura il volume della stanza."""
-
         # Prima visualizzazione del form
         device = getattr(self, "current_found_device", None)
 
@@ -483,9 +480,9 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("action"): vol.In(
                     [
                         "add_and_configure",  # Add device with volume config
-                        "add_and_stop",       # Add device and stop
-                        "skip_continue",      # Skip device and continue scanning
-                        "stop_scan",          # Stop scanning without adding
+                        "add_and_stop",  # Add device and stop
+                        "skip_continue",  # Skip device and continue scanning
+                        "stop_scan",  # Stop scanning without adding
                     ]
                 )
             }
@@ -535,8 +532,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.ConfigFlowResult:
         """Handle add device and configure volume."""
         _LOGGER.info(
-            "User wants to add device %s, configuring room volume",
-            device["ip"]
+            "User wants to add device %s, configuring room volume", device["ip"]
         )
 
         # Check if device is already configured
@@ -555,14 +551,12 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle add device and stop scan - but configure volume first."""
         _LOGGER.info(
             "User wants to add device %s and stop scan - configuring volume first",
-            device["ip"]
+            device["ip"],
         )
 
         # Check if device is already configured
         if await self._is_device_already_configured(device["ip"]):
-            _LOGGER.warning(
-                "Device %s already configured, stopping scan", device["ip"]
-            )
+            _LOGGER.warning("Device %s already configured, stopping scan", device["ip"])
             return await self._finalize_incremental_scan()
 
         # Imposta flag per fermare la scansione dopo questa configurazione

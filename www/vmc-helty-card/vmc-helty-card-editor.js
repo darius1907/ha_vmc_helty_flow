@@ -160,9 +160,9 @@ class VmcHeltyCardEditor extends LitElement {
     }
 
     // Try to get room volume from any sensor of the same device
-    const deviceEntities = Object.keys(this.hass.states).filter(entityId => 
-      entityId.includes('vmc_helty') && 
-      this.hass.states[entityId].attributes.device_id === 
+    const deviceEntities = Object.keys(this.hass.states).filter(entityId =>
+      entityId.includes('vmc_helty') &&
+      this.hass.states[entityId].attributes.device_id ===
       this.hass.states[this.config.entity]?.attributes.device_id
     );
 
@@ -181,7 +181,7 @@ class VmcHeltyCardEditor extends LitElement {
           return volumeStr;
         }
       }
-      
+
       // Also check for room_volume_m3 attribute
       if (entity.attributes && entity.attributes.room_volume_m3) {
         return parseFloat(entity.attributes.room_volume_m3);
@@ -256,7 +256,7 @@ class VmcHeltyCardEditor extends LitElement {
       console.error('Failed to sync room volume with device:', error);
       // Show error notification
       this._showNotification(
-        `Failed to update room volume: ${error.message || 'Unknown error'}`, 
+        `Failed to update room volume: ${error.message || 'Unknown error'}`,
         'error'
       );
     }

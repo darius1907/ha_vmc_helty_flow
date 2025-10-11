@@ -90,13 +90,9 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         try:
             return await tcp_send_command(self.ip, DEFAULT_PORT, "VMGH?")
         except VMCTimeoutError as err:
-            _LOGGER.warning(
-                "Timeout getting status from %s: %s", self.ip, err
-            )
+            _LOGGER.warning("Timeout getting status from %s: %s", self.ip, err)
             self._handle_error()
-            raise UpdateFailed(
-                f"Timeout communicating with {self.ip}"
-            ) from err
+            raise UpdateFailed(f"Timeout communicating with {self.ip}") from err
         except VMCConnectionError as err:
             _LOGGER.exception("Connection error to %s", self.ip)
             if self._consecutive_errors == 0 or self._consecutive_errors % 5 == 0:
@@ -109,12 +105,10 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                         self.ip,
                         diagnostics.get("ping_success"),
                         diagnostics.get("tcp_connection"),
-                        diagnostics.get("error_details")
+                        diagnostics.get("error_details"),
                     )
                 except Exception as diag_err:
-                    _LOGGER.debug(
-                        "Unable to run network diagnostics: %s", diag_err
-                    )
+                    _LOGGER.debug("Unable to run network diagnostics: %s", diag_err)
             self._handle_error()
             raise UpdateFailed(f"Connection error to {self.ip}: {err}") from err
 
@@ -161,9 +155,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                     self._cached_data["network"] = responses["network"]
                 _LOGGER.debug("Updated network info for %s", self.ip)
             except VMCConnectionError as err:
-                _LOGGER.warning(
-                    "Unable to read network info from %s: %s", self.ip, err
-                )
+                _LOGGER.warning("Unable to read network info from %s: %s", self.ip, err)
                 responses["network"] = None
         else:
             responses["network"] = self._cached_data["network"]
@@ -182,9 +174,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self._consecutive_errors = 0
         if self.update_interval != self._normal_update_interval:
             self.update_interval = self._normal_update_interval
-            _LOGGER.info(
-                "Restored normal update interval for %s", self.ip
-            )
+            _LOGGER.info("Restored normal update interval for %s", self.ip)
 
     async def _async_update_data(self):
         """Fetch data from VMC device."""
@@ -193,8 +183,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             """Raise UpdateFailed after handling error."""
             self._handle_error()
             raise UpdateFailed(
-                f"Device {self.ip} did not respond correctly: "
-                f"{status_response}"
+                f"Device {self.ip} did not respond correctly: {status_response}"
             )
 
         try:
@@ -226,9 +215,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                 "Unexpected error during data update for %s",
                 self.ip,
             )
-            raise UpdateFailed(
-                f"Error communicating with {self.ip}: {err}"
-            ) from err
+            raise UpdateFailed(f"Error communicating with {self.ip}: {err}") from err
         else:
             return data
 
@@ -286,6 +273,4 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                             self.config_entry, data=new_data
                         )
             except Exception as err:
-                _LOGGER.warning(
-                    "Error updating device name: %s", err
-                )
+                _LOGGER.warning("Error updating device name: %s", err)

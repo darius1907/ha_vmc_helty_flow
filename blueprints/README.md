@@ -14,8 +14,8 @@ config/blueprints/automation/vmc_schedule_plan/vmc_schedule_plan.yaml
 
 oppure importa direttamente con il badge sopra ⬆️
 
-2. Dopo l’import vai su  
-**Impostazioni → Automazioni & Scene → Blueprint**  
+2. Dopo l’import vai su
+**Impostazioni → Automazioni & Scene → Blueprint**
 e crea una nuova automazione basata su `VMC Boost Giorno/Notte`.
 
 ## ⚙️ Configurazione

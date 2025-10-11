@@ -37,7 +37,6 @@ from .const import (
     AIR_EXCHANGE_TIME_EXCELLENT,
     AIR_EXCHANGE_TIME_GOOD,
     AIRFLOW_MAPPING,
-    FANSPEED_MAPPING,
     COMFORT_HUMIDITY_ACCEPTABLE_MAX,
     COMFORT_HUMIDITY_ACCEPTABLE_MIN,
     COMFORT_HUMIDITY_MAX,
@@ -81,11 +80,8 @@ from .const import (
     DEW_POINT_VERY_DRY,
     DOMAIN,
     ENTITY_NAME_PREFIX,
-    FAN_SPEED_FREE_COOLING,
-    FAN_SPEED_HYPERVENTILATION,
-    FAN_SPEED_NIGHT_MODE,
     FAN_SPEED_MAX_NORMAL,
-    FAN_SPEED_OFF,
+    FANSPEED_MAPPING,
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
 )
@@ -1051,7 +1047,6 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             # Velocità ventola dalla posizione 1 del VMGO
             actual_speed = int(parts[1])
 
-
             airflow = AIRFLOW_MAPPING.get(actual_speed, 0)
 
             # Determina categoria efficienza
@@ -1160,11 +1155,11 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Ritorna attributi aggiuntivi del sensore."""
-        #Livello Ricambi d'aria/h (ACH)	Applicazioni tipiche
-        #Poor < 3 ACH	Ventilazione scarsa, rischio aria viziata in stanze chiuse.
-        #Adequate 3 - 6 ACH Sufficiente per stanze residenziali, uffici standard.
-        #Good 6 - 12 ACH Buona qualità, adatta a scuole, palestre, sale riunioni.
-        #Excellent > 12 ACH Elevata, tipica di ospedali, laboratori, cucine prof.
+        # Livello Ricambi d'aria/h (ACH)	Applicazioni tipiche
+        # Poor < 3 ACH	Ventilazione scarsa, rischio aria viziata in stanze chiuse.
+        # Adequate 3 - 6 ACH Sufficiente per stanze residenziali, uffici standard.
+        # Good 6 - 12 ACH Buona qualità, adatta a scuole, palestre, sale riunioni.
+        # Excellent > 12 ACH Elevata, tipica di ospedali, laboratori, cucine prof.
         attributes = {}
 
         daily_changes = self.native_value

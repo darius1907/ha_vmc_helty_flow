@@ -80,7 +80,7 @@ async def tcp_send_command(ip: str, port: int, command: str, timeout: int = None
     # Ensure command ends with NLCR (\n\r)
     if not command.endswith("\n\r"):
         command = command.rstrip("\r\n") + "\n\r"
-    
+
     try:
         reader, writer = await asyncio.wait_for(
             asyncio.open_connection(ip, port), timeout=timeout
@@ -96,7 +96,7 @@ async def tcp_send_command(ip: str, port: int, command: str, timeout: int = None
 ```python
 class VmcHeltyCoordinator(DataUpdateCoordinator):
     """Manages data updates with consecutive error tracking."""
-    
+
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
         super().__init__(
             hass, _LOGGER, name=DOMAIN,
@@ -105,7 +105,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         )
         self._consecutive_errors = 0
         self._max_consecutive_errors = 5
-    
+
     async def _async_update_data(self):
         """Fetch data from VMC with protocol-specific error handling."""
         try:
@@ -153,7 +153,7 @@ def calculate_air_exchange_time(airflow: float, room_volume: float) -> dict:
     """Calculate time for complete air exchange."""
     if airflow <= 0:
         return {"time_minutes": None, "category": "Off"}
-    
+
     # Time = Volume / Airflow * 60 (convert to minutes)
     exchange_time = (room_volume / airflow) * 60
     return {
@@ -193,7 +193,7 @@ set_special_mode_schema = vol.Schema({
 ```python
 class VmcHeltyFan(CoordinatorEntity, FanEntity):
     """Main VMC fan control with special modes."""
-    
+
     @property
     def percentage(self) -> int | None:
         """Return fan speed percentage (0-100%)."""
@@ -202,7 +202,7 @@ class VmcHeltyFan(CoordinatorEntity, FanEntity):
         if speed in [5, 6, 7]:
             return FANSPEED_MAPPING.get(speed, 0) * 25
         return speed * 25 if speed <= 4 else 0
-    
+
     async def async_set_percentage(self, percentage: int) -> None:
         """Set fan speed percentage with VMC protocol."""
         speed = percentage // 25  # Convert to 0-4 scale
@@ -214,7 +214,7 @@ class VmcHeltyFan(CoordinatorEntity, FanEntity):
 ```python
 class VmcHeltyComfortIndexSensor(VmcHeltySensorBase):
     """Comfort index sensor with air quality calculations."""
-    
+
     @property
     def native_value(self) -> float | None:
         """Return calculated comfort index."""
@@ -222,10 +222,10 @@ class VmcHeltyComfortIndexSensor(VmcHeltySensorBase):
         humidity = self.coordinator.data.get("humidity")
         if temp is None or humidity is None:
             return None
-        
+
         comfort_data = calculate_comfort_index(temp, humidity)
         return comfort_data.get("index")
-    
+
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return detailed comfort analysis."""
@@ -233,7 +233,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltySensorBase):
         humidity = self.coordinator.data.get("humidity")
         if temp is None or humidity is None:
             return None
-            
+
         return {
             "comfort_level": self._get_comfort_level(),
             "temperature_factor": self._get_temperature_factor(),
@@ -276,7 +276,7 @@ async def test_discovery_flow(hass, mock_discovery):
     # Test subnet validation, device discovery, and configuration
     assert result["type"] == "form"
     assert result["step_id"] == "user"
-    
+
     # Submit discovery parameters
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],

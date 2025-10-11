@@ -18,9 +18,9 @@ from .const import (
     FAN_SPEED_HYPERVENTILATION,
     FAN_SPEED_MAX_NORMAL,
     FAN_SPEED_NIGHT_MODE,
+    FAN_SPEED_OFF,
     PART_INDEX_PANEL_LED,
     PART_INDEX_SENSORS,
-    FAN_SPEED_OFF
 )
 from .device_info import VmcHeltyEntity
 from .helpers import VMCConnectionError, tcp_send_command
@@ -112,7 +112,9 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
                 attributes["hyperventilation"] = fan_speed == FAN_SPEED_HYPERVENTILATION
                 attributes["free_cooling"] = fan_speed == FAN_SPEED_FREE_COOLING
                 attributes["manual_speed"] = (
-                    fan_speed if FAN_SPEED_OFF <= fan_speed <= FAN_SPEED_MAX_NORMAL else None
+                    fan_speed
+                    if FAN_SPEED_OFF <= fan_speed <= FAN_SPEED_MAX_NORMAL
+                    else None
                 )
 
                 # Altri stati dal dispositivo

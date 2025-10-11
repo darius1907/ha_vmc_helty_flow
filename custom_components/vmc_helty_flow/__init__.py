@@ -1,6 +1,5 @@
 """Integrazione VMC Helty Flow per Home Assistant."""
 
-
 import logging
 from datetime import timedelta
 
@@ -46,28 +45,32 @@ DEVICE_NAME_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Setup services for the integration."""
     # Service schema for room volume update
-    update_room_volume_schema = vol.Schema({
-        vol.Required("entity_id"): cv.entity_id,
-        vol.Required("room_volume"): vol.All(
-            vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
-        ),
-    })
+    update_room_volume_schema = vol.Schema(
+        {
+            vol.Required("entity_id"): cv.entity_id,
+            vol.Required("room_volume"): vol.All(
+                vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
+            ),
+        }
+    )
 
     # Service schema for network diagnostics
-    network_diagnostics_schema = vol.Schema({
-        vol.Required("ip"): cv.string,
-        vol.Optional("port", default=DEFAULT_PORT): cv.port,
-    })
+    network_diagnostics_schema = vol.Schema(
+        {
+            vol.Required("ip"): cv.string,
+            vol.Optional("port", default=DEFAULT_PORT): cv.port,
+        }
+    )
 
     # Service schema for set special mode
-    set_special_mode_schema = vol.Schema({
-        vol.Required("entity_id"): cv.entity_id,
-        vol.Required("mode"): vol.In([
-            "hyperventilation",
-            "night_mode",
-            "free_cooling"
-        ]),
-    })
+    set_special_mode_schema = vol.Schema(
+        {
+            vol.Required("entity_id"): cv.entity_id,
+            vol.Required("mode"): vol.In(
+                ["hyperventilation", "night_mode", "free_cooling"]
+            ),
+        }
+    )
 
     async def handle_update_room_volume(call: ServiceCall) -> None:
         """Handle room volume update service call."""
@@ -81,9 +84,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if not entity_entry:
             raise HomeAssistantError(f"Entity {entity_id} not found")
 
-        config_entry = hass.config_entries.async_get_entry(
-            entity_entry.config_entry_id
-        )
+        config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
         if not config_entry or config_entry.domain != DOMAIN:
             raise HomeAssistantError(
                 f"Entity {entity_id} is not from VMC Helty Flow integration"
@@ -96,7 +97,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         _LOGGER.info(
             "Updated room volume for %s to %.1f m³",
             config_entry.data.get("name", config_entry.data.get("ip")),
-            new_volume
+            new_volume,
         )
 
     async def handle_network_diagnostics(
@@ -117,16 +118,19 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             # Log the results
             _LOGGER.info(
                 "Network diagnostics for %s:%s - Ping: %s, TCP: %s, Reachable: %s",
-                ip, port,
+                ip,
+                port,
                 diagnostics.get("ping_success"),
                 diagnostics.get("tcp_connection"),
-                diagnostics.get("reachable")
+                diagnostics.get("reachable"),
             )
 
             if diagnostics.get("error_details"):
                 _LOGGER.warning(
                     "Network diagnostics errors for %s:%s - %s",
-                    ip, port, diagnostics.get("error_details")
+                    ip,
+                    port,
+                    diagnostics.get("error_details"),
                 )
 
             return diagnostics
@@ -143,9 +147,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if not entity_entry:
             raise HomeAssistantError(f"Entity {entity_id} not found")
 
-        config_entry = hass.config_entries.async_get_entry(
-            entity_entry.config_entry_id
-        )
+        config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
         if not config_entry or config_entry.domain != DOMAIN:
             raise HomeAssistantError(
                 f"Entity {entity_id} is not from VMC Helty Flow integration"
@@ -154,15 +156,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         # Ottieni il coordinatore
         coordinator = hass.data[DOMAIN].get(config_entry.entry_id)
         if not coordinator:
-            raise HomeAssistantError(
-                f"Coordinator not found for entity {entity_id}"
-            )
+            raise HomeAssistantError(f"Coordinator not found for entity {entity_id}")
 
         # Mapping mode to speed values come da protocollo VMC
         mode_mapping = {
-            "night_mode": 5,        # 125% -> comando VMWH0000005
+            "night_mode": 5,  # 125% -> comando VMWH0000005
             "hyperventilation": 6,  # 150% -> comando VMWH0000006
-            "free_cooling": 7,      # 175% -> comando VMWH0000007
+            "free_cooling": 7,  # 175% -> comando VMWH0000007
         }
 
         if mode not in mode_mapping:
@@ -177,7 +177,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
             _LOGGER.info(
                 "Set special mode %s (speed %d) for %s: %s",
-                mode, speed, entity_id, result
+                mode,
+                speed,
+                entity_id,
+                result,
             )
 
             # Aggiorna i dati del coordinatore
@@ -185,8 +188,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
         except Exception as err:
             _LOGGER.exception(
-                "Failed to set special mode %s for %s: %s",
-                mode, entity_id, err
+                "Failed to set special mode %s for %s: %s", mode, entity_id, err
             )
             raise HomeAssistantError(
                 f"Failed to set special mode {mode}: {err}"
@@ -214,8 +216,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         handle_set_special_mode,
         schema=set_special_mode_schema,
     )
-
-
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

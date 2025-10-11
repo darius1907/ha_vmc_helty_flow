@@ -11,7 +11,7 @@ update_room_volume:
       example: "fan.vmc_helty_192_168_1_100"
       selector:
         entity:
-          domain: 
+          domain:
             - fan
             - sensor
           integration: vmc_helty_flow

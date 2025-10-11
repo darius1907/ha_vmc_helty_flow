@@ -148,8 +148,13 @@ async def tcp_send_command(
             command += "\n\r"
 
     try:
-        _LOGGER.debug("Connessione a %s:%s timeout: %s, comando: %s",
-                      ip, port, timeout, command.strip())
+        _LOGGER.debug(
+            "Connessione a %s:%s timeout: %s, comando: %s",
+            ip,
+            port,
+            timeout,
+            command.strip(),
+        )
 
         reader, writer = await _establish_connection(ip, port, timeout)
 
@@ -294,7 +299,7 @@ async def validate_network_connectivity(
         "reachable": False,
         "ping_success": False,
         "tcp_connection": False,
-        "error_details": None
+        "error_details": None,
     }
 
     # Test ping connectivity (basic network reachability)
@@ -316,9 +321,7 @@ async def validate_network_connectivity(
 
     # Test TCP connection
     try:
-        _, writer = await asyncio.wait_for(
-            asyncio.open_connection(ip, port), timeout=3
-        )
+        _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=3)
         diagnostics["tcp_connection"] = True
         diagnostics["reachable"] = True
         writer.close()

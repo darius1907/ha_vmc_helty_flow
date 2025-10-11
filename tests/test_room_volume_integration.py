@@ -62,38 +62,40 @@ class TestRoomVolumeIntegration(unittest.TestCase):
         """Test that air exchange sensor uses coordinator room_volume."""
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
         sensor = VmcHeltyAirExchangeTimeSensor(coordinator)
-        
+
         # Set up test data
         coordinator.data = {
             "status": "VMGO,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
         }  # Fan speed 2 -> 17 m³/h
-        
+
         # Expected: (75.0 / 17) * 60 = 264.7 minutes
         expected_time = (75.0 / 17) * 60
-        
+
         assert sensor.native_value == round(expected_time, 1)
 
     def test_daily_air_changes_sensor_uses_coordinator_room_volume(self):
         """Test that daily air changes sensor uses coordinator room_volume."""
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
         sensor = VmcHeltyDailyAirChangesSensor(coordinator, "test_device")
-        
+
         # Set up test data
-        coordinator.data = {"status": "VMGO,2,0,0,0,0,0,0,0,0,0,0,0,0,0"}  # Fan speed 2 -> 17 m³/h
-        
+        coordinator.data = {
+            "status": "VMGO,2,0,0,0,0,0,0,0,0,0,0,0,0,0"
+        }  # Fan speed 2 -> 17 m³/h
+
         # Expected: (17 / 75.0) * 24 = 5.4 changes/day
         expected_changes = round((17 / 75.0) * 24, 1)
-        
+
         assert sensor.native_value == expected_changes
 
     def test_air_exchange_sensor_attributes_show_configured_volume(self):
         """Test that air exchange sensor attributes show the configured room volume."""
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
         sensor = VmcHeltyAirExchangeTimeSensor(coordinator)
-        
+
         # Set up test data
         coordinator.data = {"status": "VMGO,2,0,0,0"}  # Fan speed 2
-        
+
         attrs = sensor.extra_state_attributes
         assert attrs["room_volume"] == "75.0 m³"
 
@@ -101,10 +103,10 @@ class TestRoomVolumeIntegration(unittest.TestCase):
         """Test that daily air changes sensor attributes show the configured room volume."""
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
         sensor = VmcHeltyDailyAirChangesSensor(coordinator, "test_device")
-        
-        # Set up test data  
+
+        # Set up test data
         coordinator.data = {"status": "VMGO,2,0,0,0,0,0,0,0,0,0,0,0,0,0"}  # Fan speed 2
-        
+
         attrs = sensor.extra_state_attributes
         assert attrs["room_volume_m3"] == 75.0
 

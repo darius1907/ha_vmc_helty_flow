@@ -1,8 +1,8 @@
 """Test update room volume service."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -58,11 +58,11 @@ class TestUpdateRoomVolumeService:
 
         # Verify services were registered (update_room_volume, network_diagnostics, and set_special_mode)
         assert mock_hass.services.async_register.call_count == 3
-        
+
         # Check that update_room_volume service was registered
         calls = mock_hass.services.async_register.call_args_list
         update_volume_call = calls[0]
-        
+
         assert update_volume_call[0][0] == DOMAIN  # domain
         assert update_volume_call[0][1] == "update_room_volume"  # service name
         assert callable(update_volume_call[0][2])  # handler function
@@ -74,7 +74,7 @@ class TestUpdateRoomVolumeService:
         """Test successful room volume update."""
         with patch(
             "homeassistant.helpers.entity_registry.async_get",
-            return_value=mock_entity_registry
+            return_value=mock_entity_registry,
         ):
             mock_entity_registry.async_get.return_value = mock_entity_entry
             mock_hass.config_entries.async_get_entry.return_value = mock_config_entry
@@ -89,10 +89,7 @@ class TestUpdateRoomVolumeService:
 
             # Create service call mock
             service_call = MagicMock()
-            service_call.data = {
-                "entity_id": "fan.test_vmc",
-                "room_volume": 85.5
-            }
+            service_call.data = {"entity_id": "fan.test_vmc", "room_volume": 85.5}
 
             # Call the handler
             await handler(service_call)
@@ -109,7 +106,7 @@ class TestUpdateRoomVolumeService:
         """Test handling when entity is not found."""
         with patch(
             "homeassistant.helpers.entity_registry.async_get",
-            return_value=mock_entity_registry
+            return_value=mock_entity_registry,
         ):
             mock_entity_registry.async_get.return_value = None  # Entity not found
 
@@ -122,15 +119,11 @@ class TestUpdateRoomVolumeService:
 
             # Create service call mock
             service_call = MagicMock()
-            service_call.data = {
-                "entity_id": "fan.nonexistent",
-                "room_volume": 85.5
-            }
+            service_call.data = {"entity_id": "fan.nonexistent", "room_volume": 85.5}
 
             # Verify exception is raised
             with pytest.raises(
-                HomeAssistantError,
-                match=r"Entity fan\.nonexistent not found"
+                HomeAssistantError, match=r"Entity fan\.nonexistent not found"
             ):
                 await handler(service_call)
 
@@ -140,7 +133,7 @@ class TestUpdateRoomVolumeService:
         """Test handling when entity is from wrong domain."""
         with patch(
             "homeassistant.helpers.entity_registry.async_get",
-            return_value=mock_entity_registry
+            return_value=mock_entity_registry,
         ):
             mock_entity_registry.async_get.return_value = mock_entity_entry
 
@@ -158,15 +151,11 @@ class TestUpdateRoomVolumeService:
 
             # Create service call mock
             service_call = MagicMock()
-            service_call.data = {
-                "entity_id": "fan.wrong_domain",
-                "room_volume": 85.5
-            }
+            service_call.data = {"entity_id": "fan.wrong_domain", "room_volume": 85.5}
 
             # Verify exception is raised
             with pytest.raises(
-                HomeAssistantError,
-                match="is not from VMC Helty Flow integration"
+                HomeAssistantError, match="is not from VMC Helty Flow integration"
             ):
                 await handler(service_call)
 
@@ -176,7 +165,7 @@ class TestUpdateRoomVolumeService:
         """Test handling when config entry is not found."""
         with patch(
             "homeassistant.helpers.entity_registry.async_get",
-            return_value=mock_entity_registry
+            return_value=mock_entity_registry,
         ):
             mock_entity_registry.async_get.return_value = mock_entity_entry
             mock_hass.config_entries.async_get_entry.return_value = None  # Not found
@@ -190,15 +179,11 @@ class TestUpdateRoomVolumeService:
 
             # Create service call mock
             service_call = MagicMock()
-            service_call.data = {
-                "entity_id": "fan.test_vmc",
-                "room_volume": 85.5
-            }
+            service_call.data = {"entity_id": "fan.test_vmc", "room_volume": 85.5}
 
             # Verify exception is raised
             with pytest.raises(
-                HomeAssistantError,
-                match="is not from VMC Helty Flow integration"
+                HomeAssistantError, match="is not from VMC Helty Flow integration"
             ):
                 await handler(service_call)
 

@@ -71,7 +71,7 @@ The new options are available in the visual card editor:
 
 **v2.1 Features:**
 - ✅ Added `show_lights` configuration option
-- ✅ Added `show_timer` configuration option  
+- ✅ Added `show_timer` configuration option
 - ✅ Updated visual editor with new toggles
 - ✅ Added helpful descriptions for VMC model compatibility
 - ✅ Maintained full backward compatibility

@@ -88,7 +88,7 @@ class VmcHeltyCard extends LitElement {
     const sensorsState = this._getEntityState(sensorsEntity);
 
     return html`
-    
+
       <div class="card-header">
         <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:cog-clockwise"></ha-icon>
@@ -736,7 +736,7 @@ class VmcHeltyCard extends LitElement {
             Velocità Ventilazione
           </ha-heading-badge>
         </span>
-        <span slot="description">Imposta la velocità di ventilazione</span>      
+        <span slot="description">Imposta la velocità di ventilazione</span>
       </ha-settings-row>
       <ha-settings-row>
         <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
