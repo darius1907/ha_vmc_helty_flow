@@ -449,24 +449,21 @@ class VmcHeltyCard extends LitElement {
 
     try {
       this._loading = true;
-        await this.hass.callService("fan", "set_percentage", {
-          entity_id: this.config.entity,
-          percentage: speed * 25,
-        });
-        fireEvent(this, "hass-notification", {
-          message: `Velocità impostata: ${speed * 25}%`,
-        });
-        // Evidenzia temporaneamente il chip attivo
-        this._lastSpeedSet = speed;
-        setTimeout(() => { this._lastSpeedSet = null; this.requestUpdate(); }, 800);
-        if ("vibrate" in navigator) navigator.vibrate(40);
-      } catch (e) {
-        fireEvent(this, "hass-notification", {
-          message: `Errore: ${e.message}`,
-        });
-      } finally {
-        this._loading = false;
-      }
+      await this.hass.callService("fan", "set_percentage", {
+        entity_id: this.config.entity,
+        percentage: speed * 25,
+      });
+      fireEvent(this, "hass-notification", {
+        message: `Velocità impostata: ${speed * 25}%`,
+      });
+      // Evidenzia temporaneamente il chip attivo
+      this._lastSpeedSet = speed;
+      setTimeout(() => { this._lastSpeedSet = null; this.requestUpdate(); }, 800);
+      if ("vibrate" in navigator) navigator.vibrate(40);
+    } catch (e) {
+      fireEvent(this, "hass-notification", {
+        message: `Errore: ${e.message}`,
+      });
     } finally {
       this._loading = false;
     }
