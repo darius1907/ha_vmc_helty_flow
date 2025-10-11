@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from homeassistant.core import ServiceCall
 
 import custom_components.vmc_helty_flow as vmc_module
-from custom_components.vmc_helty_flow.const import DOMAIN, DEFAULT_PORT
+from custom_components.vmc_helty_flow.const import DEFAULT_PORT, DOMAIN
 
 
 class TestSetSpecialModeService:
@@ -88,12 +88,14 @@ class TestSetSpecialModeService:
         # Mock tcp_send_command since the service now uses it directly
         with patch("custom_components.vmc_helty_flow.tcp_send_command") as mock_tcp:
             mock_tcp.return_value = "OK"
-            
+
             # Call the handler directly
             await handler(call)
 
             # Verify tcp_send_command was called with correct parameters
-            mock_tcp.assert_called_once_with("192.168.1.100", DEFAULT_PORT, "VMWH0000005")
+            mock_tcp.assert_called_once_with(
+                "192.168.1.100", DEFAULT_PORT, "VMWH0000005"
+            )
 
     async def test_special_mode_mappings(self):
         """Test that the mode mappings are correct."""

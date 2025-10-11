@@ -489,7 +489,9 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
                 return None
 
             parts = sensors_data.split(",")
-            if len(parts) < MIN_RESPONSE_PARTS:  # Serve almeno temp_int, temp_ext, humidity, co2
+            if (
+                len(parts) < MIN_RESPONSE_PARTS
+            ):  # Serve almeno temp_int, temp_ext, humidity, co2
                 return None
 
             # Estrai temperatura interna (pos 1) e umidità (pos 3)

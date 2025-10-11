@@ -201,6 +201,7 @@ class VmcHeltyCard extends LitElement {
    * @param {string} service - Nome del servizio (es: 'turn_on', 'set_percentage')
    * @param {object} data - Dati da inviare al servizio
    * @returns {Promise<void>}
+   */
 
   // Translation methods
   async connectedCallback() {
@@ -269,6 +270,11 @@ class VmcHeltyCard extends LitElement {
   }
 
   _t(key) {
+    // Fallback if translations are not loaded yet
+    if (!this._translations || Object.keys(this._translations).length === 0) {
+      this._translations = this._getDefaultTranslations();
+    }
+
     const keys = key.split(".");
     let translation = this._translations;
 
@@ -282,8 +288,6 @@ class VmcHeltyCard extends LitElement {
 
     return translation || key;
   }
-
-   */
   async callService(domain, service, data) {
     if (!this.hass) throw new Error('Hass object non disponibile');
     try {
@@ -298,7 +302,7 @@ class VmcHeltyCard extends LitElement {
 
   static get styles() {
     return css`
-:host {
+        :host {
           background: var(
             --ha-card-background,
             var(--card-background-color, white)
@@ -432,6 +436,11 @@ class VmcHeltyCard extends LitElement {
 
     if (changedProps.has('hass') && this.hass) {
       this._updateEntityStates();
+
+      // Load translations when hass becomes available for the first time
+      if (!this._translations || Object.keys(this._translations).length === 0) {
+        this._loadTranslations();
+      }
     }
   }
 
@@ -913,6 +922,7 @@ class VmcHeltyCard extends LitElement {
     if (this.hass) {
       this._loadTranslations();
     }
+    this._setupEntityReferences();
     this.requestUpdate();
   }
 }
