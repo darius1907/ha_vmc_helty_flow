@@ -2,9 +2,6 @@
   "name": "VMC Helty Flow Development",
   "dockerFile": "../Dockerfile.dev",
   "features": {},
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspaces/vmc_helty_flow,type=bind,consistency=cached"
-  ],
   "workspaceFolder": "/workspaces/vmc_helty_flow",
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "forwardPorts": [8123, 5683],
