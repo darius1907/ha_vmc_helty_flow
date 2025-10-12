@@ -1,13 +1,13 @@
 blueprint:
-  name: VMC Helty Flow - Automazione Boost Giorno/Notte
+  name: VMC Helty Flow - Cicli Boost Giorno/Notte
   description: >
     Gestisce automaticamente la velocità della ventola della VMC Helty Flow
-    con cicli base e boost separati per il giorno e la notte.    
+    con cicli boost e base separati per giorno e notte, intervallo e durata boost configurabili.
   domain: automation
   input:
     vmc_entity:
-      name: Entità VMC
-      description: L'entità fan.* della VMC
+      name: Entità  VMC
+      description: L'entità  fan.* della VMC
       selector:
         entity:
           domain: fan
@@ -25,7 +25,7 @@ blueprint:
         time: {}
 
     day_base_fan:
-      name: Velocità base giorno
+      name: Velocità  base giorno
       description: Valore ventola quando è giorno (base)
       default: "50"
       selector:
@@ -41,7 +41,7 @@ blueprint:
               value: "100"
 
     day_boost_fan:
-      name: Velocità boost giorno
+      name: Velocità  boost giorno
       description: Valore ventola quando è giorno (boost)
       default: "75"
       selector:
@@ -57,7 +57,7 @@ blueprint:
               value: "100"
 
     night_base_fan:
-      name: Velocità base notte
+      name: Velocità  base notte
       description: Valore ventola quando è notte (base)
       default: "25"
       selector:
@@ -73,7 +73,7 @@ blueprint:
               value: "100"
 
     night_boost_fan:
-      name: Velocità boost notte
+      name: Velocità  boost notte
       description: Valore ventola quando è notte (boost)
       default: "50"
       selector:
@@ -88,12 +88,31 @@ blueprint:
             - label: Max (100%)
               value: "100"
 
+    boost_interval:
+      name: Intervallo tra boost (minuti)
+      description: Ogni quanti minuti attivare il boost
+      default: 60
+      selector:
+        number:
+          min: 1
+          max: 180
+          unit_of_measurement: "min"
+
+    boost_duration:
+      name: Durata boost (minuti)
+      description: Per quanti minuti il boost resta attivo
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: "min"
+
 mode: restart
+
 trigger:
-  - platform: time
-    at: !input day_start
-  - platform: time
-    at: !input night_start
+  - platform: time_pattern
+    minutes: "/!input boost_interval"
 
 action:
   - choose:
@@ -107,6 +126,13 @@ action:
               entity_id: !input vmc_entity
             data:
               percentage: !input day_boost_fan
+          - delay:
+              minutes: !input boost_duration
+          - service: fan.set_percentage
+            target:
+              entity_id: !input vmc_entity
+            data:
+              percentage: !input day_base_fan
       - conditions:
           - condition: or
             conditions:
@@ -120,3 +146,10 @@ action:
               entity_id: !input vmc_entity
             data:
               percentage: !input night_boost_fan
+          - delay:
+              minutes: !input boost_duration
+          - service: fan.set_percentage
+            target:
+              entity_id: !input vmc_entity
+            data:
+              percentage: !input night_base_fan
