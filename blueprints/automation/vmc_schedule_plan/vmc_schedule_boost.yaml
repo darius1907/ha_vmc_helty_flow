@@ -1,13 +1,14 @@
 blueprint:
-  name: VMC Helty Flow - Cicli Boost Giorno/Notte (con pausa e log avanzato)
+  name: VMC Helty Flow - Cicli Boost Giorno/Notte (finale)
   description: >
-    Gestisce automaticamente la velocità della ventola della VMC Helty Flow
-    con cicli boost differenziati tra giorno e notte.
-    - Supporta granularità 5 minuti
-    - Traccia l'ultimo boost tramite input_datetime
-    - Permette di sospendere tutto tramite input_boolean (pausa)
-    - Logbook dettagliato con timestamp
+    Cicli boost giorno/notte con tracking ultimo boost, pausa e log avanzato.
+    - Trigger ogni 5 minuti
+    - Velocità fan: 0,25,50,75,100 %
+    - Pausa tramite input_boolean
+    - Tracking ultimo boost tramite input_datetime
+    - Intervalli e durata con step 5 minuti
   domain: automation
+
   input:
     vmc_entity:
       name: Entità VMC (fan)
@@ -58,7 +59,7 @@ blueprint:
       default: 10
       selector:
         number:
-          min: 1
+          min: 5
           max: 180
           step: 5
           unit_of_measurement: minutes
@@ -78,7 +79,7 @@ blueprint:
       default: 10
       selector:
         number:
-          min: 1
+          min: 5
           max: 180
           step: 5
           unit_of_measurement: minutes
@@ -152,10 +153,10 @@ action:
       is_day: >
         {{ day_start_time <= now_time < night_start_time }}
 
-      # Determina ultimo boost (timestamp)
       last_boost_ts: >
-        {% if last_boost_time_input and states(last_boost_time_input) not in ['', 'unknown', 'unavailable'] %}
-          {{ as_timestamp(states(last_boost_time_input).state) }}
+        {% set lb = last_boost_time_input %}
+        {% if lb != '' and states(lb) not in ['', 'unknown', 'unavailable'] %}
+          {{ as_timestamp(states(lb)) }}
         {% else %}
           0
         {% endif %}
@@ -181,7 +182,7 @@ action:
       cur_base_pct: "{{ day_base_fan if is_day else night_base_fan }}"
       period_label: "{{ 'giorno' if is_day else 'notte' }}"
 
-  # Pausa attiva → interrompe tutto
+  # Pausa attiva → non eseguire boost
   - condition: template
     value_template: >
       {% if pause_switch != '' %}
@@ -199,7 +200,7 @@ action:
         {{ not boost_active_fallback }}
       {% endif %}
 
-  # Log di debug prima del ciclo
+  # Log verifica ciclo
   - service: logbook.log
     data:
       name: "VMC Helty"
