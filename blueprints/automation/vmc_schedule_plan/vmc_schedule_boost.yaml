@@ -50,6 +50,7 @@ blueprint:
         number:
           min: 5
           max: 1440
+          step: 5
           unit_of_measurement: minutes
 
     day_boost_duration:
@@ -59,6 +60,7 @@ blueprint:
         number:
           min: 1
           max: 180
+          step: 5
           unit_of_measurement: minutes
 
     night_boost_interval:
@@ -68,6 +70,7 @@ blueprint:
         number:
           min: 5
           max: 1440
+          step: 5
           unit_of_measurement: minutes
 
     night_boost_duration:
@@ -77,6 +80,7 @@ blueprint:
         number:
           min: 1
           max: 180
+          step: 5
           unit_of_measurement: minutes
 
     day_base_fan:
