@@ -1,27 +1,44 @@
 blueprint:
-  name: VMC Helty Flow - Cicli Boost Giorno/Notte
+  name: VMC Helty Flow - Cicli Boost Giorno/Notte (con pausa e log avanzato)
   description: >
     Gestisce automaticamente la velocità della ventola della VMC Helty Flow
-    con cicli di boost e velocità base differenziati tra giorno e notte.
+    con cicli boost differenziati tra giorno e notte.
+    - Supporta granularità 5 minuti
+    - Traccia l'ultimo boost tramite input_datetime
+    - Permette di sospendere tutto tramite input_boolean (pausa)
+    - Logbook dettagliato con timestamp
   domain: automation
   input:
     vmc_entity:
-      name: Entità VMC
-      description: Entità del ventilatore VMC Helty (es. fan.vmc_helty_soggiorno)
+      name: Entità VMC (fan)
       selector:
         entity:
           domain: fan
 
+    last_boost_time:
+      name: Helper ultimo boost (opzionale)
+      description: "Input datetime helper che verrà aggiornato quando parte un boost."
+      default: ""
+      selector:
+        entity:
+          domain: input_datetime
+
+    pause_switch:
+      name: Switch pausa automazione (opzionale)
+      description: "Input boolean per sospendere temporaneamente i cicli boost."
+      default: ""
+      selector:
+        entity:
+          domain: input_boolean
+
     day_start:
       name: Inizio Giorno
-      description: Ora di inizio del periodo diurno
       default: "08:00:00"
       selector:
         time: {}
 
     night_start:
       name: Inizio Notte
-      description: Ora di inizio del periodo notturno
       default: "23:00:00"
       selector:
         time: {}
@@ -32,9 +49,8 @@ blueprint:
       selector:
         number:
           min: 5
-          max: 240
-          unit_of_measurement: "min"
-          mode: box
+          max: 1440
+          unit_of_measurement: minutes
 
     day_boost_duration:
       name: Durata Boost Giorno (minuti)
@@ -42,9 +58,8 @@ blueprint:
       selector:
         number:
           min: 1
-          max: 60
-          unit_of_measurement: "min"
-          mode: box
+          max: 180
+          unit_of_measurement: minutes
 
     night_boost_interval:
       name: Intervallo Boost Notte (minuti)
@@ -52,9 +67,8 @@ blueprint:
       selector:
         number:
           min: 5
-          max: 240
-          unit_of_measurement: "min"
-          mode: box
+          max: 1440
+          unit_of_measurement: minutes
 
     night_boost_duration:
       name: Durata Boost Notte (minuti)
@@ -62,59 +76,56 @@ blueprint:
       selector:
         number:
           min: 1
-          max: 60
-          unit_of_measurement: "min"
-          mode: box
+          max: 180
+          unit_of_measurement: minutes
 
     day_base_fan:
       name: Velocità base giorno
-      description: Percentuale (0=spento, 25=bassa, 50=media, 75=alta, 100=max)
       default: 50
       selector:
         number:
           min: 0
           max: 100
           step: 25
-          unit_of_measurement: "%"
 
     day_boost_fan:
       name: Velocità boost giorno
-      description: Percentuale (0=spento, 25=bassa, 50=media, 75=alta, 100=max)
       default: 75
       selector:
         number:
           min: 0
           max: 100
           step: 25
-          unit_of_measurement: "%"
 
     night_base_fan:
       name: Velocità base notte
-      description: Percentuale (0=spento, 25=bassa, 50=media, 75=alta, 100=max)
       default: 25
       selector:
         number:
           min: 0
           max: 100
           step: 25
-          unit_of_measurement: "%"
 
     night_boost_fan:
       name: Velocità boost notte
-      description: Percentuale (0=spento, 25=bassa, 50=media, 75=alta, 100=max)
       default: 50
       selector:
         number:
           min: 0
           max: 100
           step: 25
-          unit_of_measurement: "%"
 
 mode: restart
 max_exceeded: silent
 
+trigger:
+  - platform: time_pattern
+    minutes: "/5"
+
 variables:
   vmc_entity: !input vmc_entity
+  last_boost_time_input: !input last_boost_time
+  pause_switch: !input pause_switch
   day_start: !input day_start
   night_start: !input night_start
   day_boost_interval: !input day_boost_interval
@@ -126,48 +137,120 @@ variables:
   night_base_fan: !input night_base_fan
   night_boost_fan: !input night_boost_fan
 
-trigger:
-  - platform: time_pattern
-    minutes: "/1"
-
 action:
   - variables:
       now_time: "{{ now().time() }}"
-      day_start_time: "{{ strptime(day_start, '%H:%M:%S').time() }}"
-      night_start_time: "{{ strptime(night_start, '%H:%M:%S').time() }}"
+      timestamp_str: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      _fmt_day: "{{ '%H:%M:%S' if (day_start | length) == 8 else '%H:%M' }}"
+      _fmt_night: "{{ '%H:%M:%S' if (night_start | length) == 8 else '%H:%M' }}"
+      day_start_time: "{{ strptime(day_start, _fmt_day).time() }}"
+      night_start_time: "{{ strptime(night_start, _fmt_night).time() }}"
       is_day: >
         {{ day_start_time <= now_time < night_start_time }}
 
+      # Determina ultimo boost (timestamp)
+      last_boost_ts: >
+        {% if last_boost_time_input and states(last_boost_time_input) not in ['', 'unknown', 'unavailable'] %}
+          {{ as_timestamp(states(last_boost_time_input).state) }}
+        {% else %}
+          0
+        {% endif %}
+
+      seconds_since_last_boost: >
+        {% if last_boost_ts|int > 0 %}
+          {{ (as_timestamp(now()) - last_boost_ts) | int }}
+        {% else %}
+          -1
+        {% endif %}
+
+      fan_pct: "{{ state_attr(vmc_entity, 'percentage') }}"
+      boost_active_fallback: >
+        {% if fan_pct is not none %}
+          {{ (fan_pct|int) == (day_boost_fan if is_day else night_boost_fan) }}
+        {% else %}
+          false
+        {% endif %}
+
+      cur_interval_min: "{{ day_boost_interval if is_day else night_boost_interval }}"
+      cur_duration_min: "{{ day_boost_duration if is_day else night_boost_duration }}"
+      cur_boost_pct: "{{ day_boost_fan if is_day else night_boost_fan }}"
+      cur_base_pct: "{{ day_base_fan if is_day else night_base_fan }}"
+      period_label: "{{ 'giorno' if is_day else 'notte' }}"
+
+  # Pausa attiva → interrompe tutto
+  - condition: template
+    value_template: >
+      {% if pause_switch != '' %}
+        {{ is_state(pause_switch, 'off') }}
+      {% else %}
+        true
+      {% endif %}
+
+  # Controllo anti-overlap
+  - condition: template
+    value_template: >
+      {% if last_boost_ts|int > 0 %}
+        {{ seconds_since_last_boost < 0 or seconds_since_last_boost >= (cur_interval_min | int) * 60 }}
+      {% else %}
+        {{ not boost_active_fallback }}
+      {% endif %}
+
+  # Log di debug prima del ciclo
+  - service: logbook.log
+    data:
+      name: "VMC Helty"
+      message: >
+        [{{ timestamp_str }}] Verifica ciclo {{ period_label }}:
+        intervallo={{ cur_interval_min }} min, durata={{ cur_duration_min }} min,
+        seconds_since_last_boost={{ seconds_since_last_boost }},
+        pausa={{ pause_switch if pause_switch else 'none' }},
+        ventola={{ fan_pct }} %
+
+  # Imposta base
+  - service: fan.set_percentage
+    target:
+      entity_id: "{{ vmc_entity }}"
+    data:
+      percentage: "{{ cur_base_pct }}"
+
+  # Aggiorna timestamp del boost
   - choose:
-      - conditions: "{{ is_day }}"
+      - conditions: "{{ last_boost_time_input != '' }}"
         sequence:
-          - service: fan.set_percentage
+          - service: input_datetime.set_datetime
             target:
-              entity_id: "{{ vmc_entity }}"
+              entity_id: "{{ last_boost_time_input }}"
             data:
-              percentage: "{{ day_base_fan }}"
-          - delay:
-              minutes: "{{ day_boost_interval }}"
-          - service: fan.set_percentage
-            target:
-              entity_id: "{{ vmc_entity }}"
-            data:
-              percentage: "{{ day_boost_fan }}"
-          - delay:
-              minutes: "{{ day_boost_duration }}"
-      - conditions: "{{ not is_day }}"
-        sequence:
-          - service: fan.set_percentage
-            target:
-              entity_id: "{{ vmc_entity }}"
-            data:
-              percentage: "{{ night_base_fan }}"
-          - delay:
-              minutes: "{{ night_boost_interval }}"
-          - service: fan.set_percentage
-            target:
-              entity_id: "{{ vmc_entity }}"
-            data:
-              percentage: "{{ night_boost_fan }}"
-          - delay:
-              minutes: "{{ night_boost_duration }}"
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  # Avvio boost
+  - service: fan.set_percentage
+    target:
+      entity_id: "{{ vmc_entity }}"
+    data:
+      percentage: "{{ cur_boost_pct }}"
+
+  - service: logbook.log
+    data:
+      name: "VMC Helty"
+      message: >
+        [{{ timestamp_str }}] 🚀 Avvio ciclo boost ({{ period_label }}) → {{ cur_boost_pct }} %
+        (durata={{ cur_duration_min }} min)
+
+  - delay:
+      minutes: "{{ cur_duration_min }}"
+
+  # Ripristina base
+  - service: fan.set_percentage
+    target:
+      entity_id: "{{ vmc_entity }}"
+    data:
+      percentage: "{{ cur_base_pct }}"
+
+  - service: logbook.log
+    data:
+      name: "VMC Helty"
+      message: >
+        [{{ now().strftime('%Y-%m-%d %H:%M:%S') }}] ✅ Fine boost ({{ period_label }})
+        - durata={{ cur_duration_min }} min
+        - velocità ripristinata={{ cur_base_pct }} %
