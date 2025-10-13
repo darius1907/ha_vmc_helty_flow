@@ -6,8 +6,8 @@ blueprint:
   domain: automation
   input:
     vmc_entity:
-      name: Entità  VMC
-      description: L'entità  fan.* della VMC
+      name: Entità VMC
+      description: L'entità fan.* della VMC
       selector:
         entity:
           domain: fan
@@ -25,8 +25,7 @@ blueprint:
         time: {}
 
     day_base_fan:
-      name: Velocità  base giorno
-      description: Valore ventola quando è giorno (base)
+      name: Velocità base giorno
       default: "50"
       selector:
         select:
@@ -41,8 +40,7 @@ blueprint:
               value: "100"
 
     day_boost_fan:
-      name: Velocità  boost giorno
-      description: Valore ventola quando è giorno (boost)
+      name: Velocità boost giorno
       default: "75"
       selector:
         select:
@@ -57,8 +55,7 @@ blueprint:
               value: "100"
 
     night_base_fan:
-      name: Velocità  base notte
-      description: Valore ventola quando è notte (base)
+      name: Velocità base notte
       default: "25"
       selector:
         select:
@@ -73,8 +70,7 @@ blueprint:
               value: "100"
 
     night_boost_fan:
-      name: Velocità  boost notte
-      description: Valore ventola quando è notte (boost)
+      name: Velocità boost notte
       default: "50"
       selector:
         select:
@@ -88,9 +84,8 @@ blueprint:
             - label: Max (100%)
               value: "100"
 
-    boost_interval:
-      name: Intervallo tra boost (minuti)
-      description: Ogni quanti minuti attivare il boost
+    day_boost_interval:
+      name: Intervallo boost giorno (minuti)
       default: 60
       selector:
         number:
@@ -98,10 +93,27 @@ blueprint:
           max: 180
           unit_of_measurement: "min"
 
-    boost_duration:
-      name: Durata boost (minuti)
-      description: Per quanti minuti il boost resta attivo
+    day_boost_duration:
+      name: Durata boost giorno (minuti)
       default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: "min"
+
+    night_boost_interval:
+      name: Intervallo boost notte (minuti)
+      default: 120
+      selector:
+        number:
+          min: 1
+          max: 180
+          unit_of_measurement: "min"
+
+    night_boost_duration:
+      name: Durata boost notte (minuti)
+      default: 15
       selector:
         number:
           min: 1
@@ -112,44 +124,39 @@ mode: restart
 
 trigger:
   - platform: time_pattern
-    minutes: "/!input boost_interval"
+    minutes: "*"  # Controllo ogni minuto
+
+variables:
+  now_time: "{{ now().time() }}"
+  is_day: >
+    {{ now_time >= strptime(day_start, '%H:%M:%S').time() and
+       now_time < strptime(night_start, '%H:%M:%S').time() }}
+
+  interval: "{{ day_boost_interval if is_day else night_boost_interval }}"
+  duration: "{{ day_boost_duration if is_day else night_boost_duration }}"
+  boost_level: "{{ day_boost_fan if is_day else night_boost_fan }}"
+  base_level: "{{ day_base_fan if is_day else night_base_fan }}"
+
+condition:
+  - condition: template
+    value_template: >
+      {% set last = state_attr('automation.' ~ automation.entity_id.split('.')[1], 'last_triggered') %}
+      {% if last is none %}
+        true
+      {% else %}
+        {{ (now() - last).total_seconds() / 60 >= interval }}
+      {% endif %}
 
 action:
-  - choose:
-      - conditions:
-          - condition: time
-            after: !input day_start
-            before: !input night_start
-        sequence:
-          - service: fan.set_percentage
-            target:
-              entity_id: !input vmc_entity
-            data:
-              percentage: !input day_boost_fan
-          - delay:
-              minutes: !input boost_duration
-          - service: fan.set_percentage
-            target:
-              entity_id: !input vmc_entity
-            data:
-              percentage: !input day_base_fan
-      - conditions:
-          - condition: or
-            conditions:
-              - condition: time
-                after: !input night_start
-              - condition: time
-                before: !input day_start
-        sequence:
-          - service: fan.set_percentage
-            target:
-              entity_id: !input vmc_entity
-            data:
-              percentage: !input night_boost_fan
-          - delay:
-              minutes: !input boost_duration
-          - service: fan.set_percentage
-            target:
-              entity_id: !input vmc_entity
-            data:
-              percentage: !input night_base_fan
+  - service: fan.set_percentage
+    target:
+      entity_id: !input vmc_entity
+    data:
+      percentage: "{{ boost_level }}"
+  - delay:
+      minutes: "{{ duration }}"
+  - service: fan.set_percentage
+    target:
+      entity_id: !input vmc_entity
+    data:
+      percentage: "{{ base_level }}"
