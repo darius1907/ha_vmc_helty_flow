@@ -2,7 +2,7 @@ blueprint:
   name: VMC Helty Flow - Automazione Boost Giorno/Notte
   description: >
     Gestisce automaticamente la velocità della ventola della VMC Helty Flow
-    con cicli base e boost separati per il giorno e la notte.    
+    con cicli separati per il giorno e la notte.    
   domain: automation
   input:
     vmc_entity:
@@ -40,42 +40,10 @@ blueprint:
             - label: Max (100%)
               value: "100"
 
-    day_boost_fan:
-      name: Velocità boost giorno
-      description: Valore ventola quando è giorno (boost)
-      default: "75"
-      selector:
-        select:
-          options:
-            - label: Low (25%)
-              value: "25"
-            - label: Medium (50%)
-              value: "50"
-            - label: High (75%)
-              value: "75"
-            - label: Max (100%)
-              value: "100"
-
     night_base_fan:
       name: Velocità base notte
       description: Valore ventola quando è notte (base)
       default: "25"
-      selector:
-        select:
-          options:
-            - label: Low (25%)
-              value: "25"
-            - label: Medium (50%)
-              value: "50"
-            - label: High (75%)
-              value: "75"
-            - label: Max (100%)
-              value: "100"
-
-    night_boost_fan:
-      name: Velocità boost notte
-      description: Valore ventola quando è notte (boost)
-      default: "50"
       selector:
         select:
           options:
@@ -106,7 +74,7 @@ action:
             target:
               entity_id: !input vmc_entity
             data:
-              percentage: !input day_boost_fan
+              percentage: !input day_base_fan
       - conditions:
           - condition: or
             conditions:
@@ -119,4 +87,4 @@ action:
             target:
               entity_id: !input vmc_entity
             data:
-              percentage: !input night_boost_fan
+              percentage: !input night_base_fan
