@@ -2,6 +2,7 @@ blueprint:
   name: VMC Helty Flow - Cicli Boost Giorno/Notte
   description: >
     Gestisce cicli boost/day-night della VMC Helty Flow.
+    
     - Stato boost persistente tramite input_boolean
     - Intervalli e durata configurabili separatamente per giorno/notte
     - Trigger ogni 5 minuti
@@ -19,15 +20,7 @@ blueprint:
 
     boost_state:
       name: Helper stato boost (input_boolean)
-      description: "Indica se attualmente siamo in boost (persistente)"
-      selector:
-        entity:
-          domain: input_boolean
-
-    pause_switch:
-      name: Pausa automazione (input_boolean opzionale)
-      description: "Se ON, blocca cicli boost"
-      default: ""
+      description: "Indica se attualmente siamo in boost"
       selector:
         entity:
           domain: input_boolean
@@ -130,7 +123,6 @@ trigger:
 variables:
   vmc_entity: !input vmc_entity
   boost_state: !input boost_state
-  pause_switch: !input pause_switch
   day_start: !input day_start
   night_start: !input night_start
   day_boost_interval: !input day_boost_interval
@@ -151,39 +143,25 @@ action:
       is_day: "{{ day_start_time <= now_time < night_start_time }}"
 
       cur_interval_min: "{{ day_boost_interval if is_day else night_boost_interval }}"
-      cur_duration_min: "{{ day_boost_duration if is_day else night_boost_duration }}"
+      cur_boost_duration_min: "{{ day_boost_duration if is_day else night_boost_duration }}"
       cur_boost_pct: "{{ day_boost_fan if is_day else night_boost_fan }}"
       cur_base_pct: "{{ day_base_fan if is_day else night_base_fan }}"
       period_label: "{{ 'giorno' if is_day else 'notte' }}"
 
-      last_boost_ts: >
+      last_boost_change_ts: >
         {% set obj = states[boost_state] %}
         {{ as_timestamp(obj.last_changed) }}
 
-      seconds_since_last_boost: >
-        {% if last_boost_ts|int > 0 %}
-          {{ (as_timestamp(now()) - last_boost_ts) | int }}
+      seconds_since_last_boost_change: >
+        {% if last_boost_change_ts|int > 0 %}
+          {{ (as_timestamp(now()) - last_boost_change_ts) | int }}
         {% else %}
           999999
         {% endif %}
 
-      in_boost: "{{ is_state(boost_state,'on') }}"
-      ready_for_boost: "{{ not in_boost and seconds_since_last_boost >= (cur_interval_min|int)*60 }}"
-      in_boost_expired: >
-        {% if in_boost %}
-          {{ seconds_since_last_boost >= (cur_duration_min|int)*60 }}
-        {% else %}
-          false
-        {% endif %}
-
-  # Pausa attiva → skip
-  - condition: template
-    value_template: >
-      {% if pause_switch != '' %}
-        {{ is_state(pause_switch,'off') }}
-      {% else %}
-        true
-      {% endif %}
+      in_boost: "{{ is_state(boost_state, 'on') }}"
+      is_boost_to_start: "{{ not in_boost and seconds_since_last_boost_change >= (cur_interval_min|int)*60 }}"
+      is_boost_expired: "{{ in_boost and seconds_since_last_boost_change >= (cur_boost_duration_min|int)*60 }}"
 
   # Log debug
   - service: logbook.log
@@ -191,77 +169,77 @@ action:
       name: "VMC Helty"
       message: >
         [{{ timestamp_str }}] Debug {{ period_label }}:
-        in_boost={{ in_boost }}, in_boost_expired={{ in_boost_expired }},
-        ready_for_boost={{ ready_for_boost }},
-        last_boost_ts={{ last_boost_ts }},
-        now_less_last_boot={{ (as_timestamp(now()) - last_boost_ts) | int }},
-        seconds_since_last_boost={{ seconds_since_last_boost }},
-        
+        in_boost={{ in_boost }}, 
+        is_boost_expired={{ is_boost_expired }},
+        is_boost_to_start={{ is_boost_to_start }},
+        seconds_since_last_boost_change={{ seconds_since_last_boost_change }},
+        cur_interval_seconds= {{ (cur_interval_min|int)*60 }}
+        cur_boost_duration_seconds= {{ (cur_boost_duration_min|int)*60 }}
         fan_pct={{ state_attr(vmc_entity,'percentage') }}%
 
-  # 1) Se in boost ma è scaduto -> spegni boost e ripristina base
-  - condition: template
-    value_template: "{{ in_boost_expired }}"
-  - service: input_boolean.turn_off
-    target:
-      entity_id: "{{ boost_state }}"
-  - service: fan.set_percentage
-    target:
-      entity_id: "{{ vmc_entity }}"
-    data:
-      percentage: "{{ cur_base_pct }}"
-  - service: logbook.log
-    data:
-      name: "VMC Helty"
-      message: >
-        [{{ timestamp_str }}] ⏹️ Boost scaduto ({{ period_label }}) - durata {{ cur_duration_min }} min.
-        Ripristino velocità base {{ cur_base_pct }}%.
+  - choose:
+      # 1️ Se boost scaduto
+      - conditions:
+          - condition: template
+            value_template: "{{ is_boost_expired }}"
+        sequence:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: "{{ boost_state }}"
+          - service: fan.set_percentage
+            target:
+              entity_id: "{{ vmc_entity }}"
+            data:
+              percentage: "{{ cur_base_pct }}"
+          - service: logbook.log
+            data:
+              name: "VMC Helty"
+              message: >
+                [{{ timestamp_str }}] ⏹️ Boost scaduto ({{ period_label }}) - durata {{ cur_boost_duration_min }} min.
+                Ripristino velocità base {{ cur_base_pct }}%.
 
-  # 2) Se pronto per nuovo boost -> attiva boost (setta helper ON) e imposta boost
-  - condition: template
-    value_template: "{{ ready_for_boost }}"
-  - service: input_boolean.turn_on
-    target:
-      entity_id: "{{ boost_state }}"
-  - service: fan.set_percentage
-    target:
-      entity_id: "{{ vmc_entity }}"
-    data:
-      percentage: "{{ cur_boost_pct }}"
-  - service: logbook.log
-    data:
-      name: "VMC Helty"
-      message: >
-        [{{ timestamp_str }}] 🚀 Avvio nuovo boost ({{ period_label }}) → {{ cur_boost_pct }} %
-        (durata={{ cur_duration_min }} min; intervallo={{ cur_interval_min }} min)
+      # 2️ Se pronto per nuovo boost
+      - conditions:
+          - condition: template
+            value_template: "{{ is_boost_to_start }}"
+        sequence:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: "{{ boost_state }}"
+          - service: fan.set_percentage
+            target:
+              entity_id: "{{ vmc_entity }}"
+            data:
+              percentage: "{{ cur_boost_pct }}"
+          - service: logbook.log
+            data:
+              name: "VMC Helty"
+              message: >
+                [{{ timestamp_str }}] 🚀 Avvio nuovo boost ({{ period_label }}) - durata {{ cur_boost_duration_min }} min.
+                Impostata velocità {{ cur_boost_pct }} %.
 
-  # 3) Se già in boost e non scaduto -> mantieni boost
-  - condition: template
-    value_template: "{{ in_boost and not in_boost_expired }}"
-  - service: fan.set_percentage
-    target:
-      entity_id: "{{ vmc_entity }}"
-    data:
-      percentage: "{{ cur_boost_pct }}"
-  - service: logbook.log
-    data:
-      name: "VMC Helty"
-      message: >
-        [{{ timestamp_str }}] 🔄 Boost in corso ({{ period_label }}) → mantiene {{ cur_boost_pct }} %
+      # 3️ Se già in boost e non scaduto
+      - conditions:
+          - condition: template
+            value_template: "{{ in_boost and not is_boost_expired }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: "VMC Helty"
+              message: >
+                [{{ timestamp_str }}] 🔄 Boost in corso ({{ period_label }}) → mantiene {{ cur_boost_pct }} %
 
-  # 4) Default -> non in boost e non pronto -> assicurati base e helper OFF
-  - condition: template
-    value_template: "{{ not in_boost and not ready_for_boost }}"
-  - service: fan.set_percentage
-    target:
-      entity_id: "{{ vmc_entity }}"
-    data:
-      percentage: "{{ cur_base_pct }}"
-  - service: input_boolean.turn_off
-    target:
-      entity_id: "{{ boost_state }}"
-  - service: logbook.log
-    data:
-      name: "VMC Helty"
-      message: >
-        [{{ timestamp_str }}] ✅ Ventola a velocità base ({{ period_label }}) → {{ cur_base_pct }} %
+    default:
+      - service: fan.set_percentage
+        target:
+          entity_id: "{{ vmc_entity }}"
+        data:
+          percentage: "{{ cur_base_pct }}"
+      - service: input_boolean.turn_off
+        target:
+          entity_id: "{{ boost_state }}"
+      - service: logbook.log
+        data:
+          name: "VMC Helty"
+          message: >
+            [{{ timestamp_str }}] ✅ Ventola a velocità base ({{ period_label }}) → {{ cur_base_pct }} %
