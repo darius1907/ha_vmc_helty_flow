@@ -69,5 +69,51 @@
     "off": "Spento",
     "auto": "Automatico",
     "manual": "Manuale"
+  },
+  "editor": {
+    "device_selection": {
+      "title": "Selezione Dispositivo",
+      "device_label": "Dispositivo VMC",
+      "device_description": "Seleziona quale dispositivo VMC Helty Flow deve controllare questa card",
+      "choose_device": "Scegli Dispositivo VMC",
+      "card_name_label": "Nome Card",
+      "card_name_description": "Nome da visualizzare per questa card (opzionale)"
+    },
+    "sensor_configuration": {
+      "title": "Configurazione Sensori",
+      "temperature_label": "Sensore Temperatura",
+      "temperature_description": "Sensore personalizzato per la temperatura (opzionale)",
+      "humidity_label": "Sensore Umidità",
+      "humidity_description": "Sensore personalizzato per l'umidità (opzionale)",
+      "auto_sensor": "Sensore Automatico",
+      "current_value": "Valore Attuale",
+      "available": "Disponibile",
+      "unavailable": "Non Disponibile"
+    },
+    "room_volume": {
+      "title": "Volume Stanza",
+      "description": "Configurazione del volume della stanza per calcoli precisi del ricambio d'aria",
+      "volume_label": "Volume Stanza (m³)",
+      "volume_description": "Volume della stanza in metri cubi",
+      "calculator_title": "Calcolatore Volume",
+      "length": "Lunghezza (m)",
+      "width": "Larghezza (m)",
+      "height": "Altezza (m)",
+      "calculated_volume": "Volume Calcolato",
+      "use_calculated": "Usa Volume Calcolato",
+      "sync_with_device": "Sincronizza con Dispositivo"
+    },
+    "visibility_controls": {
+      "title": "Controlli Visibilità",
+      "show_lights": "Mostra Controlli Luci",
+      "show_timer": "Mostra Controlli Timer",
+      "description": "Configura quali controlli mostrare nella card"
+    },
+    "errors": {
+      "loading": "Caricamento dati Home Assistant...",
+      "no_entities": "Nessuna entità fan trovata. Assicurati che l'integrazione VMC Helty Flow sia in esecuzione e abbia creato le entità fan.",
+      "sync_failed": "Impossibile aggiornare il volume della stanza",
+      "sync_success": "Volume della stanza aggiornato con successo"
+    }
   }
 }

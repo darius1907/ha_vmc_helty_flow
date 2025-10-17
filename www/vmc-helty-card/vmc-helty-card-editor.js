@@ -28,6 +28,8 @@ class VmcHeltyCardEditor extends LitElement {
       hass: { type: Object },
       config: { type: Object },
       _vmcEntities: { type: Array, state: true },
+      _translations: { type: Object, state: true },
+      _language: { type: String, state: true }
     };
   }
 
@@ -36,6 +38,8 @@ class VmcHeltyCardEditor extends LitElement {
     this.config = {};
     this.hass = null;
     this._vmcEntities = [];
+    this._translations = {};
+    this._language = "en";
   }
 
   static get styles() {
@@ -128,12 +132,63 @@ class VmcHeltyCardEditor extends LitElement {
   setConfig(config) {
     this.config = { ...config };
     this._discoverEntities();
+    if (this.hass) {
+      this._loadTranslations();
+    }
+  }
+
+  // Translation methods
+  async _loadTranslations() {
+    try {
+      this._language = this.hass?.language || "en";
+
+      const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
+      const enTranslations = await enResponse.json();
+
+      let translations = enTranslations;
+      if (this._language !== "en") {
+        try {
+          const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
+          if (response.ok) {
+            const langTranslations = await response.json();
+            translations = { ...enTranslations, ...langTranslations };
+          }
+        } catch (e) {
+          console.warn(`Translations for ${this._language} not found, using English`);
+        }
+      }
+
+      this._translations = translations;
+      this.requestUpdate();
+    } catch (error) {
+      console.error("Failed to load translations:", error);
+    }
+  }
+
+  _t(key) {
+    const keys = key.split(".");
+    let translation = this._translations;
+
+    for (const k of keys) {
+      if (translation && typeof translation === "object" && k in translation) {
+        translation = translation[k];
+      } else {
+        return key;
+      }
+    }
+
+    return translation || key;
   }
 
   willUpdate(changedProps) {
     super.willUpdate(changedProps);
     if (changedProps.has('hass') && this.hass) {
       this._discoverEntities();
+
+      // Load translations when hass becomes available for the first time
+      if (!this._translations || Object.keys(this._translations).length === 0) {
+        this._loadTranslations();
+      }
     }
   }
   _discoverEntities() {
@@ -251,12 +306,12 @@ class VmcHeltyCardEditor extends LitElement {
       });
 
       // Show success notification
-      this._showNotification('Room volume updated successfully', 'success');
+      this._showNotification(this._t('editor.errors.sync_success'), 'success');
     } catch (error) {
       console.error('Failed to sync room volume with device:', error);
       // Show error notification
       this._showNotification(
-        `Failed to update room volume: ${error.message || 'Unknown error'}`,
+        `${this._t('editor.errors.sync_failed')}: ${error.message || 'Unknown error'}`,
         'error'
       );
     }
@@ -280,7 +335,7 @@ class VmcHeltyCardEditor extends LitElement {
       return html`
         <div class="error-message">
           <ha-icon icon="mdi:loading"></ha-icon>
-          <span>Loading Home Assistant data...</span>
+          <span>${this._t('editor.errors.loading')}</span>
         </div>
       `;
     }
@@ -288,15 +343,15 @@ class VmcHeltyCardEditor extends LitElement {
       <div class="config-section">
         <div class="section-title">
           <ha-icon icon="mdi:air-filter"></ha-icon>
-          Device Selection
+          ${this._t('editor.device_selection.title')}
         </div>
         <div class="form-group">
-          <label class="form-label">VMC Device</label>
+          <label class="form-label">${this._t('editor.device_selection.device_label')}</label>
           <div class="form-description">
-            Select which VMC Helty Flow device this card should control
+            ${this._t('editor.device_selection.device_description')}
           </div>
           <ha-select
-            .label=${"Choose VMC Device"}
+            .label=${this._t('editor.device_selection.choose_device')}
             .value=${this.config.entity || ""}
             .configValue=${"entity"}
             @selected=${this._valueChanged}
@@ -310,12 +365,12 @@ class VmcHeltyCardEditor extends LitElement {
           </ha-select>
         </div>
         <div class="form-group">
-          <label class="form-label">Card Name</label>
+          <label class="form-label">${this._t('editor.device_selection.card_name_label')}</label>
           <div class="form-description">
-            Display name for this card (optional)
+            ${this._t('editor.device_selection.card_name_description')}
           </div>
           <ha-textfield
-            .label=${"Card Name"}
+            .label=${this._t('editor.device_selection.card_name_label')}
             .value=${this.config.name || ""}
             .configValue=${"name"}
             @input=${this._valueChanged}
@@ -330,7 +385,7 @@ class VmcHeltyCardEditor extends LitElement {
       return html`
         <div class="error-message">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <span>No fan entities found. Please ensure your VMC Helty Flow integration is running and has created the fan entities.</span>
+          <span>${this._t('editor.errors.no_entities')}</span>
         </div>
       `;
     }
@@ -339,16 +394,16 @@ class VmcHeltyCardEditor extends LitElement {
       <div class="config-section">
         <div class="section-title">
           <ha-icon icon="mdi:air-filter"></ha-icon>
-          Device Selection
+          ${this._t('editor.device_selection.title')}
         </div>
 
         <div class="form-group">
-          <label class="form-label">VMC Device</label>
+          <label class="form-label">${this._t('editor.device_selection.device_label')}</label>
           <div class="form-description">
-            Select which VMC Helty Flow device this card should control
+            ${this._t('editor.device_selection.device_description')}
           </div>
           <ha-select
-            .label=${"Choose VMC Device"}
+            .label=${this._t('editor.device_selection.choose_device')}
             .value=${this.config.entity || ""}
             .configValue=${"entity"}
             @selected=${this._valueChanged}
@@ -363,12 +418,12 @@ class VmcHeltyCardEditor extends LitElement {
         </div>
 
         <div class="form-group">
-          <label class="form-label">Card Name</label>
+          <label class="form-label">${this._t('editor.device_selection.card_name_label')}</label>
           <div class="form-description">
-            Display name for this card (optional)
+            ${this._t('editor.device_selection.card_name_description')}
           </div>
           <ha-textfield
-            .label=${"Card Name"}
+            .label=${this._t('editor.device_selection.card_name_label')}
             .value=${this.config.name || ""}
             .configValue=${"name"}
             @input=${this._valueChanged}
