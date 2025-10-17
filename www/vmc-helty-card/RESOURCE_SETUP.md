@@ -10,7 +10,7 @@ Assicurati di copiare **TUTTI** i file nella cartella corretta:
 ├── vmc-helty-card-editor.js
 └── translations/
     ├── en.json
-    ├── it.json
+    ├── it.json (DEFAULT)
     ├── fr.json
     ├── de.json
     └── es.json
@@ -18,8 +18,8 @@ Assicurati di copiare **TUTTI** i file nella cartella corretta:
 
 ## ⚙️ Configurazione Risorse
 
-### Opzione 1: Solo File JS (Consigliata)
-Le traduzioni vengono caricate dinamicamente:
+### ✅ CONFIGURAZIONE CORRETTA
+Aggiungi SOLO i file JavaScript:
 
 ```yaml
 resources:
@@ -29,27 +29,18 @@ resources:
     type: module
 ```
 
-### Opzione 2: Con Traduzioni Esplicite
-Per garantire il pre-caricamento:
+### ⚠️ IMPORTANTE: NON Aggiungere i JSON alle Risorse
+I file di traduzione (.json) NON devono essere nelle risorse Lovelace perché:
+- ❌ Causano errori MIME type ("Refused to apply style... not a supported stylesheet MIME type")
+- ❌ Vengono caricati dinamicamente via JavaScript fetch()
+- ❌ Home Assistant interpreta erroneamente il tipo di file
 
-```yaml
-resources:
-  - url: /local/vmc-helty-card/vmc-helty-card.js
-    type: module
-  - url: /local/vmc-helty-card/vmc-helty-card-editor.js
-    type: module
-  # Translation files
-  - url: /local/vmc-helty-card/translations/en.json
-    type: json
-  - url: /local/vmc-helty-card/translations/it.json
-    type: json
-  - url: /local/vmc-helty-card/translations/fr.json
-    type: json
-  - url: /local/vmc-helty-card/translations/de.json
-    type: json
-  - url: /local/vmc-helty-card/translations/es.json
-    type: json
-```
+## 🇮🇹 Lingua Predefinita: Italiano
+
+- **Default**: Italiano (it.json)
+- **Fallback**: Inglese se italiano non disponibile
+- **Auto-detect**: Usa la lingua di Home Assistant se disponibile
+- **Lingue supportate**: IT, EN, FR, DE, ES
 
 ## 🔍 Verifica Installazione
 

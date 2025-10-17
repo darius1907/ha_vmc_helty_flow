@@ -24,18 +24,9 @@ resources:
     type: module
   - url: /local/vmc-helty-card/vmc-helty-card-editor.js
     type: module
-  # Translation files (loaded automatically)
-  - url: /local/vmc-helty-card/translations/en.json
-    type: json
-  - url: /local/vmc-helty-card/translations/it.json
-    type: json
-  - url: /local/vmc-helty-card/translations/fr.json
-    type: json
-  - url: /local/vmc-helty-card/translations/de.json
-    type: json
-  - url: /local/vmc-helty-card/translations/es.json
-    type: json
 ```
+
+**Importante**: I file di traduzione vengono caricati automaticamente e NON devono essere aggiunti alle risorse.
 
 ### 3. Configurazione con Editor Visuale
 

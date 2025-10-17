@@ -79,18 +79,9 @@ This card is **100% compliant** with Home Assistant development guidelines:
       type: module
     - url: /local/vmc-helty-card/vmc-helty-advanced-sensors-card.js
       type: module
-    # Translation files (loaded dynamically)
-    - url: /local/vmc-helty-card/translations/en.json
-      type: json
-    - url: /local/vmc-helty-card/translations/it.json
-      type: json
-    - url: /local/vmc-helty-card/translations/fr.json
-      type: json
-    - url: /local/vmc-helty-card/translations/de.json
-      type: json
-    - url: /local/vmc-helty-card/translations/es.json
-      type: json
   ```
+
+**Note**: Translation files are loaded automatically and should NOT be added to resources.
 
 3. **Add the card** using the visual editor or YAML
 
