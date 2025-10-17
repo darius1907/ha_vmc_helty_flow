@@ -383,8 +383,6 @@ class VmcHeltyCard extends LitElement {
 
         /* Compact section headers */
         .section-header {
-          padding: 0px 0 4px;
-          margin: 0px 0 4px;
           font-size: var(--mdc-typography-body1-font-size, 16px);
           font-weight: var(--ha-font-weight-medium);
           color: var(--primary-text-color);
@@ -412,6 +410,7 @@ class VmcHeltyCard extends LitElement {
           --control-slider-border-radius: 20px;
           --control-slider-color: var(--primary-color);
           --control-slider-background: var(--disabled-color);
+          padding-bottom: 4px;
         }
 
         /* Chip set styling */
@@ -481,6 +480,7 @@ class VmcHeltyCard extends LitElement {
           color: var(--secondary-text-color);
           font-size: var(--mdc-typography-caption-font-size, 12px);
           line-height: 1.4;
+          margin-right: 8px;
         }
 
         /* Fan speed control row */
