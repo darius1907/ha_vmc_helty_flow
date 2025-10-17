@@ -439,6 +439,16 @@ class VmcHeltyCard extends LitElement {
           padding: 4px 0;
         }
 
+        /* Control row layout for toggles */
+        .control-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid var(--divider-color, #e8e8e8);
+          min-height: 48px;
+        }
+
         .control-row:last-child {
           border-bottom: none;
         }
@@ -446,6 +456,12 @@ class VmcHeltyCard extends LitElement {
         .control-info {
           flex: 1;
           margin-right: 16px;
+          min-width: 0; /* Allow text truncation if needed */
+        }
+
+        .control-row ha-entity-toggle {
+          flex-shrink: 0;
+          min-width: 48px;
         }
 
         .control-title {
@@ -473,8 +489,8 @@ class VmcHeltyCard extends LitElement {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 8px 0;
-          margin-top: 8px;
+          padding: 0px 0;
+          margin-top: 0px;
         }
 
         /* Error and loading states */
