@@ -2,7 +2,7 @@ blueprint:
   name: VMC Helty Flow - Automazione Boost Giorno/Notte
   description: >
     Gestisce automaticamente la velocità della ventola della VMC Helty Flow
-    con cicli separati per il giorno e la notte.    
+    con cicli separati per il giorno e la notte.
   domain: automation
   input:
     vmc_entity:

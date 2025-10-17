@@ -105,7 +105,7 @@ async def async_setup_entry(
         coordinator = hass.data[DOMAIN][config_entry.entry_id]
         _LOGGER.debug("Retrieved coordinator: %s", coordinator)
     except KeyError:
-        _LOGGER.error(
+        _LOGGER.exception(
             "Coordinator not found for entry %s in hass.data[%s]",
             config_entry.entry_id,
             DOMAIN,

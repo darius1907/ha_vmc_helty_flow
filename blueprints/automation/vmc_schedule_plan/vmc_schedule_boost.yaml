@@ -2,7 +2,7 @@ blueprint:
   name: VMC Helty Flow - Cicli Boost Giorno/Notte
   description: >
     Gestisce cicli boost/day-night della VMC Helty Flow.
-    
+
     - Stato boost persistente tramite input_boolean
     - Intervalli e durata configurabili separatamente per giorno/notte
     - Trigger ogni 5 minuti
@@ -169,7 +169,7 @@ action:
       name: "VMC Helty"
       message: >
         [{{ timestamp_str }}] Debug {{ period_label }}:
-        in_boost={{ in_boost }}, 
+        in_boost={{ in_boost }},
         is_boost_expired={{ is_boost_expired }},
         is_boost_to_start={{ is_boost_to_start }},
         seconds_since_last_boost_change={{ seconds_since_last_boost_change }},
