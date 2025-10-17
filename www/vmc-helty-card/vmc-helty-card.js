@@ -110,35 +110,41 @@ class VmcHeltyCard extends LitElement {
         </ha-chip-set>
       </ha-settings-row>
 
-      <!-- Controlli dispositivo -->
+      <!-- Controlli dispositivo come row semplici -->
       <div class="section-header">
         <ha-icon icon="mdi:cog"></ha-icon>
         ${this._t("controls.title")}
       </div>
-      <ha-settings-row>
-        <div slot="heading">
-          <ha-icon icon="mdi:led-outline"></ha-icon>
-          ${this._t("controls.panel_led.title")}
+
+      <div class="control-row">
+        <div class="control-info">
+          <div class="control-title">
+            <ha-icon icon="mdi:led-outline"></ha-icon>
+            ${this._t("controls.panel_led.title")}
+          </div>
+          <div class="control-description">${this._t("controls.panel_led.description")}</div>
         </div>
-        <div slot="description">${this._t("controls.panel_led.description")}</div>
         <ha-entity-toggle
           .hass=${this.hass}
           .stateObj=${panelLedState}
           ?disabled=${this._loading || !panelLedState || panelLedState.state === 'unavailable'}
         ></ha-entity-toggle>
-      </ha-settings-row>
-      <ha-settings-row>
-        <div slot="heading">
-          <ha-icon icon="mdi:hub-outline"></ha-icon>
-          ${this._t("controls.sensors.title")}
+      </div>
+
+      <div class="control-row">
+        <div class="control-info">
+          <div class="control-title">
+            <ha-icon icon="mdi:hub-outline"></ha-icon>
+            ${this._t("controls.sensors.title")}
+          </div>
+          <div class="control-description">${this._t("controls.sensors.description")}</div>
         </div>
-        <div slot="description">${this._t("controls.sensors.description")}</div>
         <ha-entity-toggle
           .hass=${this.hass}
           .stateObj=${sensorsState}
           ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
         ></ha-entity-toggle>
-      </ha-settings-row>
+      </div>
     `;
   }
 
@@ -429,24 +435,56 @@ class VmcHeltyCard extends LitElement {
           --state-inactive-color: var(--state-icon-color);
         }
 
-        /* Settings row heading icons */
-        ha-settings-row div[slot="heading"] {
+        /* Settings row styling */
+        ha-settings-row span[slot="heading"] {
+          font-weight: var(--ha-font-weight-medium);
+          color: var(--primary-text-color);
+          display: flex;
+          align-items: center;
+        }
+
+        ha-settings-row span[slot="description"] {
+          color: var(--secondary-text-color);
+          font-size: var(--ha-font-size-sm);
+          margin-top: 4px;
+        }
+
+        /* Custom control rows */
+        .control-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 0;
+          border-bottom: 1px solid var(--divider-color);
+        }
+
+        .control-row:last-child {
+          border-bottom: none;
+        }
+
+        .control-info {
+          flex: 1;
+          margin-right: 16px;
+        }
+
+        .control-title {
           display: flex;
           align-items: center;
           font-weight: var(--ha-font-weight-medium);
           color: var(--primary-text-color);
+          margin-bottom: 4px;
         }
 
-        ha-settings-row div[slot="heading"] ha-icon {
+        .control-title ha-icon {
           margin-right: 8px;
           --mdc-icon-size: 18px;
           color: var(--primary-color);
         }
 
-        ha-settings-row div[slot="description"] {
+        .control-description {
           color: var(--secondary-text-color);
           font-size: var(--ha-font-size-sm);
-          margin-top: 4px;
+          line-height: 1.4;
         }
 
         /* Error and loading states */
