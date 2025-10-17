@@ -74,9 +74,22 @@ This card is **100% compliant** with Home Assistant development guidelines:
   ```yaml
   resources:
     - url: /local/vmc-helty-card/vmc-helty-card.js
-     type: module
+      type: module
+    - url: /local/vmc-helty-card/vmc-helty-card-editor.js
+      type: module
     - url: /local/vmc-helty-card/vmc-helty-advanced-sensors-card.js
-     type: module
+      type: module
+    # Translation files (loaded dynamically)
+    - url: /local/vmc-helty-card/translations/en.json
+      type: json
+    - url: /local/vmc-helty-card/translations/it.json
+      type: json
+    - url: /local/vmc-helty-card/translations/fr.json
+      type: json
+    - url: /local/vmc-helty-card/translations/de.json
+      type: json
+    - url: /local/vmc-helty-card/translations/es.json
+      type: json
   ```
 
 3. **Add the card** using the visual editor or YAML

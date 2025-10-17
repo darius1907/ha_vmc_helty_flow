@@ -217,27 +217,53 @@ class VmcHeltyCard extends LitElement {
 
       console.debug(`Loading translations for language: ${this._language}`);
 
-      // Always load English as base
-      const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
-      if (!enResponse.ok) {
-        console.error("Failed to load English translations");
+      // Try multiple paths for loading translations
+      const possiblePaths = [
+        `/local/vmc-helty-card/translations/en.json`,
+        `/hacsfiles/vmc_helty_flow/www/vmc-helty-card/translations/en.json`,
+        `./translations/en.json`
+      ];
+
+      let enTranslations = null;
+      let successfulPath = null;
+
+      // Try each path until one works
+      for (const path of possiblePaths) {
+        try {
+          console.debug(`Trying to load English translations from: ${path}`);
+          const response = await fetch(path);
+          if (response.ok) {
+            enTranslations = await response.json();
+            successfulPath = path.replace('en.json', '');
+            console.debug(`Successfully loaded English translations from: ${path}`, enTranslations);
+            break;
+          } else {
+            console.debug(`Failed to load from ${path}: ${response.status} ${response.statusText}`);
+          }
+        } catch (e) {
+          console.debug(`Error loading from ${path}:`, e.message);
+        }
+      }
+
+      if (!enTranslations) {
+        console.error("Failed to load English translations from all attempted paths");
         return;
       }
-      const enTranslations = await enResponse.json();
-      console.debug("English translations loaded:", enTranslations);
 
       let translations = enTranslations;
 
       // Load language-specific translations if different from English
       if (this._language !== "en") {
         try {
-          const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
+          const langPath = `${successfulPath}${this._language}.json`;
+          console.debug(`Loading language-specific translations from: ${langPath}`);
+          const response = await fetch(langPath);
           if (response.ok) {
             const langTranslations = await response.json();
             translations = { ...enTranslations, ...langTranslations };
             console.debug(`Loaded translations for language: ${this._language}`, langTranslations);
           } else {
-            console.warn(`Translation file for ${this._language} not found, using English fallback`);
+            console.warn(`Translation file for ${this._language} not found at ${langPath}, using English fallback`);
           }
         } catch (e) {
           console.warn(`Failed to load translations for ${this._language}, using English fallback:`, e.message);
