@@ -215,6 +215,8 @@ class VmcHeltyCard extends LitElement {
       this._translationsLoading = true;
       this._language = this.hass?.language || "en";
 
+      console.debug(`Loading translations for language: ${this._language}`);
+
       // Always load English as base
       const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
       if (!enResponse.ok) {
@@ -222,6 +224,7 @@ class VmcHeltyCard extends LitElement {
         return;
       }
       const enTranslations = await enResponse.json();
+      console.debug("English translations loaded:", enTranslations);
 
       let translations = enTranslations;
 
@@ -232,7 +235,7 @@ class VmcHeltyCard extends LitElement {
           if (response.ok) {
             const langTranslations = await response.json();
             translations = { ...enTranslations, ...langTranslations };
-            console.debug(`Loaded translations for language: ${this._language}`);
+            console.debug(`Loaded translations for language: ${this._language}`, langTranslations);
           } else {
             console.warn(`Translation file for ${this._language} not found, using English fallback`);
           }
@@ -242,6 +245,7 @@ class VmcHeltyCard extends LitElement {
       }
 
       this._translations = translations;
+      console.debug("Final translations object:", this._translations);
       this.requestUpdate();
     } catch (error) {
       console.error("Failed to load translations:", error);
@@ -257,8 +261,11 @@ class VmcHeltyCard extends LitElement {
 
     // If translations not loaded yet, return the key
     if (!this._translations || Object.keys(this._translations).length === 0) {
+      console.debug(`Translations not loaded yet, returning key: ${key}`);
       return key;
     }
+
+    console.debug(`Translating key: ${key}`, this._translations);
 
     const keys = key.split(".");
     let translation = this._translations;
@@ -268,12 +275,15 @@ class VmcHeltyCard extends LitElement {
         translation = translation[k];
       } else {
         // Return the key if translation not found
+        console.debug(`Translation not found for key: ${key}, returning key`);
         return key;
       }
     }
 
     // Return the translation if found and is a string, otherwise return the key
-    return (typeof translation === 'string') ? translation : key;
+    const result = (typeof translation === 'string') ? translation : key;
+    console.debug(`Translation result for ${key}: ${result}`);
+    return result;
   }
 
   static get styles() {
@@ -507,7 +517,13 @@ class VmcHeltyCard extends LitElement {
       return this._renderError();
     }
 
+    // Show loading if translations are not loaded yet or card is loading
     if (this._loading && !this._getVmcState()) {
+      return this._renderLoading();
+    }
+
+    // Wait for translations to be loaded before rendering content
+    if (!this._translations || Object.keys(this._translations).length === 0) {
       return this._renderLoading();
     }
 
