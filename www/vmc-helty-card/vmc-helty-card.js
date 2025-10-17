@@ -444,7 +444,6 @@ class VmcHeltyCard extends LitElement {
           align-items: center;
           justify-content: space-between;
           padding: 0px 6px;
-          min-height: 48px;
         }
 
         .control-row:last-child {
