@@ -237,7 +237,6 @@ class TestVmcHeltyComfortIndexSensor:
         sensor = VmcHeltyComfortIndexSensor(mock_coordinator)
 
         test_cases = [
-            # (temp, humidity, expected_category_range)
             (22.0, 50.0, "Eccellente"),  # Condizioni ottimali
             (20.0, 45.0, "Eccellente"),  # Ancora ottime
             (19.0, 40.0, "Buono"),  # Buone condizioni
@@ -248,17 +247,21 @@ class TestVmcHeltyComfortIndexSensor:
             (35.0, 90.0, "Scarso"),  # Condizioni scarse
         ]
 
-        for temp, humidity, expected_category in test_cases:
+        for temp, humidity, _expected_category in test_cases:
             temp_value = int(temp * 10)  # Decimi di grado
             humidity_value = int(humidity * 10)  # Decimi di %
             mock_coordinator.data = {
-                "sensors": f"VMGI,{temp_value},150,{humidity_value},800,0,0,0,0,0,0,150,0,0,0",
+                "sensors": (
+                    f"VMGI,{temp_value},150,{humidity_value},"
+                    "800,0,0,0,0,0,0,150,0,0,0"
+                ),
             }
 
             attributes = sensor.extra_state_attributes
             assert attributes is not None
             assert "comfort_category" in attributes
-            # Note: Controlliamo che la categoria sia ragionevole, non necessariamente esatta
+            # Note: Controlliamo che la categoria sia ragionevole,
+            # non necessariamente esatta
             # dato che i calcoli sono complessi
             assert attributes["comfort_category"] in [
                 "Eccellente",

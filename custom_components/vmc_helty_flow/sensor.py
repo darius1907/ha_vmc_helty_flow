@@ -227,7 +227,7 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
                 "temperature_internal": (1, lambda x: float(x) / 10),
                 "temperature_external": (2, lambda x: float(x) / 10),
                 "humidity": (3, lambda x: float(x) / 10),
-                "co2": (4, lambda x: int(x)),
+                "co2": (4, int),
                 "voc": (
                     11,  # VOC is at position 11 based on real data analysis
                     lambda x: int(x) if int(x) > 0 else None,  # VOC = 0 means no data
@@ -512,8 +512,7 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
             # Pressione vapore reale (hPa)
             e = (humidity / 100.0) * es
 
-            # Umidità assoluta (g/m³) usando formula termodinamica
-            # Formula: AH = (e * molar_mass) / (gas_constant * temp_kelvin)
+            # Umidità assoluta (g/m³) usando formula termodinamica Magnus-Tetens
             molar_mass = 18.016  # g/mol (peso molecolare acqua)
             gas_constant = 0.08314  # L·hPa/(mol·K)
             temp_kelvin = temp_internal + 273.15  # K
@@ -1007,7 +1006,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             # Volume ambiente dalla configurazione del dispositivo
             room_volume = self.coordinator.room_volume  # m³
 
-            # Calcola tempo di ricambio: Volume / Portata * 60 (per convertire in minuti)
+            # Calcola tempo di ricambio: Volume / Portata * 60 (conversione minuti)
             exchange_time = (room_volume / airflow) * 60
 
             return round(exchange_time, 1)
@@ -1103,7 +1102,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
 class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
     """Sensore per ricambi d'aria giornalieri basato sulla velocità della ventola."""
 
-    def __init__(self, coordinator: VmcHeltyCoordinator, device_id: str) -> None:
+    def __init__(self, coordinator: VmcHeltyCoordinator, _device_id: str) -> None:
         """Inizializza il sensore dei ricambi d'aria giornalieri."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.name_slug}_daily_air_changes"
@@ -1197,7 +1196,10 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
         if daily_changes >= DAILY_AIR_CHANGES_EXCELLENT_MIN:
             return "Ricambio d'aria eccellente, continua così"
         if daily_changes >= DAILY_AIR_CHANGES_GOOD_MIN:
-            return "Ricambio d'aria buono, eventualmente aumenta ventilazione nelle ore di punta"
+            return (
+                "Ricambio d'aria buono, eventualmente aumenta ventilazione "
+                "nelle ore di punta"
+            )
         if daily_changes >= DAILY_AIR_CHANGES_ADEQUATE_MIN:
             return "Ricambio adeguato, considera di aumentare la velocità ventola"
         if not self.coordinator.data:
@@ -1213,8 +1215,14 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
                     fan_speed = FANSPEED_MAPPING.get(fan_speed_raw, 1)
 
                     if fan_speed < FAN_SPEED_MAX_NORMAL:
-                        return f"Ricambio insufficiente, aumentare velocità da {fan_speed} a 3-4"
-                    return "Ricambio insufficiente anche a velocità massima, verificare impianto"
+                        return (
+                            f"Ricambio insufficiente, aumentare velocità "
+                            f"da {fan_speed} a 3-4"
+                        )
+                    return (
+                        "Ricambio insufficiente anche a velocità massima, "
+                        "verificare impianto"
+                    )
             except (ValueError, IndexError):
                 pass
         return "Errore nel calcolo, verificare stato ventola"

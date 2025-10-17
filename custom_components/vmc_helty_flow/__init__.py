@@ -188,9 +188,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             await coordinator.async_request_refresh()
 
         except Exception as err:
-            _LOGGER.exception(
-                "Failed to set special mode %s for %s: %s", mode, entity_id, err
-            )
+            _LOGGER.exception("Failed to set special mode %s for %s", mode, entity_id)
             raise HomeAssistantError(
                 f"Failed to set special mode {mode}: {err}"
             ) from err
