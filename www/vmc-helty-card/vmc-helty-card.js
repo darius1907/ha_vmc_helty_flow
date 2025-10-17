@@ -92,7 +92,7 @@ class VmcHeltyCard extends LitElement {
       <div class="card-header">
         <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:cog-clockwise"></ha-icon>
-          Modalità Speciali
+          ${this._t("modes.special_modes.title")}
         </ha-heading-badge>
       </div>
       <ha-settings-row>
@@ -115,7 +115,7 @@ class VmcHeltyCard extends LitElement {
       <div class="card-header">
         <ha-heading-badge type="text">
           <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
-          Controlli Dispositivo
+          ${this._t("controls.title")}
         </ha-heading-badge>
       </div>
       <ha-settings-row>
@@ -160,12 +160,12 @@ class VmcHeltyCard extends LitElement {
         mode: mode.key,
       });
       fireEvent(this, "hass-notification", {
-        message: `Modalità impostata: ${mode.label}`,
+        message: `${this._t("events.title")}: ${mode.label}`,
       });
       if ("vibrate" in navigator) navigator.vibrate(40);
     } catch (e) {
       fireEvent(this, "hass-notification", {
-        message: `Errore: ${e.message}`,
+        message: `${this._t("events.error")}: ${e.message}`,
       });
     } finally {
       this._loading = false;
@@ -192,7 +192,7 @@ class VmcHeltyCard extends LitElement {
     this._entityStates = {};
     this._entityIds = [];
     this._translations = {};
-    this._language = "en";
+    this._language = "it";
   }
 
   /**
@@ -213,13 +213,13 @@ class VmcHeltyCard extends LitElement {
 
   async _loadTranslations() {
     try {
-      this._language = this.hass?.language || "en";
+      this._language = this.hass?.language || "it";
 
       const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
       const enTranslations = await enResponse.json();
 
       let translations = enTranslations;
-      if (this._language !== "en") {
+      if (this._language !== "it") {
         try {
           const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
           if (response.ok) {
@@ -235,46 +235,10 @@ class VmcHeltyCard extends LitElement {
       this.requestUpdate();
     } catch (error) {
       console.error("Failed to load translations:", error);
-      this._translations = this._getDefaultTranslations();
     }
-  }
-
-  _getDefaultTranslations() {
-    return {
-      modes: {
-        hyperventilation: "Hyperventilation",
-        night_mode: "Night Mode",
-        free_cooling: "Free Cooling"
-      },
-      fan_speeds: {
-        off: "Off",
-        low: "Low",
-        medium: "Medium",
-        high: "High",
-        max: "Maximum"
-      },
-      controls: {
-        panel_led: {
-          title: "Panel LED",
-          description: "Front panel LED control"
-        },
-        sensors: {
-          title: "Sensors",
-          description: "Environmental sensors activation"
-        },
-        fan_speed: {
-          description: "Set ventilation speed"
-        }
-      }
-    };
   }
 
   _t(key) {
-    // Fallback if translations are not loaded yet
-    if (!this._translations || Object.keys(this._translations).length === 0) {
-      this._translations = this._getDefaultTranslations();
-    }
-
     const keys = key.split(".");
     let translation = this._translations;
 
@@ -288,13 +252,14 @@ class VmcHeltyCard extends LitElement {
 
     return translation || key;
   }
+
   async callService(domain, service, data) {
     if (!this.hass) throw new Error('Hass object non disponibile');
     try {
       await this.hass.callService(domain, service, data);
     } catch (e) {
       fireEvent(this, "hass-notification", {
-        message: `Errore chiamata servizio ${domain}.${service}: ${e.message}`
+        message: `${this._t("events.error-service")} ${domain}.${service}: ${e.message}`
       });
       throw e;
     }
@@ -457,16 +422,6 @@ class VmcHeltyCard extends LitElement {
       .slice(0, 100);
   }
 
-  _validateRoomVolume(volume) {
-    const numVolume = parseFloat(volume);
-
-    if (isNaN(numVolume) || numVolume < 1 || numVolume > 10000) {
-      return 60; // Default room volume - should match DEFAULT_ROOM_VOLUME in Python const.py
-    }
-
-    return Math.round(numVolume * 10) / 10;
-  }
-
   _setupEntityReferences() {
     const entities = new Set();
 
@@ -549,7 +504,7 @@ class VmcHeltyCard extends LitElement {
         percentage: speed * 25,
       });
       fireEvent(this, "hass-notification", {
-        message: `Velocità impostata: ${speed * 25}%`,
+        message: `${this._t("events.speed-set")}: ${speed * 25}%`,
       });
       // Evidenzia temporaneamente il chip attivo
       this._lastSpeedSet = speed;
@@ -557,7 +512,7 @@ class VmcHeltyCard extends LitElement {
       if ("vibrate" in navigator) navigator.vibrate(40);
     } catch (e) {
       fireEvent(this, "hass-notification", {
-        message: `Errore: ${e.message}`,
+        message: `${this._t("events.error")}: ${e.message}`,
       });
     } finally {
       this._loading = false;
@@ -584,7 +539,7 @@ class VmcHeltyCard extends LitElement {
 
     } catch (error) {
       console.error("Error toggling switch:", error);
-      this._error = `Failed to toggle switch: ${error.message}`;
+      this._error = `${this._t("events.error")}: ${error.message}`;
     } finally {
       this._loading = false;
     }
@@ -610,7 +565,7 @@ class VmcHeltyCard extends LitElement {
 
     } catch (error) {
       console.error("Error toggling light:", error);
-      this._error = `Failed to toggle light: ${error.message}`;
+      this._error = `${this._t("events.error")}: ${error.message}`;
     } finally {
       this._loading = false;
     }
@@ -636,118 +591,10 @@ class VmcHeltyCard extends LitElement {
 
     } catch (error) {
       console.error("Error setting light brightness:", error);
-      this._error = `Failed to set light brightness: ${error.message}`;
+      this._error = `${this._t("events.error")}: ${error.message}`;
     } finally {
       this._loading = false;
     }
-  }
-
-  // Calculation methods
-  _calculateDewPoint(temp, humidity) {
-    if (temp == null || humidity == null || humidity <= 0) return null;
-
-    const a = 17.27;
-    const b = 237.7;
-
-    const alpha = ((a * temp) / (b + temp)) + Math.log(humidity / 100.0);
-    return (b * alpha) / (a - alpha);
-  }
-
-  _calculateComfortIndex(temp, humidity) {
-    if (temp == null || humidity == null) return null;
-
-    const tempComfort = this._calculateTemperatureComfort(temp);
-    const humidityComfort = this._calculateHumidityComfort(humidity);
-
-    return Math.round((tempComfort * 0.6 + humidityComfort * 0.4) * 100);
-  }
-
-  _calculateTemperatureComfort(temp) {
-    if (temp >= 20 && temp <= 24) return 1.0;
-    if (temp >= 18 && temp < 20) return 0.5 + (temp - 18) * 0.25;
-    if (temp > 24 && temp <= 26) return 1.0 - (temp - 24) * 0.25;
-    if (temp >= 16 && temp < 18) return 0.2 + (temp - 16) * 0.15;
-    if (temp > 26 && temp <= 28) return 0.5 - (temp - 26) * 0.15;
-    return Math.max(0.0, 0.2 - Math.abs(temp - 22) * 0.02);
-  }
-
-  _calculateHumidityComfort(humidity) {
-    if (humidity >= 40 && humidity <= 60) return 1.0;
-    if (humidity >= 30 && humidity < 40) return 0.5 + (humidity - 30) * 0.05;
-    if (humidity > 60 && humidity <= 70) return 1.0 - (humidity - 60) * 0.05;
-    if (humidity >= 25 && humidity < 30) return 0.2 + (humidity - 25) * 0.06;
-    if (humidity > 70 && humidity <= 80) return 0.5 - (humidity - 70) * 0.03;
-    return Math.max(0.0, 0.2 - Math.abs(humidity - 50) * 0.005);
-  }
-
-  _calculateAirExchangeTime() {
-    const vmcState = this._getVmcState();
-    if (!vmcState || vmcState.state === 'off') return null;
-
-    const percentage = parseFloat(vmcState.attributes.percentage || 0);
-    const speed = Math.round(percentage / 25); // Convert percentage to speed (0-4)
-
-    const airflowRates = {0: 0, 1: 10, 2: 17, 3: 26, 4: 37}; // m³/h
-    const airflow = airflowRates[speed] || 0;
-
-    if (airflow === 0) return null;
-
-    const roomVolume = this.config.room_volume || 60; // Fallback matches DEFAULT_ROOM_VOLUME
-    return Math.round((roomVolume / airflow) * 60 * 10) / 10; // minutes
-  }
-
-    _getComfortLevel(comfortIndex) {
-    if (comfortIndex >= 80) return 'excellent';
-    if (comfortIndex >= 60) return 'good';
-    if (comfortIndex >= 40) return 'fair';
-    return 'poor';
-  }
-
-  _getDewPointLevel(dewPoint) {
-    if (dewPoint < 10) return 'excellent'; // Molto secco
-    if (dewPoint < 13) return 'good';      // Secco
-    if (dewPoint < 16) return 'fair';      // Confortevole
-    if (dewPoint < 18) return 'good';      // Buono
-    if (dewPoint < 21) return 'fair';      // Accettabile
-    if (dewPoint < 24) return 'poor';      // Umido
-    return 'poor';                         // Molto umido
-  }
-
-  _getHumidityLevel(absoluteHumidity) {
-    if (absoluteHumidity < 7) return 'poor';      // Troppo secco
-    if (absoluteHumidity < 9) return 'fair';      // Secco
-    if (absoluteHumidity < 12) return 'excellent'; // Ottimale
-    if (absoluteHumidity < 15) return 'good';      // Buono
-    return 'poor';                                 // Troppo umido
-  }
-
-  _formatTimestamp(timestamp) {
-    if (!timestamp) return 'N/A';
-
-    try {
-      const date = new Date(timestamp);
-      const now = new Date();
-      const diffMs = now - date;
-      const diffMins = Math.floor(diffMs / 60000);
-
-      if (diffMins < 1) return 'Ora';
-      if (diffMins < 60) return `${diffMins} min fa`;
-      if (diffMins < 1440) return `${Math.floor(diffMins / 60)} ore fa`;
-      return date.toLocaleDateString('it-IT');
-    } catch (e) {
-      return timestamp;
-    }
-  }
-
-  _formatSensorValue(value, unit) {
-    if (value == null || value === undefined) return '--';
-
-    if (typeof value === 'number') {
-      if (unit === '°C' || unit === 'min') return value.toFixed(1);
-      if (unit === '%' || unit === 'ppm' || unit === 'ppb') return Math.round(value);
-    }
-
-    return value.toString();
   }
 
   // Render methods
@@ -795,7 +642,7 @@ class VmcHeltyCard extends LitElement {
     return html`
       <div class="loading-message">
         <ha-icon icon="mdi:loading" class="spinning"></ha-icon>
-        <span>Loading VMC data...</span>
+        <span>${this._t("card.loading")}</span>
       </div>
     `;
   }
@@ -825,7 +672,7 @@ class VmcHeltyCard extends LitElement {
         <span slot="heading">
           <ha-heading-badge type="text">
             <ha-icon slot="icon" icon="mdi:fan"></ha-icon>
-            Velocità Ventilazione
+            ${this._t("controls.fan_speed.title")}
           </ha-heading-badge>
         </span>
         <span slot="description">${this._t("controls.fan_speed.description")}</span>
@@ -869,8 +716,7 @@ class VmcHeltyCard extends LitElement {
         await this._setFanSpeed(step);
         success = true;
       } catch (err) {
-        let msg = "Errore: impossibile impostare la velocità.";
-        if (err && err.message) msg += ` (${err.message})`;
+        let msg = `${this._t("events.error")}: ${err.message}`;
         fireEvent(this, "hass-notification", { message: msg });
       } finally {
         this._loading = false;
@@ -898,23 +744,6 @@ class VmcHeltyCard extends LitElement {
 
   static getConfigElement() {
     return document.createElement("vmc-helty-card-editor");
-  }
-
-  static getStubConfig() {
-    return {
-      entity: "",
-      name: "VMC Helty Flow",
-      room_volume: 60, // Should match DEFAULT_ROOM_VOLUME in Python const.py
-      show_temperature: true,
-      show_humidity: true,
-      show_co2: true,
-      show_voc: false,
-      show_advanced: true,
-      show_lights: true,
-      show_timer: true,
-      enable_comfort_calculations: true,
-      enable_air_exchange: true
-    };
   }
 
   setConfig(config) {

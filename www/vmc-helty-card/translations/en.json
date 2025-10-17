@@ -1,10 +1,19 @@
 {
+  "events": {
+    "title": "Mode set",
+    "error": "Error",
+    "error-service": "Service call error",
+    "speed-set": "Speed set"
+  },
   "card": {
     "title": "VMC Helty Flow Control",
     "loading": "Loading...",
     "unavailable": "Unavailable"
   },
   "modes": {
+    "special_modes": {
+      "title": "Special Modes"
+    },
     "hyperventilation": "Hyperventilation",
     "night_mode": "Night Mode",
     "free_cooling": "Free Cooling"
@@ -17,6 +26,7 @@
     "max": "Maximum"
   },
   "controls": {
+    "title": "Device Controls",
     "panel_led": {
       "title": "Panel LED",
       "description": "Front panel LED control"
@@ -26,6 +36,7 @@
       "description": "Environmental sensors activation"
     },
     "fan_speed": {
+      "title": "Ventilation Speed",
       "description": "Set ventilation speed"
     },
     "lights": {
