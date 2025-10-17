@@ -116,11 +116,11 @@ class VmcHeltyCard extends LitElement {
         ${this._t("controls.title")}
       </div>
       <ha-settings-row>
-        <span slot="heading">
+        <div slot="heading">
           <ha-icon icon="mdi:led-outline"></ha-icon>
           ${this._t("controls.panel_led.title")}
-        </span>
-        <span slot="description">${this._t("controls.panel_led.description")}</span>
+        </div>
+        <div slot="description">${this._t("controls.panel_led.description")}</div>
         <ha-entity-toggle
           .hass=${this.hass}
           .stateObj=${panelLedState}
@@ -128,11 +128,11 @@ class VmcHeltyCard extends LitElement {
         ></ha-entity-toggle>
       </ha-settings-row>
       <ha-settings-row>
-        <span slot="heading">
+        <div slot="heading">
           <ha-icon icon="mdi:hub-outline"></ha-icon>
           ${this._t("controls.sensors.title")}
-        </span>
-        <span slot="description">${this._t("controls.sensors.description")}</span>
+        </div>
+        <div slot="description">${this._t("controls.sensors.description")}</div>
         <ha-entity-toggle
           .hass=${this.hass}
           .stateObj=${sensorsState}
@@ -430,10 +430,23 @@ class VmcHeltyCard extends LitElement {
         }
 
         /* Settings row heading icons */
-        ha-settings-row span[slot="heading"] ha-icon {
+        ha-settings-row div[slot="heading"] {
+          display: flex;
+          align-items: center;
+          font-weight: var(--ha-font-weight-medium);
+          color: var(--primary-text-color);
+        }
+
+        ha-settings-row div[slot="heading"] ha-icon {
           margin-right: 8px;
           --mdc-icon-size: 18px;
           color: var(--primary-color);
+        }
+
+        ha-settings-row div[slot="description"] {
+          color: var(--secondary-text-color);
+          font-size: var(--ha-font-size-sm);
+          margin-top: 4px;
         }
 
         /* Error and loading states */
@@ -655,8 +668,8 @@ class VmcHeltyCard extends LitElement {
         ${this._t("controls.fan_speed.title")}
       </div>
       <ha-settings-row>
-        <span slot="description">${this._t("controls.fan_speed.description")}</span>
-        <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+        <div slot="description">${this._t("controls.fan_speed.description")}</div>
+        <div style="display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 8px;">
           <ha-icon icon="${currentStep.icon}" style="font-size: 1.5rem; color: var(--primary-color);"></ha-icon>
           <ha-control-slider
             min="0"
