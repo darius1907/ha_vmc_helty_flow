@@ -388,6 +388,7 @@ class VmcHeltyCard extends LitElement {
           display: flex;
           align-items: center;
           gap: 8px;
+          padding-top: 8px;
         }
 
         .section-header ha-icon {
