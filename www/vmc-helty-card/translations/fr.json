@@ -79,41 +79,9 @@
       "card_name_label": "Nom de la carte",
       "card_name_description": "Nom d'affichage pour cette carte (optionnel)"
     },
-    "sensor_configuration": {
-      "title": "Configuration des capteurs",
-      "temperature_label": "Capteur de température",
-      "temperature_description": "Capteur de température personnalisé (optionnel)",
-      "humidity_label": "Capteur d'humidité",
-      "humidity_description": "Capteur d'humidité personnalisé (optionnel)",
-      "auto_sensor": "Capteur automatique",
-      "current_value": "Valeur actuelle",
-      "available": "Disponible",
-      "unavailable": "Indisponible"
-    },
-    "room_volume": {
-      "title": "Volume de la pièce",
-      "description": "Configuration du volume de la pièce pour des calculs précis du renouvellement d'air",
-      "volume_label": "Volume de la pièce (m³)",
-      "volume_description": "Volume de la pièce en mètres cubes",
-      "calculator_title": "Calculateur de volume",
-      "length": "Longueur (m)",
-      "width": "Largeur (m)",
-      "height": "Hauteur (m)",
-      "calculated_volume": "Volume calculé",
-      "use_calculated": "Utiliser le volume calculé",
-      "sync_with_device": "Synchroniser avec l'appareil"
-    },
-    "visibility_controls": {
-      "title": "Contrôles de visibilité",
-      "show_lights": "Afficher les contrôles d'éclairage",
-      "show_timer": "Afficher les contrôles de minuterie",
-      "description": "Configurer quels contrôles afficher dans la carte"
-    },
     "errors": {
       "loading": "Chargement des données Home Assistant...",
-      "no_entities": "Aucune entité fan trouvée. Veuillez vous assurer que votre intégration VMC Helty Flow fonctionne et a créé les entités fan.",
-      "sync_failed": "Impossible de mettre à jour le volume de la pièce",
-      "sync_success": "Volume de la pièce mis à jour avec succès"
+      "no_entities": "Aucune entité fan trouvée. Veuillez vous assurer que votre intégration VMC Helty Flow fonctionne et a créé les entités fan."
     }
   }
 }

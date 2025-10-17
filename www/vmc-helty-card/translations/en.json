@@ -79,41 +79,9 @@
       "card_name_label": "Card Name",
       "card_name_description": "Display name for this card (optional)"
     },
-    "sensor_configuration": {
-      "title": "Sensor Configuration",
-      "temperature_label": "Temperature Sensor",
-      "temperature_description": "Custom temperature sensor (optional)",
-      "humidity_label": "Humidity Sensor",
-      "humidity_description": "Custom humidity sensor (optional)",
-      "auto_sensor": "Auto Sensor",
-      "current_value": "Current Value",
-      "available": "Available",
-      "unavailable": "Unavailable"
-    },
-    "room_volume": {
-      "title": "Room Volume",
-      "description": "Room volume configuration for accurate air exchange calculations",
-      "volume_label": "Room Volume (m³)",
-      "volume_description": "Room volume in cubic meters",
-      "calculator_title": "Volume Calculator",
-      "length": "Length (m)",
-      "width": "Width (m)",
-      "height": "Height (m)",
-      "calculated_volume": "Calculated Volume",
-      "use_calculated": "Use Calculated Volume",
-      "sync_with_device": "Sync with Device"
-    },
-    "visibility_controls": {
-      "title": "Visibility Controls",
-      "show_lights": "Show Light Controls",
-      "show_timer": "Show Timer Controls",
-      "description": "Configure which controls to show in the card"
-    },
     "errors": {
       "loading": "Loading Home Assistant data...",
-      "no_entities": "No fan entities found. Please ensure your VMC Helty Flow integration is running and has created the fan entities.",
-      "sync_failed": "Failed to update room volume",
-      "sync_success": "Room volume updated successfully"
+      "no_entities": "No fan entities found. Please ensure your VMC Helty Flow integration is running and has created the fan entities."
     }
   }
 }

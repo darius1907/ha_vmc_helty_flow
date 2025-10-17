@@ -79,41 +79,9 @@
       "card_name_label": "Nombre de Tarjeta",
       "card_name_description": "Nombre de visualización para esta tarjeta (opcional)"
     },
-    "sensor_configuration": {
-      "title": "Configuración de Sensores",
-      "temperature_label": "Sensor de Temperatura",
-      "temperature_description": "Sensor de temperatura personalizado (opcional)",
-      "humidity_label": "Sensor de Humedad",
-      "humidity_description": "Sensor de humedad personalizado (opcional)",
-      "auto_sensor": "Sensor Automático",
-      "current_value": "Valor Actual",
-      "available": "Disponible",
-      "unavailable": "No Disponible"
-    },
-    "room_volume": {
-      "title": "Volumen de Habitación",
-      "description": "Configuración del volumen de habitación para cálculos precisos de renovación de aire",
-      "volume_label": "Volumen de Habitación (m³)",
-      "volume_description": "Volumen de la habitación en metros cúbicos",
-      "calculator_title": "Calculadora de Volumen",
-      "length": "Longitud (m)",
-      "width": "Ancho (m)",
-      "height": "Altura (m)",
-      "calculated_volume": "Volumen Calculado",
-      "use_calculated": "Usar Volumen Calculado",
-      "sync_with_device": "Sincronizar con Dispositivo"
-    },
-    "visibility_controls": {
-      "title": "Controles de Visibilidad",
-      "show_lights": "Mostrar Controles de Luces",
-      "show_timer": "Mostrar Controles de Temporizador",
-      "description": "Configurar qué controles mostrar en la tarjeta"
-    },
     "errors": {
       "loading": "Cargando datos de Home Assistant...",
-      "no_entities": "No se encontraron entidades de ventilador. Asegúrese de que su integración VMC Helty Flow esté funcionando y haya creado las entidades de ventilador.",
-      "sync_failed": "Error al actualizar el volumen de la habitación",
-      "sync_success": "Volumen de habitación actualizado exitosamente"
+      "no_entities": "No se encontraron entidades de ventilador. Asegúrese de que su integración VMC Helty Flow esté funcionando y haya creado las entidades de ventilador."
     }
   }
 }

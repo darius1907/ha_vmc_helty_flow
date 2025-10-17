@@ -79,41 +79,9 @@
       "card_name_label": "Kartenname",
       "card_name_description": "Anzeigename für diese Karte (optional)"
     },
-    "sensor_configuration": {
-      "title": "Sensor Konfiguration",
-      "temperature_label": "Temperatursensor",
-      "temperature_description": "Benutzerdefinierter Temperatursensor (optional)",
-      "humidity_label": "Feuchtigkeitssensor",
-      "humidity_description": "Benutzerdefinierter Feuchtigkeitssensor (optional)",
-      "auto_sensor": "Automatischer Sensor",
-      "current_value": "Aktueller Wert",
-      "available": "Verfügbar",
-      "unavailable": "Nicht verfügbar"
-    },
-    "room_volume": {
-      "title": "Raumvolumen",
-      "description": "Raumvolumen-Konfiguration für genaue Luftwechsel-Berechnungen",
-      "volume_label": "Raumvolumen (m³)",
-      "volume_description": "Raumvolumen in Kubikmetern",
-      "calculator_title": "Volumen-Rechner",
-      "length": "Länge (m)",
-      "width": "Breite (m)",
-      "height": "Höhe (m)",
-      "calculated_volume": "Berechnetes Volumen",
-      "use_calculated": "Berechnetes Volumen verwenden",
-      "sync_with_device": "Mit Gerät synchronisieren"
-    },
-    "visibility_controls": {
-      "title": "Sichtbarkeits-Steuerungen",
-      "show_lights": "Lichtsteuerungen anzeigen",
-      "show_timer": "Timer-Steuerungen anzeigen",
-      "description": "Konfigurieren Sie, welche Steuerungen in der Karte angezeigt werden sollen"
-    },
     "errors": {
       "loading": "Home Assistant Daten werden geladen...",
-      "no_entities": "Keine Fan-Entitäten gefunden. Bitte stellen Sie sicher, dass Ihre VMC Helty Flow Integration läuft und die Fan-Entitäten erstellt hat.",
-      "sync_failed": "Raumvolumen konnte nicht aktualisiert werden",
-      "sync_success": "Raumvolumen erfolgreich aktualisiert"
+      "no_entities": "Keine Fan-Entitäten gefunden. Bitte stellen Sie sicher, dass Ihre VMC Helty Flow Integration läuft und die Fan-Entitäten erstellt hat."
     }
   }
 }
