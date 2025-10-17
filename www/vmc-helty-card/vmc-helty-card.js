@@ -400,6 +400,7 @@ class VmcHeltyCard extends LitElement {
         ha-settings-row {
           --settings-row-content-width: 100%;
           --settings-row-prefix-display: none;
+          --settings-row-content-padding: 2px 0;
           margin: 0;
           padding: 2px 0;
         }
@@ -479,7 +480,7 @@ class VmcHeltyCard extends LitElement {
           color: var(--secondary-text-color);
           font-size: var(--mdc-typography-caption-font-size, 12px);
           line-height: 1.4;
-          margin-right: 8px;
+          padding-left: 24px;
         }
 
         /* Fan speed control row */
