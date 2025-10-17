@@ -87,12 +87,10 @@ class VmcHeltyCard extends LitElement {
     const sensorsState = this._getEntityState(sensorsEntity);
 
     return html`
-
-      <div class="card-header">
-        <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:cog-clockwise"></ha-icon>
-          ${this._t("modes.special_modes.title")}
-        </ha-heading-badge>
+      <!-- Modalità speciali -->
+      <div class="section-header">
+        <ha-icon icon="mdi:cog-clockwise"></ha-icon>
+        ${this._t("modes.special_modes.title")}
       </div>
       <ha-settings-row>
         <ha-chip-set>
@@ -111,18 +109,16 @@ class VmcHeltyCard extends LitElement {
           })}
         </ha-chip-set>
       </ha-settings-row>
-      <div class="card-header">
-        <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:cog"></ha-icon>
-          ${this._t("controls.title")}
-        </ha-heading-badge>
+
+      <!-- Controlli dispositivo -->
+      <div class="section-header">
+        <ha-icon icon="mdi:cog"></ha-icon>
+        ${this._t("controls.title")}
       </div>
       <ha-settings-row>
         <span slot="heading">
-          <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:led-outline"></ha-icon>
-            ${this._t("controls.panel_led.title")}
-          </ha-heading-badge>
+          <ha-icon icon="mdi:led-outline"></ha-icon>
+          ${this._t("controls.panel_led.title")}
         </span>
         <span slot="description">${this._t("controls.panel_led.description")}</span>
         <ha-entity-toggle
@@ -133,10 +129,8 @@ class VmcHeltyCard extends LitElement {
       </ha-settings-row>
       <ha-settings-row>
         <span slot="heading">
-          <ha-heading-badge type="text">
-          <ha-icon slot="icon" icon="mdi:hub-outline"></ha-icon>
-            ${this._t("controls.sensors.title")}
-          </ha-heading-badge>
+          <ha-icon icon="mdi:hub-outline"></ha-icon>
+          ${this._t("controls.sensors.title")}
         </span>
         <span slot="description">${this._t("controls.sensors.description")}</span>
         <ha-entity-toggle
@@ -213,29 +207,29 @@ class VmcHeltyCard extends LitElement {
 
     try {
       this._translationsLoading = true;
-      this._language = this.hass?.language || "en";
+      this._language = this.hass?.language || "it";  // Default to Italian
 
       console.debug(`Loading translations for language: ${this._language}`);
 
       // Try multiple paths for loading translations
       const possiblePaths = [
-        `/local/vmc-helty-card/translations/en.json`,
-        `/hacsfiles/vmc_helty_flow/www/vmc-helty-card/translations/en.json`,
-        `./translations/en.json`
+        `/local/vmc-helty-card/translations/it.json`,  // Try Italian first
+        `/hacsfiles/vmc_helty_flow/www/vmc-helty-card/translations/it.json`,
+        `./translations/it.json`
       ];
 
-      let enTranslations = null;
+      let defaultTranslations = null;
       let successfulPath = null;
 
-      // Try each path until one works
+      // Try each path until one works for Italian
       for (const path of possiblePaths) {
         try {
-          console.debug(`Trying to load English translations from: ${path}`);
+          console.debug(`Trying to load Italian translations from: ${path}`);
           const response = await fetch(path);
           if (response.ok) {
-            enTranslations = await response.json();
-            successfulPath = path.replace('en.json', '');
-            console.debug(`Successfully loaded English translations from: ${path}`, enTranslations);
+            defaultTranslations = await response.json();
+            successfulPath = path.replace('it.json', '');
+            console.debug(`Successfully loaded Italian translations from: ${path}`, defaultTranslations);
             break;
           } else {
             console.debug(`Failed to load from ${path}: ${response.status} ${response.statusText}`);
@@ -245,28 +239,52 @@ class VmcHeltyCard extends LitElement {
         }
       }
 
-      if (!enTranslations) {
-        console.error("Failed to load English translations from all attempted paths");
+      // If Italian fails, fallback to English
+      if (!defaultTranslations) {
+        console.warn("Failed to load Italian translations, trying English fallback");
+        const enPaths = [
+          `/local/vmc-helty-card/translations/en.json`,
+          `/hacsfiles/vmc_helty_flow/www/vmc-helty-card/translations/en.json`,
+          `./translations/en.json`
+        ];
+
+        for (const path of enPaths) {
+          try {
+            console.debug(`Fallback: trying to load English translations from: ${path}`);
+            const response = await fetch(path);
+            if (response.ok) {
+              defaultTranslations = await response.json();
+              successfulPath = path.replace('en.json', '');
+              console.debug(`Successfully loaded English fallback from: ${path}`, defaultTranslations);
+              break;
+            }
+          } catch (e) {
+            console.debug(`Error loading English fallback from ${path}:`, e.message);
+          }
+        }
+      }
+
+      if (!defaultTranslations) {
+        console.error("Failed to load translations from all attempted paths");
         return;
       }
 
-      let translations = enTranslations;
-
-      // Load language-specific translations if different from English
-      if (this._language !== "en") {
+      let translations = defaultTranslations;
+      // Load language-specific translations if different from the loaded default
+      if (this._language !== "it" && this._language !== "en") {
         try {
           const langPath = `${successfulPath}${this._language}.json`;
           console.debug(`Loading language-specific translations from: ${langPath}`);
           const response = await fetch(langPath);
           if (response.ok) {
             const langTranslations = await response.json();
-            translations = { ...enTranslations, ...langTranslations };
+            translations = { ...defaultTranslations, ...langTranslations };
             console.debug(`Loaded translations for language: ${this._language}`, langTranslations);
           } else {
-            console.warn(`Translation file for ${this._language} not found at ${langPath}, using English fallback`);
+            console.warn(`Translation file for ${this._language} not found at ${langPath}, using default fallback`);
           }
         } catch (e) {
-          console.warn(`Failed to load translations for ${this._language}, using English fallback:`, e.message);
+          console.warn(`Failed to load translations for ${this._language}, using default fallback:`, e.message);
         }
       }
 
@@ -350,94 +368,116 @@ class VmcHeltyCard extends LitElement {
           font-size: var(--ha-card-header-font-size, var(--ha-font-size-2xl));
           letter-spacing: -0.012em;
           line-height: var(--ha-line-height-expanded);
-          padding: 12px 16px 16px;
+          padding: 8px 16px 12px;
           display: block;
           margin-block-start: 0px;
           margin-block-end: 0px;
           font-weight: var(--ha-font-weight-normal);
         }
 
+        /* Compact section headers */
+        .section-header {
+          padding: 8px 0 4px;
+          margin: 8px 0 4px;
+          font-size: var(--ha-font-size-md);
+          font-weight: var(--ha-font-weight-medium);
+          color: var(--secondary-text-color);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .section-header ha-icon {
+          --mdc-icon-size: 20px;
+          color: var(--primary-color);
+        }
+
+        /* Compact settings rows */
+        ha-settings-row {
+          --settings-row-content-width: 100%;
+          --settings-row-prefix-display: none;
+          margin: 0;
+          padding: 8px 0;
+        }
+
+        ha-settings-row:not(:last-child) {
+          border-bottom: 1px solid var(--divider-color);
+        }
+
+        /* Fan speed control styling */
+        ha-control-slider {
+          --control-slider-thickness: 40px;
+          --control-slider-border-radius: 20px;
+          --control-slider-color: var(--primary-color);
+          --control-slider-background: var(--disabled-color);
+        }
+
+        /* Chip set styling */
+        ha-chip-set {
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        ha-assist-chip {
+          --ha-assist-chip-container-height: 36px;
+          --ha-assist-chip-label-text-size: 14px;
+        }
+
+        /* Icon styling */
+        ha-icon {
+          color: var(--state-icon-color);
+          --state-inactive-color: var(--state-icon-color);
+        }
+
+        /* Settings row heading icons */
+        ha-settings-row span[slot="heading"] ha-icon {
+          margin-right: 8px;
+          --mdc-icon-size: 18px;
+          color: var(--primary-color);
+        }
+
+        /* Error and loading states */
+        .error-message,
+        .loading-message {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          text-align: center;
+          flex-direction: column;
+          gap: 12px;
+          color: var(--secondary-text-color);
+        }
+
+        .error-message ha-icon {
+          color: var(--error-color);
+          --mdc-icon-size: 48px;
+        }
+
+        .loading-message ha-icon {
+          color: var(--primary-color);
+          --mdc-icon-size: 48px;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
         :host ::slotted(.card-content:not(:first-child)),
         slot:not(:first-child)::slotted(.card-content) {
           padding-top: 0px;
-          margin-top: -8px;
+          margin-top: -4px;
         }
 
         :host ::slotted(.card-content) {
-          padding: 16px;
+          padding: 12px 16px;
         }
 
         :host ::slotted(.card-actions) {
           border-top: 1px solid var(--divider-color, #e8e8e8);
           padding: 8px;
-        }
-
-        ha-icon {
-         color: var(--state-icon-color);
-          --state-inactive-color: var(--state-icon-color);
-          line-height: 40px;
-        }
-
-        ha-card {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          cursor: pointer;
-          outline: none;
-        }
-
-        .header {
-          display: flex;
-          padding: 8px 16px 0;
-          justify-content: space-between;
-        }
-
-        .name {
-          color: var(--secondary-text-color);
-          line-height: 40px;
-          font-size: var(--ha-font-size-l);
-          font-weight: var(--ha-font-weight-medium);
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-        }
-
-        .icon {
-          color: var(--state-icon-color);
-          --state-inactive-color: var(--state-icon-color);
-          line-height: 40px;
-        }
-
-        .info {
-          padding: 0px 16px 16px;
-          margin-top: -4px;
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          line-height: var(--ha-line-height-condensed);
-        }
-
-        .value {
-          font-size: var(--ha-font-size-3xl);
-          margin-right: 4px;
-          margin-inline-end: 4px;
-          margin-inline-start: initial;
-        }
-
-        .measurement {
-          font-size: var(--ha-font-size-l);
-          color: var(--secondary-text-color);
-        }
-
-        .with-fixed-footer {
-          justify-content: flex-start;
-        }
-        .with-fixed-footer .footer {
-          position: absolute;
-          right: 0;
-          left: 0;
-          bottom: 0;
         }
     `;
   }
@@ -562,12 +602,10 @@ class VmcHeltyCard extends LitElement {
     return html`
       <ha-card>
         <div class="card-content">
-          <h1 class="card-header">
-            <ha-heading-badge type="text">
-              <ha-icon slot="icon" icon="mdi:air-filter"></ha-icon>
-              ${this.config.name}
-            </ha-heading-badge>
-          </h1>
+          <div class="card-header">
+            <ha-icon icon="mdi:air-filter" style="color: var(--primary-color); margin-right: 8px;"></ha-icon>
+            ${this.config.name}
+          </div>
           ${this._renderFanControls()}
           ${this._renderModeControls()}
         </div>
@@ -612,28 +650,26 @@ class VmcHeltyCard extends LitElement {
     );
 
     return html`
+      <div class="section-header">
+        <ha-icon icon="mdi:fan"></ha-icon>
+        ${this._t("controls.fan_speed.title")}
+      </div>
       <ha-settings-row>
-        <span slot="heading">
-          <ha-heading-badge type="text">
-            <ha-icon slot="icon" icon="mdi:fan"></ha-icon>
-            ${this._t("controls.fan_speed.title")}
-          </ha-heading-badge>
-        </span>
         <span slot="description">${this._t("controls.fan_speed.description")}</span>
-      </ha-settings-row>
-      <ha-settings-row>
-        <ha-icon icon="${currentStep.icon}" style="font-size: 2rem;"></ha-icon>
-        <ha-control-slider
-          min="0"
-          max="4"
-          step="1"
-          .value="${currentStep.value}"
-          @value-changed="${this._setFanSpeedDiscrete}"
-          ?disabled="${this._loading || vmcState.state === 'off'}"
-          style="flex: 1;"
-          dir="ltr"
-        ></ha-control-slider>
-        <span style="min-width: 40px; text-align: right; font-weight: 600;">${currentStep.pct}%</span>
+        <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+          <ha-icon icon="${currentStep.icon}" style="font-size: 1.5rem; color: var(--primary-color);"></ha-icon>
+          <ha-control-slider
+            min="0"
+            max="4"
+            step="1"
+            .value="${currentStep.value}"
+            @value-changed="${this._setFanSpeedDiscrete}"
+            ?disabled="${this._loading || vmcState.state === 'off'}"
+            style="flex: 1;"
+            dir="ltr"
+          ></ha-control-slider>
+          <span style="min-width: 40px; text-align: right; font-weight: 600; color: var(--primary-color);">${currentStep.pct}%</span>
+        </div>
       </ha-settings-row>
     `;
   }
