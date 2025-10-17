@@ -29,7 +29,8 @@ class VmcHeltyCardEditor extends LitElement {
       config: { type: Object },
       _vmcEntities: { type: Array, state: true },
       _translations: { type: Object, state: true },
-      _language: { type: String, state: true }
+      _language: { type: String, state: true },
+      _translationsLoading: { type: Boolean, state: true }
     };
   }
 
@@ -40,6 +41,7 @@ class VmcHeltyCardEditor extends LitElement {
     this._vmcEntities = [];
     this._translations = {};
     this._language = "en";
+    this._translationsLoading = false;
   }
 
   static get styles() {
@@ -86,40 +88,76 @@ class VmcHeltyCardEditor extends LitElement {
   setConfig(config) {
     this.config = { ...config };
     this._discoverEntities();
-    if (this.hass) {
+
+    // Load translations if hass is available
+    if (this.hass && (!this._translations || Object.keys(this._translations).length === 0)) {
       this._loadTranslations();
+    }
+  }
+
+  // Lifecycle methods
+  async connectedCallback() {
+    super.connectedCallback();
+    // Load translations when component is connected if hass is already available
+    if (this.hass && (!this._translations || Object.keys(this._translations).length === 0)) {
+      await this._loadTranslations();
     }
   }
 
   // Translation methods
   async _loadTranslations() {
+    // Prevent multiple simultaneous loading attempts
+    if (this._translationsLoading) return;
+
     try {
+      this._translationsLoading = true;
       this._language = this.hass?.language || "en";
 
+      // Always load English as base
       const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
+      if (!enResponse.ok) {
+        console.error("Failed to load English translations");
+        return;
+      }
       const enTranslations = await enResponse.json();
 
       let translations = enTranslations;
+
+      // Load language-specific translations if different from English
       if (this._language !== "en") {
         try {
           const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
           if (response.ok) {
             const langTranslations = await response.json();
             translations = { ...enTranslations, ...langTranslations };
+            console.debug(`Loaded editor translations for language: ${this._language}`);
+          } else {
+            console.warn(`Editor translation file for ${this._language} not found, using English fallback`);
           }
         } catch (e) {
-          console.warn(`Translations for ${this._language} not found, using English`);
+          console.warn(`Failed to load editor translations for ${this._language}, using English fallback:`, e.message);
         }
       }
 
       this._translations = translations;
       this.requestUpdate();
     } catch (error) {
-      console.error("Failed to load translations:", error);
+      console.error("Failed to load editor translations:", error);
+      // Fallback to empty object to prevent breaking the editor
+      this._translations = {};
+    } finally {
+      this._translationsLoading = false;
     }
   }
 
   _t(key) {
+    if (!key || typeof key !== 'string') return key;
+
+    // If translations not loaded yet, return the key
+    if (!this._translations || Object.keys(this._translations).length === 0) {
+      return key;
+    }
+
     const keys = key.split(".");
     let translation = this._translations;
 
@@ -127,11 +165,13 @@ class VmcHeltyCardEditor extends LitElement {
       if (translation && typeof translation === "object" && k in translation) {
         translation = translation[k];
       } else {
+        // Return the key if translation not found
         return key;
       }
     }
 
-    return translation || key;
+    // Return the translation if found and is a string, otherwise return the key
+    return (typeof translation === 'string') ? translation : key;
   }
 
   willUpdate(changedProps) {

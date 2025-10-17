@@ -178,7 +178,8 @@ class VmcHeltyCard extends LitElement {
       _error: { type: String, state: true },
       _entityStates: { type: Object, state: true },
       _translations: { type: Object, state: true },
-      _language: { type: String, state: true }
+      _language: { type: String, state: true },
+      _translationsLoading: { type: Boolean, state: true }
     };
   }
 
@@ -192,6 +193,7 @@ class VmcHeltyCard extends LitElement {
     this._entityIds = [];
     this._translations = {};
     this._language = "en";
+    this._translationsLoading = false;
   }
 
   /**
@@ -199,28 +201,43 @@ class VmcHeltyCard extends LitElement {
    */
   async connectedCallback() {
     super.connectedCallback();
-    if (this.hass) {
+    // Load translations when component is connected if hass is already available
+    if (this.hass && (!this._translations || Object.keys(this._translations).length === 0)) {
       await this._loadTranslations();
     }
   }
 
   async _loadTranslations() {
+    // Prevent multiple simultaneous loading attempts
+    if (this._translationsLoading) return;
+
     try {
+      this._translationsLoading = true;
       this._language = this.hass?.language || "en";
 
+      // Always load English as base
       const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
+      if (!enResponse.ok) {
+        console.error("Failed to load English translations");
+        return;
+      }
       const enTranslations = await enResponse.json();
 
       let translations = enTranslations;
+
+      // Load language-specific translations if different from English
       if (this._language !== "en") {
         try {
           const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
           if (response.ok) {
             const langTranslations = await response.json();
             translations = { ...enTranslations, ...langTranslations };
+            console.debug(`Loaded translations for language: ${this._language}`);
+          } else {
+            console.warn(`Translation file for ${this._language} not found, using English fallback`);
           }
         } catch (e) {
-          console.warn(`Translations for ${this._language} not found, using English`);
+          console.warn(`Failed to load translations for ${this._language}, using English fallback:`, e.message);
         }
       }
 
@@ -228,10 +245,21 @@ class VmcHeltyCard extends LitElement {
       this.requestUpdate();
     } catch (error) {
       console.error("Failed to load translations:", error);
+      // Fallback to empty object to prevent breaking the card
+      this._translations = {};
+    } finally {
+      this._translationsLoading = false;
     }
   }
 
   _t(key) {
+    if (!key || typeof key !== 'string') return key;
+
+    // If translations not loaded yet, return the key
+    if (!this._translations || Object.keys(this._translations).length === 0) {
+      return key;
+    }
+
     const keys = key.split(".");
     let translation = this._translations;
 
@@ -239,11 +267,13 @@ class VmcHeltyCard extends LitElement {
       if (translation && typeof translation === "object" && k in translation) {
         translation = translation[k];
       } else {
+        // Return the key if translation not found
         return key;
       }
     }
 
-    return translation || key;
+    // Return the translation if found and is a string, otherwise return the key
+    return (typeof translation === 'string') ? translation : key;
   }
 
   static get styles() {
@@ -584,10 +614,13 @@ class VmcHeltyCard extends LitElement {
 
   setConfig(config) {
     this.config = config;
-    if (this.hass) {
+    this._setupEntityReferences();
+
+    // Load translations if hass is available
+    if (this.hass && (!this._translations || Object.keys(this._translations).length === 0)) {
       this._loadTranslations();
     }
-    this._setupEntityReferences();
+
     this.requestUpdate();
   }
 }
