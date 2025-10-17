@@ -64,6 +64,13 @@ jobs:
           kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/vmc-helty-card-editor.js \
             $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
 
+      - name: Copy VMC Helty Card translations
+        run: |
+          kubectl exec $POD_NAME -n home-assistant -- \
+            mkdir -p /config/www/vmc-helty-card/translations
+          kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/translations/ \
+            $POD_NAME:/config/www/vmc-helty-card/ -n home-assistant
+
       - name: Copy VMC Helty Card documentation
         run: |
           kubectl cp /tmp/ha_vmc_helty_flow/www/vmc-helty-card/README.md \
@@ -77,13 +84,16 @@ jobs:
         run: |
           kubectl exec $POD_NAME -n home-assistant -- bash -c '
             LOVELACE_CONFIG="/config/ui-lovelace.yaml"
-            RESOURCE_URL="/local/vmc-helty-card/vmc-helty-card.js"
+            CARD_RESOURCE_URL="/local/vmc-helty-card/vmc-helty-card.js"
+            EDITOR_RESOURCE_URL="/local/vmc-helty-card/vmc-helty-card-editor.js"
 
             # Create ui-lovelace.yaml if it does not exist
             if [ ! -f "$LOVELACE_CONFIG" ]; then
               echo "📝 Creating new ui-lovelace.yaml"
               echo "resources:" > "$LOVELACE_CONFIG"
-              echo "  - url: /local/vmc-helty-card/vmc-helty-card.js" >> "$LOVELACE_CONFIG"
+              echo "  - url: $CARD_RESOURCE_URL" >> "$LOVELACE_CONFIG"
+              echo "    type: module" >> "$LOVELACE_CONFIG"
+              echo "  - url: $EDITOR_RESOURCE_URL" >> "$LOVELACE_CONFIG"
               echo "    type: module" >> "$LOVELACE_CONFIG"
               echo "" >> "$LOVELACE_CONFIG"
               echo "title: Home Assistant" >> "$LOVELACE_CONFIG"
@@ -91,28 +101,38 @@ jobs:
               echo "  - title: Home" >> "$LOVELACE_CONFIG"
               echo "    cards: []" >> "$LOVELACE_CONFIG"
             else
-              # Check if resource already exists
-              if ! grep -q "$RESOURCE_URL" "$LOVELACE_CONFIG"; then
-                echo "➕ Adding VMC Helty Card resource to existing configuration"
+              # Check if resources already exist
+              CARD_EXISTS=$(grep -c "$CARD_RESOURCE_URL" "$LOVELACE_CONFIG" || true)
+              EDITOR_EXISTS=$(grep -c "$EDITOR_RESOURCE_URL" "$LOVELACE_CONFIG" || true)
+
+              if [ "$CARD_EXISTS" -eq 0 ] || [ "$EDITOR_EXISTS" -eq 0 ]; then
+                echo "➕ Adding VMC Helty Card resources to existing configuration"
                 # Create backup
                 cp "$LOVELACE_CONFIG" "$LOVELACE_CONFIG.backup.$(date +%Y%m%d_%H%M%S)"
 
                 # Check if resources section exists
                 if grep -q "^resources:" "$LOVELACE_CONFIG"; then
-                  # Add to existing resources section
-                  sed -i "/^resources:/a\\  - url: $RESOURCE_URL\\n    type: module" "$LOVELACE_CONFIG"
+                  # Add missing resources to existing section
+                  if [ "$CARD_EXISTS" -eq 0 ]; then
+                    sed -i "/^resources:/a\\  - url: $CARD_RESOURCE_URL\\n    type: module" "$LOVELACE_CONFIG"
+                  fi
+                  if [ "$EDITOR_EXISTS" -eq 0 ]; then
+                    sed -i "/^resources:/a\\  - url: $EDITOR_RESOURCE_URL\\n    type: module" "$LOVELACE_CONFIG"
+                  fi
                 else
                   # Add new resources section at the beginning
                   {
                     echo "resources:"
-                    echo "  - url: $RESOURCE_URL"
+                    echo "  - url: $CARD_RESOURCE_URL"
+                    echo "    type: module"
+                    echo "  - url: $EDITOR_RESOURCE_URL"
                     echo "    type: module"
                     echo ""
                     cat "$LOVELACE_CONFIG"
                   } > "$LOVELACE_CONFIG.tmp" && mv "$LOVELACE_CONFIG.tmp" "$LOVELACE_CONFIG"
                 fi
               else
-                echo "✅ VMC Helty Card resource already configured"
+                echo "✅ VMC Helty Card resources already configured"
               fi
             fi
           '
@@ -140,6 +160,19 @@ jobs:
               echo "❌ vmc-helty-card-editor.js missing"
               exit 1
             fi
+
+            # Check translation files exist
+            echo "🌐 Checking translation files..."
+            for lang in en it fr de es; do
+              if [ -f "/config/www/vmc-helty-card/translations/${lang}.json" ]; then
+                echo "✅ ${lang}.json translation installed"
+                FILE_SIZE=$(wc -c < /config/www/vmc-helty-card/translations/${lang}.json)
+                echo "📊 ${lang}.json size: $FILE_SIZE bytes"
+              else
+                echo "❌ ${lang}.json translation missing"
+                exit 1
+              fi
+            done
 
             # Check Lovelace configuration
             if grep -q "/local/vmc-helty-card/vmc-helty-card.js" /config/ui-lovelace.yaml; then
