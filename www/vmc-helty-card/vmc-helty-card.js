@@ -92,7 +92,7 @@ class VmcHeltyCard extends LitElement {
         <ha-icon icon="mdi:cog-clockwise"></ha-icon>
         ${this._t("modes.special_modes.title")}
       </div>
-      <ha-settings-row>
+      <div class="chip-container">
         <ha-chip-set>
           ${specialModes.map(mode => {
             const isOn = !!attrs[mode.attr];
@@ -108,7 +108,7 @@ class VmcHeltyCard extends LitElement {
             `;
           })}
         </ha-chip-set>
-      </ha-settings-row>
+      </div>
 
       <!-- Controlli dispositivo come row semplici -->
       <div class="section-header">
@@ -381,7 +381,6 @@ class VmcHeltyCard extends LitElement {
           font-weight: var(--ha-font-weight-normal);
         }
 
-        /* Compact section headers */
         .section-header {
           font-size: var(--mdc-typography-body1-font-size, 16px);
           font-weight: var(--ha-font-weight-medium);
@@ -396,22 +395,10 @@ class VmcHeltyCard extends LitElement {
           color: var(--primary-color);
         }
 
-        /* Compact settings rows - only for chip sets */
-        ha-settings-row {
-          --settings-row-content-width: 100%;
-          --settings-row-prefix-display: none;
-          margin: 0;
+        /* Compact chip container - replaces ha-settings-row */
+        .chip-container {
           padding: 2px 0;
-        }
-
-        /* Override ha-settings-row content padding with higher specificity */
-        ha-settings-row .content {
-          padding: 2px 0 !important;
-        }
-
-        /* Alternative: target the content more specifically */
-        ha-settings-row:not([narrow]) .content {
-          padding: 2px 0 !important;
+          margin: 4px 0;
         }
 
         /* Fan speed control styling */
