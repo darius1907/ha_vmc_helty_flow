@@ -383,8 +383,8 @@ class VmcHeltyCard extends LitElement {
 
         /* Compact section headers */
         .section-header {
-          padding: 8px 0 4px;
-          margin: 8px 0 4px;
+          padding: 0px 0 4px;
+          margin: 0px 0 4px;
           font-size: var(--mdc-typography-body1-font-size, 16px);
           font-weight: var(--ha-font-weight-medium);
           color: var(--primary-text-color);
@@ -444,8 +444,7 @@ class VmcHeltyCard extends LitElement {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 8px 0;
-          border-bottom: 1px solid var(--divider-color, #e8e8e8);
+          padding: 0px 6px;
           min-height: 48px;
         }
 
