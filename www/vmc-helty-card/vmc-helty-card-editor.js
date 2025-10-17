@@ -249,59 +249,6 @@ class VmcHeltyCardEditor extends LitElement {
     `;
   }
 
-  _renderDeviceSelection() {
-    if (this._vmcEntities.length === 0) {
-      return html`
-        <div class="error-message">
-          <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <span>${this._t('editor.errors.no_entities')}</span>
-        </div>
-      `;
-    }
-
-    return html`
-      <div class="config-section">
-        <div class="section-title">
-          <ha-icon icon="mdi:air-filter"></ha-icon>
-          ${this._t('editor.device_selection.title')}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">${this._t('editor.device_selection.device_label')}</label>
-          <div class="form-description">
-            ${this._t('editor.device_selection.device_description')}
-          </div>
-          <ha-select
-            .label=${this._t('editor.device_selection.choose_device')}
-            .value=${this.config.entity || ""}
-            .configValue=${"entity"}
-            @selected=${this._valueChanged}
-            @closed=${(ev) => ev.stopPropagation()}
-          >
-            ${this._vmcEntities.map(entity => html`
-              <mwc-list-item .value=${entity.value}>
-                ${entity.label}
-              </mwc-list-item>
-            `)}
-          </ha-select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">${this._t('editor.device_selection.card_name_label')}</label>
-          <div class="form-description">
-            ${this._t('editor.device_selection.card_name_description')}
-          </div>
-          <ha-textfield
-            .label=${this._t('editor.device_selection.card_name_label')}
-            .value=${this.config.name || ""}
-            .configValue=${"name"}
-            @input=${this._valueChanged}
-          ></ha-textfield>
-        </div>
-      </div>
-    `;
-  }
-
 }
 
 // Register the editor

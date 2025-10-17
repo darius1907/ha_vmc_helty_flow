@@ -10,17 +10,17 @@
  * - Material Design Icons (MDI) only
  * - CSP compliance (no inline styles/scripts)
  * - Performance optimized rendering
- * - Configurable device selection
- * - Custom sensor selection for advanced calculations
- * - Room volume configuration for accurate air exchange calculations
- * - Configurable light and timer controls visibility (NEW in v2.1)
+ * - Multilingual support with automatic language detection
+ * - Fan speed control with discrete slider
+ * - Special modes (hyperventilation, night mode, free cooling)
+ * - Device controls (panel LED, sensors)
  *
  * @version 2.1.0
  * @author VMC Helty Integration Team
  */
 
 console.info(
-  `%c VMC HELTY CARD v2.1 LitElement %c Advanced VMC Helty Flow control with configurable light/timer controls`,
+  `%c VMC HELTY CARD v2.1 LitElement %c Advanced VMC Helty Flow control with multilingual support`,
   "color: orange; font-weight: bold; background: black",
   "color: white; font-weight: normal;"
 );
@@ -53,8 +53,7 @@ class VmcHeltyCard extends LitElement {
     if (!deviceSlug) return nothing;
 
     // Modalità speciali: stato letto dagli attributi della fan
-    const fanState = this._getVmcState();
-    const attrs = (fanState && fanState.attributes) || {};
+    const attrs = (vmcState && vmcState.attributes) || {};
 
     // Mappa modalità speciali: chiave, label, icona, attributo, valore fan speed
     const specialModes = [
@@ -192,18 +191,12 @@ class VmcHeltyCard extends LitElement {
     this._entityStates = {};
     this._entityIds = [];
     this._translations = {};
-    this._language = "it";
+    this._language = "en";
   }
 
   /**
-   * Chiamata generica ai servizi Home Assistant
-   * @param {string} domain - Dominio del servizio (es: 'fan', 'switch', 'light')
-   * @param {string} service - Nome del servizio (es: 'turn_on', 'set_percentage')
-   * @param {object} data - Dati da inviare al servizio
-   * @returns {Promise<void>}
+   * Translation methods
    */
-
-  // Translation methods
   async connectedCallback() {
     super.connectedCallback();
     if (this.hass) {
@@ -213,13 +206,13 @@ class VmcHeltyCard extends LitElement {
 
   async _loadTranslations() {
     try {
-      this._language = this.hass?.language || "it";
+      this._language = this.hass?.language || "en";
 
       const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
       const enTranslations = await enResponse.json();
 
       let translations = enTranslations;
-      if (this._language !== "it") {
+      if (this._language !== "en") {
         try {
           const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
           if (response.ok) {
@@ -251,18 +244,6 @@ class VmcHeltyCard extends LitElement {
     }
 
     return translation || key;
-  }
-
-  async callService(domain, service, data) {
-    if (!this.hass) throw new Error('Hass object non disponibile');
-    try {
-      await this.hass.callService(domain, service, data);
-    } catch (e) {
-      fireEvent(this, "hass-notification", {
-        message: `${this._t("events.error-service")} ${domain}.${service}: ${e.message}`
-      });
-      throw e;
-    }
   }
 
   static get styles() {
@@ -429,14 +410,6 @@ class VmcHeltyCard extends LitElement {
       entities.add(this.config.entity);
     }
 
-    if (this.config.temperature_entity) {
-      entities.add(this.config.temperature_entity);
-    }
-
-    if (this.config.humidity_entity) {
-      entities.add(this.config.humidity_entity);
-    }
-
     this._entityIds = Array.from(entities);
   }
 
@@ -466,24 +439,6 @@ class VmcHeltyCard extends LitElement {
     return this._getEntityState(this.config.entity);
   }
 
-  _getTemperatureState() {
-    if (this.config.temperature_entity) {
-      return this._getEntityState(this.config.temperature_entity);
-    }
-    // Fall back to VMC internal temperature sensor
-    const baseEntityId = this.config.entity.replace('fan.', '');
-    return this._getEntityState(`sensor.${baseEntityId}_temperature_internal`);
-  }
-
-  _getHumidityState() {
-    if (this.config.humidity_entity) {
-      return this._getEntityState(this.config.humidity_entity);
-    }
-    // Fall back to VMC internal humidity sensor
-    const baseEntityId = this.config.entity.replace('fan.', '');
-    return this._getEntityState(`sensor.${baseEntityId}_humidity`);
-  }
-
   _getDeviceSlug() {
     if (!this.config.entity) return null;
 
@@ -506,92 +461,11 @@ class VmcHeltyCard extends LitElement {
       fireEvent(this, "hass-notification", {
         message: `${this._t("events.speed-set")}: ${speed * 25}%`,
       });
-      // Evidenzia temporaneamente il chip attivo
-      this._lastSpeedSet = speed;
-      setTimeout(() => { this._lastSpeedSet = null; this.requestUpdate(); }, 800);
       if ("vibrate" in navigator) navigator.vibrate(40);
     } catch (e) {
       fireEvent(this, "hass-notification", {
         message: `${this._t("events.error")}: ${e.message}`,
       });
-    } finally {
-      this._loading = false;
-    }
-  }
-
-  async _toggleSwitch(entityId) {
-    if (!this.hass || !entityId) return;
-
-    try {
-      this._loading = true;
-
-      const state = this._getEntityState(entityId);
-      const service = state && state.state === 'on' ? 'turn_off' : 'turn_on';
-
-      await this.hass.callService("switch", service, {
-        entity_id: entityId
-      });
-
-      // Provide haptic feedback on mobile
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-      }
-
-    } catch (error) {
-      console.error("Error toggling switch:", error);
-      this._error = `${this._t("events.error")}: ${error.message}`;
-    } finally {
-      this._loading = false;
-    }
-  }
-
-  async _toggleLight(entityId) {
-    if (!this.hass || !entityId) return;
-
-    try {
-      this._loading = true;
-
-      const state = this._getEntityState(entityId);
-      const service = state && state.state === 'on' ? 'turn_off' : 'turn_on';
-
-      await this.hass.callService("light", service, {
-        entity_id: entityId
-      });
-
-      // Provide haptic feedback on mobile
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-      }
-
-    } catch (error) {
-      console.error("Error toggling light:", error);
-      this._error = `${this._t("events.error")}: ${error.message}`;
-    } finally {
-      this._loading = false;
-    }
-  }
-
-  async _setLightBrightness(entityId, brightness) {
-    if (!this.hass || !entityId) return;
-
-    try {
-      this._loading = true;
-
-      const brightnessValue = Math.round((brightness / 100) * 255); // Convert 0-100 to 0-255
-
-      await this.hass.callService("light", "turn_on", {
-        entity_id: entityId,
-        brightness: brightnessValue
-      });
-
-      // Provide haptic feedback on mobile
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-      }
-
-    } catch (error) {
-      console.error("Error setting light brightness:", error);
-      this._error = `${this._t("events.error")}: ${error.message}`;
     } finally {
       this._loading = false;
     }
@@ -664,8 +538,6 @@ class VmcHeltyCard extends LitElement {
     const currentStep = speedSteps.reduce((prev, curr) =>
       Math.abs(curr.pct - currentPercentage) < Math.abs(prev.pct - currentPercentage) ? curr : prev
     );
-    const sliderValue = this._fanSliderValue !== undefined ? this._fanSliderValue : currentStep.value;
-    const sliderStep = speedSteps[sliderValue] || currentStep;
 
     return html`
       <ha-settings-row>
@@ -678,64 +550,28 @@ class VmcHeltyCard extends LitElement {
         <span slot="description">${this._t("controls.fan_speed.description")}</span>
       </ha-settings-row>
       <ha-settings-row>
-        <ha-icon icon="${sliderStep.icon}" style="font-size: 2rem;"></ha-icon>
+        <ha-icon icon="${currentStep.icon}" style="font-size: 2rem;"></ha-icon>
         <ha-control-slider
           min="0"
           max="4"
           step="1"
-          .value="${sliderValue}"
-          @input="${(e) => this._onFanSliderInput(e)}"
-          @value-changed="${(e) => this._setFanSpeedDiscrete(e)}"
+          .value="${currentStep.value}"
+          @value-changed="${this._setFanSpeedDiscrete}"
           ?disabled="${this._loading || vmcState.state === 'off'}"
           style="flex: 1;"
           dir="ltr"
         ></ha-control-slider>
-        <span style="min-width: 40px; text-align: right; font-weight: 600;">${sliderStep.pct}%</span>
+        <span style="min-width: 40px; text-align: right; font-weight: 600;">${currentStep.pct}%</span>
       </ha-settings-row>
     `;
   }
 
-  // Track slider value for optimistic UI
-  _onFanSliderInput(e) {
-    const val = Number(e.target.value);
-    if (!isNaN(val) && val >= 0 && val <= 4) {
-      this._fanSliderValue = val;
-      this.requestUpdate();
-    }
-  }
-
-  // Handler for discrete slider
   async _setFanSpeedDiscrete(e) {
     const step = Number(e.target.value);
     if (!isNaN(step) && step >= 0 && step <= 4) {
-      this._fanSliderValue = step;
-      this.requestUpdate();
-      let success = false;
-      try {
-        this._loading = true;
-        await this._setFanSpeed(step);
-        success = true;
-      } catch (err) {
-        let msg = `${this._t("events.error")}: ${err.message}`;
-        fireEvent(this, "hass-notification", { message: msg });
-      } finally {
-        this._loading = false;
-        // Se errore, resetta slider allo stato entity
-        if (!success) {
-          this._fanSliderValue = undefined;
-          this.requestUpdate();
-        } else {
-          // Su successo, lascia che il valore venga aggiornato dal backend
-          setTimeout(() => {
-            this._fanSliderValue = undefined;
-            this.requestUpdate();
-          }, 500);
-        }
-      }
+      await this._setFanSpeed(step);
     }
   }
-
-
 
   // Home Assistant integration methods
   getCardSize() {
@@ -764,7 +600,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'vmc-helty-card',
   name: 'VMC Helty Flow Control Card',
-  description: 'Advanced control card for VMC Helty Flow devices with custom sensor support and room volume configuration',
+  description: 'Advanced control card for VMC Helty Flow devices with multilingual support',
   preview: true,
   documentationURL: 'https://github.com/dpezzoli/ha_vmc_helty_flow/www/vmc-helty-card/README.md',
 });
