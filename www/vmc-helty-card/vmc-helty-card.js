@@ -371,7 +371,7 @@ class VmcHeltyCard extends LitElement {
         :host ::slotted(.card-header) {
           color: var(--ha-card-header-color, var(--primary-text-color));
           font-family: var(--ha-card-header-font-family, inherit);
-          font-size: var(--ha-card-header-font-size, var(--ha-font-size-2xl));
+          font-size: var(--ha-card-header-font-size, var(--mdc-typography-headline6-font-size, 20px));
           letter-spacing: -0.012em;
           line-height: var(--ha-line-height-expanded);
           padding: 8px 16px 12px;
@@ -385,9 +385,9 @@ class VmcHeltyCard extends LitElement {
         .section-header {
           padding: 8px 0 4px;
           margin: 8px 0 4px;
-          font-size: var(--ha-font-size-md);
+          font-size: var(--mdc-typography-body1-font-size, 16px);
           font-weight: var(--ha-font-weight-medium);
-          color: var(--secondary-text-color);
+          color: var(--primary-text-color);
           display: flex;
           align-items: center;
           gap: 8px;
@@ -398,16 +398,12 @@ class VmcHeltyCard extends LitElement {
           color: var(--primary-color);
         }
 
-        /* Compact settings rows */
+        /* Compact settings rows - only for chip sets */
         ha-settings-row {
           --settings-row-content-width: 100%;
           --settings-row-prefix-display: none;
           margin: 0;
-          padding: 8px 0;
-        }
-
-        ha-settings-row:not(:last-child) {
-          border-bottom: 1px solid var(--divider-color);
+          padding: 2px 0;
         }
 
         /* Fan speed control styling */
@@ -435,27 +431,12 @@ class VmcHeltyCard extends LitElement {
           --state-inactive-color: var(--state-icon-color);
         }
 
-        /* Settings row styling */
-        ha-settings-row span[slot="heading"] {
-          font-weight: var(--ha-font-weight-medium);
-          color: var(--primary-text-color);
-          display: flex;
-          align-items: center;
-        }
-
-        ha-settings-row span[slot="description"] {
-          color: var(--secondary-text-color);
-          font-size: var(--ha-font-size-sm);
-          margin-top: 4px;
-        }
-
-        /* Custom control rows */
-        .control-row {
+        /* Fan speed control styling */
+        ha-control-slider {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 0;
-          border-bottom: 1px solid var(--divider-color);
+          padding: 4px 0;
         }
 
         .control-row:last-child {
@@ -471,7 +452,7 @@ class VmcHeltyCard extends LitElement {
           display: flex;
           align-items: center;
           font-weight: var(--ha-font-weight-medium);
-          color: var(--primary-text-color);
+          color: var(--secondary-text-color);
           margin-bottom: 4px;
         }
 
@@ -483,8 +464,17 @@ class VmcHeltyCard extends LitElement {
 
         .control-description {
           color: var(--secondary-text-color);
-          font-size: var(--ha-font-size-sm);
+          font-size: var(--mdc-typography-caption-font-size, 12px);
           line-height: 1.4;
+        }
+
+        /* Fan speed control row */
+        .fan-control-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 8px 0;
+          margin-top: 8px;
         }
 
         /* Error and loading states */
@@ -705,23 +695,27 @@ class VmcHeltyCard extends LitElement {
         <ha-icon icon="mdi:fan"></ha-icon>
         ${this._t("controls.fan_speed.title")}
       </div>
-      <ha-settings-row>
-        <div slot="description">${this._t("controls.fan_speed.description")}</div>
-        <div style="display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 8px;">
-          <ha-icon icon="${currentStep.icon}" style="font-size: 1.5rem; color: var(--primary-color);"></ha-icon>
-          <ha-control-slider
-            min="0"
-            max="4"
-            step="1"
-            .value="${currentStep.value}"
-            @value-changed="${this._setFanSpeedDiscrete}"
-            ?disabled="${this._loading || vmcState.state === 'off'}"
-            style="flex: 1;"
-            dir="ltr"
-          ></ha-control-slider>
-          <span style="min-width: 40px; text-align: right; font-weight: 600; color: var(--primary-color);">${currentStep.pct}%</span>
+
+      <div class="control-row">
+        <div class="control-info">
+          <div class="control-description">${this._t("controls.fan_speed.description")}</div>
         </div>
-      </ha-settings-row>
+      </div>
+
+      <div class="fan-control-row">
+        <ha-icon icon="${currentStep.icon}" style="font-size: 1.5rem; color: var(--primary-color);"></ha-icon>
+        <ha-control-slider
+          min="0"
+          max="4"
+          step="1"
+          .value="${currentStep.value}"
+          @value-changed="${this._setFanSpeedDiscrete}"
+          ?disabled="${this._loading || vmcState.state === 'off'}"
+          style="flex: 1;"
+          dir="ltr"
+        ></ha-control-slider>
+        <span style="min-width: 40px; text-align: right; font-weight: 600; color: var(--primary-color);">${currentStep.pct}%</span>
+      </div>
     `;
   }
 
