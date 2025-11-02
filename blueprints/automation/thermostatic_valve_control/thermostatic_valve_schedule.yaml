@@ -10,7 +10,6 @@ blueprint:
         target:
           entity:
             domain: input_number
-          multiple: true
     # Orari comuni
     morning_time:
       name: Ora mattina

@@ -3,7 +3,6 @@ blueprint:
   description: Controllo integrato del riscaldamento con programmazione, regolazione intelligente, comfort e allarmi opzionali.
   domain: automation
   input:
-    # Stanze / Input
     target_inputs:
       name: Input_number da regolare
       description: Lista di input_number delle stanze da controllare
@@ -11,7 +10,6 @@ blueprint:
         target:
           entity:
             domain: input_number
-          multiple: true
     thermostat:
       name: Termostato
       description: Termostato da controllare
@@ -32,7 +30,7 @@ blueprint:
         entity:
           domain: sensor
 
-    # Fasce orarie comuni
+    # Fasce orarie
     morning_time:
       name: Ora mattina
       default: "06:30:00"
@@ -101,7 +99,7 @@ blueprint:
           max: 30
           unit_of_measurement: "°C"
 
-    # Temperature non feriali
+    # Temperature weekend
     weekend_morning_temp:
       name: Temperatura mattina weekend
       default: 22
@@ -213,17 +211,14 @@ variables:
   current_target: "{{ state_attr(!input thermostat, 'temperature') | float(20) }}"
   diff: "{{ current_temp - desired_temp }}"
   current_humidity: >
-    {% if !input humidity_sensor %}
+    {% if !input humidity_sensor == "" %}
       50
     {% else %}
       {{ states(!input humidity_sensor) | float(50) }}
     {% endif %}
-  dew_point: >
-    {{ (current_temp - ((100 - current_humidity)/5)) | round(1) }}
-  comfort_index: >
-    {{ (current_temp - 0.55*(1-current_humidity/100)*(current_temp-14.5)) | round(1) }}
+  dew_point: "{{ (current_temp - ((100 - current_humidity)/5)) | round(1) }}"
+  comfort_index: "{{ (current_temp - 0.55*(1-current_humidity/100)*(current_temp-14.5)) | round(1) }}"
 
-# Azione principale: programmazione
 action:
   - choose:
       # Feriali
@@ -298,7 +293,7 @@ action:
             data:
               message: "🌙 Buonanotte (feriali)! Target temperatura {{ !input weekday_night_temp }}°C"
 
-      # Weekend / non feriali
+      # Weekend
       - conditions:
           - condition: template
             value_template: "{{ now().weekday() >= 5 }}"
@@ -370,7 +365,7 @@ action:
             data:
               message: "🌙 Buonanotte (weekend)! Target temperatura {{ !input weekend_night_temp }}°C"
 
-  # Controllo intelligente del termostato
+  # Controllo intelligente termostato
   - choose:
       - conditions:
           - condition: template
@@ -392,4 +387,60 @@ action:
                 🛋 Comfort: {{ comfort_index }}°C
       - conditions:
           - condition: template
-            value_template
+            value_template: "{{ diff < -0.5 }}"
+          - condition: template
+            value_template: "{{ current_target < 15 }}"
+        sequence:
+          - service: climate.set_temperature
+            target:
+              entity_id: !input thermostat
+            data:
+              temperature: "{{ desired_temp }}"
+              hvac_mode: heat
+          - service: notify.persistent_notification
+            data:
+              message: >
+                🔥 {{ !input thermostat }}: {{ current_temp }}°C → Target {{ desired_temp }}°C
+                🌡 Punto di rugiada: {{ dew_point }}°C
+                🛋 Comfort: {{ comfort_index }}°C
+
+  # Allarmi opzionali
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_alerts }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: !input temperature_sensor
+                    above: !input high_temperature_threshold
+                sequence:
+                  - service: notify.persistent_notification
+                    data:
+                      message: "⚠️ Temperatura troppo alta: {{ current_temp }}°C"
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: !input temperature_sensor
+                    below: !input low_temperature_threshold
+                sequence:
+                  - service: notify.persistent_notification
+                    data:
+                      message: "⚠️ Temperatura troppo bassa: {{ current_temp }}°C"
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: !input humidity_sensor
+                    above: !input high_humidity_threshold
+                sequence:
+                  - service: notify.persistent_notification
+                    data:
+                      message: "⚠️ Umidità troppo alta: {{ current_humidity }}%"
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: !input humidity_sensor
+                    below: !input low_humidity_threshold
+                sequence:
+                  - service: notify.persistent_notification
+                    data:
+                      message: "⚠️ Umidità troppo bassa: {{ current_humidity }}%"
+mode: restart
