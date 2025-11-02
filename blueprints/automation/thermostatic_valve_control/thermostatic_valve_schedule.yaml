@@ -1,0 +1,285 @@
+blueprint:
+  name: Programmazione Riscaldamento Settimanale
+  description: Imposta automaticamente la temperatura desiderata nei giorni feriali e non feriali in base a fasce orarie.
+  domain: automation
+  input:
+    target_inputs:
+      name: Input_number da regolare
+      description: Lista di input_number delle stanze da controllare
+      selector:
+        target:
+          entity:
+            domain: input_number
+          multiple: true
+    # Orari comuni
+    morning_time:
+      name: Ora mattina
+      default: "06:30:00"
+      selector:
+        time: {}
+    day_away_time:
+      name: Ora giorno fuori casa
+      default: "08:30:00"
+      selector:
+        time: {}
+    mid_day_time:
+      name: Ora metà giornata
+      default: "12:00:00"
+      selector:
+        time: {}
+    evening_time:
+      name: Ora sera
+      default: "17:30:00"
+      selector:
+        time: {}
+    night_time:
+      name: Ora notte
+      default: "22:30:00"
+      selector:
+        time: {}
+    # Temperature fasce feriali
+    weekday_morning_temp:
+      name: Temperatura mattina feriali
+      default: 22
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekday_day_away_temp:
+      name: Temperatura giorno fuori casa feriali
+      default: 18
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekday_mid_day_temp:
+      name: Temperatura metà giornata feriali
+      default: 22
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekday_evening_temp:
+      name: Temperatura sera feriali
+      default: 22
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekday_night_temp:
+      name: Temperatura notte feriali
+      default: 18
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    # Temperature fasce non feriali
+    weekend_morning_temp:
+      name: Temperatura mattina weekend
+      default: 22
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekend_day_away_temp:
+      name: Temperatura giorno fuori casa weekend
+      default: 20
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekend_mid_day_temp:
+      name: Temperatura metà giornata weekend
+      default: 22
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekend_evening_temp:
+      name: Temperatura sera weekend
+      default: 22
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+    weekend_night_temp:
+      name: Temperatura notte weekend
+      default: 18
+      selector:
+        number:
+          min: 10
+          max: 30
+          unit_of_measurement: "°C"
+
+trigger:
+  - platform: time
+    at: !input morning_time
+    id: morning
+  - platform: time
+    at: !input day_away_time
+    id: day_away
+  - platform: time
+    at: !input mid_day_time
+    id: mid_day
+  - platform: time
+    at: !input evening_time
+    id: evening
+  - platform: time
+    at: !input night_time
+    id: night
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() < 5 }}"  # feriali
+          - condition: trigger
+            id: morning
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekday_morning_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🌅 Buongiorno (feriali)! Target temperatura impostata a {{ !input weekday_morning_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() < 5 }}"
+          - condition: trigger
+            id: day_away
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekday_day_away_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🏢 Modalità risparmio feriali: target {{ !input weekday_day_away_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() < 5 }}"
+          - condition: trigger
+            id: mid_day
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekday_mid_day_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🌞 Temperatura metà giornata (feriali): {{ !input weekday_mid_day_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() < 5 }}"
+          - condition: trigger
+            id: evening
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekday_evening_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🏠 Bentornato (feriali)! Target temperatura {{ !input weekday_evening_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() < 5 }}"
+          - condition: trigger
+            id: night
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekday_night_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🌙 Buonanotte (feriali)! Target temperatura {{ !input weekday_night_temp }}°C"
+
+      # weekend / non feriali
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() >= 5 }}"  # sab e dom
+          - condition: trigger
+            id: morning
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekend_morning_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🌅 Buongiorno (weekend)! Target temperatura {{ !input weekend_morning_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() >= 5 }}"
+          - condition: trigger
+            id: day_away
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekend_day_away_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🏢 Modalità risparmio (weekend): target {{ !input weekend_day_away_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() >= 5 }}"
+          - condition: trigger
+            id: mid_day
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekend_mid_day_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🌞 Temperatura metà giornata (weekend): {{ !input weekend_mid_day_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() >= 5 }}"
+          - condition: trigger
+            id: evening
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekend_evening_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🏠 Bentornato (weekend)! Target temperatura {{ !input weekend_evening_temp }}°C"
+      - conditions:
+          - condition: template
+            value_template: "{{ now().weekday() >= 5 }}"
+          - condition: trigger
+            id: night
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: !input target_inputs
+            data:
+              value: !input weekend_night_temp
+          - service: notify.persistent_notification
+            data:
+              message: "🌙 Buonanotte (weekend)! Target temperatura {{ !input weekend_night_temp }}°C"
+
+mode: single
