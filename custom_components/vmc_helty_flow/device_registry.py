@@ -39,7 +39,7 @@ async def async_get_or_create_device(
     if coordinator.config_entry is None:
         raise ValueError("Coordinator config_entry is None")
 
-    return device_registry_instance.async_get_or_create(
+    return device_registry_instance.async_get_or_create(  # type: ignore[no-any-return]
         config_entry_id=coordinator.config_entry.entry_id,
         # Usa sia MAC/identificatore univoco che IP come identificatori
         identifiers={(DOMAIN, unique_id), (DOMAIN, ip_address)},

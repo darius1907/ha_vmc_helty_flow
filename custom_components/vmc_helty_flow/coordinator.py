@@ -176,7 +176,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
         self._consecutive_errors = 0
         if self.update_interval != self._normal_update_interval:
-            self.update_interval = self._normal_update_interval
+            self.update_interval = self._normal_update_interval  # type: ignore
             _LOGGER.info("Restored normal update interval for %s", self.ip)
 
     async def _async_update_data(self):
@@ -247,7 +247,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             self._consecutive_errors >= self._max_consecutive_errors
             and self.update_interval != self._error_recovery_interval
         ):
-            self.update_interval = self._error_recovery_interval
+            self.update_interval = self._error_recovery_interval  # type: ignore
             _LOGGER.info(
                 "Changed update interval for %s to %d seconds (recovery mode)",
                 self.ip,
