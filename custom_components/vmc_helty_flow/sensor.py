@@ -63,19 +63,14 @@ from .const import (
     DAILY_AIR_CHANGES_GOOD_MIN,
     DAILY_AIR_CHANGES_POOR,
     DEW_POINT_ACCEPTABLE_MAX,
-    DEW_POINT_ACCEPTABLE_MIN,
     DEW_POINT_COMFORTABLE_MAX,
-    DEW_POINT_COMFORTABLE_MIN,
     DEW_POINT_DELTA_CRITICAL,
     DEW_POINT_DELTA_HIGH_RISK,
     DEW_POINT_DELTA_LOW_RISK,
     DEW_POINT_DELTA_MODERATE_RISK,
     DEW_POINT_DRY_MAX,
-    DEW_POINT_DRY_MIN,
     DEW_POINT_GOOD_MAX,
-    DEW_POINT_GOOD_MIN,
     DEW_POINT_HUMID_MAX,
-    DEW_POINT_HUMID_MIN,
     DEW_POINT_VERY_DRY,
     DOMAIN,
     ENTITY_NAME_PREFIX,
@@ -609,6 +604,27 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
         except (ValueError, TypeError, ZeroDivisionError):
             return None
 
+    def _calculate_dew_point_comfort(self, dew_point: float | None) -> tuple[str, str]:
+        """Calculate dew point comfort level and color."""
+        if dew_point is None:
+            return "Unknown", "#9e9e9e"
+
+        # Define comfort ranges and their corresponding level and color
+        comfort_ranges = [
+            (DEW_POINT_VERY_DRY, "Molto Secco", "#ff6b47"),
+            (DEW_POINT_DRY_MAX, "Secco", "#ffeb3b"),
+            (DEW_POINT_COMFORTABLE_MAX, "Confortevole", "#4caf50"),
+            (DEW_POINT_GOOD_MAX, "Buono", "#8bc34a"),
+            (DEW_POINT_ACCEPTABLE_MAX, "Accettabile", "#ffeb3b"),
+            (DEW_POINT_HUMID_MAX, "Umido", "#ff9800"),
+        ]
+
+        for threshold, level, color in comfort_ranges:
+            if dew_point < threshold:
+                return level, color
+
+        return "Oppressivo", "#f44336"
+
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return extra attributes."""
@@ -632,31 +648,7 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
 
         # Calcola anche il comfort level basato sul punto di rugiada
         dew_point = self.native_value
-        comfort_level = "Unknown"
-        comfort_color = "#9e9e9e"
-
-        if dew_point is not None:
-            if dew_point < DEW_POINT_VERY_DRY:
-                comfort_level = "Molto Secco"
-                comfort_color = "#ff6b47"
-            elif DEW_POINT_DRY_MIN <= dew_point < DEW_POINT_DRY_MAX:
-                comfort_level = "Secco"
-                comfort_color = "#ffeb3b"
-            elif DEW_POINT_COMFORTABLE_MIN <= dew_point < DEW_POINT_COMFORTABLE_MAX:
-                comfort_level = "Confortevole"
-                comfort_color = "#4caf50"
-            elif DEW_POINT_GOOD_MIN <= dew_point < DEW_POINT_GOOD_MAX:
-                comfort_level = "Buono"
-                comfort_color = "#8bc34a"
-            elif DEW_POINT_ACCEPTABLE_MIN <= dew_point < DEW_POINT_ACCEPTABLE_MAX:
-                comfort_level = "Accettabile"
-                comfort_color = "#ffeb3b"
-            elif DEW_POINT_HUMID_MIN <= dew_point < DEW_POINT_HUMID_MAX:
-                comfort_level = "Umido"
-                comfort_color = "#ff9800"
-            else:
-                comfort_level = "Oppressivo"
-                comfort_color = "#f44336"
+        comfort_level, comfort_color = self._calculate_dew_point_comfort(dew_point)
 
         return {
             "formula": "Magnus-Tetens",
@@ -1194,15 +1186,29 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
 
     def _get_recommendation(self, daily_changes: float) -> str:
         """Genera raccomandazioni basate sui ricambi d'aria giornalieri."""
-        if daily_changes >= DAILY_AIR_CHANGES_EXCELLENT_MIN:
-            return "Ricambio d'aria eccellente, continua così"
-        if daily_changes >= DAILY_AIR_CHANGES_GOOD_MIN:
-            return (
+        # Define recommendation thresholds and messages
+        recommendations = [
+            (
+                DAILY_AIR_CHANGES_EXCELLENT_MIN,
+                "Ricambio d'aria eccellente, continua così",
+            ),
+            (
+                DAILY_AIR_CHANGES_GOOD_MIN,
                 "Ricambio d'aria buono, eventualmente aumenta ventilazione "
-                "nelle ore di punta"
-            )
-        if daily_changes >= DAILY_AIR_CHANGES_ADEQUATE_MIN:
-            return "Ricambio adeguato, considera di aumentare la velocità ventola"
+                "nelle ore di punta",
+            ),
+            (
+                DAILY_AIR_CHANGES_ADEQUATE_MIN,
+                "Ricambio adeguato, considera di aumentare la velocità ventola",
+            ),
+        ]
+
+        # Check thresholds in order
+        for threshold, message in recommendations:
+            if daily_changes >= threshold:
+                return message
+
+        # Handle insufficient air changes
         if not self.coordinator.data:
             return "Nessun dato disponibile"
 
@@ -1212,7 +1218,6 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
                 parts = status_data.split(",")
                 if len(parts) >= MIN_RESPONSE_PARTS:
                     fan_speed_raw = int(parts[1])
-                    # Decodifica modalità speciali
                     fan_speed = FANSPEED_MAPPING.get(fan_speed_raw, 1)
 
                     if fan_speed < FAN_SPEED_MAX_NORMAL:

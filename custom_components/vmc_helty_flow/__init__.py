@@ -43,9 +43,135 @@ NETWORK_INFO_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 DEVICE_NAME_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 
 
-async def async_setup_services(hass: HomeAssistant) -> None:
-    """Setup services for the integration."""
-    # Service schema for room volume update
+async def _handle_update_room_volume(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Handle room volume update service call."""
+    entity_id = call.data["entity_id"]
+    new_volume = float(call.data["room_volume"])
+
+    # Trova la config entry associata all'entità
+    entity_registry_instance = entity_registry.async_get(hass)
+    entity_entry = entity_registry_instance.async_get(entity_id)
+
+    if not entity_entry:
+        raise HomeAssistantError(f"Entity {entity_id} not found")
+
+    if entity_entry.config_entry_id is None:
+        raise HomeAssistantError(f"Entity {entity_id} has no config entry")
+
+    config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
+    if not config_entry or config_entry.domain != DOMAIN:
+        raise HomeAssistantError(
+            f"Entity {entity_id} is not from VMC Helty Flow integration"
+        )
+
+    # Aggiorna i dati della config entry
+    new_data = {**config_entry.data, "room_volume": new_volume}
+    hass.config_entries.async_update_entry(config_entry, data=new_data)
+
+    _LOGGER.info(
+        "Updated room volume for %s to %.1f m³",
+        config_entry.data.get("name", config_entry.data.get("ip")),
+        new_volume,
+    )
+
+
+async def _handle_network_diagnostics(
+    _: HomeAssistant, call: ServiceCall
+) -> dict[str, str | bool | int | None]:
+    """Handle network diagnostics service call."""
+    ip = call.data["ip"]
+    port = call.data["port"]
+
+    _LOGGER.info("Running network diagnostics for %s:%s", ip, port)
+
+    try:
+        diagnostics = await validate_network_connectivity(ip, port)
+    except Exception as err:
+        _LOGGER.exception("Failed to run network diagnostics for %s:%s", ip, port)
+        raise HomeAssistantError(f"Network diagnostics failed: {err}") from err
+
+    # Log the results
+    _LOGGER.info(
+        "Network diagnostics for %s:%s - Ping: %s, TCP: %s, Reachable: %s",
+        ip,
+        port,
+        diagnostics.get("ping_success"),
+        diagnostics.get("tcp_connection"),
+        diagnostics.get("reachable"),
+    )
+
+    if diagnostics.get("error_details"):
+        _LOGGER.warning(
+            "Network diagnostics errors for %s:%s - %s",
+            ip,
+            port,
+            diagnostics.get("error_details"),
+        )
+
+    return diagnostics
+
+
+async def _handle_set_special_mode(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Handle set special mode service call."""
+    entity_id = call.data["entity_id"]
+    mode = call.data["mode"]
+
+    # Trova l'entità
+    entity_registry_instance = entity_registry.async_get(hass)
+    entity_entry = entity_registry_instance.async_get(entity_id)
+
+    if not entity_entry:
+        raise HomeAssistantError(f"Entity {entity_id} not found")
+
+    if entity_entry.config_entry_id is None:
+        raise HomeAssistantError(f"Entity {entity_id} has no config entry")
+
+    config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
+    if not config_entry or config_entry.domain != DOMAIN:
+        raise HomeAssistantError(
+            f"Entity {entity_id} is not from VMC Helty Flow integration"
+        )
+
+    # Ottieni il coordinatore
+    coordinator = hass.data[DOMAIN].get(config_entry.entry_id)
+    if not coordinator:
+        raise HomeAssistantError(f"Coordinator not found for entity {entity_id}")
+
+    # Mapping mode to speed values come da protocollo VMC
+    mode_mapping = {
+        "night_mode": 6,  # 150% -> comando VMWH0000006
+        "hyperventilation": 5,  # 125% -> comando VMWH0000005
+        "free_cooling": 7,  # 175% -> comando VMWH0000007
+    }
+
+    if mode not in mode_mapping:
+        raise HomeAssistantError(f"Invalid mode: {mode}")
+
+    speed = mode_mapping[mode]
+
+    try:
+        # Use tcp_send_command directly
+        command = f"VMWH{speed:07d}"
+        result = await tcp_send_command(coordinator.ip, DEFAULT_PORT, command)
+
+        _LOGGER.info(
+            "Set special mode %s (speed %d) for %s: %s",
+            mode,
+            speed,
+            entity_id,
+            result,
+        )
+
+        # Aggiorna i dati del coordinatore
+        await coordinator.async_request_refresh()
+
+    except Exception as err:
+        _LOGGER.exception("Failed to set special mode %s for %s", mode, entity_id)
+        raise HomeAssistantError(f"Failed to set special mode {mode}: {err}") from err
+
+
+def _create_service_schemas() -> tuple[vol.Schema, vol.Schema, vol.Schema]:
+    """Create service schemas for all VMC services."""
     update_room_volume_schema = vol.Schema(
         {
             vol.Required("entity_id"): cv.entity_id,
@@ -55,7 +181,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         }
     )
 
-    # Service schema for network diagnostics
     network_diagnostics_schema = vol.Schema(
         {
             vol.Required("ip"): cv.string,
@@ -63,7 +188,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         }
     )
 
-    # Service schema for set special mode
     set_special_mode_schema = vol.Schema(
         {
             vol.Required("entity_id"): cv.entity_id,
@@ -73,144 +197,34 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         }
     )
 
-    async def handle_update_room_volume(call: ServiceCall) -> None:
-        """Handle room volume update service call."""
-        entity_id = call.data["entity_id"]
-        new_volume = float(call.data["room_volume"])
+    return (
+        update_room_volume_schema,
+        network_diagnostics_schema,
+        set_special_mode_schema,
+    )
 
-        # Trova la config entry associata all'entità
-        entity_registry_instance = entity_registry.async_get(hass)
-        entity_entry = entity_registry_instance.async_get(entity_id)
 
-        if not entity_entry:
-            raise HomeAssistantError(f"Entity {entity_id} not found")
+async def async_setup_services(hass: HomeAssistant) -> None:
+    """Setup services for the integration."""
+    # Get service schemas
+    (
+        update_room_volume_schema,
+        network_diagnostics_schema,
+        set_special_mode_schema,
+    ) = _create_service_schemas()
 
-        if entity_entry.config_entry_id is None:
-            raise HomeAssistantError(f"Entity {entity_id} has no config entry")
-
-        config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
-        if not config_entry or config_entry.domain != DOMAIN:
-            raise HomeAssistantError(
-                f"Entity {entity_id} is not from VMC Helty Flow integration"
-            )
-
-        # Aggiorna i dati della config entry
-        new_data = {**config_entry.data, "room_volume": new_volume}
-        hass.config_entries.async_update_entry(config_entry, data=new_data)
-
-        _LOGGER.info(
-            "Updated room volume for %s to %.1f m³",
-            config_entry.data.get("name", config_entry.data.get("ip")),
-            new_volume,
-        )
-
-    async def handle_network_diagnostics(
-        call: ServiceCall,
-    ) -> dict[str, str | bool | int | None]:
-        """Handle network diagnostics service call."""
-        ip = call.data["ip"]
-        port = call.data["port"]
-
-        _LOGGER.info("Running network diagnostics for %s:%s", ip, port)
-
-        try:
-            diagnostics = await validate_network_connectivity(ip, port)
-        except Exception as err:
-            _LOGGER.exception("Failed to run network diagnostics for %s:%s", ip, port)
-            raise HomeAssistantError(f"Network diagnostics failed: {err}") from err
-        else:
-            # Log the results
-            _LOGGER.info(
-                "Network diagnostics for %s:%s - Ping: %s, TCP: %s, Reachable: %s",
-                ip,
-                port,
-                diagnostics.get("ping_success"),
-                diagnostics.get("tcp_connection"),
-                diagnostics.get("reachable"),
-            )
-
-            if diagnostics.get("error_details"):
-                _LOGGER.warning(
-                    "Network diagnostics errors for %s:%s - %s",
-                    ip,
-                    port,
-                    diagnostics.get("error_details"),
-                )
-
-            return diagnostics
-
-    async def handle_set_special_mode(call: ServiceCall) -> None:
-        """Handle set special mode service call."""
-        entity_id = call.data["entity_id"]
-        mode = call.data["mode"]
-
-        # Trova l'entità
-        entity_registry_instance = entity_registry.async_get(hass)
-        entity_entry = entity_registry_instance.async_get(entity_id)
-
-        if not entity_entry:
-            raise HomeAssistantError(f"Entity {entity_id} not found")
-
-        if entity_entry.config_entry_id is None:
-            raise HomeAssistantError(f"Entity {entity_id} has no config entry")
-
-        config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
-        if not config_entry or config_entry.domain != DOMAIN:
-            raise HomeAssistantError(
-                f"Entity {entity_id} is not from VMC Helty Flow integration"
-            )
-
-        # Ottieni il coordinatore
-        coordinator = hass.data[DOMAIN].get(config_entry.entry_id)
-        if not coordinator:
-            raise HomeAssistantError(f"Coordinator not found for entity {entity_id}")
-
-        # Mapping mode to speed values come da protocollo VMC
-        mode_mapping = {
-            "night_mode": 6,  # 150% -> comando VMWH0000006
-            "hyperventilation": 5,  # 125% -> comando VMWH0000005
-            "free_cooling": 7,  # 175% -> comando VMWH0000007
-        }
-
-        if mode not in mode_mapping:
-            raise HomeAssistantError(f"Invalid mode: {mode}")
-
-        speed = mode_mapping[mode]
-
-        try:
-            # Use tcp_send_command directly
-            command = f"VMWH{speed:07d}"
-            result = await tcp_send_command(coordinator.ip, DEFAULT_PORT, command)
-
-            _LOGGER.info(
-                "Set special mode %s (speed %d) for %s: %s",
-                mode,
-                speed,
-                entity_id,
-                result,
-            )
-
-            # Aggiorna i dati del coordinatore
-            await coordinator.async_request_refresh()
-
-        except Exception as err:
-            _LOGGER.exception("Failed to set special mode %s for %s", mode, entity_id)
-            raise HomeAssistantError(
-                f"Failed to set special mode {mode}: {err}"
-            ) from err
-
-    # Register services
+    # Register services using external handler functions
     hass.services.async_register(
         DOMAIN,
         "update_room_volume",
-        handle_update_room_volume,
+        lambda call: _handle_update_room_volume(hass, call),
         schema=update_room_volume_schema,
     )
 
     hass.services.async_register(
         DOMAIN,
         "network_diagnostics",
-        handle_network_diagnostics,
+        lambda call: _handle_network_diagnostics(hass, call),
         schema=network_diagnostics_schema,
         supports_response="only",
     )
@@ -218,7 +232,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN,
         "set_special_mode",
-        handle_set_special_mode,
+        lambda call: _handle_set_special_mode(hass, call),
         schema=set_special_mode_schema,
     )
 

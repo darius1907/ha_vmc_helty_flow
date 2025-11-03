@@ -1,5 +1,7 @@
 """Test per il modulo coordinator.py."""
 
+# ruff: noqa: PT019
+
 from datetime import timedelta
 from unittest.mock import Mock, patch
 
