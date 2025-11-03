@@ -47,7 +47,7 @@ class TestRoomVolumeIntegration(unittest.TestCase):
         assert coordinator.room_volume == 80.0
 
     def test_coordinator_room_volume_default_fallback(self):
-        """Test coordinator uses default if neither data nor options have room_volume."""
+        """Test coordinator uses default if neither data nor options have it."""
         # Remove room_volume from both data and options
         self.config_entry.data = {
             "ip": "192.168.1.100",
@@ -100,7 +100,7 @@ class TestRoomVolumeIntegration(unittest.TestCase):
         assert attrs["room_volume"] == "75.0 m³"
 
     def test_daily_air_changes_sensor_attributes_show_configured_volume(self):
-        """Test that daily air changes sensor attributes show the configured room volume."""
+        """Test that daily air changes sensor attributes show configured room volume."""
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
         sensor = VmcHeltyDailyAirChangesSensor(coordinator, "test_device")
 

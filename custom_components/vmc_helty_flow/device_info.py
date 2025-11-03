@@ -56,7 +56,7 @@ class VmcHeltyEntity(Entity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        return self.coordinator.last_update_success
+        return bool(self.coordinator.last_update_success)
 
     async def async_added_to_hass(self):
         """Connect to dispatcher when added to hass."""
@@ -77,5 +77,6 @@ class VmcHeltyEntity(Entity):
     def name_by_user(self) -> str | None:
         """Return the user-defined name if set."""
         if hasattr(self.coordinator, "config_entry"):
-            return self.coordinator.config_entry.title
+            title = self.coordinator.config_entry.title
+            return str(title) if title is not None else None
         return None

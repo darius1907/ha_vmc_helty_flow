@@ -310,7 +310,10 @@ class TestVmcHeltyFlowConfigFlow:
             assert result["reason"] == "unknown"
 
     async def test_async_step_room_config_no_input(self, config_flow):
-        """Test room configuration step without input shows form with room_volume field."""
+        """Test room configuration step without input shows form.
+
+        This test verifies that the form is displayed with room_volume field.
+        """
         config_flow.current_found_device = {"ip": "192.168.1.100", "name": "Test1"}
 
         result = await config_flow.async_step_room_config()

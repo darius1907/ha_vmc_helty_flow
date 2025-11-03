@@ -27,7 +27,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from . import VmcHeltyCoordinator
 from .const import (
     AIR_EXCHANGE_ACCEPTABLE,
     AIR_EXCHANGE_EXCELLENT,
@@ -85,6 +84,7 @@ from .const import (
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
 )
+from .coordinator import VmcHeltyCoordinator
 from .device_info import VmcHeltyEntity
 from .helpers import parse_vmsl_response, tcp_send_command
 
@@ -543,15 +543,16 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
             temp_internal = float(parts[1]) / 10  # Decimi di °C
             humidity = float(parts[3]) / 10  # Decimi di %
 
-            return {
-                "formula": "Magnus-Tetens",
-                "temperature_source": f"{temp_internal}°C",
-                "humidity_source": f"{humidity}%",
-                "precision": "±0.1 g/m³",
-                "valid_range": "-40°C to +50°C",
-            }
         except (ValueError, IndexError):
             return None
+
+        return {
+            "formula": "Magnus-Tetens",
+            "temperature_source": f"{temp_internal}°C",
+            "humidity_source": f"{humidity}%",
+            "precision": "±0.1 g/m³",
+            "valid_range": "-40°C to +50°C",
+        }
 
 
 class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
@@ -1015,7 +1016,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             return None
 
     @property
-    def extra_state_attributes(self) -> dict[str, any] | None:
+    def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return extra state attributes."""
         if not self.coordinator.data:
             return {

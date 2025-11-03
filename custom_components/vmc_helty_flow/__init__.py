@@ -85,6 +85,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if not entity_entry:
             raise HomeAssistantError(f"Entity {entity_id} not found")
 
+        if entity_entry.config_entry_id is None:
+            raise HomeAssistantError(f"Entity {entity_id} has no config entry")
+
         config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
         if not config_entry or config_entry.domain != DOMAIN:
             raise HomeAssistantError(
@@ -147,6 +150,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
         if not entity_entry:
             raise HomeAssistantError(f"Entity {entity_id} not found")
+
+        if entity_entry.config_entry_id is None:
+            raise HomeAssistantError(f"Entity {entity_id} has no config entry")
 
         config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
         if not config_entry or config_entry.domain != DOMAIN:

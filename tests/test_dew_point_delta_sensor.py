@@ -255,7 +255,10 @@ class TestVmcHeltyDewPointDeltaSensor:
             humidity_val = int(humidity * 10)
 
             mock_coordinator.data = {
-                "sensors": f"VMGI,{temp_int_val},{temp_ext_val},{humidity_val},800,0,0,0,0,0,0,150,0,0,0",
+                "sensors": (
+                    f"VMGI,{temp_int_val},{temp_ext_val},{humidity_val},"
+                    "800,0,0,0,0,0,0,150,0,0,0"
+                ),
             }
 
             delta = sensor.native_value

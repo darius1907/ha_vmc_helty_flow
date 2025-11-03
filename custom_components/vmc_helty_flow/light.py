@@ -1,6 +1,7 @@
 """Entità Light per livello luci VMC Helty Flow."""
 
-from homeassistant.components.light import ColorMode, LightEntity
+from homeassistant.components.light import LightEntity
+from homeassistant.components.light.const import ColorMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -128,7 +129,8 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
     def is_on(self) -> bool:
         """Return True if timer is active."""
         attributes = self.extra_state_attributes
-        return attributes.get("timer_seconds", 0) > 0
+        timer_seconds = attributes.get("timer_seconds", 0) if attributes else 0
+        return int(timer_seconds) > 0
 
     async def async_turn_on(self, **_kwargs) -> None:
         """Set light timer (default 300 seconds)."""

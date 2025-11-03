@@ -54,24 +54,26 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self._recovery_update_interval = timedelta(seconds=60)
 
         # Timestamps for smart update intervals
-        self._last_network_update = 0
-        self._last_name_update = 0
+        self._last_network_update = 0.0
+        self._last_name_update = 0.0
 
         # Cache for last valid data
-        self._cached_data = {
-            "name": str,
-            "network": str,
+        self._cached_data: dict[str, str | None] = {
+            "name": None,
+            "network": None,
         }
 
     @property
     def room_volume(self) -> float:
         """Return configured room volume from config entry."""
+        if self.config_entry is None:
+            return DEFAULT_ROOM_VOLUME
         room_volume = self.config_entry.data.get("room_volume")
         if room_volume is None:
             room_volume = self.config_entry.options.get(
                 "room_volume", DEFAULT_ROOM_VOLUME
             )
-        return float(room_volume)
+        return float(room_volume or DEFAULT_ROOM_VOLUME)
 
     @property
     def name_slug(self) -> str:

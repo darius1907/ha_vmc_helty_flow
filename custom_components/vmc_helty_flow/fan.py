@@ -100,7 +100,7 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
             return {}
 
         status = self.coordinator.data.get("status", "")
-        attributes = {}
+        attributes: dict[str, int | bool | None] = {}
 
         if status and status.startswith("VMGO"):
             try:

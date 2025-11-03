@@ -111,35 +111,89 @@ class VmcHeltyCardEditor extends LitElement {
 
     try {
       this._translationsLoading = true;
-      this._language = this.hass?.language || "en";
+      this._language = this.hass?.language || "it";  // Default to Italian
 
-      // Always load English as base
-      const enResponse = await fetch(`/local/vmc-helty-card/translations/en.json`);
-      if (!enResponse.ok) {
-        console.error("Failed to load English translations");
-        return;
-      }
-      const enTranslations = await enResponse.json();
+      console.debug(`Loading editor translations for language: ${this._language}`);
 
-      let translations = enTranslations;
+      // Try multiple paths for loading translations
+      const possiblePaths = [
+        `/local/vmc-helty-card/translations/it.json`,  // Try Italian first
+        `/hacsfiles/vmc_helty_flow/www/vmc-helty-card/translations/it.json`,
+        `./translations/it.json`
+      ];
 
-      // Load language-specific translations if different from English
-      if (this._language !== "en") {
+      let defaultTranslations = null;
+      let successfulPath = null;
+
+      // Try each path until one works for Italian
+      for (const path of possiblePaths) {
         try {
-          const response = await fetch(`/local/vmc-helty-card/translations/${this._language}.json`);
+          console.debug(`Editor trying to load Italian translations from: ${path}`);
+          const response = await fetch(path);
           if (response.ok) {
-            const langTranslations = await response.json();
-            translations = { ...enTranslations, ...langTranslations };
-            console.debug(`Loaded editor translations for language: ${this._language}`);
+            defaultTranslations = await response.json();
+            successfulPath = path.replace('it.json', '');
+            console.debug(`Editor successfully loaded Italian translations from: ${path}`, defaultTranslations);
+            break;
           } else {
-            console.warn(`Editor translation file for ${this._language} not found, using English fallback`);
+            console.debug(`Editor failed to load from ${path}: ${response.status} ${response.statusText}`);
           }
         } catch (e) {
-          console.warn(`Failed to load editor translations for ${this._language}, using English fallback:`, e.message);
+          console.debug(`Editor error loading from ${path}:`, e.message);
+        }
+      }
+
+      // If Italian fails, fallback to English
+      if (!defaultTranslations) {
+        console.warn("Editor failed to load Italian translations, trying English fallback");
+        const enPaths = [
+          `/local/vmc-helty-card/translations/en.json`,
+          `/hacsfiles/vmc_helty_flow/www/vmc-helty-card/translations/en.json`,
+          `./translations/en.json`
+        ];
+
+        for (const path of enPaths) {
+          try {
+            console.debug(`Editor fallback: trying to load English translations from: ${path}`);
+            const response = await fetch(path);
+            if (response.ok) {
+              defaultTranslations = await response.json();
+              successfulPath = path.replace('en.json', '');
+              console.debug(`Editor successfully loaded English fallback from: ${path}`, defaultTranslations);
+              break;
+            }
+          } catch (e) {
+            console.debug(`Editor error loading English fallback from ${path}:`, e.message);
+          }
+        }
+      }
+
+      if (!defaultTranslations) {
+        console.error("Editor failed to load translations from all attempted paths");
+        return;
+      }
+
+      let translations = defaultTranslations;
+      // Load language-specific translations if different from the loaded default
+      if (this._language !== "it" && this._language !== "en") {
+        try {
+          const langPath = `${successfulPath}${this._language}.json`;
+          console.debug(`Editor loading language-specific translations from: ${langPath}`);
+          const response = await fetch(langPath);
+          if (response.ok) {
+            const langTranslations = await response.json();
+            translations = { ...defaultTranslations, ...langTranslations };
+            console.debug(`Editor loaded translations for language: ${this._language}`, langTranslations);
+          } else {
+            console.warn(`Editor translation file for ${this._language} not found at ${langPath}, using default fallback`);
+          }
+        } catch (e) {
+          console.warn(`Editor failed to load translations for ${this._language}, using default fallback:`, e.message);
         }
       }
 
       this._translations = translations;
+      console.debug("Final editor translations object:", this._translations);
       this.requestUpdate();
     } catch (error) {
       console.error("Failed to load editor translations:", error);
@@ -148,9 +202,7 @@ class VmcHeltyCardEditor extends LitElement {
     } finally {
       this._translationsLoading = false;
     }
-  }
-
-  _t(key) {
+  }  _t(key) {
     if (!key || typeof key !== 'string') return key;
 
     // If translations not loaded yet, return the key
@@ -248,6 +300,17 @@ class VmcHeltyCardEditor extends LitElement {
         </div>
       `;
     }
+
+    // Wait for translations to be loaded before rendering content
+    if (!this._translations || Object.keys(this._translations).length === 0) {
+      return html`
+        <div class="error-message">
+          <ha-icon icon="mdi:loading"></ha-icon>
+          <span>Loading translations...</span>
+        </div>
+      `;
+    }
+
     return html`
       <div class="config-section">
         <div class="section-title">
