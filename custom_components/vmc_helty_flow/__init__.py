@@ -2,11 +2,12 @@
 
 import logging
 from datetime import timedelta
+from typing import Any
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry
@@ -77,7 +78,7 @@ async def _handle_update_room_volume(hass: HomeAssistant, call: ServiceCall) -> 
 
 async def _handle_network_diagnostics(
     _: HomeAssistant, call: ServiceCall
-) -> dict[str, str | bool | int | None]:
+) -> dict[str, Any]:
     """Handle network diagnostics service call."""
     ip = call.data["ip"]
     port = call.data["port"]
@@ -226,7 +227,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         "network_diagnostics",
         lambda call: _handle_network_diagnostics(hass, call),
         schema=network_diagnostics_schema,
-        supports_response="only",
+        supports_response=SupportsResponse.ONLY,
     )
 
     hass.services.async_register(
@@ -288,7 +289,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
 
-    return unload_ok
+    return bool(unload_ok)
 
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:

@@ -47,6 +47,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self.ip = config_entry.data["ip"]
         self.name = config_entry.data["name"]
         self.device_entry: DeviceEntry | None = None
+        self.device_id: str | None = None
         self._consecutive_errors = 0
         self._max_consecutive_errors = 5
         self._error_recovery_interval = timedelta(seconds=30)

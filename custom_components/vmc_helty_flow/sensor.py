@@ -2,6 +2,7 @@
 
 import logging
 import math
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
@@ -15,7 +16,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.components.text import TextEntity
+from homeassistant.components.text import TextEntity, TextMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
@@ -218,7 +219,7 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
                 return None
 
             # Mapping dei sensori con logica unificata
-            sensor_mapping = {
+            sensor_mapping: dict[str, tuple[int, Callable[[str], Any]]] = {
                 "temperature_internal": (1, lambda x: float(x) / 10),
                 "temperature_external": (2, lambda x: float(x) / 10),
                 "humidity": (3, lambda x: float(x) / 10),
@@ -290,7 +291,9 @@ class VmcHeltyOnOffSensor(VmcHeltyEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return True if device is online."""
-        return self.coordinator.data and self.coordinator.data.get("available", False)
+        return bool(
+            self.coordinator.data and self.coordinator.data.get("available", False)
+        )
 
 
 class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):
@@ -354,7 +357,7 @@ class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return device IP address."""
-        return self.coordinator.ip
+        return str(self.coordinator.ip)
 
 
 class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
@@ -392,8 +395,8 @@ class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
 
         name_data = self.coordinator.data.get("name", "")
         if name_data and name_data.startswith("VMNM"):
-            return name_data[4:].strip()
-        return self.coordinator.name
+            return str(name_data[4:].strip())
+        return str(self.coordinator.name)
 
     async def async_set_value(self, value: str) -> None:
         """Set new device name."""
@@ -439,7 +442,7 @@ class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
         self._attr_unique_id = f"{coordinator.name_slug}_wifi_password"
         self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} WiFi Password"
         self._attr_icon = "mdi:lock"
-        self._attr_mode = "password"
+        self._attr_mode = TextMode.PASSWORD
 
     @property
     def native_value(self) -> str | None:
@@ -756,7 +759,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributi aggiuntivi con dettagli del comfort."""
-        attributes = super().extra_state_attributes or {}
+        attributes = dict(super().extra_state_attributes or {})
 
         if not self.coordinator.data:
             return attributes
@@ -873,7 +876,7 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributi aggiuntivi con informazioni sul rischio condensazione."""
-        attributes = super().extra_state_attributes or {}
+        attributes = dict(super().extra_state_attributes or {})
 
         if not self.coordinator.data:
             return attributes
@@ -1002,7 +1005,7 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             # Calcola tempo di ricambio: Volume / Portata * 60 (conversione minuti)
             exchange_time = (room_volume / airflow) * 60
 
-            return round(exchange_time, 1)
+            return float(round(exchange_time, 1))
 
         except (ValueError, IndexError, TypeError):
             return None
@@ -1141,7 +1144,7 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
             # Calcola ricambi d'aria per 24 ore
             daily_air_changes = air_changes_per_hour * 24
 
-            return round(daily_air_changes, 1)
+            return float(round(daily_air_changes, 1))
 
         except (ValueError, IndexError, TypeError):
             return None
