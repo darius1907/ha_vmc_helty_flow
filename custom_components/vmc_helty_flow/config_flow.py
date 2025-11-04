@@ -34,10 +34,11 @@ MAX_IPS_IN_SUBNET = 254
 _LOGGER = logging.getLogger(__name__)
 
 
-class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow):
+class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
 
-    domain = DOMAIN
+    VERSION = 1
+    MINOR_VERSION = 1
 
     @staticmethod
     def _validate_room_volume(user_input: dict) -> tuple[float | None, dict]:
@@ -69,9 +70,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow):
                 vol.Required("room_volume", default=current_volume): str,
             }
         )
-
-    """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
-    VERSION = 1
 
     def __init__(self):
         """Initialize the config flow."""
