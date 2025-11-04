@@ -175,8 +175,8 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             )
 
         self._consecutive_errors = 0
-        if self.update_interval != self._normal_update_interval:
-            self.update_interval = self._normal_update_interval  # type: ignore
+        if self.update_interval != self._normal_update_interval:  # type: ignore[has-type]
+            self.update_interval = self._normal_update_interval  # type: ignore[has-type]
             _LOGGER.info("Restored normal update interval for %s", self.ip)
 
     async def _async_update_data(self):

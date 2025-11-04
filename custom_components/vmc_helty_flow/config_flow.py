@@ -34,7 +34,7 @@ MAX_IPS_IN_SUBNET = 254
 _LOGGER = logging.getLogger(__name__)
 
 
-class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
 
     VERSION = 1

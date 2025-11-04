@@ -14,22 +14,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug - Show repository structure
-        run: |
-          echo "=== Repository root ==="
-          ls -la
-          echo -e "\n=== custom_components ==="
-          ls -la custom_components/
-          echo -e "\n=== custom_components/vmc_helty_flow ==="
-          ls -la custom_components/vmc_helty_flow/
-          echo -e "\n=== hacs.json content ==="
-          cat hacs.json
-          echo -e "\n=== manifest.json content ==="
-          cat custom_components/vmc_helty_flow/manifest.json
-          echo -e "\n=== Validate JSON files ==="
-          python3 -m json.tool hacs.json > /dev/null && echo "✅ hacs.json is valid JSON"
-          python3 -m json.tool custom_components/vmc_helty_flow/manifest.json > /dev/null && echo "✅ manifest.json is valid JSON"
-
       - name: HACS validation
         uses: hacs/action@main
         with:
