@@ -6,7 +6,6 @@ pytest-cov==6.2.1
 coverage==7.10.0
 pylint==3.3.8
 black==24.8.0
-mypy==1.11.2
 
 # Home Assistant Core for integration testing
 homeassistant==2025.8.3
