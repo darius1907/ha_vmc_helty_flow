@@ -10,6 +10,7 @@
 astroid==3.3.11
 coverage==7.10.0
 freezegun==1.5.2
+homeassistant==2024.11.3
 license-expression==30.4.3
 mock-open==1.4.0
 mypy-dev==1.19.0a2
