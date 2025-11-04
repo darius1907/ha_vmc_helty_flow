@@ -104,7 +104,8 @@ class TestVmcHeltyDailyAirChangesSensor(unittest.TestCase):
     def test_calculation_invalid_fan_speed(self):
         """Test calcolo con velocità ventola non valida (fallback 10 m³/h)."""
         self.coordinator.data = {"status": "VMGO,999,1,0,0,0,0,0,0,0,0,50,0,0,0,60"}
-        # Portata: 10 m³/h (fallback), Ricambi/ora: 10/60 = 0.167, Ricambi/giorno: 0.167*24 = 4.0
+        # Portata: 10 m³/h (fallback), Ricambi/ora: 10/60 = 0.167
+        # Ricambi/giorno: 0.167*24 = 4.0
         expected = round((10 / self.TEST_ROOM_VOLUME) * 24, 1)
         assert self.sensor.native_value == expected
 

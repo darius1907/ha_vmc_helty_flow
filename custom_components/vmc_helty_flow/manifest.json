@@ -1,20 +1,15 @@
 {
   "domain": "vmc_helty_flow",
   "name": "VMC Helty Flow",
-  "codeowners": ["@dpezzoli"],
+  "codeowners": ["@darius1907"],
   "config_flow": true,
-  "dependencies": [],
-  "documentation": "https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md",
+  "dependencies": ["network"],
+  "documentation": "https://github.com/darius1907/ha_vmc_helty_flow",
   "integration_type": "device",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/dpezzoli/ha_vmc_helty_flow/issues",
-  "requirements": [],
-  "ssdp": [],
+  "issue_tracker": "https://github.com/darius1907/ha_vmc_helty_flow/issues",
+  "requirements": ["ifaddr"],
   "version": "1.0.0",
-  "zeroconf": [],
-  "quality_scale": "silver",
-  "loggers": ["vmc_helty_flow"],
-  "homekit": {},
-  "after_dependencies": ["network"],
-  "dhcp": []
+  "quality_scale": "silver"
 }
+

@@ -22,7 +22,7 @@ async def async_get_or_create_device(
     device_registry_instance = device_registry.async_get(hass)
 
     # Recupera l'indirizzo IP dal coordinatore
-    ip_address = coordinator.ip
+    ip_address = getattr(coordinator, "ip", "")
 
     # Cerca di ottenere l'indirizzo MAC o un identificatore univoco
     unique_id = await async_get_device_unique_id(hass, ip_address)
@@ -36,7 +36,10 @@ async def async_get_or_create_device(
     device_info = await async_get_device_info(hass, ip_address)
 
     # Crea o aggiorna il device nel registry
-    return device_registry_instance.async_get_or_create(
+    if coordinator.config_entry is None:
+        raise ValueError("Coordinator config_entry is None")
+
+    return device_registry_instance.async_get_or_create(  # type: ignore[no-any-return]
         config_entry_id=coordinator.config_entry.entry_id,
         # Usa sia MAC/identificatore univoco che IP come identificatori
         identifiers={(DOMAIN, unique_id), (DOMAIN, ip_address)},

@@ -47,6 +47,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self.ip = config_entry.data["ip"]
         self.name = config_entry.data["name"]
         self.device_entry: DeviceEntry | None = None
+        self.device_id: str | None = None
         self._consecutive_errors = 0
         self._max_consecutive_errors = 5
         self._error_recovery_interval = timedelta(seconds=30)
@@ -54,24 +55,26 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self._recovery_update_interval = timedelta(seconds=60)
 
         # Timestamps for smart update intervals
-        self._last_network_update = 0
-        self._last_name_update = 0
+        self._last_network_update = 0.0
+        self._last_name_update = 0.0
 
         # Cache for last valid data
-        self._cached_data = {
-            "name": str,
-            "network": str,
+        self._cached_data: dict[str, str | None] = {
+            "name": None,
+            "network": None,
         }
 
     @property
     def room_volume(self) -> float:
         """Return configured room volume from config entry."""
+        if self.config_entry is None:
+            return DEFAULT_ROOM_VOLUME
         room_volume = self.config_entry.data.get("room_volume")
         if room_volume is None:
             room_volume = self.config_entry.options.get(
                 "room_volume", DEFAULT_ROOM_VOLUME
             )
-        return float(room_volume)
+        return float(room_volume or DEFAULT_ROOM_VOLUME)
 
     @property
     def name_slug(self) -> str:
@@ -172,8 +175,8 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             )
 
         self._consecutive_errors = 0
-        if self.update_interval != self._normal_update_interval:
-            self.update_interval = self._normal_update_interval
+        if self.update_interval != self._normal_update_interval:  # type: ignore[has-type]
+            self.update_interval = self._normal_update_interval  # type: ignore[has-type]
             _LOGGER.info("Restored normal update interval for %s", self.ip)
 
     async def _async_update_data(self):
@@ -244,7 +247,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             self._consecutive_errors >= self._max_consecutive_errors
             and self.update_interval != self._error_recovery_interval
         ):
-            self.update_interval = self._error_recovery_interval
+            self.update_interval = self._error_recovery_interval  # type: ignore
             _LOGGER.info(
                 "Changed update interval for %s to %d seconds (recovery mode)",
                 self.ip,

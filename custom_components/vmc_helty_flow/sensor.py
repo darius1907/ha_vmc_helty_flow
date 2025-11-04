@@ -2,6 +2,7 @@
 
 import logging
 import math
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
@@ -15,7 +16,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.components.text import TextEntity
+from homeassistant.components.text import TextEntity, TextMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
@@ -27,7 +28,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from . import VmcHeltyCoordinator
 from .const import (
     AIR_EXCHANGE_ACCEPTABLE,
     AIR_EXCHANGE_EXCELLENT,
@@ -64,19 +64,14 @@ from .const import (
     DAILY_AIR_CHANGES_GOOD_MIN,
     DAILY_AIR_CHANGES_POOR,
     DEW_POINT_ACCEPTABLE_MAX,
-    DEW_POINT_ACCEPTABLE_MIN,
     DEW_POINT_COMFORTABLE_MAX,
-    DEW_POINT_COMFORTABLE_MIN,
     DEW_POINT_DELTA_CRITICAL,
     DEW_POINT_DELTA_HIGH_RISK,
     DEW_POINT_DELTA_LOW_RISK,
     DEW_POINT_DELTA_MODERATE_RISK,
     DEW_POINT_DRY_MAX,
-    DEW_POINT_DRY_MIN,
     DEW_POINT_GOOD_MAX,
-    DEW_POINT_GOOD_MIN,
     DEW_POINT_HUMID_MAX,
-    DEW_POINT_HUMID_MIN,
     DEW_POINT_VERY_DRY,
     DOMAIN,
     ENTITY_NAME_PREFIX,
@@ -85,6 +80,7 @@ from .const import (
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
 )
+from .coordinator import VmcHeltyCoordinator
 from .device_info import VmcHeltyEntity
 from .helpers import parse_vmsl_response, tcp_send_command
 
@@ -223,7 +219,7 @@ class VmcHeltySensor(VmcHeltyEntity, SensorEntity):
                 return None
 
             # Mapping dei sensori con logica unificata
-            sensor_mapping = {
+            sensor_mapping: dict[str, tuple[int, Callable[[str], Any]]] = {
                 "temperature_internal": (1, lambda x: float(x) / 10),
                 "temperature_external": (2, lambda x: float(x) / 10),
                 "humidity": (3, lambda x: float(x) / 10),
@@ -295,7 +291,9 @@ class VmcHeltyOnOffSensor(VmcHeltyEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return True if device is online."""
-        return self.coordinator.data and self.coordinator.data.get("available", False)
+        return bool(
+            self.coordinator.data and self.coordinator.data.get("available", False)
+        )
 
 
 class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):
@@ -359,7 +357,7 @@ class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):
     @property
     def native_value(self) -> str:
         """Return device IP address."""
-        return self.coordinator.ip
+        return str(self.coordinator.ip)
 
 
 class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
@@ -397,8 +395,8 @@ class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
 
         name_data = self.coordinator.data.get("name", "")
         if name_data and name_data.startswith("VMNM"):
-            return name_data[4:].strip()
-        return self.coordinator.name
+            return str(name_data[4:].strip())
+        return str(self.coordinator.name)
 
     async def async_set_value(self, value: str) -> None:
         """Set new device name."""
@@ -444,7 +442,7 @@ class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
         self._attr_unique_id = f"{coordinator.name_slug}_wifi_password"
         self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} WiFi Password"
         self._attr_icon = "mdi:lock"
-        self._attr_mode = "password"
+        self._attr_mode = TextMode.PASSWORD
 
     @property
     def native_value(self) -> str | None:
@@ -543,15 +541,16 @@ class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
             temp_internal = float(parts[1]) / 10  # Decimi di °C
             humidity = float(parts[3]) / 10  # Decimi di %
 
-            return {
-                "formula": "Magnus-Tetens",
-                "temperature_source": f"{temp_internal}°C",
-                "humidity_source": f"{humidity}%",
-                "precision": "±0.1 g/m³",
-                "valid_range": "-40°C to +50°C",
-            }
         except (ValueError, IndexError):
             return None
+
+        return {
+            "formula": "Magnus-Tetens",
+            "temperature_source": f"{temp_internal}°C",
+            "humidity_source": f"{humidity}%",
+            "precision": "±0.1 g/m³",
+            "valid_range": "-40°C to +50°C",
+        }
 
 
 class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
@@ -608,6 +607,27 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
         except (ValueError, TypeError, ZeroDivisionError):
             return None
 
+    def _calculate_dew_point_comfort(self, dew_point: float | None) -> tuple[str, str]:
+        """Calculate dew point comfort level and color."""
+        if dew_point is None:
+            return "Unknown", "#9e9e9e"
+
+        # Define comfort ranges and their corresponding level and color
+        comfort_ranges = [
+            (DEW_POINT_VERY_DRY, "Molto Secco", "#ff6b47"),
+            (DEW_POINT_DRY_MAX, "Secco", "#ffeb3b"),
+            (DEW_POINT_COMFORTABLE_MAX, "Confortevole", "#4caf50"),
+            (DEW_POINT_GOOD_MAX, "Buono", "#8bc34a"),
+            (DEW_POINT_ACCEPTABLE_MAX, "Accettabile", "#ffeb3b"),
+            (DEW_POINT_HUMID_MAX, "Umido", "#ff9800"),
+        ]
+
+        for threshold, level, color in comfort_ranges:
+            if dew_point < threshold:
+                return level, color
+
+        return "Oppressivo", "#f44336"
+
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return extra attributes."""
@@ -631,31 +651,7 @@ class VmcHeltyDewPointSensor(VmcHeltyEntity, SensorEntity):
 
         # Calcola anche il comfort level basato sul punto di rugiada
         dew_point = self.native_value
-        comfort_level = "Unknown"
-        comfort_color = "#9e9e9e"
-
-        if dew_point is not None:
-            if dew_point < DEW_POINT_VERY_DRY:
-                comfort_level = "Molto Secco"
-                comfort_color = "#ff6b47"
-            elif DEW_POINT_DRY_MIN <= dew_point < DEW_POINT_DRY_MAX:
-                comfort_level = "Secco"
-                comfort_color = "#ffeb3b"
-            elif DEW_POINT_COMFORTABLE_MIN <= dew_point < DEW_POINT_COMFORTABLE_MAX:
-                comfort_level = "Confortevole"
-                comfort_color = "#4caf50"
-            elif DEW_POINT_GOOD_MIN <= dew_point < DEW_POINT_GOOD_MAX:
-                comfort_level = "Buono"
-                comfort_color = "#8bc34a"
-            elif DEW_POINT_ACCEPTABLE_MIN <= dew_point < DEW_POINT_ACCEPTABLE_MAX:
-                comfort_level = "Accettabile"
-                comfort_color = "#ffeb3b"
-            elif DEW_POINT_HUMID_MIN <= dew_point < DEW_POINT_HUMID_MAX:
-                comfort_level = "Umido"
-                comfort_color = "#ff9800"
-            else:
-                comfort_level = "Oppressivo"
-                comfort_color = "#f44336"
+        comfort_level, comfort_color = self._calculate_dew_point_comfort(dew_point)
 
         return {
             "formula": "Magnus-Tetens",
@@ -763,7 +759,7 @@ class VmcHeltyComfortIndexSensor(VmcHeltyEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributi aggiuntivi con dettagli del comfort."""
-        attributes = super().extra_state_attributes or {}
+        attributes = dict(super().extra_state_attributes or {})
 
         if not self.coordinator.data:
             return attributes
@@ -880,7 +876,7 @@ class VmcHeltyDewPointDeltaSensor(VmcHeltyEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Attributi aggiuntivi con informazioni sul rischio condensazione."""
-        attributes = super().extra_state_attributes or {}
+        attributes = dict(super().extra_state_attributes or {})
 
         if not self.coordinator.data:
             return attributes
@@ -1009,13 +1005,13 @@ class VmcHeltyAirExchangeTimeSensor(VmcHeltyEntity, SensorEntity):
             # Calcola tempo di ricambio: Volume / Portata * 60 (conversione minuti)
             exchange_time = (room_volume / airflow) * 60
 
-            return round(exchange_time, 1)
+            return float(round(exchange_time, 1))
 
         except (ValueError, IndexError, TypeError):
             return None
 
     @property
-    def extra_state_attributes(self) -> dict[str, any] | None:
+    def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return extra state attributes."""
         if not self.coordinator.data:
             return {
@@ -1148,7 +1144,7 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
             # Calcola ricambi d'aria per 24 ore
             daily_air_changes = air_changes_per_hour * 24
 
-            return round(daily_air_changes, 1)
+            return float(round(daily_air_changes, 1))
 
         except (ValueError, IndexError, TypeError):
             return None
@@ -1193,15 +1189,29 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
 
     def _get_recommendation(self, daily_changes: float) -> str:
         """Genera raccomandazioni basate sui ricambi d'aria giornalieri."""
-        if daily_changes >= DAILY_AIR_CHANGES_EXCELLENT_MIN:
-            return "Ricambio d'aria eccellente, continua così"
-        if daily_changes >= DAILY_AIR_CHANGES_GOOD_MIN:
-            return (
+        # Define recommendation thresholds and messages
+        recommendations = [
+            (
+                DAILY_AIR_CHANGES_EXCELLENT_MIN,
+                "Ricambio d'aria eccellente, continua così",
+            ),
+            (
+                DAILY_AIR_CHANGES_GOOD_MIN,
                 "Ricambio d'aria buono, eventualmente aumenta ventilazione "
-                "nelle ore di punta"
-            )
-        if daily_changes >= DAILY_AIR_CHANGES_ADEQUATE_MIN:
-            return "Ricambio adeguato, considera di aumentare la velocità ventola"
+                "nelle ore di punta",
+            ),
+            (
+                DAILY_AIR_CHANGES_ADEQUATE_MIN,
+                "Ricambio adeguato, considera di aumentare la velocità ventola",
+            ),
+        ]
+
+        # Check thresholds in order
+        for threshold, message in recommendations:
+            if daily_changes >= threshold:
+                return message
+
+        # Handle insufficient air changes
         if not self.coordinator.data:
             return "Nessun dato disponibile"
 
@@ -1211,7 +1221,6 @@ class VmcHeltyDailyAirChangesSensor(VmcHeltyEntity, SensorEntity):
                 parts = status_data.split(",")
                 if len(parts) >= MIN_RESPONSE_PARTS:
                     fan_speed_raw = int(parts[1])
-                    # Decodifica modalità speciali
                     fan_speed = FANSPEED_MAPPING.get(fan_speed_raw, 1)
 
                     if fan_speed < FAN_SPEED_MAX_NORMAL:

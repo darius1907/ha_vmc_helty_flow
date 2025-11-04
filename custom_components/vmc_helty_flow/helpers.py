@@ -293,7 +293,7 @@ async def validate_network_connectivity(
     ip: str, port: int = DEFAULT_PORT
 ) -> dict[str, str | bool | int | None]:
     """Validate network connectivity to a VMC device and return diagnostic info."""
-    diagnostics = {
+    diagnostics: dict[str, str | bool | int | None] = {
         "ip": ip,
         "port": port,
         "reachable": False,
@@ -334,7 +334,7 @@ async def validate_network_connectivity(
     return diagnostics
 
 
-def parse_vmsl_response(response: str):
+def parse_vmsl_response(response: str) -> tuple[str, str]:
     """Parsa la risposta VMSL? e restituisce SSID e password senza padding."""
     if not response or len(response) < MIN_RESPONSE_LENGTH:
         return "", ""

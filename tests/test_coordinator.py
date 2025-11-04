@@ -1,5 +1,7 @@
 """Test per il modulo coordinator.py."""
 
+# ruff: noqa: PT019
+
 from datetime import timedelta
 from unittest.mock import Mock, patch
 
@@ -64,7 +66,7 @@ class TestVmcHeltyCoordinator:
         coordinator._normal_update_interval = timedelta(seconds=60)
         coordinator.hass = self.hass
 
-        async def tcp_response(*args, **kwargs):
+        async def tcp_response(*_args, **_kwargs):
             return "VMGO,2,1,0,0,1,0"
 
         mock_tcp_send.side_effect = tcp_response
@@ -125,7 +127,7 @@ class TestVmcHeltyCoordinator:
         coordinator._normal_update_interval = timedelta(seconds=60)
         coordinator.hass = self.hass
 
-        async def tcp_response(*args, **kwargs):
+        async def tcp_response(*_args, **_kwargs):
             return "VMGO,1,0,1,0,0,1"
 
         mock_tcp_send.side_effect = tcp_response

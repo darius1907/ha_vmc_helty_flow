@@ -43,7 +43,7 @@ def mock_coordinator():
 
 
 @pytest.mark.parametrize(
-    "entity_cls,args",
+    ("entity_cls", "args"),
     [
         (VmcHeltyFan, []),
         (VmcHeltyLight, []),

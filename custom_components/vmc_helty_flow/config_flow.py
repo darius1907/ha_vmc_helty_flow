@@ -34,8 +34,11 @@ MAX_IPS_IN_SUBNET = 254
 _LOGGER = logging.getLogger(__name__)
 
 
-class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
     """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
+
+    VERSION = 1
+    MINOR_VERSION = 1
 
     @staticmethod
     def _validate_room_volume(user_input: dict) -> tuple[float | None, dict]:
@@ -67,9 +70,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("room_volume", default=current_volume): str,
             }
         )
-
-    """Gestisce il flusso di configurazione dell'integrazione VMC Helty."""
-    VERSION = 1
 
     def __init__(self):
         """Initialize the config flow."""
@@ -246,17 +246,16 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input=None
     ) -> config_entries.ConfigFlowResult:
         """Configura il volume della stanza."""
-        # Prima visualizzazione del form
         device = getattr(self, "current_found_device", None)
-
         name = (
             device.get("name", "Dispositivo sconosciuto")
             if device
             else "Dispositivo sconosciuto"
         )
 
+        # Prima visualizzazione del form
         if user_input is None:
-            return self.async_show_form(
+            return self.async_show_form(  # type: ignore[no-any-return]
                 step_id="room_config",
                 data_schema=self._create_room_config_schema(),
                 description_placeholders={"device_name": name},
@@ -264,27 +263,50 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Validazione input
         room_volume, errors = self._validate_room_volume(user_input)
-
         if errors:
-            return self.async_show_form(
+            return self.async_show_form(  # type: ignore[no-any-return]
                 step_id="room_config",
                 data_schema=self._create_room_config_schema(user_input),
                 errors=errors,
                 description_placeholders={"device_name": name},
             )
 
-        # Se non ci sono errori, prosegui con la creazione della entry
+        # Validazione dispositivo
+        device_validation_result = self._validate_device_availability(device)
+        if device_validation_result:
+            return device_validation_result
+
+        # Gestisci unique_id in modo sicuro per i test
+        unique_id_result = await self._handle_unique_id_setup(device)
+        if unique_id_result:
+            return unique_id_result
+
+        # Creazione entry
+        return await self._create_device_entry(device, room_volume)
+
+    def _validate_device_availability(
+        self, device
+    ) -> config_entries.ConfigFlowResult | None:
+        """Valida che il dispositivo sia disponibile e non già configurato."""
+        # Controlla se il dispositivo esiste
+        if device is None:
+            return self.async_abort(reason="device_not_found")  # type: ignore[no-any-return]
+
+        # Controlla se il dispositivo è già configurato
         existing_entries = [
             entry
             for entry in self._async_current_entries()
-            if device is not None and entry.data.get("ip") == device.get("ip")
+            if entry.data.get("ip") == device.get("ip")
         ]
         if existing_entries:
-            return self.async_abort(reason="device_already_configured")
-        if device is None:
-            return self.async_abort(reason="device_not_found")
+            return self.async_abort(reason="device_already_configured")  # type: ignore[no-any-return]
 
-        # Gestisci unique_id in modo sicuro per i test
+        return None
+
+    async def _handle_unique_id_setup(
+        self, device
+    ) -> config_entries.ConfigFlowResult | None:
+        """Gestisce la configurazione dell'unique_id."""
         try:
             await self.async_set_unique_id(device["ip"])
             self._abort_if_unique_id_configured()
@@ -292,8 +314,13 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # In ambiente di test il context potrebbe essere read-only
             pass
         except Exception:
-            return self.async_abort(reason="device_already_configured")
+            return self.async_abort(reason="device_already_configured")  # type: ignore[no-any-return]
+        return None
 
+    async def _create_device_entry(
+        self, device, room_volume
+    ) -> config_entries.ConfigFlowResult:
+        """Crea l'entry del dispositivo."""
         entry_data = {
             "ip": device["ip"],
             "name": device["name"],
@@ -319,7 +346,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Continua scan incrementale dopo aver configurato volume
             self._continue_after_room_config = False
             return await self._scan_next_ip()
-        return self.async_abort(reason="unknown")
+        return self.async_abort(reason="unknown")  # type: ignore[no-any-return]
 
     async def _discover_devices_async(self, subnet, port, timeout):
         """Perform device discovery with progress tracking."""
@@ -365,7 +392,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.found_devices_session = []
 
         if not self.ip_range:
-            return self.async_show_form(
+            return self.async_show_form(  # type: ignore[no-any-return]
                 step_id="user",
                 errors={"subnet": "subnet_non_valida"},
                 description_placeholders={
@@ -427,7 +454,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if not self.found_devices_session:
             # No devices found during incremental scan
-            return self.async_show_form(
+            return self.async_show_form(  # type: ignore[no-any-return]
                 step_id="user",
                 errors={"base": "nessun_dispositivo_trovato"},
                 description_placeholders={
@@ -444,7 +471,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # All devices should have been created during scan
         # Complete the flow by aborting with success message
         device_count = len(self.found_devices_session)
-        return self.async_abort(
+        return self.async_abort(  # type: ignore[no-any-return]
             reason="devices_configured_successfully",
             description_placeholders={
                 "device_count": str(device_count),
@@ -497,7 +524,7 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         device_ip = device.get("ip", "N/A") if device else "N/A"
         device_model = device.get("model", "VMC Flow") if device else "VMC Flow"
 
-        return self.async_show_form(
+        return self.async_show_form(  # type: ignore[no-any-return]
             step_id="device_found",
             data_schema=schema,
             description_placeholders={
