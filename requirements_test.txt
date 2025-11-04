@@ -20,7 +20,7 @@ pylint==3.3.8
 pylint-per-file-ignores==1.4.0
 pipdeptree==2.26.1
 pytest-asyncio==1.1.0
-pytest-aiohttp==1.1.0
+pytest-aiohttp==1.0.5
 pytest-cov==6.2.1
 pytest-freezer==0.4.9
 pytest-github-actions-annotate-failures==0.3.0
