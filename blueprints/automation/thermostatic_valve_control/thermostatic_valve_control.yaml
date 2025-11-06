@@ -202,6 +202,17 @@ blueprint:
       default: false
       selector:
         boolean: {}
+
+    # Schedulazione ricorrente
+    enable_periodic_check:
+      name: Abilita controllo periodico
+      description: >
+        Attiva un controllo ricorrente ogni 5 minuti.
+        NOTA: L'intervallo è fisso a 5 minuti (limitazione blueprint).
+        Per modificare, edita manualmente l'automazione dopo la creazione.
+      default: false
+      selector:
+        boolean: {}
     high_humidity_threshold:
       name: Soglia umidità alta (%)
       default: 75
@@ -260,8 +271,13 @@ trigger:
     entity_id: !input humidity_sensor
   - platform: state
     entity_id: !input target_input
+  # Trigger periodico ogni 5 minuti (configurabile tramite enable_periodic_check)
+  - platform: time_pattern
+    minutes: "/5"
+    id: periodic_check
 
 variables:
+  enable_periodic_check: !input enable_periodic_check
   temperature_sensor: !input temperature_sensor
   thermostat: !input thermostat
   humidity_sensor: !input humidity_sensor
@@ -283,23 +299,45 @@ variables:
     {{ (current_temp - ((100 - current_humidity)/5)) | round(1) }}
   comfort_index: >
     {{ (current_temp - 0.55*(1-current_humidity/100)*(current_temp-14.5)) | round(1) }}
-  v_weekday_daylight_temp: !input weekday_daylight_temp
-  v_weekday_morning_temp: !input weekday_morning_temp
-  v_weekday_mid_day_temp: !input weekday_mid_day_temp
-  v_weekday_afternoon_temp: !input weekday_afternoon_temp
-  v_weekday_night_temp: !input weekday_night_temp
-  v_weekend_daylight_temp: !input weekend_daylight_temp
-  v_weekend_morning_temp: !input weekend_morning_temp
-  v_weekend_mid_day_temp: !input weekend_mid_day_temp
-  v_weekend_afternoon_temp: !input weekend_afternoon_temp
-  v_weekend_evening_temp: !input weekend_evening_temp
-  v_weekend_night_temp: !input weekend_night_temp
-  v_high_temperature_threshold: !input high_temperature_threshold
-  v_low_temperature_threshold: !input low_temperature_threshold
-  v_high_humidity_threshold: !input high_humidity_threshold
-  v_low_humidity_threshold: !input low_humidity_threshold
+  enable_alerts: !input enable_alerts
+  high_temperature_threshold: !input high_temperature_threshold
+  low_temperature_threshold: !input low_temperature_threshold
+  high_humidity_threshold: !input high_humidity_threshold
+  low_humidity_threshold: !input low_humidity_threshold
 
 action:
+  # Log iniziale: trigger attivato
+  - service: logbook.log
+    data:
+      name: "🔧 Controllo Riscaldamento"
+      message: >
+        Trigger: {{ trigger.id | default('unknown') }}
+        | Temp: {{ current_temp }}°C → Desired: {{ desired_temp }}°C
+        | Diff: {{ diff }}°C | Humidity: {{ current_humidity }}%
+      entity_id: !input thermostat
+
+  # Verifica se il trigger periodico è abilitato
+  - condition: template
+    value_template: >
+      {% if trigger.id == 'periodic_check' %}
+        {{ enable_periodic_check }}
+      {% else %}
+        true
+      {% endif %}
+
+  # Log: condizione trigger periodico
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'periodic_check' }}"
+        sequence:
+          - service: system_log.write
+            data:
+              level: debug
+              message: >
+                [Periodic Check] Abilitato={{ enable_periodic_check }}
+                | Temp={{ current_temp }}°C | Target={{ desired_temp }}°C | Diff={{ diff }}°C
+
   # Feriali
   - choose:
       # --- Feriali alba ---
@@ -314,10 +352,17 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekday_daylight_temp
+          - service: logbook.log
+            data:
+              name: "📅 Cambio Programmato"
+              message: >
+                Alba Feriali: {{ states(target_input) }}°C
+                (Precedente: {{ states(target_input) | float - (weekday_daylight_temp | float - states(target_input) | float) }}°C)
+              entity_id: !input target_input
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekday_daylight_temp }}°C
+                🌅 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Alba Feriali)
   - choose:
       # --- Feriali mattino ---
       - conditions:
@@ -334,7 +379,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekday_morning_temp }}°C
+                ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mattino Feriali)
   - choose:
       # --- Feriali mezzogiorno ---
       - conditions:
@@ -351,7 +396,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekday_mid_day_temp }}°C
+                ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mezzogiorno Feriali)
   - choose:
       # --- Feriali pomeriggio ---
       - conditions:
@@ -368,7 +413,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekday_afternoon_temp }}°C
+                🌤️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Pomeriggio Feriali)
   - choose:
       # --- Feriali sera ---
       - conditions:
@@ -385,7 +430,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekday_evening_temp }}°C
+                🌆 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Sera Feriali)
   - choose:
       # --- Feriali notte ---
       - conditions:
@@ -402,7 +447,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekday_night_temp }}°C
+                🌙 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Notte Feriali)
   # weekend
   - choose:
       # --- Weekend alba ---
@@ -420,7 +465,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekend_daylight_temp }}°C
+                🌅 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Alba Weekend)
   - choose:
       # --- Weekend mattino ---
       - conditions:
@@ -437,7 +482,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekend_morning_temp }}°C
+                ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mattino Weekend)
   - choose:
       # --- Weekend mezzogiorno ---
       - conditions:
@@ -454,7 +499,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekend_mid_day_temp }}°C
+                ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mezzogiorno Weekend)
   - choose:
       # --- Weekend pomeriggio ---
       - conditions:
@@ -471,7 +516,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekend_afternoon_temp }}°C
+                🌤️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Pomeriggio Weekend)
   - choose:
       # --- Weekend sera ---
       - conditions:
@@ -488,7 +533,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekend_evening_temp }}°C
+                🌆 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Sera Weekend)
   - choose:
       # --- Weekend notte ---
       - conditions:
@@ -505,9 +550,16 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🌅 {{ state_attr(thermostat, 'friendly_name') }}: Target {{ v_weekend_night_temp }}°C
+                🌙 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Notte Weekend)
 
   # --- Controllo dinamico termostato ---
+  - service: system_log.write
+    data:
+      level: debug
+      message: >
+        [Controllo Dinamico] Diff={{ diff }}°C (Up={{ diff_up }}°C, Down={{ diff_down }}°C)
+        | Current={{ current_temp }}°C | Desired={{ desired_temp }}°C | Target={{ current_target }}°C
+
   - choose:
       - conditions:
           - condition: template
@@ -515,6 +567,13 @@ action:
           - condition: template
             value_template: "{{ current_target > 10 }}"
         sequence:
+          - service: logbook.log
+            data:
+              name: "❄️ Riscaldamento SPENTO"
+              message: >
+                Temperatura raggiunta: {{ current_temp }}°C (Desired: {{ desired_temp }}°C)
+                | Diff: +{{ diff }}°C (soglia: +{{ diff_up }}°C) → Target: 5°C
+              entity_id: !input thermostat
           - service: climate.set_temperature
             target:
               entity_id: !input thermostat
@@ -523,7 +582,7 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                ✅ {{ state_attr(thermostat, 'friendly_name') }}: {{ current_temp }}°C → Target ridotto a 5°C
+                ✅ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: {{ current_temp }}°C → Target ridotto a 5°C
                 🌡 Punto di rugiada: {{ dew_point }}°C
                 🛋 Comfort: {{ comfort_index }}°C
       - conditions:
@@ -532,6 +591,13 @@ action:
           - condition: template
             value_template: "{{ current_target < 30 }}"
         sequence:
+          - service: logbook.log
+            data:
+              name: "🔥 Riscaldamento ACCESO"
+              message: >
+                Temperatura bassa: {{ current_temp }}°C (Desired: {{ desired_temp }}°C)
+                | Diff: {{ diff }}°C (soglia: {{ diff_down }}°C) → Target: {{ desired_temp }}°C
+              entity_id: !input thermostat
           - service: climate.set_temperature
             target:
               entity_id: !input thermostat
@@ -541,47 +607,87 @@ action:
           - service: notify.persistent_notification
             data:
               message: >
-                🔥 {{ state_attr(thermostat, 'friendly_name') }}: {{ current_temp }}°C → Target {{ desired_temp }}°C
+                🔥 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: {{ current_temp }}°C → Target {{ desired_temp }}°C
                 🌡 Punto di rugiada: {{ dew_point }}°C
                 🛋 Comfort: {{ comfort_index }}°C
 
   # --- Allarmi opzionali ---
+  - service: system_log.write
+    data:
+      level: debug
+      message: >
+        [Allarmi] Enabled={{ enable_alerts }}
+        | Temp={{ current_temp }}°C ({{ low_temperature_threshold }}-{{ high_temperature_threshold }}°C)
+        | Humidity={{ current_humidity }}% ({{ low_humidity_threshold }}-{{ high_humidity_threshold }}%)
+
   - choose:
       # ⚠️ Temperatura troppo alta
       - conditions:
           - condition: template
-            value_template: "{{ enable_alerts and (current_temp > v_high_temperature_threshold) }}"
+            value_template: "{{ enable_alerts and (current_temp > high_temperature_threshold) }}"
         sequence:
+          - service: logbook.log
+            data:
+              name: "⚠️ ALLARME Temperatura Alta"
+              message: >
+                Temperatura critica: {{ current_temp }}°C
+                | Soglia massima: {{ high_temperature_threshold }}°C
+                | Eccesso: +{{ (current_temp - high_temperature_threshold) | round(1) }}°C
+              entity_id: !input temperature_sensor
           - service: notify.persistent_notification
             data:
               message: >
-                ⚠️ Temperatura eccessiva: {{ current_temp }}°C (soglia: {{ v_high_temperature_threshold }}°C)
+                ⚠️ Temperatura eccessiva: {{ current_temp }}°C (soglia: {{ high_temperature_threshold }}°C)
       # 🥶 Temperatura troppo bassa
       - conditions:
           - condition: template
-            value_template: "{{ enable_alerts and (current_temp < v_low_temperature_threshold) }}"
+            value_template: "{{ enable_alerts and (current_temp < low_temperature_threshold) }}"
         sequence:
+          - service: logbook.log
+            data:
+              name: "🥶 ALLARME Temperatura Bassa"
+              message: >
+                Temperatura critica: {{ current_temp }}°C
+                | Soglia minima: {{ low_temperature_threshold }}°C
+                | Deficit: {{ (low_temperature_threshold - current_temp) | round(1) }}°C
+              entity_id: !input temperature_sensor
           - service: notify.persistent_notification
             data:
               message: >
-                🥶 Temperatura troppo bassa: {{ current_temp }}°C (soglia: {{ v_low_temperature_threshold }}°C)
+                🥶 Temperatura troppo bassa: {{ current_temp }}°C (soglia: {{ low_temperature_threshold }}°C)
       # 💧 Umidità alta
       - conditions:
           - condition: template
-            value_template: "{{ enable_alerts and (current_humidity > v_high_humidity_threshold) }}"
+            value_template: "{{ enable_alerts and (current_humidity > high_humidity_threshold) }}"
         sequence:
+          - service: logbook.log
+            data:
+              name: "💧 ALLARME Umidità Alta"
+              message: >
+                Umidità critica: {{ current_humidity }}%
+                | Soglia massima: {{ high_humidity_threshold }}%
+                | Punto di rugiada: {{ dew_point }}°C
+              entity_id: !input humidity_sensor
           - service: notify.persistent_notification
             data:
               message: >
-                💧 Umidità alta: {{ current_humidity }}% (soglia: {{ v_high_humidity_threshold }}%)
+                💧 Umidità alta: {{ current_humidity }}% (soglia: {{ high_humidity_threshold }}%)
       # 🏜 Umidità bassa
       - conditions:
           - condition: template
-            value_template: "{{ enable_alerts and (current_humidity < v_low_humidity_threshold) }}"
+            value_template: "{{ enable_alerts and (current_humidity < low_humidity_threshold) }}"
         sequence:
+          - service: logbook.log
+            data:
+              name: "🏜 ALLARME Umidità Bassa"
+              message: >
+                Umidità critica: {{ current_humidity }}%
+                | Soglia minima: {{ low_humidity_threshold }}%
+                | Rischio aria secca
+              entity_id: !input humidity_sensor
           - service: notify.persistent_notification
             data:
               message: >
-                🏜 Umidità bassa: {{ current_humidity }}% (soglia: {{ v_low_humidity_threshold }}%)
+                🏜 Umidità bassa: {{ current_humidity }}% (soglia: {{ low_humidity_threshold }}%)
 
 mode: restart
