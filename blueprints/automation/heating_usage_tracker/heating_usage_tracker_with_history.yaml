@@ -1,0 +1,206 @@
+blueprint:
+  name: 🔥 Statistiche Riscaldamento con Storico (LTS)
+  description: |
+    Calcola e registra le ore giornaliere di funzionamento del termosifone
+    monitorando la temperatura impostata sulla valvola climate.
+
+    **NOVITÀ**: Salva automaticamente lo storico nel database di Home Assistant
+    per consultazioni a lungo termine (6+ mesi).
+
+    **REQUISITI**:
+    - 1x Helper input_number (contatore ore giornaliere)
+    - 1x Helper input_text (memorizza orario accensione)
+    - 1x Helper input_number (contatore cumulativo per statistiche)
+  domain: automation
+
+  input:
+    climate_entity:
+      name: Valvola Termostatica
+      description: L'entità climate da monitorare.
+      selector:
+        entity:
+          domain: climate
+
+    counter_input:
+      name: Helper Contatore Ore Giornaliere
+      description: L'input_number dove salvare le ore totali di riscaldamento della giornata corrente.
+      selector:
+        entity:
+          domain: input_number
+
+    cumulative_counter:
+      name: Helper Contatore Cumulativo (per LTS)
+      description: |
+        Input_number che accumula le ore totali per le statistiche a lungo termine.
+        Questo valore NON viene mai resettato automaticamente.
+      selector:
+        entity:
+          domain: input_number
+
+    start_time_input:
+      name: Helper Start Time
+      description: Input_text dove viene memorizzato l'orario di accensione.
+      selector:
+        entity:
+          domain: input_text
+
+    off_threshold:
+      name: Soglia OFF
+      description: Temperatura considerata come "spento".
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 15
+          step: 0.5
+          unit_of_measurement: "°C"
+
+    enable_notifications:
+      name: Abilita Notifiche
+      description: Invia notifiche al dispositivo quando il riscaldamento viene acceso/spento.
+      default: false
+      selector:
+        boolean:
+
+    notification_device:
+      name: Dispositivo per Notifiche
+      description: Dispositivo mobile dove inviare le notifiche (opzionale).
+      default: []
+      selector:
+        device:
+          integration: mobile_app
+          multiple: false
+
+trigger:
+  - platform: state
+    entity_id: !input climate_entity
+    attribute: temperature
+    id: temperature_changed
+  - platform: time
+    at: "00:00:00"
+    id: midnight
+
+variables:
+  soglia: !input off_threshold
+  climate: !input climate_entity
+  counter_entity: !input counter_input
+  cumulative_entity: !input cumulative_counter
+  start_entity: !input start_time_input
+  notify_enabled: !input enable_notifications
+  current_value: "{{ state_attr(climate, 'temperature') | float(0) }}"
+  previous_value: "{{ trigger.from_state.attributes.temperature | float(0) if trigger.from_state else 0 }}"
+  accensione: "{{ (previous_value <= soglia) and (current_value > soglia) }}"
+  spegnimento: "{{ (previous_value > soglia) and (current_value <= soglia) }}"
+  device_name: "{{ state_attr(climate, 'friendly_name') or climate }}"
+
+action:
+  - choose:
+      # --- Accensione ---
+      - conditions:
+          - condition: trigger
+            id: temperature_changed
+          - condition: template
+            value_template: "{{ accensione }}"
+        sequence:
+          - service: input_text.set_value
+            data:
+              entity_id: "{{ start_entity }}"
+              value: "{{ now() }}"
+          - service: logbook.log
+            data:
+              name: "Riscaldamento {{ device_name }}"
+              message: "Acceso alle {{ now().strftime('%H:%M') }}"
+              entity_id: "{{ climate }}"
+          - if:
+              - condition: template
+                value_template: "{{ notify_enabled }}"
+            then:
+              - service: notify.persistent_notification
+                data:
+                  title: "🔥 Riscaldamento Acceso"
+                  message: "{{ device_name }} acceso alle {{ now().strftime('%H:%M') }}"
+
+      # --- Spegnimento ---
+      - conditions:
+          - condition: trigger
+            id: temperature_changed
+          - condition: template
+            value_template: "{{ spegnimento }}"
+        sequence:
+          - variables:
+              start_str: "{{ states(start_entity) }}"
+              start_time: "{{ as_datetime(start_str, default=now()) }}"
+              delta: "{{ (as_timestamp(now()) - as_timestamp(start_time)) / 3600 }}"
+              current_hours: "{{ states(counter_entity) | float(0) }}"
+              total_hours: "{{ (current_hours + delta) | round(2) }}"
+              cumulative_hours: "{{ states(cumulative_entity) | float(0) }}"
+              new_cumulative: "{{ (cumulative_hours + delta) | round(2) }}"
+
+          # Aggiorna contatore giornaliero
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ counter_entity }}"
+              value: "{{ total_hours }}"
+
+          # Aggiorna contatore cumulativo (per LTS)
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ cumulative_entity }}"
+              value: "{{ new_cumulative }}"
+
+          # Reset start time
+          - service: input_text.set_value
+            data:
+              entity_id: "{{ start_entity }}"
+              value: ""
+
+          # Log evento
+          - service: logbook.log
+            data:
+              name: "Riscaldamento {{ device_name }}"
+              message: "Spento alle {{ now().strftime('%H:%M') }} (+{{ delta | round(2) }} ore) - Totale oggi: {{ total_hours }} ore"
+              entity_id: "{{ climate }}"
+
+          # Notifica opzionale
+          - if:
+              - condition: template
+                value_template: "{{ notify_enabled }}"
+            then:
+              - service: notify.persistent_notification
+                data:
+                  title: "🔥 Riscaldamento Spento"
+                  message: "{{ device_name }} spento alle {{ now().strftime('%H:%M') }} (+{{ delta | round(2) }}h) - Totale: {{ total_hours }}h"
+
+      # --- Reset giornaliero ---
+      - conditions:
+          - condition: trigger
+            id: midnight
+        sequence:
+          - variables:
+              today_hours: "{{ states(counter_entity) | float(0) }}"
+              cumulative_total: "{{ states(cumulative_entity) | float(0) }}"
+
+          # Log riepilogo giornaliero
+          - service: logbook.log
+            data:
+              name: "Riscaldamento {{ device_name }}"
+              message: "📊 Totale di ieri: {{ today_hours }} ore - Cumulativo: {{ cumulative_total }} ore"
+              entity_id: "{{ climate }}"
+
+          # Reset contatore giornaliero
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ counter_entity }}"
+              value: 0
+
+          # Notifica riepilogo giornaliero (opzionale)
+          - if:
+              - condition: template
+                value_template: "{{ notify_enabled and today_hours > 0 }}"
+            then:
+              - service: notify.persistent_notification
+                data:
+                  title: "📊 Riepilogo Riscaldamento"
+                  message: "{{ device_name }}: {{ today_hours }}h ieri, {{ cumulative_total }}h totali"
+
+mode: restart
