@@ -22,6 +22,14 @@ blueprint:
       selector:
         entity:
           domain: sensor
+    humidity_sensor:
+      name: Sensore umidità (opzionale)
+      description: Sensore umidità per comfort e punto di rugiada
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+
     # Fasce orarie comuni
     daylight_time:
       name: Ora alba
@@ -188,6 +196,56 @@ blueprint:
           step: 0.1
           unit_of_measurement: "°C"
 
+    # Allarmi opzionali
+    enable_alerts:
+      name: Abilita allarmi
+      default: false
+      selector:
+        boolean: {}
+
+    # Schedulazione ricorrente
+#    enable_periodic_check:
+#      name: Abilita controllo periodico
+#      description: >
+#        Attiva un controllo ricorrente ogni 5 minuti.
+#        NOTA: L'intervallo è fisso a 5 minuti (limitazione blueprint).
+#        Per modificare, edita manualmente l'automazione dopo la creazione.
+#      default: false
+#      selector:
+#        boolean: {}
+    high_humidity_threshold:
+      name: Soglia umidità alta (%)
+      default: 75
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    low_humidity_threshold:
+      name: Soglia umidità bassa (%)
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    high_temperature_threshold:
+      name: Temperatura massima critica (°C)
+      default: 28
+      selector:
+        number:
+          min: 0
+          max: 50
+          unit_of_measurement: "°C"
+    low_temperature_threshold:
+      name: Temperatura minima critica (°C)
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 50
+          unit_of_measurement: "°C"
+
 trigger:
   - platform: time
     at: !input daylight_time
@@ -210,11 +268,19 @@ trigger:
   - platform: state
     entity_id: !input temperature_sensor
   - platform: state
+    entity_id: !input humidity_sensor
+  - platform: state
     entity_id: !input target_input
+  # Trigger periodico ogni 5 minuti (configurabile tramite enable_periodic_check)
+#  - platform: time_pattern
+#    minutes: "/5"
+#    id: periodic_check
 
 variables:
+  #enable_periodic_check: !input enable_periodic_check
   temperature_sensor: !input temperature_sensor
   thermostat: !input thermostat
+  humidity_sensor: !input humidity_sensor
   target_input: !input target_input
 
   desired_temp: "{{ states(target_input) | float(21) }}"
@@ -223,6 +289,21 @@ variables:
   diff: "{{ current_temp - desired_temp }}"
   diff_up: !input heating_diff_up
   diff_down: !input heating_diff_down
+  current_humidity: >
+    {% if humidity_sensor != '' %}
+      {{ states(humidity_sensor) | float(50) }}
+    {% else %}
+      50
+    {% endif %}
+  dew_point: >
+    {{ (current_temp - ((100 - current_humidity)/5)) | round(1) }}
+  comfort_index: >
+    {{ (current_temp - 0.55*(1-current_humidity/100)*(current_temp-14.5)) | round(1) }}
+  enable_alerts: !input enable_alerts
+  high_temperature_threshold: !input high_temperature_threshold
+  low_temperature_threshold: !input low_temperature_threshold
+  high_humidity_threshold: !input high_humidity_threshold
+  low_humidity_threshold: !input low_humidity_threshold
 
 action:
   # Log iniziale: trigger attivato
@@ -232,8 +313,31 @@ action:
       message: >
         Trigger: {{ trigger.id | default('unknown') }}
         | Temp: {{ current_temp }}°C → Desired: {{ desired_temp }}°C
-        | Diff: {{ diff }}°C
+        | Diff: {{ diff }}°C | Humidity: {{ current_humidity }}%
       entity_id: !input thermostat
+
+  # Verifica se il trigger periodico è abilitato
+#  - condition: template
+#    value_template: >
+#      {% if trigger.id == 'periodic_check' %}
+#        {{ enable_periodic_check }}
+#      {% else %}
+#        true
+#     {% endif %}
+
+  # Log: condizione trigger periodico
+#  - choose:
+#      - conditions:
+#          - condition: template
+#            value_template: "{{ trigger.id == 'periodic_check' }}"
+#        sequence:
+#          - service: system_log.write
+#            data:
+#              level: debug
+#              message: >
+#                [Periodic Check] Abilitato={{ enable_periodic_check }}
+#                | Temp={{ current_temp }}°C | Target={{ desired_temp }}°C | Diff={{ diff }}°C
+
   # Feriali
   - choose:
       # --- Feriali alba ---
@@ -259,6 +363,7 @@ action:
             data:
               message: >
                 🌅 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Alba Feriali)
+  - choose:
       # --- Feriali mattino ---
       - conditions:
           - condition: template
@@ -271,17 +376,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekday_morning_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Mattino Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekday_morning_temp | float - states(target_input) | float) }}°C)
-              entity_id: !input target_input          
           - service: notify.persistent_notification
             data:
               message: >
                 ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mattino Feriali)
+  - choose:
       # --- Feriali mezzogiorno ---
       - conditions:
           - condition: template
@@ -294,17 +393,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekday_mid_day_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Mezzogiorno Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekday_mid_day_temp | float - states(target_input) | float) }}°C)
-              entity_id: !input target_input              
           - service: notify.persistent_notification
             data:
               message: >
                 ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mezzogiorno Feriali)
+  - choose:
       # --- Feriali pomeriggio ---
       - conditions:
           - condition: template
@@ -317,17 +410,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekday_afternoon_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekday_afternoon_temp | float - states(target_input) | float) }}°C)
-              entity_id: !input target_input              
           - service: notify.persistent_notification
             data:
               message: >
                 🌤️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Pomeriggio Feriali)
+  - choose:
       # --- Feriali sera ---
       - conditions:
           - condition: template
@@ -340,16 +427,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekday_evening_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekday_evening_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
                 🌆 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Sera Feriali)
+  - choose:
       # --- Feriali notte ---
       - conditions:
           - condition: template
@@ -362,12 +444,6 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekday_night_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekday_night_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
@@ -386,16 +462,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekend_daylight_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_daylight_temp | float - states(target_input) | float) }}°C)              
           - service: notify.persistent_notification
             data:
               message: >
                 🌅 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Alba Weekend)
+  - choose:
       # --- Weekend mattino ---
       - conditions:
           - condition: template
@@ -408,16 +479,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekend_morning_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_morning_temp | float - states(target_input) | float) }}°C)                 
           - service: notify.persistent_notification
             data:
               message: >
                 ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mattino Weekend)
+  - choose:
       # --- Weekend mezzogiorno ---
       - conditions:
           - condition: template
@@ -430,16 +496,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekend_mid_day_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_mid_day_temp | float - states(target_input) | float) }}°C)               
           - service: notify.persistent_notification
             data:
               message: >
                 ☀️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Mezzogiorno Weekend)
+  - choose:
       # --- Weekend pomeriggio ---
       - conditions:
           - condition: template
@@ -452,16 +513,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekend_afternoon_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_afternoon_temp | float - states(target_input) | float) }}°C)                 
           - service: notify.persistent_notification
             data:
               message: >
                 🌤️ [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Pomeriggio Weekend)
+  - choose:
       # --- Weekend sera ---
       - conditions:
           - condition: template
@@ -474,16 +530,11 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekend_evening_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_evening_temp | float - states(target_input) | float) }}°C)                
           - service: notify.persistent_notification
             data:
               message: >
                 🌆 [{{ now().strftime('%H:%M') }}] {{ state_attr(thermostat, 'friendly_name') }}: Temperatura impostata a {{ states(target_input) }}°C (Sera Weekend)
+  - choose:
       # --- Weekend notte ---
       - conditions:
           - condition: template
@@ -496,12 +547,6 @@ action:
               entity_id: !input target_input
             data:
               value: !input weekend_night_temp
-          - service: logbook.log
-            data:
-              name: "📅 Cambio Programmato"
-              message: >
-                Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_night_temp | float - states(target_input) | float) }}°C)                    
           - service: notify.persistent_notification
             data:
               message: >
@@ -528,7 +573,7 @@ action:
               message: >
                 Temperatura raggiunta: {{ current_temp }}°C (Desired: {{ desired_temp }}°C)
                 | Diff: +{{ diff }}°C (soglia: +{{ diff_up }}°C) → Target: 5°C
-              entity_id: !input thermostat           
+              entity_id: !input thermostat
           - service: climate.set_temperature
             target:
               entity_id: !input thermostat
@@ -552,7 +597,7 @@ action:
               message: >
                 Temperatura bassa: {{ current_temp }}°C (Desired: {{ desired_temp }}°C)
                 | Diff: {{ diff }}°C (soglia: {{ diff_down }}°C) → Target: {{ desired_temp }}°C
-              entity_id: !input thermostat           
+              entity_id: !input thermostat
           - service: climate.set_temperature
             target:
               entity_id: !input thermostat
@@ -573,5 +618,76 @@ action:
       message: >
         [Allarmi] Enabled={{ enable_alerts }}
         | Temp={{ current_temp }}°C ({{ low_temperature_threshold }}-{{ high_temperature_threshold }}°C)
+        | Humidity={{ current_humidity }}% ({{ low_humidity_threshold }}-{{ high_humidity_threshold }}%)
+
+  - choose:
+      # ⚠️ Temperatura troppo alta
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_alerts and (current_temp > high_temperature_threshold) }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: "⚠️ ALLARME Temperatura Alta"
+              message: >
+                Temperatura critica: {{ current_temp }}°C
+                | Soglia massima: {{ high_temperature_threshold }}°C
+                | Eccesso: +{{ (current_temp - high_temperature_threshold) | round(1) }}°C
+              entity_id: !input temperature_sensor
+          - service: notify.persistent_notification
+            data:
+              message: >
+                ⚠️ Temperatura eccessiva: {{ current_temp }}°C (soglia: {{ high_temperature_threshold }}°C)
+      # 🥶 Temperatura troppo bassa
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_alerts and (current_temp < low_temperature_threshold) }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: "🥶 ALLARME Temperatura Bassa"
+              message: >
+                Temperatura critica: {{ current_temp }}°C
+                | Soglia minima: {{ low_temperature_threshold }}°C
+                | Deficit: {{ (low_temperature_threshold - current_temp) | round(1) }}°C
+              entity_id: !input temperature_sensor
+          - service: notify.persistent_notification
+            data:
+              message: >
+                🥶 Temperatura troppo bassa: {{ current_temp }}°C (soglia: {{ low_temperature_threshold }}°C)
+      # 💧 Umidità alta
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_alerts and (current_humidity > high_humidity_threshold) }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: "💧 ALLARME Umidità Alta"
+              message: >
+                Umidità critica: {{ current_humidity }}%
+                | Soglia massima: {{ high_humidity_threshold }}%
+                | Punto di rugiada: {{ dew_point }}°C
+              entity_id: !input humidity_sensor
+          - service: notify.persistent_notification
+            data:
+              message: >
+                💧 Umidità alta: {{ current_humidity }}% (soglia: {{ high_humidity_threshold }}%)
+      # 🏜 Umidità bassa
+      - conditions:
+          - condition: template
+            value_template: "{{ enable_alerts and (current_humidity < low_humidity_threshold) }}"
+        sequence:
+          - service: logbook.log
+            data:
+              name: "🏜 ALLARME Umidità Bassa"
+              message: >
+                Umidità critica: {{ current_humidity }}%
+                | Soglia minima: {{ low_humidity_threshold }}%
+                | Rischio aria secca
+              entity_id: !input humidity_sensor
+          - service: notify.persistent_notification
+            data:
+              message: >
+                🏜 Umidità bassa: {{ current_humidity }}% (soglia: {{ low_humidity_threshold }}%)
 
 mode: restart
