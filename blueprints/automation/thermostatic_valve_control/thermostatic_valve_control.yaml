@@ -216,13 +216,24 @@ variables:
   temperature_sensor: !input temperature_sensor
   thermostat: !input thermostat
   target_input: !input target_input
-
   desired_temp: "{{ states(target_input) | float(21) }}"
   current_temp: "{{ states(temperature_sensor) | float(20) }}"
   current_target: "{{ state_attr(thermostat, 'temperature') | float(20) }}"
   diff: "{{ current_temp - desired_temp }}"
   diff_up: !input heating_diff_up
   diff_down: !input heating_diff_down
+  weekday_morning_temp: !input weekday_morning_temp
+  weekday_daylight_temp: !input weekday_daylight_temp
+  weekday_mid_day_temp: !input weekday_mid_day_temp
+  weekday_afternoon_temp: !input weekday_afternoon_temp
+  weekday_evening_temp: !input weekday_evening_temp
+  weekday_night_temp: !input weekday_night_temp
+  weekend_morning_temp: !input weekend_morning_temp
+  weekend_daylight_temp: !input weekend_daylight_temp
+  weekend_mid_day_temp: !input weekend_mid_day_temp
+  weekend_afternoon_temp: !input weekend_afternoon_temp
+  weekend_evening_temp: !input weekend_evening_temp
+  weekend_night_temp: !input weekend_night_temp
 
 action:
   # Log iniziale: trigger attivato
@@ -239,7 +250,7 @@ action:
       # --- Feriali alba ---
       - conditions:
           - condition: template
-            value_template: "{{ now().weekend() < 5 }}"
+            value_template: "{{ now().weekday() < 5 }}"
           - condition: trigger
             id: daylight
         sequence:
@@ -565,13 +576,5 @@ action:
                 🔥 [{{ now().strftime('%H:%M') }}] 🔥 Riscaldamento ACCESO {{ state_attr(thermostat, 'friendly_name') }}: {{ current_temp }}°C → Target {{ desired_temp }}°C
                 🌡 Punto di rugiada: {{ dew_point }}°C
                 🛋 Comfort: {{ comfort_index }}°C
-
-  # --- Allarmi opzionali ---
-  - service: system_log.write
-    data:
-      level: debug
-      message: >
-        [Allarmi] Enabled={{ enable_alerts }}
-        | Temp={{ current_temp }}°C ({{ low_temperature_threshold }}-{{ high_temperature_threshold }}°C)
 
 mode: restart
