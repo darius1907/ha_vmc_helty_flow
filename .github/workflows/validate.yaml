@@ -1,0 +1,72 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Validate
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+
+      - name: 🧹 Run pre-commit checks
+        run: |
+          pre-commit run --all-files
+
+      - name: 🔍 HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+
+      - name: ✅ Hassfest validation
+        uses: home-assistant/actions/hassfest@master
+
+  tests:
+    runs-on: ubuntu-latest
+    name: Run tests
+    steps:
+      - name: 📥 Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+
+      - name: 🧪 Run tests
+        run: |
+          pytest tests/ \
+            --cov=custom_components.vmc_helty_flow \
+            --cov-report=xml \
+            --cov-report=term-missing
+
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
