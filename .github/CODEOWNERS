@@ -1,0 +1,20 @@
+# Code owners per VMC Helty Flow
+# Ogni PR richiederà review da questi utenti
+
+# Default owner per tutto
+* @darius1907
+
+# Configurazione e documentazione
+*.md @darius1907
+*.json @darius1907
+*.yaml @darius1907
+*.yml @darius1907
+
+# Codice principale
+/custom_components/ @darius1907
+
+# Test
+/tests/ @darius1907
+
+# Configurazioni GitHub
+/.github/ @darius1907
