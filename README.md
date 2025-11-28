@@ -43,7 +43,6 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 ### 🔍 **Scoperta Dispositivi Avanzata**
 
 - **Scansione Incrementale**: Trova e configura i dispositivi uno alla volta con controllo completo dell'utente
-- **Scansione Completa**: Scansiona l'intera rete e seleziona tutti i dispositivi alla fine
 - **Validazione Intelligente**: Controllo automatico di formato subnet, porte e timeout
 - **Gestione Errori**: Messaggi informativi e possibilità di recupero dagli errori
 
@@ -117,9 +116,7 @@ Card Lovelace personalizzata per controllo completo del sistema VMC:
 # Copia i file della card in www/
 /config/www/vmc-helty-card/
 ├── vmc-helty-card.js              # Card principale
-├── vmc-helty-card-editor.js       # Editor configurazione
-├── vmc-helty-compact-card.js      # Versione compatta
-└── examples.yaml                  # Esempi configurazione
+└── vmc-helty-card-editor.js       # Editor configurazione
 ```
 
 Aggiungi alle risorse Lovelace:
@@ -190,7 +187,6 @@ show_voc: true
 Subnet: 192.168.1.0/24
 Porta: 5001
 Timeout: 10 secondi
-Modalità: Scansione incrementale
 ```
 
 ### Configurazione Rete Personalizzata
@@ -208,7 +204,6 @@ Modalità: Scansione completa
 Subnet: 192.168.0.0/23
 Porta: 5001
 Timeout: 15 secondi
-Modalità: Scansione incrementale (consigliata per reti grandi)
 ```
 
 ## 🔄 **Automazioni e Integrazioni**
@@ -283,9 +278,8 @@ logger:
 ## 🔮 **Prossimi Sviluppi**
 
 - **Rilevamento Automatico**: Discovery automatico dispositivi nella rete locale
-- **Profili Stagionali**: Configurazioni automatiche estate/inverno
 - **Integrazioni Avanzate**: Collegamento con sensori esterni e stazioni meteo
-- **Dashboard Dedicata**: Interface utente specializzata per controllo VMC
+- **Dashboard Dedicata**: Interface utente specializzata per controllo dei sensori avanzati VMC
 
 ## 📞 **Supporto**
 
@@ -293,7 +287,6 @@ Per problemi, richieste di funzionalità o contributi:
 
 - 🐛 [Apri una issue](https://github.com/darius1907/ha_vmc_helty_flow/issues) su GitHub
 - 💬 Unisciti alla [discussione della community](https://community.home-assistant.io/)
-- 📖 Consulta la [documentazione completa](https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md)
 
 ### Come Contribuire
 

@@ -5,56 +5,158 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: Create Release Archive
+      - name: 🏗 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 📝 Extract version from tag
+        id: version
         run: |
-          # Create integration archive
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+
+      - name: 🔄 Update manifest.json version
+        run: |
+          python3 << EOF
+          import json
+
+          manifest_path = 'custom_components/vmc_helty_flow/manifest.json'
+          with open(manifest_path, 'r') as f:
+              manifest = json.load(f)
+
+          manifest['version'] = '${{ steps.version.outputs.version }}'
+
+          with open(manifest_path, 'w') as f:
+              json.dump(manifest, f, indent=2)
+              f.write('\n')
+
+          print(f"✅ Updated manifest.json version to {manifest['version']}")
+          EOF
+
+      - name: 📦 Create Release Archives
+        run: |
+          echo "📦 Creating release archives..."
+
+          # Create integration archive for HACS
           cd custom_components
-          zip -r ../vmc_helty_flow.zip vmc_helty_flow/
+          zip -r ../vmc_helty_flow.zip vmc_helty_flow/ \
+            -x "*.pyc" \
+            -x "*__pycache__*" \
+            -x "*.egg-info/*"
           cd ..
 
           # Create complete package including Lovelace card
-          zip -r vmc_helty_flow_complete.zip custom_components/ www/ README.md LICENSE INFO.md
+          zip -r vmc_helty_flow_complete.zip \
+            custom_components/ \
+            www/ \
+            README.md \
+            LICENSE \
+            INFO.md \
+            CHANGELOG.md \
+            CONTRIBUTING.md \
+            CODE_OF_CONDUCT.md \
+            SECURITY.md \
+            -x "*.pyc" \
+            -x "*__pycache__*" \
+            -x "*.egg-info/*"
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+          echo "✅ Archives created successfully"
+          ls -lh *.zip
+
+          echo "✅ Archives created successfully"
+          ls -lh *.zip
+
+      - name: 📋 Generate Release Notes
+        id: release_notes
+        run: |
+          cat << 'EOF' > release_notes.md
+          ## 📦 Installation Files
+
+          ### For HACS Users (Recommended)
+          - **vmc_helty_flow.zip** - Integration only, automatically installed by HACS
+
+          ### For Manual Installation
+          - **vmc_helty_flow_complete.zip** - Complete package including:
+            - Integration files
+            - Lovelace card
+            - Documentation
+
+          ## 🚀 Quick Start
+
+          ### Via HACS
+          1. Open HACS in Home Assistant
+          2. Go to Integrations
+          3. Search for "VMC Helty Flow"
+          4. Click Install
+          5. Restart Home Assistant
+          6. Add integration: Settings → Devices & Services → Add Integration → VMC Helty Flow
+
+          ### Manual Installation
+          1. Download `vmc_helty_flow_complete.zip`
+          2. Extract to your Home Assistant config directory:
+             ```
+             /config/custom_components/vmc_helty_flow/
+             /config/www/vmc-helty-card/
+             ```
+          3. Restart Home Assistant
+          4. Add integration from UI
+
+          ## 📚 Documentation
+
+          - [Complete README](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [Configuration Guide](https://github.com/${{ github.repository }}/blob/main/README.md#-configurazione-guidata)
+          - [Lovelace Card Setup](https://github.com/${{ github.repository }}/blob/main/README.md#-dashboard-personalizzata)
+          - [Troubleshooting](https://github.com/${{ github.repository }}/blob/main/README.md#-risoluzione-problemi)
+          - [Contributing](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md)
+
+          ## 🐛 Bug Reports
+
+          Found an issue? [Open a bug report](https://github.com/${{ github.repository }}/issues/new?template=bug_report.md)
+
+          ## 💡 Feature Requests
+
+          Have an idea? [Request a feature](https://github.com/${{ github.repository }}/issues/new?template=feature_request.md)
+
+          ---
+
+          **Compatibility:** Home Assistant 2024.1.0+
+          **License:** MIT
+          **Maintainer:** @darius1907
+
+          ⭐ If you find this integration useful, please star the repository!
+          EOF
+
+          echo "✅ Release notes generated"
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             vmc_helty_flow.zip
             vmc_helty_flow_complete.zip
-          generate_release_notes: true
+          body_path: release_notes.md
           draft: false
           prerelease: false
-          body: |
-            ## 📦 Files Available
-
-            - **vmc_helty_flow.zip**: Integration only (for HACS)
-            - **vmc_helty_flow_complete.zip**: Complete package with Lovelace card
-
-            ## 🚀 Installation
-
-            ### Via HACS (Recommended)
-            1. Add this repository to HACS
-            2. Install "VMC Helty Flow" integration
-            3. Restart Home Assistant
-            4. Add the integration from Settings → Devices & Services
-
-            ### Manual Installation
-            1. Download `vmc_helty_flow_complete.zip`
-            2. Extract to your Home Assistant directory
-            3. Restart Home Assistant
-
-            For detailed instructions, see [README.md](https://github.com/dpezzoli/ha_vmc_helty_flow/blob/main/README.md)
+          generate_release_notes: true
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update HACS Repository
+      - name: ✅ Release Complete
         run: |
-          echo "Release ${{ github.ref_name }} created successfully!"
-          echo "HACS will automatically detect this release."
+          echo "🎉 Release ${{ github.ref_name }} created successfully!"
+          echo "📦 Version: ${{ steps.version.outputs.version }}"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          echo "🏠 HACS will automatically detect this release"

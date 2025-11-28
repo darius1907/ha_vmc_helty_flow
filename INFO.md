@@ -15,7 +15,7 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 
 ### 🎛️ Controllo Completo
 
-- Controllo velocità ventola (5 livelli)
+- Controllo velocità ventola (4 livelli)
 - Modalità operative: Normal, Night, Hyperventilation, Free Cooling
 - Controllo LED pannello e sensori
 - Controlli luci con timer automatico

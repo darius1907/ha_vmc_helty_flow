@@ -7,8 +7,5 @@ coverage==7.10.0
 pylint==3.3.8
 black==24.8.0
 
-# Home Assistant Core for integration testing
-homeassistant==2025.8.3
-
 # Additional test utilities
 pytest-homeassistant-custom-component==0.13.272
