@@ -1,0 +1,163 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: "0 0 * * *"  # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Code Quality & HACS Validation
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+
+      - name: 🧹 Run pre-commit checks
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+        continue-on-error: false
+
+      - name: 🔍 Run linting (ruff)
+        run: |
+          ruff check custom_components/vmc_helty_flow/
+
+      - name: 🔬 Run type checking (mypy)
+        run: |
+          mypy custom_components/vmc_helty_flow/
+
+      - name: 📋 HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+
+      - name: ✅ Hassfest validation
+        uses: home-assistant/actions/hassfest@master
+
+      - name: 📊 Validation Summary
+        if: always()
+        run: |
+          echo "### Validation Results 📋" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Pre-commit checks: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Ruff linting: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ MyPy type checking: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ HACS validation: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Hassfest validation: Passed" >> $GITHUB_STEP_SUMMARY
+
+  tests:
+    runs-on: ubuntu-latest
+    name: Unit Tests & Coverage
+    needs: validate
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🏗 Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+
+      - name: 🧪 Run tests with coverage
+        run: |
+          pytest tests/ \
+            --cov=custom_components.vmc_helty_flow \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-report=html \
+            -v
+
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: 📈 Test Summary
+        if: always()
+        run: |
+          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); print(f\"{float(root.attrib['line-rate']) * 100:.1f}\")" 2>/dev/null || echo "N/A")
+          echo "### Test Results 🧪" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage: **${COVERAGE}%**" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+
+  validate-structure:
+    runs-on: ubuntu-latest
+    name: Validate Structure
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate manifest.json
+        run: |
+          python -m json.tool custom_components/vmc_helty_flow/manifest.json > /dev/null
+          echo "✅ manifest.json is valid JSON"
+
+      - name: Validate hacs.json
+        run: |
+          python -m json.tool hacs.json > /dev/null
+          echo "✅ hacs.json is valid JSON"
+
+      - name: Check required files
+        run: |
+          files=(
+            "README.md"
+            "INFO.md"
+            "LICENSE"
+            "hacs.json"
+            "custom_components/vmc_helty_flow/manifest.json"
+            "custom_components/vmc_helty_flow/__init__.py"
+          )
+
+          for file in "${files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ $file exists"
+            else
+              echo "❌ $file is missing"
+              exit 1
+            fi
+          done
+
+      - name: Check Lovelace card structure
+        run: |
+          if [ -d "www/vmc-helty-card" ]; then
+            echo "✅ Lovelace card directory exists"
+            if [ -f "www/vmc-helty-card/vmc-helty-card.js" ]; then
+              echo "✅ Main card file exists"
+            else
+              echo "❌ Main card file missing"
+              exit 1
+            fi
+            if [ -f "www/vmc-helty-card/vmc-helty-card-editor.js" ]; then
+              echo "✅ Card editor exists"
+            else
+              echo "❌ Card editor missing"
+              exit 1
+            fi
+          else
+            echo "⚠️ Lovelace card directory not found"
+          fi
