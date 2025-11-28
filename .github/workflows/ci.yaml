@@ -41,11 +41,10 @@ jobs:
         run: |
           mypy custom_components/vmc_helty_flow/
 
-      - name: 📋 HACS validation
+      - name: 🧪 HACS Validation
         uses: hacs/action@main
         with:
           category: integration
-          ignore: brands
 
       - name: ✅ Hassfest validation
         uses: home-assistant/actions/hassfest@master
