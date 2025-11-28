@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -11,19 +11,19 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 25.11.0
     hooks:
       - id: black
         language_version: python3.13
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.14.6
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.18.2
     hooks:
       - id: mypy
         files: ^custom_components/

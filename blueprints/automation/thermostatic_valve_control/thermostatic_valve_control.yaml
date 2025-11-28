@@ -288,7 +288,7 @@ action:
               message: >
                 Mattino Feriali: {{ states(target_input) }}°C
                 (Precedente: {{ states(target_input) | float - (weekday_morning_temp | float - states(target_input) | float) }}°C)
-              entity_id: !input target_input          
+              entity_id: !input target_input
           - service: notify.persistent_notification
             data:
               message: >
@@ -311,7 +311,7 @@ action:
               message: >
                 Mezzogiorno Feriali: {{ states(target_input) }}°C
                 (Precedente: {{ states(target_input) | float - (weekday_mid_day_temp | float - states(target_input) | float) }}°C)
-              entity_id: !input target_input              
+              entity_id: !input target_input
           - service: notify.persistent_notification
             data:
               message: >
@@ -334,7 +334,7 @@ action:
               message: >
                 Pomeriggio Feriali: {{ states(target_input) }}°C
                 (Precedente: {{ states(target_input) | float - (weekday_afternoon_temp | float - states(target_input) | float) }}°C)
-              entity_id: !input target_input              
+              entity_id: !input target_input
           - service: notify.persistent_notification
             data:
               message: >
@@ -402,7 +402,7 @@ action:
               name: "📅 Cambio Programmato"
               message: >
                 Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_daylight_temp | float - states(target_input) | float) }}°C)              
+                (Precedente: {{ states(target_input) | float - (weekend_daylight_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
@@ -424,7 +424,7 @@ action:
               name: "📅 Cambio Programmato"
               message: >
                 Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_morning_temp | float - states(target_input) | float) }}°C)                 
+                (Precedente: {{ states(target_input) | float - (weekend_morning_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
@@ -446,7 +446,7 @@ action:
               name: "📅 Cambio Programmato"
               message: >
                 Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_mid_day_temp | float - states(target_input) | float) }}°C)               
+                (Precedente: {{ states(target_input) | float - (weekend_mid_day_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
@@ -468,7 +468,7 @@ action:
               name: "📅 Cambio Programmato"
               message: >
                 Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_afternoon_temp | float - states(target_input) | float) }}°C)                 
+                (Precedente: {{ states(target_input) | float - (weekend_afternoon_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
@@ -490,7 +490,7 @@ action:
               name: "📅 Cambio Programmato"
               message: >
                 Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_evening_temp | float - states(target_input) | float) }}°C)                
+                (Precedente: {{ states(target_input) | float - (weekend_evening_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
@@ -512,7 +512,7 @@ action:
               name: "📅 Cambio Programmato"
               message: >
                 Pomeriggio Feriali: {{ states(target_input) }}°C
-                (Precedente: {{ states(target_input) | float - (weekend_night_temp | float - states(target_input) | float) }}°C)                    
+                (Precedente: {{ states(target_input) | float - (weekend_night_temp | float - states(target_input) | float) }}°C)
           - service: notify.persistent_notification
             data:
               message: >
@@ -539,7 +539,7 @@ action:
               message: >
                 Temperatura raggiunta: {{ current_temp }}°C (Desired: {{ desired_temp }}°C)
                 | Diff: +{{ diff }}°C (soglia: +{{ diff_up }}°C) → Target: 5°C
-              entity_id: !input thermostat           
+              entity_id: !input thermostat
           - service: climate.set_temperature
             target:
               entity_id: !input thermostat
@@ -563,7 +563,7 @@ action:
               message: >
                 Temperatura bassa: {{ current_temp }}°C (Desired: {{ desired_temp }}°C)
                 | Diff: {{ diff }}°C (soglia: {{ diff_down }}°C) → Target: {{ desired_temp }}°C
-              entity_id: !input thermostat           
+              entity_id: !input thermostat
           - service: climate.set_temperature
             target:
               entity_id: !input thermostat
