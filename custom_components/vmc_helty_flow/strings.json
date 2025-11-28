@@ -152,28 +152,6 @@
     }
   },
   "entity": {
-    "fan": {
-      "state_attributes": {
-        "night_mode": {
-          "name": "Modalità Notte"
-        },
-        "hyperventilation": {
-          "name": "Iperventilazione"
-        },
-        "free_cooling": {
-          "name": "Free Cooling"
-        },
-        "manual_speed": {
-          "name": "Velocità Manuale"
-        },
-        "panel_led": {
-          "name": "LED Pannello"
-        },
-        "sensors_active": {
-          "name": "Sensori Attivi"
-        }
-      }
-    },
     "sensor": {
       "temperature_internal": {
         "name": "Temperatura Interna"
