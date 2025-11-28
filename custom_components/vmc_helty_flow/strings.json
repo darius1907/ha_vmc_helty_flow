@@ -153,117 +153,103 @@
   },
   "entity": {
     "fan": {
-      "vmc_helty_flow": {
-        "state_attributes": {
-          "night_mode": {
-            "name": "Modalità Notte"
-          },
-          "hyperventilation": {
-            "name": "Iperventilazione"
-          },
-          "free_cooling": {
-            "name": "Free Cooling"
-          },
-          "manual_speed": {
-            "name": "Velocità Manuale"
-          },
-          "panel_led": {
-            "name": "LED Pannello"
-          },
-          "sensors_active": {
-            "name": "Sensori Attivi"
-          }
-        }
-      }
-    },
-    "sensor": {
-      "vmc_helty_flow": {
-        "temperature_internal": {
-          "name": "Temperatura Interna"
+      "state_attributes": {
+        "night_mode": {
+          "name": "Modalità Notte"
         },
-        "temperature_external": {
-          "name": "Temperatura Esterna"
-        },
-        "humidity": {
-          "name": "Umidità"
-        },
-        "co2": {
-          "name": "CO2"
-        },
-        "voc": {
-          "name": "VOC"
-        },
-        "filter_hours": {
-          "name": "Ore Filtro"
-        },
-        "ip_address": {
-          "name": "Indirizzo IP"
-        },
-        "network_ssid": {
-          "name": "SSID Rete"
-        },
-        "network_password": {
-          "name": "Password Rete"
-        },
-        "last_response": {
-          "name": "Ultima Risposta"
-        }
-      }
-    },
-    "binary_sensor": {
-      "vmc_helty_flow": {
-        "online": {
-          "name": "Online"
-        }
-      }
-    },
-    "switch": {
-      "vmc_helty_flow": {
         "hyperventilation": {
           "name": "Iperventilazione"
-        },
-        "night": {
-          "name": "Modalità Notte"
         },
         "free_cooling": {
           "name": "Free Cooling"
         },
+        "manual_speed": {
+          "name": "Velocità Manuale"
+        },
         "panel_led": {
           "name": "LED Pannello"
         },
-        "sensors": {
-          "name": "Sensori"
+        "sensors_active": {
+          "name": "Sensori Attivi"
         }
+      }
+    },
+    "sensor": {
+      "temperature_internal": {
+        "name": "Temperatura Interna"
+      },
+      "temperature_external": {
+        "name": "Temperatura Esterna"
+      },
+      "humidity": {
+        "name": "Umidità"
+      },
+      "co2": {
+        "name": "CO2"
+      },
+      "voc": {
+        "name": "VOC"
+      },
+      "filter_hours": {
+        "name": "Ore Filtro"
+      },
+      "ip_address": {
+        "name": "Indirizzo IP"
+      },
+      "network_ssid": {
+        "name": "SSID Rete"
+      },
+      "network_password": {
+        "name": "Password Rete"
+      },
+      "last_response": {
+        "name": "Ultima Risposta"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      }
+    },
+    "switch": {
+      "hyperventilation": {
+        "name": "Iperventilazione"
+      },
+      "night": {
+        "name": "Modalità Notte"
+      },
+      "free_cooling": {
+        "name": "Free Cooling"
+      },
+      "panel_led": {
+        "name": "LED Pannello"
+      },
+      "sensors": {
+        "name": "Sensori"
       }
     },
     "light": {
-      "vmc_helty_flow": {
-        "light": {
-          "name": "Luci"
-        },
-        "light_timer": {
-          "name": "Timer Luci"
-        }
+      "light": {
+        "name": "Luci"
+      },
+      "light_timer": {
+        "name": "Timer Luci"
       }
     },
     "button": {
-      "vmc_helty_flow": {
-        "reset_filter": {
-          "name": "Reset Filtro"
-        }
+      "reset_filter": {
+        "name": "Reset Filtro"
       }
     },
     "text": {
-      "vmc_helty_flow": {
-        "device_name": {
-          "name": "Nome Dispositivo"
-        },
-        "wifi_ssid": {
-          "name": "SSID WiFi"
-        },
-        "wifi_password": {
-          "name": "Password WiFi"
-        }
+      "device_name": {
+        "name": "Nome Dispositivo"
+      },
+      "wifi_ssid": {
+        "name": "SSID WiFi"
+      },
+      "wifi_password": {
+        "name": "Password WiFi"
       }
     }
   },
