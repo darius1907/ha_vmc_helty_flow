@@ -17,20 +17,25 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 
 ### Via HACS (Consigliato)
 
-1. **Aggiungi Repository Personalizzato**:
-   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=darius1907&repository=ha_vmc_helty_flow&category=integration)
-
-2. **Installa l'Integrazione**:
-   - Vai in HACS → Integrazioni
-   - Cerca "VMC Helty Flow"
-   - Clicca "Scarica"
+1. **Installa l'Integrazione**:
+   - Apri HACS in Home Assistant
+   - Vai in **Integrazioni**
+   - Clicca sul pulsante **Esplora e scarica repository** in basso a destra
+   - Cerca "**VMC Helty Flow**"
+   - Clicca su "**Scarica**"
    - Riavvia Home Assistant
 
-3. **Configura l'Integrazione**:
-   - Vai in Impostazioni → Dispositivi e Servizi
-   - Clicca "Aggiungi Integrazione"
-   - Cerca "VMC Helty Flow"
-   - Segui la procedura guidata
+   > **Nota**: Se non trovi l'integrazione nella ricerca, potrebbero essere necessarie alcune ore dopo la pubblicazione. In alternativa, puoi aggiungerla come repository personalizzato usando il badge qui sotto:
+
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=darius1907&repository=ha_vmc_helty_flow&category=integration)
+
+2. **Configura l'Integrazione**:
+
+2. **Configura l'Integrazione**:
+   - Vai in **Impostazioni** → **Dispositivi e Servizi**
+   - Clicca "**Aggiungi Integrazione**"
+   - Cerca "**VMC Helty Flow**"
+   - Segui la procedura guidata di configurazione
 
 ### Installazione Manuale
 
@@ -308,7 +313,7 @@ Per problemi, richieste di funzionalità o contributi:
 **Versione**: 1.0.0
 **Compatibilità**: Home Assistant 2024.1+
 **Licenza**: MIT
-**Stato HACS**: ✅ Pronto per distribuzione
+**Stato HACS**: ✅ Disponibile nel repository ufficiale HACS
 
 ---
 
