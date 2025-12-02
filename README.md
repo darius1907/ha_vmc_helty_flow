@@ -319,6 +319,12 @@ Per problemi, richieste di funzionalità o contributi:
 
 **⭐ Se questa integrazione ti è utile, metti una stella al repository!**
 
+**☕ Ti piace questa integrazione? Offrimi un caffè!**
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/darius1907)
+
+Il tuo supporto mi aiuta a mantenere e migliorare questa integrazione!
+
 [hacs]: https://github.com/hacs/integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [discord]: https://discord.gg/Qa5fW2R
