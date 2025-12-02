@@ -18,7 +18,7 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 ### Via HACS (Consigliato)
 
 1. **Aggiungi Repository Personalizzato**:
-   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dpezzoli&repository=ha_vmc_helty_flow&category=integration)
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=darius1907&repository=ha_vmc_helty_flow&category=integration)
 
 2. **Installa l'Integrazione**:
    - Vai in HACS → Integrazioni
@@ -321,11 +321,11 @@ Per problemi, richieste di funzionalità o contributi:
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [forum]: https://community.home-assistant.io/
 [license]: https://github.com/darius1907/ha_vmc_helty_flow/blob/main/LICENSE
-[license-shield]: https://img.shields.io/github/license/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-%40dpezzoli-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/darius1907/ha_vmc_helty_flow.svg?style=for-the-badge
+[maintenance-shield]: https://img.shields.io/badge/maintainer-%40darius1907-blue.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/darius1907/ha_vmc_helty_flow.svg?style=for-the-badge
 [releases]: https://github.com/darius1907/ha_vmc_helty_flow/releases
-[commits-shield]: https://img.shields.io/github/commit-activity/y/dpezzoli/ha_vmc_helty_flow.svg?style=for-the-badge
+[commits-shield]: https://img.shields.io/github/commit-activity/y/darius1907/ha_vmc_helty_flow.svg?style=for-the-badge
 [commits]: https://github.com/darius1907/ha_vmc_helty_flow/commits/main
 [user_profile]: https://github.com/darius1907
 [buymecoffee]: https://www.buymeacoffee.com/darius1907
