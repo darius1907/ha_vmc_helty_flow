@@ -310,7 +310,7 @@ Per problemi, richieste di funzionalità o contributi:
 ![GitHub commits since latest release][commits-since-shield]
 ![GitHub last commit][last-commit-shield]
 
-**Versione**: 1.0.0
+**Versione**: 1.0.0-RC2
 **Compatibilità**: Home Assistant 2024.1+
 **Licenza**: MIT
 **Stato HACS**: ✅ Disponibile nel repository ufficiale HACS
