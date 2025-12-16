@@ -1,4 +1,4 @@
-# 🌬️ VMC Helty Flow - Integrazione Home Assistant
+# 🌬️ VMC Helty Flow - Home Assistant Integration
 
 [![hacs][hacsbadge]][hacs]
 [![GitHub Release][releases-shield]][releases]
@@ -11,120 +11,120 @@
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
-Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) Helty Flow con Home Assistant.
+Complete integration for Helty Flow Mechanical Ventilation (VMC) systems with Home Assistant.
 
-## 🚀 Installazione Rapida
+> **🇮🇹 Versione Italiana**: [README_IT.md](README_IT.md)
 
-### Via HACS (Consigliato)
+## 🚀 Quick Installation
 
-1. **Installa l'Integrazione**:
-   - Apri HACS in Home Assistant
-   - Vai in **Integrazioni**
-   - Clicca sul pulsante **Esplora e scarica repository** in basso a destra
-   - Cerca "**VMC Helty Flow**"
-   - Clicca su "**Scarica**"
-   - Riavvia Home Assistant
+### Via HACS (Recommended)
 
-   > **Nota**: Se non trovi l'integrazione nella ricerca, potrebbero essere necessarie alcune ore dopo la pubblicazione. In alternativa, puoi aggiungerla come repository personalizzato usando il badge qui sotto:
+1. **Install the Integration**:
+   - Open HACS in Home Assistant
+   - Go to **Integrations**
+   - Click the **Explore & Download Repositories** button in the bottom right
+   - Search for "**VMC Helty Flow**"
+   - Click "**Download**"
+   - Restart Home Assistant
+
+   > **Note**: If you can't find the integration in the search, it may take a few hours after publication. Alternatively, you can add it as a custom repository using the badge below:
 
    [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=darius1907&repository=ha_vmc_helty_flow&category=integration)
 
-2. **Configura l'Integrazione**:
+2. **Configure the Integration**:
+   - Go to **Settings** → **Devices & Services**
+   - Click "**Add Integration**"
+   - Search for "**VMC Helty Flow**"
+   - Follow the guided configuration procedure
 
-2. **Configura l'Integrazione**:
-   - Vai in **Impostazioni** → **Dispositivi e Servizi**
-   - Clicca "**Aggiungi Integrazione**"
-   - Cerca "**VMC Helty Flow**"
-   - Segui la procedura guidata di configurazione
+### Manual Installation
 
-### Installazione Manuale
+1. Copy the `custom_components/vmc_helty_flow` folder into your `custom_components/` directory
+2. Restart Home Assistant
+3. Add the integration from the interface
 
-1. Copia la cartella `custom_components/vmc_helty_flow` nella tua directory `custom_components/`
-2. Riavvia Home Assistant
-3. Aggiungi l'integrazione dall'interfaccia
+## ✨ Main Features
 
-## ✨ Caratteristiche Principali
+### 🔍 **Advanced Device Discovery**
 
-### 🔍 **Scoperta Dispositivi Avanzata**
+- **Incremental Scanning**: Find and configure devices one at a time with full user control
+- **Smart Validation**: Automatic verification of subnet format, ports, and timeouts
+- **Error Management**: Informative messages and error recovery capabilities
 
-- **Scansione Incrementale**: Trova e configura i dispositivi uno alla volta con controllo completo dell'utente
-- **Validazione Intelligente**: Controllo automatico di formato subnet, porte e timeout
-- **Gestione Errori**: Messaggi informativi e possibilità di recupero dagli errori
+### 🎛️ **Complete VMC Control**
 
-### 🎛️ **Controllo Completo VMC**
+- **Fan Control**: Variable speed and operating modes
+- **Environmental Monitoring**: Indoor/outdoor temperature, humidity, CO2, VOC
+- **Filter Management**: Usage hours monitoring and filter reset
+- **Lighting**: Integrated light control with timer
+- **Network Configuration**: WiFi management and network parameters
 
-- **Controllo Ventola**: Velocità variabile e modalità operative
-- **Monitoraggio Ambientale**: Temperatura interna/esterna, umidità, CO2, VOC
-- **Gestione Filtri**: Monitoraggio ore utilizzo e reset filtro
-- **Illuminazione**: Controllo luci integrate con timer
-- **Configurazione di Rete**: Gestione WiFi e parametri di rete
+## 🏠 Available Entities
 
-## 🏠 Entità Disponibili
+### 🌪️ **Ventilation Control**
 
-### 🌪️ **Controllo Ventilazione**
+- **Fan**: Fan speed control and operating modes
+- **Mode Switch**: Operating modes (hyperventilation, night, free_cooling)
+- **Sensors Switch**: Enable/disable environmental sensors
 
-- **Fan**: Controllo velocità ventola e modalità operative
-- **Mode Switch**: Modalità operative (hyperventilation, night, free_cooling)
-- **Sensors Switch**: Attivazione/disattivazione sensori ambientali
+### 📊 **Environmental Sensors**
 
-### 📊 **Sensori Ambientali**
+- **Indoor/Outdoor Temperature**: Real-time temperature monitoring
+- **Humidity**: Environmental humidity levels
+- **CO2**: Carbon dioxide concentration (ppm)
+- **VOC**: Volatile organic compounds
+- **Air Quality**: Overall environmental quality indicators
 
-- **Temperatura Interna/Esterna**: Monitoraggio temperature in tempo reale
-- **Umidità**: Livelli di umidità ambientale
-- **CO2**: Concentrazione anidride carbonica (ppm)
-- **VOC**: Composti organici volatili
-- **Qualità Aria**: Indicatori complessivi qualità ambientale
+### 🔧 **System Management**
 
-### 🔧 **Gestione Sistema**
+- **Filter Hours**: Filter operating hours
+- **Reset Filter Button**: Filter counter reset
+- **Last Response**: Last communication timestamp
+- **Panel LED Switch**: Front panel LED control
 
-- **Filter Hours**: Ore di funzionamento filtro
-- **Reset Filter Button**: Reset contatore filtro
-- **Last Response**: Timestamp ultima comunicazione
-- **Panel LED Switch**: Controllo LED pannello frontale
+### 💡 **Lighting**
 
-### 💡 **Illuminazione**
+- **Light**: Integrated light control
+- **Light Timer**: Automatic light shutdown timer
 
-- **Light**: Controllo luci integrate
-- **Light Timer**: Timer automatico spegnimento luci
+### 🌐 **Network Configuration**
 
-### 🌐 **Configurazione di Rete**
+- **IP Address**: Device IP address
+- **Subnet Mask/Gateway**: Network parameters
+- **SSID/Password**: WiFi configuration
+- **Network Settings**: Complete network parameter management
 
-- **IP Address**: Indirizzo IP dispositivo
-- **Subnet Mask/Gateway**: Parametri di rete
-- **SSID/Password**: Configurazione WiFi
-- **Network Settings**: Gestione completa parametri di rete
+### 📈 **Advanced Sensors**
 
-### 📈 **Sensori Avanzati**
+- **Dew Point**: Dew point calculation for condensation prevention
+- **Comfort Index**: Comfort index based on temperature and humidity
+- **Dew Point Delta**: Difference between outdoor temperature and dew point
+- **Air Exchange Time**: Air exchange time based on fan speed
+- **Daily Air Changes**: Number of daily air changes
 
-- **Dew Point**: Calcolo punto di rugiada per prevenzione condensa
-- **Comfort Index**: Indice di comfort basato su temperatura e umidità
-- **Dew Point Delta**: Differenza tra temperatura esterna e punto rugiada
-- **Air Exchange Time**: Tempo di ricambio aria basato su velocità ventola
-- **Daily Air Changes**: Numero ricambi d'aria giornalieri
-
-## 🎨 **Dashboard Personalizzata**
+## 🎨 **Custom Dashboard**
 
 ### 📱 **VMC Helty Control Card**
 
-Card Lovelace personalizzata per controllo completo del sistema VMC:
+Custom Lovelace card for complete VMC system control:
 
-- **🎛️ Controllo Ventola**: Interfaccia intuitiva con pulsanti velocità (0-4)
-- **📊 Monitor Ambientale**: Visualizzazione sensori con indicatori colorati
-- **🔄 Aggiornamenti Real-time**: Stato ventola e sensori in tempo reale
-- **� Design Responsive**: Ottimizzato per mobile, tablet e desktop
-- **🎨 Temi Multipli**: Default, Compact, Minimal
-- **⚙️ Configurazione Visuale**: Editor grafico integrato in Lovelace
+- **🎛️ Fan Control**: Intuitive interface with speed buttons (0-4)
+- **📊 Environmental Monitor**: Sensor visualization with color indicators
+- **🔄 Real-time Updates**: Real-time fan and sensor status
+- **📱 Responsive Design**: Optimized for mobile, tablet, and desktop
+- **🎨 Multiple Themes**: Default, Compact, Minimal
+- **⚙️ Visual Configuration**: Integrated graphical editor in Lovelace
 
-#### Installazione Card
+#### Card Installation
 
 ```bash
-# Copia i file della card in www/
+# Copy card files to www/
 /config/www/vmc-helty-card/
-├── vmc-helty-card.js              # Card principale
-└── vmc-helty-card-editor.js       # Editor configurazione
+├── vmc-helty-card.js              # Main card
+└── vmc-helty-card-editor.js       # Configuration editor
 ```
 
-Aggiungi alle risorse Lovelace:
+Add to Lovelace resources:
 
 ```yaml
 resources:
@@ -134,9 +134,9 @@ resources:
     type: module
 ```
 
-**Nota**: I file di traduzione vengono caricati automaticamente e NON devono essere aggiunti alle risorse.
+**Note**: Translation files are loaded automatically and should NOT be added to resources.
 
-Configurazione card:
+Card configuration:
 
 ```yaml
 type: custom:vmc-helty-card
@@ -148,130 +148,129 @@ show_co2: true
 show_voc: true
 ```
 
-## �🚀 Configurazione Guidata
+## 🚀 Guided Configuration
 
-### 📡 **Scansione Incrementale**
+### 📡 **Incremental Scanning**
 
-1. **Avvio Configurazione**
-   - Apri Home Assistant → Impostazioni → Dispositivi e Servizi
-   - Clicca "Aggiungi Integrazione" → Cerca "VMC Helty Flow"
+1. **Start Configuration**
+   - Open Home Assistant → Settings → Devices & Services
+   - Click "Add Integration" → Search for "VMC Helty Flow"
 
-2. **Configurazione Scansione**
-   - **Subnet**: Inserisci la rete da scansionare (es. `192.168.1.0/24`)
-   - **Porta**: Porta TCP del dispositivo VMC (default: `5001`)
-   - **Timeout**: Timeout connessione in secondi (1-60)
-   - **Modalità**: Seleziona "Scansione incrementale"
+2. **Scan Configuration**
+   - **Subnet**: Enter the network to scan (e.g., `192.168.1.0/24`)
+   - **Port**: VMC device TCP port (default: `5001`)
+   - **Timeout**: Connection timeout in seconds (1-60)
+   - **Mode**: Select "Incremental scan"
 
-3. **Processo Incrementale**
-   - La scansione inizia e si ferma automaticamente ad ogni dispositivo trovato
-   - Per ogni dispositivo VMC scoperto, puoi scegliere:
-     - **➕ Aggiungi e continua**: Aggiunge il dispositivo e prosegue la scansione
-     - **⏭️ Salta e continua**: Ignora questo dispositivo e prosegue
-     - **✅ Aggiungi e termina**: Aggiunge il dispositivo e termina
-     - **🛑 Termina scansione**: Ferma tutto senza aggiungere
+3. **Incremental Process**
+   - The scan starts and automatically stops at each device found
+   - For each discovered VMC device, you can choose:
+     - **➕ Add and continue**: Adds the device and continues scanning
+     - **⏭️ Skip and continue**: Ignores this device and continues
+     - **✅ Add and finish**: Adds the device and terminates
+     - **🛑 Stop scan**: Stops everything without adding
 
-4. **Feedback Immediato**
+4. **Immediate Feedback**
+   - Real-time display of found devices
+   - Detailed information (name, IP, model) for each device
+   - Progressive counter and scan position indicator
 
-- Visualizzazione in tempo reale dei dispositivi trovati
-- Informazioni dettagliate (nome, IP, modello) per ogni dispositivo
-- Contatore progressivo e indicatore posizione nella scansione
+### 🔧 **Validations and Security**
 
-### 🔧 **Validazioni e Sicurezza**
+- **Subnet Format**: Automatic CIDR format validation
+- **IP Limit**: Maximum 254 addresses per scan (for performance)
+- **Port Check**: Port range validation (1-65535)
+- **Smart Timeout**: Balance between speed and reliability
+- **Duplicate Management**: Automatic duplicate configuration prevention
 
-- **Formato Subnet**: Validazione automatica formato CIDR
-- **Limite IP**: Massimo 254 indirizzi per scansione (per performance)
-- **Controllo Porte**: Validazione range porte (1-65535)
-- **Timeout Intelligente**: Bilanciamento tra velocità e affidabilità
-- **Gestione Duplicati**: Prevenzione configurazioni duplicate automatica
+## 📋 **Configuration Examples**
 
-## 📋 **Esempi di Configurazione**
-
-### Configurazione Base
+### Basic Configuration
 
 ```text
 Subnet: 192.168.1.0/24
-Porta: 5001
-Timeout: 10 secondi
+Port: 5001
+Timeout: 10 seconds
 ```
 
-### Configurazione Rete Personalizzata
+### Custom Network Configuration
 
 ```text
 Subnet: 10.0.0.0/24
-Porta: 8080
-Timeout: 5 secondi
-Modalità: Scansione completa
+Port: 8080
+Timeout: 5 seconds
+Mode: Full scan
 ```
 
-### Configurazione Rete Estesa
+### Extended Network Configuration
 
 ```text
 Subnet: 192.168.0.0/23
-Porta: 5001
-Timeout: 15 secondi
+Port: 5001
+Timeout: 15 seconds
 ```
 
-## 🔄 **Automazioni e Integrazioni**
+## 🔄 **Automations and Integrations**
 
-Tutte le entità sono completamente integrate con Home Assistant:
+All entities are fully integrated with Home Assistant:
 
-### Automazione Qualità Aria
+### Air Quality Automation
 
 ```yaml
 automation:
-  - alias: "VMC Boost su CO2 Alto"
+  - alias: "VMC Boost on High CO2"
     trigger:
       platform: numeric_state
-      entity_id: sensor.vmc_helty_soggiorno_co2
+      entity_id: sensor.vmc_helty_living_room_co2
       above: 800
     action:
       service: fan.set_percentage
       target:
-        entity_id: fan.vmc_helty_soggiorno
+        entity_id: fan.vmc_helty_living_room
       data:
         percentage: 80
 ```
 
-### Dashboard Personalizzata
+### Custom Dashboard
 
 ```yaml
 cards:
   - type: entities
-    title: "Controllo VMC Soggiorno"
+    title: "Living Room VMC Control"
     entities:
-      - fan.vmc_helty_soggiorno
-      - sensor.vmc_helty_soggiorno_temperatura_interna
-      - sensor.vmc_helty_soggiorno_co2
-      - switch.vmc_helty_soggiorno_modalita
-      - light.vmc_helty_soggiorno_luce
+      - fan.vmc_helty_living_room
+      - sensor.vmc_helty_living_room_indoor_temperature
+      - sensor.vmc_helty_living_room_co2
+      - switch.vmc_helty_living_room_mode
+      - light.vmc_helty_living_room_light
 ```
 
-## 🛠️ **Risoluzione Problemi**
+## 🛠️ **Troubleshooting**
 
-### Problemi Comuni
+### Common Issues
 
-**Dispositivi non trovati?**
+**Devices not found?**
 
-- Verifica che i dispositivi VMC siano accesi e connessi alla rete
-- Controlla che la subnet sia corretta
-- Prova ad aumentare il timeout di connessione
-- Verifica che la porta 5001 non sia bloccata dal firewall
+- Verify that VMC devices are powered on and connected to the network
+- Check that the subnet is correct
+- Try increasing the connection timeout
+- Verify that port 5001 is not blocked by firewall
 
-**Scansione lenta?**
+**Slow scanning?**
 
-- Riduci la subnet (es. da /23 a /24)
-- Diminuisci il timeout per reti veloci
-- Usa la modalità incrementale per controllo granulare
+- Reduce the subnet (e.g., from /23 to /24)
+- Decrease timeout for fast networks
+- Use incremental mode for granular control
 
-**Errori di connessione?**
+**Connection errors?**
 
-- Verifica la configurazione di rete del dispositivo VMC
-- Controlla che Home Assistant possa raggiungere la subnet specificata
-- Prova a riavviare il dispositivo VMC
+- Verify the VMC device network configuration
+- Check that Home Assistant can reach the specified subnet
+- Try restarting the VMC device
 
-### Log e Debug
+### Logging and Debug
 
-Per abilitare log dettagliati, aggiungi al `configuration.yaml`:
+To enable detailed logging, add to `configuration.yaml`:
 
 ```yaml
 logger:
@@ -280,50 +279,50 @@ logger:
     custom_components.vmc_helty_flow: debug
 ```
 
-## 🔮 **Prossimi Sviluppi**
+## 🔮 **Future Developments**
 
-- **Rilevamento Automatico**: Discovery automatico dispositivi nella rete locale
-- **Integrazioni Avanzate**: Collegamento con sensori esterni e stazioni meteo
-- **Dashboard Dedicata**: Interface utente specializzata per controllo dei sensori avanzati VMC
+- **Automatic Detection**: Automatic discovery of devices in the local network
+- **Advanced Integrations**: Connection with external sensors and weather stations
+- **Dedicated Dashboard**: Specialized user interface for advanced VMC sensor control
 
-## 📞 **Supporto**
+## 📞 **Support**
 
-Per problemi, richieste di funzionalità o contributi:
+For issues, feature requests, or contributions:
 
-- 🐛 [Apri una issue](https://github.com/darius1907/ha_vmc_helty_flow/issues) su GitHub
-- 💬 Unisciti alla [discussione della community](https://community.home-assistant.io/)
+- 🐛 [Open an issue](https://github.com/darius1907/ha_vmc_helty_flow/issues) on GitHub
+- 💬 Join the [community discussion](https://community.home-assistant.io/)
 
-### Come Contribuire
+### How to Contribute
 
-1. 🍴 Fork del repository
-2. 🌱 Crea un branch per la feature
-3. ✅ Aggiungi test per le modifiche
-4. 📝 Aggiorna la documentazione
-5. 🔄 Invia una pull request
+1. 🍴 Fork the repository
+2. 🌱 Create a branch for the feature
+3. ✅ Add tests for changes
+4. 📝 Update documentation
+5. 🔄 Submit a pull request
 
 ---
 
-## 📊 **Stato del Progetto**
+## 📊 **Project Status**
 
 ![GitHub release (latest by date)][releases-shield]
 ![GitHub Release Date][release-date-shield]
 ![GitHub commits since latest release][commits-since-shield]
 ![GitHub last commit][last-commit-shield]
 
-**Versione**: 1.0.0-RC2
-**Compatibilità**: Home Assistant 2024.1+
-**Licenza**: MIT
-**Stato HACS**: ✅ Disponibile nel repository ufficiale HACS
+**Version**: 1.0.2
+**Compatibility**: Home Assistant 2024.1+
+**License**: MIT
+**HACS Status**: ✅ Available in the official HACS repository
 
 ---
 
-**⭐ Se questa integrazione ti è utile, metti una stella al repository!**
+**⭐ If this integration is useful to you, star the repository!**
 
-**☕ Ti piace questa integrazione? Offrimi un caffè!**
+**☕ Do you like this integration? Buy me a coffee!**
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/darius1907)
 
-Il tuo supporto mi aiuta a mantenere e migliorare questa integrazione!
+Your support helps me maintain and improve this integration!
 
 [hacs]: https://github.com/hacs/integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge

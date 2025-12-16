@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/darius1907/ha_vmc_helty_flow/issues",
   "quality_scale": "silver",
   "requirements": ["ifaddr"],
-  "version": "1.0.1"
+  "version": "1.0.2"
 }
