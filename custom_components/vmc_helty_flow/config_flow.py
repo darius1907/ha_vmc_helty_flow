@@ -642,7 +642,6 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:
                 "port": discovery_info.get("port", 5001),
                 "timeout": discovery_info.get("timeout", 10),
                 # Use configured volume from discovery_info or default
-                # Use configured volume from discovery_info or default
                 "room_volume": discovery_info.get("room_volume", DEFAULT_ROOM_VOLUME),
             },
         )
@@ -653,17 +652,15 @@ class VmcHeltyFlowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type:
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,  # noqa: ARG004
+    ) -> config_entries.OptionsFlow:
         """Get the options flow for this handler."""
-        return VmcHeltyOptionsFlowHandler(config_entry)
+        return VmcHeltyOptionsFlowHandler()
 
 
 class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle VMC Helty Flow options."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry):
-        """Initialize VMC Helty Flow options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         """Manage the VMC Helty Flow options."""
