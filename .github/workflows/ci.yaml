@@ -14,19 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     name: Code Quality & HACS Validation
     steps:
-      - name: 📥 Checkout
+      - name: 🛎️ Checkout code
         uses: actions/checkout@v4
 
       - name: 🏗 Set up Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-          cache: 'pip'
+          # Disable cache to ensure fresh pycares/aiodns installation
 
       - name: 📦 Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install --upgrade 'pycares>=4.9.0' 'aiodns==3.5.0'
+          # Force reinstall pycares and aiodns without using cache
+          pip install --no-cache-dir --force-reinstall 'pycares>=4.9.0' 'aiodns==3.5.0'
           pip install -r requirements_test.txt
 
       - name: 🧹 Run pre-commit checks
@@ -66,19 +67,20 @@ jobs:
     name: Unit Tests & Coverage
     needs: validate
     steps:
-      - name: 📥 Checkout
+      - name: 🛎️ Checkout code
         uses: actions/checkout@v4
 
       - name: 🏗 Set up Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-          cache: 'pip'
+          # Disable cache to ensure fresh pycares/aiodns installation
 
       - name: 📦 Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install --upgrade 'pycares>=4.9.0' 'aiodns==3.5.0'
+          # Force reinstall pycares and aiodns without using cache
+          pip install --no-cache-dir --force-reinstall 'pycares>=4.9.0' 'aiodns==3.5.0'
           pip install -r requirements_test.txt
 
       - name: 🧪 Run tests with coverage
