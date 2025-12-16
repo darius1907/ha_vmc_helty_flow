@@ -12,5 +12,6 @@ pytest-homeassistant-custom-component==0.13.272
 
 # Fix for Python 3.13 compatibility issue with aiodns/pycares
 # Must match Home Assistant's requirements
+# Pin pycares to 4.11.0 - version 5.0.0 has breaking API changes
 aiodns==3.5.0
-pycares>=4.9.0
+pycares==4.11.0
