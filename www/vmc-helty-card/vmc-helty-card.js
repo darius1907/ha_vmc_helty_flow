@@ -1,5 +1,5 @@
 /**
- * VMC Helty Flow Control Card v2.1 - LitElement Implementation
+ * VMC Helty Flow Control Card v2.1.1 - LitElement Implementation
  * Advanced Lovelace card for VMC Helty Flow Plus/Elite control
  *
  * Fully compliant with Home Assistant development guidelines:
@@ -15,12 +15,12 @@
  * - Special modes (hyperventilation, night mode, free cooling)
  * - Device controls (panel LED, sensors)
  *
- * @version 2.1.0
+ * @version 2.1.1
  * @author VMC Helty Integration Team
  */
 
 console.info(
-  `%c VMC HELTY CARD v2.1 LitElement %c Advanced VMC Helty Flow control with multilingual support`,
+  `%c VMC HELTY CARD v2.1.1 LitElement %c Advanced VMC Helty Flow control with multilingual support`,
   "color: orange; font-weight: bold; background: black",
   "color: white; font-weight: normal;"
 );
@@ -101,10 +101,9 @@ class VmcHeltyCard extends LitElement {
                 .selected=${isOn}
                 @click=${() => this._setSpecialMode(mode)}
                 label="${mode.label}"
-                ?disabled=${this._loading || (vmcState && vmcState.state === 'off')}
+                ?disabled=${this._loading}
               >
-                <ha-icon icon="${mode.icon}" slot="icon"></ha-icon>
-              </ha-assist-chip>
+                <ha-icon icon="${mode.icon}" slot="icon"></ha-assist-chip>
             `;
           })}
         </ha-chip-set>
@@ -142,7 +141,7 @@ class VmcHeltyCard extends LitElement {
         <ha-entity-toggle
           .hass=${this.hass}
           .stateObj=${sensorsState}
-          ?disabled=${this._loading || (vmcState && vmcState.state === 'off') || !sensorsState || sensorsState.state === 'unavailable'}
+          ?disabled=${this._loading || !sensorsState || sensorsState.state === 'unavailable'}
         ></ha-entity-toggle>
       </div>
     `;
@@ -722,7 +721,7 @@ class VmcHeltyCard extends LitElement {
           step="1"
           .value="${currentStep.value}"
           @value-changed="${this._setFanSpeedDiscrete}"
-          ?disabled="${this._loading || vmcState.state === 'off'}"
+          ?disabled="${this._loading}"
           style="flex: 1;"
           dir="ltr"
         ></ha-control-slider>

@@ -14,7 +14,10 @@ from homeassistant.helpers import entity_registry
 
 from .const import (
     DEFAULT_PORT,
+    DEFAULT_ROOM_VOLUME,
     DOMAIN,
+    MAX_ROOM_VOLUME,
+    MIN_ROOM_VOLUME,
     NETWORK_INFO_UPDATE_INTERVAL,
     SENSORS_UPDATE_INTERVAL,
 )
@@ -49,7 +52,7 @@ async def _handle_update_room_volume(hass: HomeAssistant, call: ServiceCall) -> 
     entity_id = call.data["entity_id"]
     new_volume = float(call.data["room_volume"])
 
-    # Trova la config entry associata all'entità
+    # Trova l'entità
     entity_registry_instance = entity_registry.async_get(hass)
     entity_entry = entity_registry_instance.async_get(entity_id)
 
@@ -65,9 +68,12 @@ async def _handle_update_room_volume(hass: HomeAssistant, call: ServiceCall) -> 
             f"Entity {entity_id} is not from VMC Helty Flow integration"
         )
 
-    # Aggiorna i dati della config entry
-    new_data = {**config_entry.data, "room_volume": new_volume}
-    hass.config_entries.async_update_entry(config_entry, data=new_data)
+    # Aggiorna il volume nelle options (non più in data)
+    new_options = {**config_entry.options, "room_volume": new_volume}
+    hass.config_entries.async_update_entry(config_entry, options=new_options)
+
+    # Ricarica l'integrazione per applicare i cambiamenti
+    await hass.config_entries.async_reload(config_entry.entry_id)
 
     _LOGGER.info(
         "Updated room volume for %s to %.1f m³",
@@ -177,7 +183,7 @@ def _create_service_schemas() -> tuple[vol.Schema, vol.Schema, vol.Schema]:
         {
             vol.Required("entity_id"): cv.entity_id,
             vol.Required("room_volume"): vol.All(
-                vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
+                vol.Coerce(float), vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
             ),
         }
     )
@@ -238,10 +244,58 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
 
 
+async def _migrate_room_volume_to_options(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Migrate room_volume from data to options for backward compatibility."""
+    # Se room_volume è in data ma non in options, migra
+    if "room_volume" in entry.data and "room_volume" not in entry.options:
+        room_volume = entry.data.get("room_volume", DEFAULT_ROOM_VOLUME)
+
+        # Valida il volume prima di migrarlo
+        try:
+            room_volume = float(room_volume)
+            if not (MIN_ROOM_VOLUME <= room_volume <= MAX_ROOM_VOLUME):
+                _LOGGER.warning(
+                    "Room volume %s out of range, using default %s",
+                    room_volume,
+                    DEFAULT_ROOM_VOLUME,
+                )
+                room_volume = DEFAULT_ROOM_VOLUME
+        except (ValueError, TypeError):
+            _LOGGER.warning(
+                "Invalid room volume %s, using default %s",
+                room_volume,
+                DEFAULT_ROOM_VOLUME,
+            )
+            room_volume = DEFAULT_ROOM_VOLUME
+
+        # Copia room_volume nelle options
+        new_options = {**entry.options, "room_volume": room_volume}
+        hass.config_entries.async_update_entry(entry, options=new_options)
+
+        # Rimuovi room_volume da data (mantieni solo configurazione immutabile)
+        new_data = {k: v for k, v in entry.data.items() if k != "room_volume"}
+        hass.config_entries.async_update_entry(entry, data=new_data)
+
+        _LOGGER.info("Migrated room_volume from data to options: %s m³", room_volume)
+    # Se room_volume non è né in data né in options, usa default
+    elif "room_volume" not in entry.options:
+        new_options = {**entry.options, "room_volume": DEFAULT_ROOM_VOLUME}
+        hass.config_entries.async_update_entry(entry, options=new_options)
+        _LOGGER.info(
+            "Initialized room_volume in options with default: %s m³",
+            DEFAULT_ROOM_VOLUME,
+        )
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up VMC Helty Flow from a config entry."""
     # Inizializza il dominio se non esiste
     hass.data.setdefault(DOMAIN, {})
+
+    # Migrazione: sposta room_volume da data a options per backward compatibility
+    await _migrate_room_volume_to_options(hass, entry)
 
     # Setup delle device actions (solo una volta per l'integrazione)
     if not hass.data[DOMAIN].get("device_actions_setup"):

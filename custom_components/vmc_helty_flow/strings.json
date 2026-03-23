@@ -115,16 +115,16 @@
         "title": "Opzioni VMC Helty Flow",
         "description": "Configura le opzioni avanzate per l'integrazione",
         "data": {
+          "room_volume": "Volume stanza (m³)",
           "scan_interval": "Intervallo di aggiornamento (secondi)",
           "timeout": "Timeout connessioni (secondi)",
-          "retry_attempts": "Tentativi di riconnessione",
-          "room_volume": "Volume stanza (m³)"
+          "retry_attempts": "Tentativi di riconnessione"
         },
         "data_description": {
+          "room_volume": "Volume della stanza in metri cubi per calcoli accurati dei ricambi d'aria (5-200 m³). Modificabile anche tramite servizio update_room_volume",
           "scan_interval": "Frequenza di aggiornamento dei dati dal dispositivo VMC (30-600 secondi)",
           "timeout": "Timeout per le connessioni TCP al dispositivo (5-60 secondi)",
-          "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)",
-          "room_volume": "Volume della stanza in metri cubi per calcoli accurati dei ricambi d'aria (1-1000 m³)"
+          "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)"
         }
       }
     }

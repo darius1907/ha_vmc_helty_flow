@@ -309,7 +309,7 @@ For issues, feature requests, or contributions:
 ![GitHub commits since latest release][commits-since-shield]
 ![GitHub last commit][last-commit-shield]
 
-**Version**: 1.0.2
+**Version**: 1.1.0
 **Compatibility**: Home Assistant 2024.1+
 **License**: MIT
 **HACS Status**: ✅ Available in the official HACS repository

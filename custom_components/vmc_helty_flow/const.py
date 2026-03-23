@@ -177,10 +177,6 @@ COMFORT_LEVEL_GOOD = "Good"
 COMFORT_LEVEL_FAIR = "Fair"
 COMFORT_LEVEL_POOR = "Poor"
 
-# Room volume validation (m³)
-MIN_ROOM_VOLUME = 5.0  # Minimo per una stanza abitabile (es. bagno piccolo)
-MAX_ROOM_VOLUME = 200.0  # Massimo ragionevole per ambiente domestico
-
-# Room volume validation (m³)
+# Room volume validation and configuration (m³)
 MIN_ROOM_VOLUME = 5.0  # Minimo per una stanza abitabile (es. bagno piccolo)
 MAX_ROOM_VOLUME = 200.0  # Massimo ragionevole per ambiente domestico

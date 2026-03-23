@@ -7,10 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Prepared for HACS distribution
-- Added comprehensive HACS compliance documentation
-- Enhanced README with installation badges and community links
+## [1.1.0] - 2026-03-23
+
+### 🎉 Major Improvements
+
+#### Room Volume Management Enhancement
+- **BREAKING CHANGE**: Room volume now managed through `config_entry.options` instead of `config_entry.data`
+- Automatic migration from old format to new format (backward compatible)
+- Enhanced Options Flow UI with room volume configuration
+- Volume now modifiable via integration options (⚙️ button in UI)
+- Improved validation with consistent limits (5.0-200.0 m³)
+- Automatic reload after options update
+
+#### Options Flow Enhancements
+- New comprehensive options UI
+- Support for configurable parameters:
+  - Room volume (5.0-200.0 m³)
+  - Scan interval (30-600 seconds)
+  - Connection timeout (5-60 seconds)
+  - Retry attempts (1-10)
+- Better descriptions and suggested values
+- Help text improvements
+
+### 🐛 Bug Fixes
+- Fixed fan slider disabled when fan speed set to 0
+- Fixed special modes (hyperventilation, night mode, free cooling) disabled when fan off
+- Fixed sensors toggle disabled when fan off
+- Users can now turn the fan back on using slider or special modes
+
+### 🔧 Technical Improvements
+- Removed duplicate constants in const.py
+- Standardized volume limits across all components
+- Updated coordinator to read only from options
+- Improved type safety and error handling
+- Service `update_room_volume` now uses options instead of data
+- Enhanced code quality (Black formatting, Ruff compliance)
+- Updated documentation in strings.json and services.yaml
+- VMC Helty Card updated to v2.1.1
+
+### 📝 Service Updates
+- `update_room_volume` service updated to use config_entry.options
+- Proper reload trigger after volume update
+- Improved validation using MIN_ROOM_VOLUME and MAX_ROOM_VOLUME constants
+
+### ✅ Testing
+- All core tests passing (18/18)
+- Updated test fixtures to use options
+- Added migration scenario tests
+- Fixed async mocks in service tests
+- Pylint rating: 9.83/10
+
+### 📚 Documentation
+- Updated strings.json with clearer descriptions
+- Updated services.yaml with correct volume limits
+- Enhanced help text for all configuration steps
 
 ## [1.0.0] - 2024-09-24
 
