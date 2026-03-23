@@ -53,6 +53,19 @@ AIRFLOW_MAPPING = {
     7: 26,  # Free Cooling
 }
 
+# Mappatura consumo energetico per velocità ventola (Watts)
+# Basato su specifiche tipiche VMC residenziali
+POWER_MAPPING = {
+    0: 0,  # Spenta
+    1: 10,  # Velocità 1 - consumo minimo
+    2: 20,  # Velocità 2
+    3: 35,  # Velocità 3
+    4: 50,  # Velocità 4 - consumo massimo normale
+    5: 55,  # Hyperventilation - consumo massimo
+    6: 5,  # Night Mode - consumo ridotto
+    7: 35,  # Free Cooling - simile a velocità 3
+}
+
 FANSPEED_MAPPING = {
     0: 0,  # Spenta
     1: 1,  # Velocità 1

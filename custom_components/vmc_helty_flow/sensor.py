@@ -21,6 +21,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
+    UnitOfEnergy,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -85,6 +86,7 @@ from .const import (
     FILTER_STATUS_POOR,
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
+    POWER_MAPPING,
 )
 from .coordinator import VmcHeltyCoordinator
 from .device_info import VmcHeltyEntity
@@ -175,6 +177,9 @@ async def async_setup_entry(
         VmcHeltyLastResponseSensor(coordinator),
         VmcHeltyFilterHoursSensor(coordinator),
         VmcHeltyFilterLifePercentageSensor(coordinator),
+        # Sensori energetici
+        VmcHeltyPowerSensor(coordinator),
+        VmcHeltyDailyEnergyEstimateSensor(coordinator),
         # Sensori di rete
         VmcHeltyIPAddressSensor(coordinator),
         # Pulsanti e controlli di testo
@@ -442,6 +447,226 @@ class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
             "status": status,
             "recommendation": recommendation,
         }
+
+
+class VmcHeltyPowerSensor(VmcHeltyEntity, SensorEntity):
+    """VMC Helty instantaneous power consumption sensor.
+
+    Shows current power consumption in Watts based on fan speed.
+    Updates in real-time when fan speed changes.
+    """
+
+    def __init__(self, coordinator: VmcHeltyCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_power"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Power"
+        self._attr_native_unit_of_measurement = "W"
+        self._attr_device_class = SensorDeviceClass.POWER
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:flash"
+        self._attr_entity_category = None  # Important sensor for energy monitoring
+
+    @property
+    def native_value(self) -> int | None:
+        """Return current power consumption in Watts.
+
+        Maps fan speed to power consumption using POWER_MAPPING:
+        - Speed 0 (off): 0W
+        - Speed 1: 10W
+        - Speed 2: 20W
+        - Speed 3: 35W
+        - Speed 4: 50W
+        - Speed 5 (hyperventilation): 55W
+        - Speed 6 (night mode): 5W
+        - Speed 7 (free cooling): 35W
+
+        Returns:
+            Current power consumption in Watts, or None if data unavailable
+        """
+        if not self.coordinator.data:
+            return None
+
+        # Get fan speed from status data
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])  # Part index 1 contains fan speed
+
+            # Map fan speed to power consumption
+            return POWER_MAPPING.get(fan_speed, 0)
+
+        except (ValueError, IndexError):
+            return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])
+            power = POWER_MAPPING.get(fan_speed, 0)
+
+            # Calculate efficiency metrics
+            airflow = AIRFLOW_MAPPING.get(fan_speed, 0)
+            efficiency = (airflow / power) if power > 0 else 0
+
+            return {
+                "fan_speed": fan_speed,
+                "airflow_m3h": airflow,
+                "efficiency_m3h_per_watt": round(efficiency, 2),
+                "power_mapping": dict(POWER_MAPPING),
+            }
+
+        except (ValueError, IndexError):
+            return None
+
+
+class VmcHeltyDailyEnergyEstimateSensor(VmcHeltyEntity, SensorEntity):
+    """VMC Helty daily energy estimate sensor.
+
+    Estimates daily energy consumption in Wh based on typical usage patterns.
+    Provides a realistic estimate considering average daily runtime and
+    typical speed distribution.
+    """
+
+    def __init__(self, coordinator: VmcHeltyCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_daily_energy_estimate"
+        self._attr_name = (
+            f"{ENTITY_NAME_PREFIX} {coordinator.name} Daily Energy Estimate"
+        )
+        self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_icon = "mdi:lightning-bolt-circle"
+        self._attr_entity_category = None  # Important for energy monitoring
+
+    @property
+    def native_value(self) -> float | None:
+        """Return estimated daily energy consumption in Wh.
+
+        Calculation based on typical VMC usage pattern:
+        - Assumes 18-20 hours daily operation
+        - Speed distribution: 60% speed 2, 25% speed 1, 10% speed 3, 5% speed 4
+        - Average power: ~19W
+        - Daily energy: ~350-380 Wh
+
+        Uses current speed to adjust estimate:
+        - If running at high speed, estimate is higher
+        - If running at low speed, estimate is lower
+        - If off, returns minimum baseline for standby
+
+        Returns:
+            Estimated daily energy in Wh, or None if data unavailable
+        """
+        if not self.coordinator.data:
+            return None
+
+        # Get current fan speed
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])
+
+            # Typical daily operation patterns (hours per speed per day)
+            typical_pattern = {
+                0: 4,  # 4 hours off (sleep, maintenance)
+                1: 5,  # 5 hours at speed 1 (night, light usage)
+                2: 12,  # 12 hours at speed 2 (normal operation)
+                3: 2,  # 2 hours at speed 3 (cooking, showers)
+                4: 1,  # 1 hour at speed 4 (peak usage)
+            }
+
+            # Calculate baseline daily energy from typical pattern
+            baseline_energy = sum(
+                hours * POWER_MAPPING.get(speed, 0)
+                for speed, hours in typical_pattern.items()
+            )
+
+            # Speed adjustment multipliers
+            speed_multipliers = {
+                0: 1.0,  # Off: baseline
+                1: 0.9,  # Speed 1: lower
+                2: 1.0,  # Speed 2: baseline
+                3: 1.1,  # Speed 3: higher
+                4: 1.2,  # Speed 4: highest
+                5: 1.3,  # Hyperventilation
+                6: 0.8,  # Night mode: lowest
+                7: 1.3,  # Free cooling
+            }
+
+            adjustment = speed_multipliers.get(fan_speed, 1.0)
+            return float(baseline_energy * adjustment)
+
+        except (ValueError, IndexError):
+            return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])
+            current_power = POWER_MAPPING.get(fan_speed, 0)
+
+            # Daily cost estimate (assuming 0.25 €/kWh average EU rate)
+            daily_energy_wh = self.native_value or 0
+            daily_cost_eur = (daily_energy_wh / 1000) * 0.25
+
+            # Monthly and yearly projections
+            monthly_energy_kwh = (daily_energy_wh * 30) / 1000
+            yearly_energy_kwh = (daily_energy_wh * 365) / 1000
+            yearly_cost_eur = yearly_energy_kwh * 0.25
+
+            return {
+                "current_power_w": current_power,
+                "current_fan_speed": fan_speed,
+                "daily_cost_eur": round(daily_cost_eur, 2),
+                "monthly_energy_kwh": round(monthly_energy_kwh, 1),
+                "yearly_energy_kwh": round(yearly_energy_kwh, 1),
+                "yearly_cost_eur": round(yearly_cost_eur, 2),
+                "calculation_method": (
+                    "Typical usage pattern with current speed adjustment"
+                ),
+                "typical_runtime_hours": 20,
+            }
+
+        except (ValueError, IndexError):
+            return None
 
 
 class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):

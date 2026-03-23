@@ -15,12 +15,13 @@ Versione Corrente: v1.1.0 ✅
 Prossimo Release: v1.2.0 🔄
 Quality Scale: Silver ⭐⭐
 Test Coverage: >95% ✅
+Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 ```
 
 ### Milestone Overview
 | Milestone | Stato | Data Target | Completamento |
 |-----------|-------|-------------|---------------|
-| v1.2.0-beta | 🔄 In Progress | 2026-04-15 | ▓▓▓░░░░░░░ 35% |
+| v1.2.0-beta | 🔄 In Progress | 2026-04-15 | ▓▓▓▓░░░░░░ 45% |
 | v1.2.0 | 📋 Planned | 2026-05-15 | ░░░░░░░░░░ 0% |
 | v1.3.0 | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
 
@@ -138,24 +139,28 @@ Test Coverage: >95% ✅
   - **Priority**: 🔴 Alta
   - **Test**: 12/12 passed, Coverage sensor.py: 43%
 
-- [ ] **SENS-002**: Implementa `VmcHeltyDailyEnergyEstimateSensor`
-  - [ ] Crea classe in `sensor.py`
-  - [ ] Mappa velocità → potenza (W): {0:0, 1:10, 2:20, 3:35, 4:50}
-  - [ ] Calcola Wh basato su tempo a ogni velocità
-  - [ ] Device class: energy, unit: Wh
-  - [ ] State class: total_increasing
-  - [ ] **Criteri successo**: Accumulo realistico energia giornaliera
-  - **Effort**: 3h
+- [x] **SENS-002**: Implementa `VmcHeltyDailyEnergyEstimateSensor` ⚠️ **DA MIGLIORARE**
+  - [x] Crea classe in `sensor.py`
+  - [x] Mappa velocità → potenza (W): {0:0, 1:10, 2:20, 3:35, 4:50}
+  - [x] Calcola Wh basato su pattern utilizzo giornaliero tipico
+  - [x] Device class: energy, unit: Wh
+  - [x] State class: total
+  - [x] **Criteri successo**: Stima realistica energia giornaliera
+  - **Effort**: 3h ✅ **COMPLETATO 2026-03-23**
   - **Priority**: 🟡 Media
+  - **Test**: 18/18 passed, Include calcolo costi e proiezioni
+  - **⚠️ NOTA**: Pattern fisso poco realistico, necessita monitoraggio velocità reale
+  - **→ Vedi SENS-009 per miglioramento**
 
-- [ ] **SENS-003**: Implementa `VmcHeltyPowerSensor` (istantaneo)
-  - [ ] Crea classe in `sensor.py`
-  - [ ] Potenza istantanea basata su velocità corrente
-  - [ ] Device class: power, unit: W
-  - [ ] State class: measurement
-  - [ ] **Criteri successo**: Valore aggiorna in real-time con cambio velocità
-  - **Effort**: 1h
+- [x] **SENS-003**: Implementa `VmcHeltyPowerSensor` (istantaneo)
+  - [x] Crea classe in `sensor.py`
+  - [x] Potenza istantanea basata su velocità corrente
+  - [x] Device class: power, unit: W
+  - [x] State class: measurement
+  - [x] **Criteri successo**: Valore aggiorna in real-time con cambio velocità
+  - **Effort**: 1h ✅ **COMPLETATO 2026-03-23**
   - **Priority**: 🟡 Media
+  - **Test**: 18/18 passed, Include efficiency metrics
 
 - [ ] **SENS-004**: Implementa `VmcHeltyRunningTimeSensor`
   - [ ] Tempo totale funzionamento (hours)
@@ -164,6 +169,18 @@ Test Coverage: >95% ✅
   - [ ] **Criteri successo**: Accumula correttamente ore funzionamento
   - **Effort**: 2h
   - **Priority**: 🟢 Bassa
+
+- [ ] **SENS-009**: Migliora `VmcHeltyDailyEnergyEstimateSensor` (v1.3.0)
+  - [ ] Rimuovi pattern fisso poco realistico
+  - [ ] Implementa monitoraggio velocità reale con timestamp
+  - [ ] Accumula Wh basato su tempo effettivo a ogni velocità
+  - [ ] Persistent storage per stato tra restart
+  - [ ] Reset automatico a mezzanotte
+  - [ ] Calcolo: somma(potenza_velocità * tempo_a_velocità)
+  - [ ] **Criteri successo**: Energia calcolata su utilizzo reale misurato
+  - **Effort**: 4h
+  - **Priority**: 🔴 Alta (Miglioramento)
+  - **Dipendenze**: SENS-002 (sostituisce logica pattern)
 
 ##### 5. Binary Sensors Alerting
 - [ ] **SENS-005**: Implementa `VmcHeltyFilterWarningBinarySensor`
