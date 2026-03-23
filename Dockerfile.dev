@@ -27,12 +27,15 @@ RUN \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Add go2rtc binary
-COPY --from=ghcr.io/alexxit/go2rtc:latest /usr/local/bin/go2rtc /bin/go2rtc
+# Add go2rtc binary - Install directly instead of COPY to avoid ghcr.io auth issues
+RUN curl -fsSL https://github.com/AlexxIT/go2rtc/releases/latest/download/go2rtc_linux_amd64 -o /bin/go2rtc \
+    && chmod +x /bin/go2rtc
 
 WORKDIR /usr/src
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Install UV directly instead of COPY to avoid ghcr.io auth issues
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && mv /root/.local/bin/uv /usr/local/bin/uv
 
 RUN uv python install 3.13.2
 
