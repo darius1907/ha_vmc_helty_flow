@@ -1,6 +1,6 @@
 """Test update room volume service."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntry
@@ -33,10 +33,13 @@ def mock_config_entry():
     """Create a mock config entry."""
     config_entry = MagicMock(spec=ConfigEntry)
     config_entry.domain = DOMAIN
+    config_entry.entry_id = "test_config_entry_id"  # Add entry_id for reload
     config_entry.data = {
         "ip": "192.168.1.100",
         "name": "Test VMC",
-        "room_volume": 60.0,
+    }
+    config_entry.options = {
+        "room_volume": 60.0,  # Now in options, not data
     }
     return config_entry
 
@@ -80,6 +83,7 @@ class TestUpdateRoomVolumeService:
             mock_entity_registry.async_get.return_value = mock_entity_entry
             mock_hass.config_entries.async_get_entry.return_value = mock_config_entry
             mock_hass.config_entries.async_update_entry = MagicMock()
+            mock_hass.config_entries.async_reload = AsyncMock(return_value=True)  # Use AsyncMock for coroutine
 
             # Setup service
             await async_setup_services(mock_hass)
@@ -95,11 +99,19 @@ class TestUpdateRoomVolumeService:
             # Call the handler
             await handler(service_call)
 
-            # Verify config entry was updated
+            # Verify config entry was updated with new options (not data)
             mock_hass.config_entries.async_update_entry.assert_called_once()
             call_args = mock_hass.config_entries.async_update_entry.call_args
-            assert call_args[0][0] == mock_config_entry  # config entry
-            assert call_args[1]["data"]["room_volume"] == 85.5  # new volume
+            assert call_args[0][0] == mock_config_entry  # config entry as first arg
+            # Check kwargs for options parameter
+            assert "options" in call_args.kwargs or "options" in call_args[1]
+            if "options" in call_args.kwargs:
+                assert call_args.kwargs["options"]["room_volume"] == 85.5
+            else:
+                assert call_args[1]["options"]["room_volume"] == 85.5
+
+            # Verify reload was called
+            mock_hass.config_entries.async_reload.assert_called_once_with("test_config_entry_id")
 
     async def test_handle_update_room_volume_entity_not_found(
         self, mock_hass, mock_entity_registry

@@ -66,15 +66,12 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
     @property
     def room_volume(self) -> float:
-        """Return configured room volume from config entry."""
+        """Return configured room volume from config entry options."""
         if self.config_entry is None:
             return DEFAULT_ROOM_VOLUME
-        room_volume = self.config_entry.data.get("room_volume")
-        if room_volume is None:
-            room_volume = self.config_entry.options.get(
-                "room_volume", DEFAULT_ROOM_VOLUME
-            )
-        return float(room_volume or DEFAULT_ROOM_VOLUME)
+        # Leggi solo da options (migrazione automatica gestita in __init__.py)
+        room_volume = self.config_entry.options.get("room_volume", DEFAULT_ROOM_VOLUME)
+        return float(room_volume)
 
     @property
     def name_slug(self) -> str:

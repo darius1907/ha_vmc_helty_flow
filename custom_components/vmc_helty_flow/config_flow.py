@@ -667,25 +667,49 @@ class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
+        # Ottieni i valori correnti dalle options (non da data)
+        current_room_volume = self.config_entry.options.get(
+            "room_volume",
+            self.config_entry.data.get("room_volume", DEFAULT_ROOM_VOLUME),
+        )
+
         options_schema = vol.Schema(
             {
                 vol.Optional(
+                    "room_volume",
+                    description={
+                        "suggested_value": current_room_volume,
+                    },
+                    default=current_room_volume,
+                ): vol.All(
+                    vol.Coerce(float),
+                    vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME),
+                ),
+                vol.Optional(
                     "scan_interval",
+                    description={
+                        "suggested_value": self.config_entry.options.get(
+                            "scan_interval", 60
+                        ),
+                    },
                     default=self.config_entry.options.get("scan_interval", 60),
                 ): vol.All(vol.Coerce(int), vol.Range(min=30, max=600)),
                 vol.Optional(
-                    "timeout", default=self.config_entry.options.get("timeout", 10)
+                    "timeout",
+                    description={
+                        "suggested_value": self.config_entry.options.get("timeout", 10),
+                    },
+                    default=self.config_entry.options.get("timeout", 10),
                 ): vol.All(vol.Coerce(int), vol.Range(min=5, max=60)),
                 vol.Optional(
                     "retry_attempts",
+                    description={
+                        "suggested_value": self.config_entry.options.get(
+                            "retry_attempts", 3
+                        ),
+                    },
                     default=self.config_entry.options.get("retry_attempts", 3),
                 ): vol.All(vol.Coerce(int), vol.Range(min=1, max=10)),
-                vol.Optional(
-                    "room_volume",
-                    default=self.config_entry.data.get(
-                        "room_volume", DEFAULT_ROOM_VOLUME
-                    ),
-                ): vol.All(vol.Coerce(float), vol.Range(min=1.0, max=1000.0)),
             }
         )
 
@@ -694,7 +718,9 @@ class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=options_schema,
             description_placeholders={
                 "help": (
-                    "Configura le opzioni avanzate per l'integrazione VMC Helty Flow."
+                    "Configura le opzioni per l'integrazione VMC Helty Flow. "
+                    f"Il volume della stanza deve essere compreso tra {MIN_ROOM_VOLUME} e {MAX_ROOM_VOLUME} m³. "
+                    "Le modifiche verranno applicate dopo il riavvio dell'integrazione."
                 )
             },
         )

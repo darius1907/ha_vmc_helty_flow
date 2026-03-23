@@ -16,39 +16,41 @@ class TestRoomVolumeIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        # Mock config entry with room_volume
+        # Mock config entry with room_volume in options (new behavior)
         self.config_entry = Mock()
         self.config_entry.data = {
             "ip": "192.168.1.100",
             "name": "TestVMC",
-            "room_volume": 75.0,  # Custom room volume
         }
-        self.config_entry.options = {}
+        self.config_entry.options = {
+            "room_volume": 75.0,  # Custom room volume now in options
+        }
 
         # Mock hass
         self.hass = Mock()
 
-    def test_coordinator_room_volume_from_data(self):
-        """Test coordinator reads room_volume from config entry data."""
+    def test_coordinator_room_volume_from_options(self):
+        """Test coordinator reads room_volume from config entry options."""
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
         assert coordinator.room_volume == 75.0
 
-    def test_coordinator_room_volume_fallback_to_options(self):
-        """Test coordinator falls back to options if data doesn't have room_volume."""
-        # Remove room_volume from data
+    def test_coordinator_room_volume_with_old_data_format(self):
+        """Test coordinator handles legacy room_volume in data (migration scenario)."""
+        # Simulate pre-migration scenario where room_volume is still in data
         self.config_entry.data = {
             "ip": "192.168.1.100",
             "name": "TestVMC",
+            "room_volume": 80.0,  # Legacy location
         }
-        # Add to options
-        self.config_entry.options = {"room_volume": 80.0}
+        self.config_entry.options = {}
 
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
-        assert coordinator.room_volume == 80.0
+        # Should use default since options is empty (migration should have happened in async_setup_entry)
+        assert coordinator.room_volume == DEFAULT_ROOM_VOLUME
 
     def test_coordinator_room_volume_default_fallback(self):
-        """Test coordinator uses default if neither data nor options have it."""
-        # Remove room_volume from both data and options
+        """Test coordinator uses default if options doesn't have room_volume."""
+        # Remove room_volume from options
         self.config_entry.data = {
             "ip": "192.168.1.100",
             "name": "TestVMC",

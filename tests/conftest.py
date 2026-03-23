@@ -58,9 +58,13 @@ def mock_config_entry():
         "name": "VMC_Test",
         "port": 5001,
         "timeout": 10,
-        "room_volume": 60.0,
     }
-    config_entry.options = {"scan_interval": 60, "timeout": 10, "retry_attempts": 3}
+    config_entry.options = {
+        "scan_interval": 60,
+        "timeout": 10,
+        "retry_attempts": 3,
+        "room_volume": 60.0,  # Now in options, not data
+    }
     config_entry.unique_id = "192_168_1_100"
     config_entry.version = 1
     return config_entry
