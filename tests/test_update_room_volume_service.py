@@ -83,7 +83,9 @@ class TestUpdateRoomVolumeService:
             mock_entity_registry.async_get.return_value = mock_entity_entry
             mock_hass.config_entries.async_get_entry.return_value = mock_config_entry
             mock_hass.config_entries.async_update_entry = MagicMock()
-            mock_hass.config_entries.async_reload = AsyncMock(return_value=True)  # Use AsyncMock for coroutine
+            mock_hass.config_entries.async_reload = AsyncMock(
+                return_value=True
+            )  # Use AsyncMock for coroutine
 
             # Setup service
             await async_setup_services(mock_hass)
@@ -111,7 +113,9 @@ class TestUpdateRoomVolumeService:
                 assert call_args[1]["options"]["room_volume"] == 85.5
 
             # Verify reload was called
-            mock_hass.config_entries.async_reload.assert_called_once_with("test_config_entry_id")
+            mock_hass.config_entries.async_reload.assert_called_once_with(
+                "test_config_entry_id"
+            )
 
     async def test_handle_update_room_volume_entity_not_found(
         self, mock_hass, mock_entity_registry

@@ -278,9 +278,7 @@ async def _migrate_room_volume_to_options(
         new_data = {k: v for k, v in entry.data.items() if k != "room_volume"}
         hass.config_entries.async_update_entry(entry, data=new_data)
 
-        _LOGGER.info(
-            "Migrated room_volume from data to options: %s m³", room_volume
-        )
+        _LOGGER.info("Migrated room_volume from data to options: %s m³", room_volume)
     # Se room_volume non è né in data né in options, usa default
     elif "room_volume" not in entry.options:
         new_options = {**entry.options, "room_volume": DEFAULT_ROOM_VOLUME}

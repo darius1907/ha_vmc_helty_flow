@@ -719,8 +719,10 @@ class VmcHeltyOptionsFlowHandler(config_entries.OptionsFlow):
             description_placeholders={
                 "help": (
                     "Configura le opzioni per l'integrazione VMC Helty Flow. "
-                    f"Il volume della stanza deve essere compreso tra {MIN_ROOM_VOLUME} e {MAX_ROOM_VOLUME} m³. "
-                    "Le modifiche verranno applicate dopo il riavvio dell'integrazione."
+                    f"Il volume della stanza deve essere compreso tra "
+                    f"{MIN_ROOM_VOLUME} e {MAX_ROOM_VOLUME} m³. "
+                    "Le modifiche verranno applicate dopo il riavvio "
+                    "dell'integrazione."
                 )
             },
         )

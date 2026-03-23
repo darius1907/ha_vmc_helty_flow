@@ -45,7 +45,8 @@ class TestRoomVolumeIntegration(unittest.TestCase):
         self.config_entry.options = {}
 
         coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
-        # Should use default since options is empty (migration should have happened in async_setup_entry)
+        # Should use default since options is empty
+        # (migration should have happened in async_setup_entry)
         assert coordinator.room_volume == DEFAULT_ROOM_VOLUME
 
     def test_coordinator_room_volume_default_fallback(self):
