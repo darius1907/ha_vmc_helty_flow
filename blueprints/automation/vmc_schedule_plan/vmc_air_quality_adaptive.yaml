@@ -1,0 +1,267 @@
+blueprint:
+  name: VMC Helty Flow - Ventilazione Adattiva Qualità Aria
+  description: >
+    Regola automaticamente la velocità della VMC Helty Flow in base ai livelli di CO2 e VOC.
+
+    **Logica di funzionamento**:
+    - CO2 < soglia bassa: Velocità minima (risparmio energetico)
+    - CO2 tra soglia bassa e alta: Velocità media (comfort)
+    - CO2 > soglia alta: Velocità massima o hyperventilation
+    - VOC elevati: Boost aggiuntivo indipendente da CO2
+
+    **Caratteristiche**:
+    - Tempo di ritardo configurabile per evitare oscillazioni
+    - Supporto sensore VOC opzionale
+    - Modalità hyperventilation per emergenze
+    - Ritorno graduale a velocità normale
+
+  domain: automation
+
+  input:
+    vmc_entity:
+      name: Entità VMC
+      description: L'entità fan della VMC Helty Flow
+      selector:
+        entity:
+          domain: fan
+          integration: vmc_helty_flow
+
+    co2_sensor:
+      name: Sensore CO2
+      description: Sensore CO2 ambientale (integrato VMC o esterno)
+      selector:
+        entity:
+          domain: sensor
+          device_class: co2
+
+    voc_sensor:
+      name: Sensore VOC (opzionale)
+      description: Sensore composti organici volatili (lasciare vuoto se non disponibile)
+      default: {}
+      selector:
+        entity:
+          domain: sensor
+
+    co2_threshold_low:
+      name: Soglia CO2 Bassa
+      description: Sotto questa soglia, velocità minima
+      default: 800
+      selector:
+        number:
+          min: 400
+          max: 1200
+          step: 50
+          unit_of_measurement: "ppm"
+          mode: slider
+
+    co2_threshold_high:
+      name: Soglia CO2 Alta
+      description: Sopra questa soglia, velocità massima/hyperventilation
+      default: 1000
+      selector:
+        number:
+          min: 800
+          max: 2000
+          step: 50
+          unit_of_measurement: "ppm"
+          mode: slider
+
+    voc_threshold:
+      name: Soglia VOC
+      description: Sopra questa soglia, attiva boost indipendentemente da CO2
+      default: 500
+      selector:
+        number:
+          min: 100
+          max: 2000
+          step: 50
+          unit_of_measurement: "ppb"
+          mode: slider
+
+    speed_low:
+      name: Velocità Minima
+      description: Velocità quando qualità aria è buona
+      default: 25
+      selector:
+        select:
+          options:
+            - label: "Spento (0%)"
+              value: "0"
+            - label: "Minimo (25%)"
+              value: "25"
+            - label: "Medio-Basso (50%)"
+              value: "50"
+
+    speed_medium:
+      name: Velocità Media
+      description: Velocità quando qualità aria è accettabile
+      default: 50
+      selector:
+        select:
+          options:
+            - label: "Minimo (25%)"
+              value: "25"
+            - label: "Medio (50%)"
+              value: "50"
+            - label: "Medio-Alto (75%)"
+              value: "75"
+
+    speed_high:
+      name: Velocità Alta
+      description: Velocità quando qualità aria è scadente
+      default: 75
+      selector:
+        select:
+          options:
+            - label: "Medio (50%)"
+              value: "50"
+            - label: "Alto (75%)"
+              value: "75"
+            - label: "Massimo (100%)"
+              value: "100"
+
+    use_hyperventilation:
+      name: Usa Hyperventilation
+      description: Attiva modalità hyperventilation quando CO2 molto alta (invece di velocità massima)
+      default: false
+      selector:
+        boolean:
+
+    delay_minutes:
+      name: Tempo di Ritardo
+      description: Minuti di attesa prima di cambiare velocità (evita oscillazioni)
+      default: 3
+      selector:
+        number:
+          min: 0
+          max: 30
+          step: 1
+          unit_of_measurement: "minuti"
+          mode: slider
+
+    enabled_hours_start:
+      name: Ora Inizio Attivazione (opzionale)
+      description: Limita automazione a fascia oraria (lasciare vuoto per sempre attivo)
+      default: {}
+      selector:
+        time:
+
+    enabled_hours_end:
+      name: Ora Fine Attivazione (opzionale)
+      description: Limita automazione a fascia oraria (lasciare vuoto per sempre attivo)
+      default: {}
+      selector:
+        time:
+
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input co2_sensor
+    for:
+      minutes: !input delay_minutes
+
+  - platform: state
+    entity_id: !input voc_sensor
+    for:
+      minutes: !input delay_minutes
+
+condition:
+  # Verifica se siamo nella fascia oraria abilitata (se specificata)
+  - condition: template
+    value_template: >
+      {% set start = states('input_datetime.enabled_hours_start') | default('', true) %}
+      {% set end = states('input_datetime.enabled_hours_end') | default('', true) %}
+      {% if start == '' or end == '' %}
+        true
+      {% else %}
+        {% set current = now().strftime('%H:%M') %}
+        {{ start <= current < end }}
+      {% endif %}
+
+action:
+  - variables:
+      co2_value: "{{ states(co2_sensor) | float(0) }}"
+      voc_value: "{{ states(voc_sensor) | float(0) if voc_sensor != {} else 0 }}"
+      co2_low: !input co2_threshold_low
+      co2_high: !input co2_threshold_high
+      voc_limit: !input voc_threshold
+      use_hyper: !input use_hyperventilation
+
+  - choose:
+      # Caso 1: VOC troppo alti - Boost immediato
+      - conditions:
+          - condition: template
+            value_template: "{{ voc_value > voc_limit }}"
+        sequence:
+          - service: fan.set_percentage
+            target:
+              entity_id: !input vmc_entity
+            data:
+              percentage: !input speed_high
+          - service: logbook.log
+            data:
+              name: "VMC Auto-Quality"
+              message: "Boost attivato per VOC elevati ({{ voc_value }}ppb)"
+
+      # Caso 2: CO2 molto alta - Hyperventilation o velocità massima
+      - conditions:
+          - condition: template
+            value_template: "{{ co2_value >= co2_high }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ use_hyper }}"
+                sequence:
+                  # Usa servizio special mode per hyperventilation
+                  - service: vmc_helty_flow.set_special_mode
+                    target:
+                      entity_id: !input vmc_entity
+                    data:
+                      mode: "hyperventilation"
+                  - service: logbook.log
+                    data:
+                      name: "VMC Auto-Quality"
+                      message: "Hyperventilation attivato per CO2 critico ({{ co2_value }}ppm)"
+            default:
+              - service: fan.set_percentage
+                target:
+                  entity_id: !input vmc_entity
+                data:
+                  percentage: !input speed_high
+              - service: logbook.log
+                data:
+                  name: "VMC Auto-Quality"
+                  message: "Velocità alta per CO2 elevato ({{ co2_value }}ppm)"
+
+      # Caso 3: CO2 media - Velocità media
+      - conditions:
+          - condition: template
+            value_template: "{{ co2_value >= co2_low and co2_value < co2_high }}"
+        sequence:
+          - service: fan.set_percentage
+            target:
+              entity_id: !input vmc_entity
+            data:
+              percentage: !input speed_medium
+          - service: logbook.log
+            data:
+              name: "VMC Auto-Quality"
+              message: "Velocità media per CO2 accettabile ({{ co2_value }}ppm)"
+
+      # Caso 4: CO2 bassa - Velocità minima (risparmio energetico)
+      - conditions:
+          - condition: template
+            value_template: "{{ co2_value < co2_low }}"
+        sequence:
+          - service: fan.set_percentage
+            target:
+              entity_id: !input vmc_entity
+            data:
+              percentage: !input speed_low
+          - service: logbook.log
+            data:
+              name: "VMC Auto-Quality"
+              message: "Velocità minima per CO2 ottimale ({{ co2_value }}ppm)"

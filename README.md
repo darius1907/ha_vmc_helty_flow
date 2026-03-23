@@ -281,9 +281,34 @@ logger:
 
 ## 🔮 **Future Developments**
 
-- **Automatic Detection**: Automatic discovery of devices in the local network
-- **Advanced Integrations**: Connection with external sensors and weather stations
-- **Dedicated Dashboard**: Specialized user interface for advanced VMC sensor control
+We have an active development roadmap with exciting features planned!
+
+### 📋 Development Resources
+
+- **[Project Roadmap](PROJECT_ROADMAP.md)** - Detailed development plan with milestones, tasks, and progress tracking
+- **[Improvement Plan](IMPROVEMENT_PLAN.md)** - Complete analysis and proposed improvements for upcoming versions
+- **[Blueprint Guide](blueprints/BLUEPRINT_GUIDE.md)** - Comprehensive automation blueprint documentation
+
+### 🎯 Upcoming Features (v1.2.0+)
+
+**High Priority**:
+- 🔔 **Notification System**: Complete alerting for critical events (filter, air quality, offline)
+- 📘 **6 New Automation Blueprints**: Air quality adaptive, humidity control, filter reminders, and more
+- 📊 **Statistical Sensors**: Filter life percentage, energy estimates, running time tracking
+- 📦 **Ready-to-Use Dashboard Package**: Complete importable package with helpers, automations, and views
+
+**Medium Priority** (v1.3.0):
+- ⭐ **Quality Scale Gold**: Upgrade from Silver to Gold certification
+- ⚡ **Energy Dashboard Integration**: Track VMC power consumption in Home Assistant Energy
+- 🎭 **Predefined Scenes**: Night mode, boost, energy saving scenarios
+
+**Community Requests**:
+- 🤖 Machine Learning air quality predictions
+- 🗣️ Voice assistant advanced integrations
+- 📱 Mobile companion app
+- 🌐 Multi-zone VMC coordination
+
+See the [full roadmap](PROJECT_ROADMAP.md) for detailed timeline and task breakdown.
 
 ## 📞 **Support**
 
@@ -294,10 +319,13 @@ For issues, feature requests, or contributions:
 
 ### How to Contribute
 
+We welcome contributions! See our [Contributing Guidelines](CONTRIBUTING.md) and [Project Roadmap](PROJECT_ROADMAP.md) for current priorities.
+
 1. 🍴 Fork the repository
 2. 🌱 Create a branch for the feature
-3. ✅ Add tests for changes
+3. ✅ Add tests for changes (coverage >95%)
 4. 📝 Update documentation
+5. 🎯 Check [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) for priority tasks
 5. 🔄 Submit a pull request
 
 ---
