@@ -20,7 +20,7 @@ Test Coverage: >95% ✅
 ### Milestone Overview
 | Milestone | Stato | Data Target | Completamento |
 |-----------|-------|-------------|---------------|
-| v1.2.0-beta | 🔄 In Progress | 2026-04-15 | ▓▓▓░░░░░░░ 30% |
+| v1.2.0-beta | 🔄 In Progress | 2026-04-15 | ▓▓▓░░░░░░░ 35% |
 | v1.2.0 | 📋 Planned | 2026-05-15 | ░░░░░░░░░░ 0% |
 | v1.3.0 | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
 
@@ -127,15 +127,16 @@ Test Coverage: >95% ✅
 #### Task Checklist
 
 ##### 4. Sensori Statistici
-- [ ] **SENS-001**: Implementa `VmcHeltyFilterLifePercentageSensor`
-  - [ ] Crea classe in `sensor.py`
-  - [ ] Calcolo: `(MAX_HOURS - current_hours) / MAX_HOURS * 100`
-  - [ ] Unit: percentage, state_class: measurement
-  - [ ] Icon: mdi:air-filter
-  - [ ] Unique ID: `{name_slug}_filter_life_percentage`
-  - [ ] **Criteri successo**: Sensore mostra 100% con filtro nuovo, 0% a 3600h
-  - **Effort**: 2h
+- [x] **SENS-001**: Implementa `VmcHeltyFilterLifePercentageSensor`
+  - [x] Crea classe in `sensor.py`
+  - [x] Calcolo: `(MAX_HOURS - current_hours) / MAX_HOURS * 100`
+  - [x] Unit: percentage, state_class: measurement
+  - [x] Icon: mdi:air-filter
+  - [x] Unique ID: `{name_slug}_filter_life_percentage`
+  - [x] **Criteri successo**: Sensore mostra 100% con filtro nuovo, 0% a 3600h
+  - **Effort**: 2h ✅ **COMPLETATO 2026-03-23**
   - **Priority**: 🔴 Alta
+  - **Test**: 12/12 passed, Coverage sensor.py: 43%
 
 - [ ] **SENS-002**: Implementa `VmcHeltyDailyEnergyEstimateSensor`
   - [ ] Crea classe in `sensor.py`

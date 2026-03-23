@@ -150,6 +150,16 @@ AIR_EXCHANGE_POOR = "Poor"
 # NOTE: This should be configured by user for their specific room
 DEFAULT_ROOM_VOLUME = 60  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
 
+# Filter life constants
+FILTER_MAX_HOURS = 3600  # Maximum filter life in hours (~6 months at 20h/day)
+
+# Filter Status Threshold Percentages
+FILTER_STATUS_EXCELLENT = 90  # Green zone - filter in optimal condition
+FILTER_STATUS_GOOD = 70  # Good condition
+FILTER_STATUS_ADEQUATE = 50  # Adequate - monitor regularly
+FILTER_STATUS_FAIR = 20  # Fair - plan replacement
+FILTER_STATUS_POOR = 10  # Poor - replace within 1-2 weeks
+
 # Air Exchange Time Thresholds (minutes) - Tempo ideale per ricambio completo aria
 AIR_EXCHANGE_TIME_EXCELLENT = 120  # Meno di 120 minuti = eccellente
 AIR_EXCHANGE_TIME_GOOD = 240  # 120-240 minuti = buono

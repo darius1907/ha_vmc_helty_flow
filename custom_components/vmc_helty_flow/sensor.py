@@ -77,6 +77,12 @@ from .const import (
     ENTITY_NAME_PREFIX,
     FAN_SPEED_MAX_NORMAL,
     FANSPEED_MAPPING,
+    FILTER_MAX_HOURS,
+    FILTER_STATUS_ADEQUATE,
+    FILTER_STATUS_EXCELLENT,
+    FILTER_STATUS_FAIR,
+    FILTER_STATUS_GOOD,
+    FILTER_STATUS_POOR,
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
 )
@@ -168,6 +174,7 @@ async def async_setup_entry(
         VmcHeltyOnOffSensor(coordinator),
         VmcHeltyLastResponseSensor(coordinator),
         VmcHeltyFilterHoursSensor(coordinator),
+        VmcHeltyFilterLifePercentageSensor(coordinator),
         # Sensori di rete
         VmcHeltyIPAddressSensor(coordinator),
         # Pulsanti e controlli di testo
@@ -342,6 +349,99 @@ class VmcHeltyFilterHoursSensor(VmcHeltyEntity, SensorEntity):
         # Il contatore filtro potrebbe essere nei dati di stato - da implementare
         # Per ora restituisce un valore placeholder
         return 0
+
+
+class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
+    """VMC Helty filter life percentage sensor.
+
+    Shows remaining filter life as percentage.
+    100% = new filter, 0% = needs replacement.
+    Based on FILTER_MAX_HOURS constant (default 3600 hours ~ 6 months).
+    """
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_filter_life_percentage"
+        self._attr_name = (
+            f"{ENTITY_NAME_PREFIX} {coordinator.name} Filter Life Percentage"
+        )
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_device_class = None  # No specific device class for percentage
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:air-filter"
+        self._attr_entity_category = None  # Important sensor, not diagnostic
+
+    @property
+    def native_value(self) -> float | None:
+        """Return filter life remaining as percentage (0-100%).
+
+        Calculation: (MAX_HOURS - current_hours) / MAX_HOURS * 100
+        Returns:
+            100.0 when filter is new (0 hours)
+            0.0 when filter reached max hours (3600 hours)
+            None if filter hours data not available
+        """
+        if not self.coordinator.data:
+            return None
+
+        # Get current filter hours from coordinator
+        filter_hours = self.coordinator.data.get("filter_hours")
+
+        if filter_hours is None:
+            return None
+
+        # Calculate remaining life percentage
+        remaining_hours = max(0, FILTER_MAX_HOURS - int(filter_hours))
+        percentage = (remaining_hours / FILTER_MAX_HOURS) * 100
+
+        return round(percentage, 1)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        filter_hours = self.coordinator.data.get("filter_hours")
+
+        if filter_hours is None:
+            return None
+
+        remaining_hours = max(0, FILTER_MAX_HOURS - int(filter_hours))
+
+        # Determine status based on percentage
+        percentage = (remaining_hours / FILTER_MAX_HOURS) * 100
+
+        if percentage >= FILTER_STATUS_EXCELLENT:
+            status = "excellent"
+            recommendation = "Filter in optimal condition"
+        elif percentage >= FILTER_STATUS_GOOD:
+            status = "good"
+            recommendation = "Filter in good condition"
+        elif percentage >= FILTER_STATUS_ADEQUATE:
+            status = "adequate"
+            recommendation = "Filter adequate, monitor regularly"
+        elif percentage >= FILTER_STATUS_FAIR:
+            status = "fair"
+            recommendation = "Plan filter replacement soon"
+        elif percentage >= FILTER_STATUS_POOR:
+            status = "poor"
+            recommendation = "Replace filter within 1-2 weeks"
+        elif percentage > 0:
+            status = "critical"
+            recommendation = "Replace filter immediately - degraded"
+        else:
+            status = "expired"
+            recommendation = "Filter exceeded life - replace urgently"
+
+        return {
+            "filter_hours_used": int(filter_hours),
+            "filter_hours_remaining": remaining_hours,
+            "filter_max_hours": FILTER_MAX_HOURS,
+            "status": status,
+            "recommendation": recommendation,
+        }
 
 
 class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):
