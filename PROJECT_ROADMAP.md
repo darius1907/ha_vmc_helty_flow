@@ -23,7 +23,8 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 |-----------|-------|-------------|---------------|
 | v1.2.0-beta | 🔄 In Progress | 2026-04-15 | ▓▓▓▓░░░░░░ 45% |
 | v1.2.0 | 📋 Planned | 2026-05-15 | ░░░░░░░░░░ 0% |
-| v1.3.0 | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
+| v1.3.0 Gold | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
+| v1.4.0 Platinum | 📋 Planned | 2026-11-15 | ░░░░░░░░░░ 0% |
 
 ---
 
@@ -728,6 +729,213 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 
 ---
 
+## 🎯 Milestone 4: v1.4.0 Platinum Advanced (Target: 2026-11-15)
+
+**Obiettivo**: Architettura avanzata per sensori configurabili + sorgenti dati esterne
+
+### 📋 Feature Principale: External Advanced Sensor Configuration (EASC)
+
+#### Overview
+System permettere ai sensori evoluti di utilizzare fonti dati esterne (sensori HA, ESPHome, Zigbee) al posto dei sensori VMC interni, con fallback automatico a dati VMC.
+
+#### Analisi Sensori Evoluti Attualmente Implementati
+
+**Sensori che usano Temperatura + Umidità (da VMGI response):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ SENSORE                          │ INPUT DA VMC    │ FORMULA │
+├─────────────────────────────────┼─────────────────┼─────────┤
+│ VmcHeltyAbsoluteHumiditySensor  │ T_int, Humidity │ Magnus  │
+│ VmcHeltyDewPointSensor           │ T_int, Humidity │ Magnus  │
+│ VmcHeltyComfortIndexSensor       │ T_int, Humidity │ ASHRAE  │
+│ VmcHeltyDewPointDeltaSensor      │ T_int, T_ext,   │ Magnus  │
+│                                   │ Humidity        │         │
+└─────────────────────────────────────────────────────────────┘
+
+Source Data: VMGI response, positions [1], [2], [3]
+- Position 1: Temperatura interna (°C * 10)
+- Position 2: Temperatura esterna (°C * 10)
+- Position 3: Umidità relativa (% * 10)
+```
+
+**Sensori che usano Fan Speed + Volume ambiente (da VMGO response):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ SENSORE                          │ INPUT          │ FORMULA │
+├─────────────────────────────────┼────────────────┼─────────┤
+│ VmcHeltyAirExchangeTimeSensor    │ Fan Speed,     │ V/Q*60  │
+│ VmcHeltyDailyAirChangesSensor    │ Room Volume    │ (Q/V)*24│
+└─────────────────────────────────────────────────────────────┘
+
+Source Data: VMGO response position [1], Room Volume from config
+- Position 1: Fan speed (0-7) → AIRFLOW_MAPPING → m³/h
+- Room Volume: Configurabile per stanza (default 60 m³)
+```
+
+**Sensori base (non evoluti) che usano CO2 + VOC (da VMGI response):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ SENSORE (base)                   │ INPUT          │ SOURCE  │
+├─────────────────────────────────┼────────────────┼─────────┤
+│ VmcHeltySensor(type="co2")       │ CO2 ppm        │ VMGI[4] │
+│ VmcHeltySensor(type="voc")       │ VOC level      │ VMGI[11]│
+└─────────────────────────────────────────────────────────────┘
+
+NOTA: CO2 e VOC sono attualmente usati solo in sensori base.
+Future opportunity: VOC-based adaptive ventilation control
+```
+
+#### Requisiti Feature EASC
+
+**R1: Configurabilità Source Dati**
+- Per ogni sensore evoluto, permettere override della fonte dati
+- Supportare: VMC (default), entity_id generico, const value, formula custom
+- Fallback automatico se source esterno non disponibile
+
+**R2: Mapping Sensori Esterni**
+- Temperature sensor (interno): `climate.*` o `sensor.*temperature*`
+- Temperature sensor (esterno): `weather.*` o custom `sensor.*outdoor*`
+- Humidity sensor: `sensor.*humidity*`
+- VOC sensor: `sensor.*voc*` o custom
+- CO2 sensor: `sensor.*co2*` o custom
+- Fan speed: `fan.*` entity
+
+**R3: Validazione e Conversioni**
+- Auto-detect unità di misura (°C vs °F)
+- Conversione da diversi formati (10⁻¹ per VMC → numeri normali)
+- Type checking (string → float/int)
+- Range validation (es. 0-100% per humidity)
+
+**R4: Persistenza Configurazione**
+- Salva mapping nel `config_entry.options`
+- Allow update via config flow dialog
+- Migrate legacy configs automaticamente
+
+**R5: Diagnostics & Debugging**
+- Log quale source è usato per ogni calcolo
+- Timestamp ultimo dato valido da fonte esterna
+- Fallback reason se fonte esterna fallisce
+
+#### Architecture EASC
+
+```yaml
+# config_entry.options schema
+esac_config:
+  advanced_sensors:
+    absolute_humidity:
+      enabled: true
+      temperature_source: "sensor.living_room_temp"  # default: use VMC
+      humidity_source: "sensor.living_room_humidity"  # default: use VMC
+      formula: "magnus"  # default
+    dew_point:
+      enabled: true
+      temperature_source: "sensor.living_room_temp"
+      humidity_source: "sensor.living_room_humidity"
+    comfort_index:
+      enabled: true
+      temperature_source: "sensor.living_room_temp"
+      humidity_source: "sensor.living_room_humidity"
+    dew_point_delta:
+      enabled: true
+      temperature_internal: "sensor.living_room_temp"
+      temperature_external: "weather.provincia"  # weather entity
+      humidity_source: "sensor.living_room_humidity"
+```
+
+#### Implementation Plan - Sprint 4.1 (2 settimane)
+
+##### 4.1.1 Infrastructure
+- [ ] **EASC-001**: Config schema validation
+  - [ ] Aggiungi config schema per EASC options
+  - [ ] Validate entity_id references
+  - [ ] Validation formulas custom
+  - **Effort**: 3h
+  - **Priority**: 🔴 Alta
+
+- [ ] **EASC-002**: Data source provider
+  - [ ] Crea `EASCDataProvider` class
+  - [ ] Method `get_temperature(source)` → float
+  - [ ] Method `get_humidity(source)` → float
+  - [ ] Method `get_entity_state(entity_id)` with fallback
+  - [ ] Unit conversion utilities
+  - **Effort**: 4h
+  - **Priority**: 🔴 Alta
+
+- [ ] **EASC-003**: Config flow UI
+  - [ ] Step "advanced_sensor_config"
+  - [ ] Dropdown per ogni sensore (enabled/disabled)
+  - [ ] Entity picker per temperature_source, humidity_source, etc.
+  - [ ] Form validation e error handling
+  - **Effort**: 5h
+  - **Priority**: 🔴 Alta
+
+##### 4.1.2 Sensor Refactoring
+- [ ] **EASC-004**: Refactor VmcHeltyAbsoluteHumiditySensor
+  - [ ] Inject EASCDataProvider
+  - [ ] Get temp/humidity da provider instead hardcoded VMC
+  - [ ] Update unit tests
+  - **Effort**: 2h
+  - **Priority**: 🔴 Alta
+
+- [ ] **EASC-005**: Refactor VmcHeltyDewPointSensor
+  - [ ] Inject EASCDataProvider
+  - [ ] Support external temp/humidity sources
+  - [ ] Update unit tests
+  - **Effort**: 2h
+  - **Priority**: 🔴 Alta
+
+- [ ] **EASC-006**: Refactor VmcHeltyComfortIndexSensor
+  - [ ] Inject EASCDataProvider
+  - [ ] Support external temp/humidity sources
+  - [ ] Update unit tests
+  - **Effort**: 2h
+  - **Priority**: 🔴 Alta
+
+- [ ] **EASC-007**: Refactor VmcHeltyDewPointDeltaSensor
+  - [ ] Support external temp_int, temp_ext, humidity sources
+  - [ ] Weather entity support per temperatura esterna
+  - [ ] Update unit tests
+  - **Effort**: 2h
+  - **Priority**: 🔴 Alta
+
+##### 4.1.3 Testing & Documentation
+- [ ] **TEST-004**: Unit tests EASC provider
+  - [ ] Test temperature conversions (°C vs °F)
+  - [ ] Test humidity conversions (0-1 vs 0-100)
+  - [ ] Test fallback to VMC data
+  - [ ] Test invalid entity_id handling
+  - **Effort**: 3h
+  - **Priority**: 🔴 Alta
+
+- [ ] **TEST-005**: Integration tests sensors refactored
+  - [ ] Test ogni sensore con 3 source scenarios (VMC, external, mixed)
+  - [ ] Test fallback automatico
+  - [ ] Test error conditions
+  - **Effort**: 4h
+  - **Priority**: 🔴 Alta
+
+- [ ] **DOC-012**: Documentation EASC
+  - [ ] Crea `docs/EXTERNAL_ADVANCED_SENSORS.md`
+  - [ ] Guida configurazione step-by-step
+  - [ ] Esempi: integrazione Netatmo, ESPHome, weather
+  - [ ] Troubleshooting
+  - **Effort**: 3h
+  - **Priority**: 🟡 Media
+
+**Sprint 4.1 Total Effort**: ~31 ore
+
+#### Implementation Plan - Sprint 4.2 (1 settimana)
+
+- [ ] **EASC-008**: Diagnostics logging
+- [ ] **EASC-009**: Custom formula support
+- [ ] **TEST-006**: Full integration testing
+- [ ] **REL-014**: Release v1.4.0-beta
+- [ ] **DOC-013**: Update main README
+
+**Sprint 4.2 Total Effort**: ~15 ore
+
+---
+
 ## 📋 Backlog (Priorità Bassa - Future)
 
 ### Feature Requests Community
@@ -738,6 +946,7 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 - [ ] Machine Learning predictions
 - [ ] Weather integration advanced
 - [ ] Calendar-based scheduling
+- [ ] **External Advanced Sensor Configuration (v1.4.0)** - USE VEDI MILESTONE 4
 
 ### Technical Debt
 - [ ] Rimuovi tutti `_LOGGER.setLevel(logging.DEBUG)`
@@ -810,6 +1019,9 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 2026-06  ║░░░░░░░░░░░░░░░░░░░░░░████║ Sprint 3.1-3.2
 2026-07  ║██░░░░░░░░░░░░░░░░░░░░░░░░║ Sprint 3.3-3.4
 2026-08  ║░░██░░░░░░░░░░░░░░░░░░░░░░║ v1.3.0 Release
+2026-09  ║░░░░████░░░░░░░░░░░░░░░░░░║ Sprint 4.1 (EASC dev)
+2026-10  ║░░░░░░░░████████████░░░░░░║ Sprint 4.2 (EASC testing)
+2026-11  ║░░░░░░░░░░░░░░░░░░░░████░░║ v1.4.0 Release (Platinum ready)
 
 Legend: ████ = Active Development
         ░░░░ = Planning/Buffer
