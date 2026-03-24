@@ -62,8 +62,8 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Priority**: 🔴 Alta
 
 - [ ] **BLU-003**: Test completo `vmc_filter_reminder.yaml`
-  - [ ] Test notifica avviso 90% (3240h)
-  - [ ] Test notifica critica 95% (3420h)
+  - [ ] Test notifica avviso 90% (~15970h su 17744h)
+  - [ ] Test notifica critica 95% (~16857h su 17744h)
   - [ ] Test promemoria giornaliero 100%
   - [ ] Test persistent notification
   - [ ] Test mobile notification con action buttons
@@ -135,7 +135,7 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - [x] Unit: percentage, state_class: measurement
   - [x] Icon: mdi:air-filter
   - [x] Unique ID: `{name_slug}_filter_life_percentage`
-  - [x] **Criteri successo**: Sensore mostra 100% con filtro nuovo, 0% a 3600h
+  - [x] **Criteri successo**: Sensore mostra 100% con filtro nuovo, 0% a 17744h
   - **Effort**: 2h ✅ **COMPLETATO 2026-03-23**
   - **Priority**: 🔴 Alta
   - **Test**: 12/12 passed, Coverage sensor.py: 43%
@@ -186,10 +186,10 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 ##### 5. Binary Sensors Alerting
 - [ ] **SENS-005**: Implementa `VmcHeltyFilterWarningBinarySensor`
   - [ ] Crea classe in `sensor.py`
-  - [ ] ON quando filter_hours > 90% massimo (3240h)
+  - [ ] ON quando filter_hours > 90% massimo (~15970h su 17744h)
   - [ ] Device class: problem
   - [ ] Icon: mdi:air-filter-alert
-  - [ ] **Criteri successo**: Trigger ON a 3240h, OFF dopo reset
+  - [ ] **Criteri successo**: Trigger ON a ~15970h, OFF dopo reset
   - **Effort**: 1h
   - **Priority**: 🔴 Alta
 
