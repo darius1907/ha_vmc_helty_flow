@@ -479,6 +479,7 @@ class VmcHeltyPowerSensor(VmcHeltyEntity, SensorEntity):
         self._attr_unique_id = f"{coordinator.name_slug}_power"
         self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Power"
         self._attr_native_unit_of_measurement = "W"
+        self._attr_suggested_display_precision = 1
         self._attr_device_class = SensorDeviceClass.POWER
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_icon = "mdi:flash"
@@ -538,7 +539,7 @@ class VmcHeltyPowerSensor(VmcHeltyEntity, SensorEntity):
                 return None
 
             fan_speed = int(parts[1])
-            power = POWER_MAPPING.get(fan_speed, 0)
+            power = float(POWER_MAPPING.get(fan_speed, 0))
 
             # Calculate efficiency metrics
             airflow = AIRFLOW_MAPPING.get(fan_speed, 0)
