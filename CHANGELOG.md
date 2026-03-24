@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🔄 Changed
+- `VmcHeltySSIDText` is now explicitly read-only: SSID edits are blocked with a clear user-facing error
+- `VmcHeltyPasswordText` now supports password updates while preserving the current SSID
+- WiFi password updates now validate length using integration constraints (`MIN_PASSWORD_LENGTH` / `MAX_PASSWORD_LENGTH`)
+- WiFi password updates now use protocol payload padding (`VMSL <ssid_padded><password_padded>`) and trigger coordinator refresh after success
+- `VmcHeltyResetFilterButton` now uses `FILTER_MAX_HOURS` dynamically for reset command generation
+
+### 🐛 Fixed
+- Prevented accidental synchronous writes on text entities by raising explicit `HomeAssistantError` in sync `set_value` paths
+
 ## [1.2.0-beta] - 2026-03-24
 
 ### ✨ Added
