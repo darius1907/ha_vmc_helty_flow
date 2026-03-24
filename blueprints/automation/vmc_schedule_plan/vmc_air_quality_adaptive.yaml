@@ -154,6 +154,12 @@ blueprint:
 mode: restart
 max_exceeded: silent
 
+variables:
+  co2_sensor_entity: !input co2_sensor
+  voc_sensor_entity: !input voc_sensor
+  enabled_hours_start_input: !input enabled_hours_start
+  enabled_hours_end_input: !input enabled_hours_end
+
 trigger:
   - platform: state
     entity_id: !input co2_sensor
@@ -169,19 +175,28 @@ condition:
   # Verifica se siamo nella fascia oraria abilitata (se specificata)
   - condition: template
     value_template: >
-      {% set start = states('input_datetime.enabled_hours_start') | default('', true) %}
-      {% set end = states('input_datetime.enabled_hours_end') | default('', true) %}
-      {% if start == '' or end == '' %}
+      {% set start = enabled_hours_start_input %}
+      {% set end = enabled_hours_end_input %}
+      {% if start == {} or end == {} %}
         true
       {% else %}
         {% set current = now().strftime('%H:%M') %}
-        {{ start <= current < end }}
+        {% if start < end %}
+          {{ start <= current < end }}
+        {% else %}
+          {{ current >= start or current < end }}
+        {% endif %}
       {% endif %}
 
 action:
   - variables:
-      co2_value: "{{ states(co2_sensor) | float(0) }}"
-      voc_value: "{{ states(voc_sensor) | float(0) if voc_sensor != {} else 0 }}"
+      co2_value: "{{ states(co2_sensor_entity) | float(0) }}"
+      voc_value: >
+        {% if voc_sensor_entity in [none, '', {}] %}
+          0
+        {% else %}
+          {{ states(voc_sensor_entity) | float(0) }}
+        {% endif %}
       co2_low: !input co2_threshold_low
       co2_high: !input co2_threshold_high
       voc_limit: !input voc_threshold

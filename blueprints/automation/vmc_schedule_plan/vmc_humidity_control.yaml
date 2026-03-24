@@ -147,6 +147,7 @@ mode: single
 max_exceeded: silent
 
 variables:
+  humidity_sensor_entity: !input humidity_sensor
   humidity_high: !input humidity_threshold_high
   humidity_low: !input humidity_threshold_low
   duration_min: !input boost_duration_min
@@ -182,7 +183,7 @@ condition:
 
 action:
   - variables:
-      humidity_current: "{{ states(humidity_sensor) | float(0) }}"
+  humidity_current: "{{ states(humidity_sensor_entity) | float(0) }}"
       boost_start_time: "{{ now() }}"
 
   # Invia notifica di attivazione (se configurata)
@@ -230,7 +231,7 @@ action:
           data:
             name: "VMC Humidity Control"
             message: >
-              Boost continua - Umidità: {{ states(humidity_sensor) }}%
+              Boost continua - Umidità: {{ states(humidity_sensor_entity) }}%
               (target: {{ humidity_low }}%)
 
   # Ritorna a velocità normale
@@ -243,7 +244,7 @@ action:
   - variables:
       boost_duration: >
         {{ ((now() - boost_start_time).total_seconds() / 60) | round(1) }}
-      final_humidity: "{{ states(humidity_sensor) | float(0) }}"
+      final_humidity: "{{ states(humidity_sensor_entity) | float(0) }}"
 
   # Invia notifica di completamento (se configurata)
   - if:
