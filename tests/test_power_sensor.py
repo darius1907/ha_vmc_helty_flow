@@ -45,7 +45,7 @@ async def test_power_sensor_speed_1(mock_coordinator):
     mock_coordinator.data = {"status": "VMGO,1,1,0,0,0"}
     sensor = VmcHeltyPowerSensor(mock_coordinator)
 
-    assert sensor.native_value == 10
+    assert sensor.native_value == 4.6
 
 
 async def test_power_sensor_speed_2(mock_coordinator):
@@ -53,7 +53,7 @@ async def test_power_sensor_speed_2(mock_coordinator):
     mock_coordinator.data = {"status": "VMGO,2,1,0,0,0"}
     sensor = VmcHeltyPowerSensor(mock_coordinator)
 
-    assert sensor.native_value == 20
+    assert sensor.native_value == 6.5
 
 
 async def test_power_sensor_speed_3(mock_coordinator):
@@ -61,7 +61,7 @@ async def test_power_sensor_speed_3(mock_coordinator):
     mock_coordinator.data = {"status": "VMGO,3,1,0,0,0"}
     sensor = VmcHeltyPowerSensor(mock_coordinator)
 
-    assert sensor.native_value == 35
+    assert sensor.native_value == 9
 
 
 async def test_power_sensor_speed_4(mock_coordinator):
@@ -69,7 +69,7 @@ async def test_power_sensor_speed_4(mock_coordinator):
     mock_coordinator.data = {"status": "VMGO,4,1,0,0,0"}
     sensor = VmcHeltyPowerSensor(mock_coordinator)
 
-    assert sensor.native_value == 50
+    assert sensor.native_value == 16.5
 
 
 async def test_power_sensor_speed_5_hyperventilation(mock_coordinator):
@@ -77,7 +77,7 @@ async def test_power_sensor_speed_5_hyperventilation(mock_coordinator):
     mock_coordinator.data = {"status": "VMGO,5,1,0,0,0"}
     sensor = VmcHeltyPowerSensor(mock_coordinator)
 
-    assert sensor.native_value == 55
+    assert sensor.native_value == 25
 
 
 async def test_power_sensor_speed_6_night_mode(mock_coordinator):
@@ -85,7 +85,7 @@ async def test_power_sensor_speed_6_night_mode(mock_coordinator):
     mock_coordinator.data = {"status": "VMGO,6,1,0,0,0"}
     sensor = VmcHeltyPowerSensor(mock_coordinator)
 
-    assert sensor.native_value == 5
+    assert sensor.native_value == 2.5
 
 
 async def test_power_sensor_speed_7_free_cooling(mock_coordinator):
@@ -93,7 +93,7 @@ async def test_power_sensor_speed_7_free_cooling(mock_coordinator):
     mock_coordinator.data = {"status": "VMGO,7,1,0,0,0"}
     sensor = VmcHeltyPowerSensor(mock_coordinator)
 
-    assert sensor.native_value == 35
+    assert sensor.native_value == 9
 
 
 async def test_power_sensor_no_data(mock_coordinator):
@@ -137,7 +137,7 @@ async def test_power_sensor_extra_attributes(mock_coordinator):
     assert attrs is not None
     assert attrs["fan_speed"] == 3
     assert attrs["airflow_m3h"] == 26  # From AIRFLOW_MAPPING
-    assert attrs["efficiency_m3h_per_watt"] == round(26 / 35, 2)
+    assert attrs["efficiency_m3h_per_watt"] == round(26 / 9, 2)
     assert "power_mapping" in attrs
 
 

@@ -484,18 +484,18 @@ class VmcHeltyPowerSensor(VmcHeltyEntity, SensorEntity):
         self._attr_entity_category = None  # Important sensor for energy monitoring
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> float | None:
         """Return current power consumption in Watts.
 
         Maps fan speed to power consumption using POWER_MAPPING:
         - Speed 0 (off): 0W
-        - Speed 1: 10W
-        - Speed 2: 20W
-        - Speed 3: 35W
-        - Speed 4: 50W
-        - Speed 5 (hyperventilation): 55W
-        - Speed 6 (night mode): 5W
-        - Speed 7 (free cooling): 35W
+        - Speed 1: 4.6W
+        - Speed 2: 6.5W
+        - Speed 3: 9W
+        - Speed 4: 16.5W
+        - Speed 5 (hyperventilation): 25W
+        - Speed 6 (night mode): 2.5W
+        - Speed 7 (free cooling): 9W
 
         Returns:
             Current power consumption in Watts, or None if data unavailable
@@ -516,7 +516,7 @@ class VmcHeltyPowerSensor(VmcHeltyEntity, SensorEntity):
             fan_speed = int(parts[1])  # Part index 1 contains fan speed
 
             # Map fan speed to power consumption
-            return POWER_MAPPING.get(fan_speed, 0)
+            return float(POWER_MAPPING.get(fan_speed, 0))
 
         except (ValueError, IndexError):
             return None

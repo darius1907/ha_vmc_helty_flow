@@ -337,7 +337,7 @@ We welcome contributions! See our [Contributing Guidelines](CONTRIBUTING.md) and
 ![GitHub commits since latest release][commits-since-shield]
 ![GitHub last commit][last-commit-shield]
 
-**Version**: 1.1.0
+**Version**: 1.2.0-beta
 **Compatibility**: Home Assistant 2024.1+
 **License**: MIT
 **HACS Status**: ✅ Available in the official HACS repository

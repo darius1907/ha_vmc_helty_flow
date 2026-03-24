@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0-beta] - 2026-03-24
+
+### ✨ Added
+- New advanced sensor `VmcHeltyFilterLifePercentageSensor` (SENS-001)
+- New sensor `VmcHeltyPowerSensor` for instantaneous power estimate in W (SENS-003)
+- New sensor `VmcHeltyDailyEnergyEstimateSensor` for daily energy estimate in Wh (SENS-002)
+
+### 🔄 Changed
+- Filter hours are now parsed from device response and exposed consistently for filter-life calculations
+- Updated `FILTER_MAX_HOURS` from `3600` to `17744` (value aligned with real filter reset behavior)
+- Updated humidity blueprint notification default service (`notify.mobile_app_m2101k9g`)
+
+### 🐛 Fixed
+- Refactored filter-life tests to use dynamic expectations based on `FILTER_MAX_HOURS`
+- Improved robustness of filter-life test fixtures and edge-case handling
+
+### 🧪 Testing
+- Full test suite validated: 578 tests passed
+- Pre-commit checks passed (format, lint, type-check, tests)
+
+### 📚 Documentation
+- Added comprehensive roadmap and planning updates for upcoming releases
+- Added `EASC_SPECIFICATION.md` for External Advanced Sensor Configuration planning
+- Updated roadmap filter thresholds to match new max filter lifetime (`17744h`)
+
 ## [1.1.0] - 2026-03-23
 
 ### 🎉 Major Improvements

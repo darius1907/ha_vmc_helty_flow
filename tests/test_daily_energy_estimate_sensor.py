@@ -43,8 +43,8 @@ async def test_daily_energy_baseline_speed_2(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    # Baseline: 4*0 + 5*10 + 12*20 + 2*35 + 1*50 = 410 Wh
-    assert value == 410.0  # Speed 2: 1.0x baseline
+    # Baseline: 4*0 + 5*4.6 + 12*6.5 + 2*9 + 1*16.5 = 135.5 Wh
+    assert value == 135.5  # Speed 2: 1.0x baseline
 
 
 async def test_daily_energy_speed_0_off(mock_coordinator):
@@ -54,7 +54,7 @@ async def test_daily_energy_speed_0_off(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    assert value == 410.0  # Returns baseline even when off
+    assert value == 135.5  # Returns baseline even when off
 
 
 async def test_daily_energy_speed_1_lower(mock_coordinator):
@@ -64,7 +64,7 @@ async def test_daily_energy_speed_1_lower(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    assert value == 410.0 * 0.9  # Speed 1: 0.9x baseline = 369 Wh
+    assert value == 135.5 * 0.9  # Speed 1: 0.9x baseline = 121.95 Wh
 
 
 async def test_daily_energy_speed_3_higher(mock_coordinator):
@@ -74,7 +74,7 @@ async def test_daily_energy_speed_3_higher(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    assert value == 410.0 * 1.1  # Speed 3: 1.1x baseline = 451 Wh
+    assert value == 135.5 * 1.1  # Speed 3: 1.1x baseline = 149.05 Wh
 
 
 async def test_daily_energy_speed_4_highest(mock_coordinator):
@@ -84,7 +84,7 @@ async def test_daily_energy_speed_4_highest(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    assert value == 410.0 * 1.2  # Speed 4: 1.2x baseline = 492 Wh
+    assert value == 135.5 * 1.2  # Speed 4: 1.2x baseline = 162.6 Wh
 
 
 async def test_daily_energy_speed_6_night_mode(mock_coordinator):
@@ -94,7 +94,7 @@ async def test_daily_energy_speed_6_night_mode(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    assert value == 410.0 * 0.8  # Night mode: 0.8x baseline = 328 Wh
+    assert value == 135.5 * 0.8  # Night mode: 0.8x baseline = 108.4 Wh
 
 
 async def test_daily_energy_speed_5_hyperventilation(mock_coordinator):
@@ -104,7 +104,7 @@ async def test_daily_energy_speed_5_hyperventilation(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    assert value == 410.0 * 1.3  # Hyperventilation: 1.3x baseline = 533 Wh
+    assert value == 135.5 * 1.3  # Hyperventilation: 1.3x baseline = 176.15 Wh
 
 
 async def test_daily_energy_speed_7_free_cooling(mock_coordinator):
@@ -114,7 +114,7 @@ async def test_daily_energy_speed_7_free_cooling(mock_coordinator):
 
     value = sensor.native_value
     assert value is not None
-    assert value == 410.0 * 1.3  # Free cooling: 1.3x baseline = 533 Wh
+    assert value == 135.5 * 1.3  # Free cooling: 1.3x baseline = 176.15 Wh
 
 
 async def test_daily_energy_no_data(mock_coordinator):
@@ -156,7 +156,7 @@ async def test_daily_energy_extra_attributes(mock_coordinator):
 
     attrs = sensor.extra_state_attributes
     assert attrs is not None
-    assert attrs["current_power_w"] == 20  # Speed 2 = 20W
+    assert attrs["current_power_w"] == 6.5  # Speed 2 = 6.5W
     assert attrs["current_fan_speed"] == 2
     assert "daily_cost_eur" in attrs
     assert "monthly_energy_kwh" in attrs
@@ -171,7 +171,7 @@ async def test_daily_energy_cost_calculations(mock_coordinator):
     sensor = VmcHeltyDailyEnergyEstimateSensor(mock_coordinator)
 
     attrs = sensor.extra_state_attributes
-    daily_energy_wh = 410.0
+    daily_energy_wh = 135.5
     daily_cost = (daily_energy_wh / 1000) * 0.25
 
     assert attrs["daily_cost_eur"] == round(daily_cost, 2)
@@ -192,7 +192,7 @@ async def test_daily_energy_all_speeds(mock_coordinator):
         7: 1.3,  # Free cooling
     }
 
-    baseline = 410.0
+    baseline = 135.5
 
     for speed, multiplier in expected_multipliers.items():
         mock_coordinator.data = {"status": f"VMGO,{speed},1,0,0,0"}
