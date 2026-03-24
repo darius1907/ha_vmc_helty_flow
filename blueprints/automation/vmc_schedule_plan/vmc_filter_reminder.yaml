@@ -10,10 +10,10 @@ blueprint:
     - Notifiche multiple: persistente UI, mobile, email (opzionali)
     - Traccia data ultimo reset per statistiche
 
-    **Soglie standard** (basate su 3600 ore = ~6 mesi):
-    - 3240 ore (90%) = Avviso preventivo
-    - 3420 ore (95%) = Allerta critica
-    - 3600 ore (100%) = Promemoria urgente giornaliero
+    **Soglie standard** (sensore ore residue, basato su 17744 ore):
+    - 1774 ore residue (10%) = Avviso preventivo
+    - 887 ore residue (5%) = Allerta critica
+    - 0 ore residue = Promemoria urgente giornaliero
 
   domain: automation
 
@@ -36,37 +36,37 @@ blueprint:
 
     warning_threshold:
       name: Soglia Avviso (ore)
-      description: Ore di utilizzo per avviso preventivo (suggerito 3240 = 90%)
-      default: 3240
+      description: Ore residue per avviso preventivo (suggerito 1774 = 10%)
+      default: 1774
       selector:
         number:
-          min: 2000
-          max: 3600
-          step: 100
+          min: 100
+          max: 17744
+          step: 1
           unit_of_measurement: "ore"
           mode: box
 
     critical_threshold:
       name: Soglia Critica (ore)
-      description: Ore di utilizzo per allerta critica (suggerito 3420 = 95%)
-      default: 3420
+      description: Ore residue per allerta critica (suggerito 887 = 5%)
+      default: 887
       selector:
         number:
-          min: 2500
-          max: 3900
-          step: 100
+          min: 0
+          max: 17744
+          step: 1
           unit_of_measurement: "ore"
           mode: box
 
     max_threshold:
-      name: Soglia Massima (ore)
-      description: Ore massime raccomandate (promemoria giornaliero) (suggerito 3600 = 100%)
-      default: 3600
+      name: Soglia Esaurito (ore)
+      description: Ore residue per promemoria giornaliero urgente (suggerito 0 = filtro esaurito)
+      default: 0
       selector:
         number:
-          min: 3000
-          max: 5000
-          step: 100
+          min: 0
+          max: 1000
+          step: 1
           unit_of_measurement: "ore"
           mode: box
 
@@ -111,12 +111,18 @@ blueprint:
         boolean:
 
 variables:
+  vmc_entity_input: !input vmc_entity
+  filter_hours_sensor_entity: !input filter_hours_sensor
+  warning_threshold_input: !input warning_threshold
+  critical_threshold_input: !input critical_threshold
+  max_threshold_input: !input max_threshold
+  filter_life_max_hours: 17744
   vmc_name: >
-    {{ state_attr(vmc_entity, 'friendly_name') | default('VMC Helty', true) }}
+    {{ state_attr(vmc_entity_input, 'friendly_name') | default('VMC Helty', true) }}
   filter_hours: >
-    {{ states(filter_hours_sensor) | float(0) }}
+    {{ states(filter_hours_sensor_entity) | float(0) }}
   filter_percentage: >
-    {{ ((filter_hours / max_threshold) * 100) | round(1) }}
+    {{ ((filter_hours / filter_life_max_hours) * 100) | round(1) }}
   notify_mobile_service: !input notify_mobile
   notify_email_service: !input notify_email
   persistent_enabled: !input create_persistent_notification
@@ -124,19 +130,19 @@ variables:
 
 # Multipli trigger per diversi livelli di avviso
 trigger:
-  # Trigger 1: Avviso preventivo (90%)
+  # Trigger 1: Avviso preventivo (ore residue sotto soglia warning)
   - platform: numeric_state
     entity_id: !input filter_hours_sensor
-    above: !input warning_threshold
+    below: !input warning_threshold
     id: warning
 
-  # Trigger 2: Allerta critica (95%)
+  # Trigger 2: Allerta critica (ore residue sotto soglia critical)
   - platform: numeric_state
     entity_id: !input filter_hours_sensor
-    above: !input critical_threshold
+    below: !input critical_threshold
     id: critical
 
-  # Trigger 3: Promemoria giornaliero se oltre soglia massima
+  # Trigger 3: Promemoria giornaliero se sotto soglia esaurito
   - platform: time
     at: !input daily_reminder_time
     id: daily_reminder
@@ -145,13 +151,13 @@ condition:
   # Evita notifiche ridondanti - triggera solo al cambio di soglia
   - condition: template
     value_template: >
-      {% set hours = states(filter_hours_sensor) | float(0) %}
+      {% set hours = states(filter_hours_sensor_entity) | float(0) %}
       {% if trigger.id == 'daily_reminder' %}
-        {{ hours >= max_threshold }}
+        {{ hours <= max_threshold_input }}
       {% elif trigger.id == 'critical' %}
-        {{ hours >= critical_threshold and hours < (critical_threshold + 50) }}
+        {{ hours <= critical_threshold_input and hours > max_threshold_input }}
       {% elif trigger.id == 'warning' %}
-        {{ hours >= warning_threshold and hours < (warning_threshold + 50) }}
+        {{ hours <= warning_threshold_input and hours > critical_threshold_input }}
       {% else %}
         true
       {% endif %}
@@ -160,18 +166,18 @@ action:
   - variables:
       notification_data:
         warning:
-          title: "⚠️ VMC - Filtro al 90%"
+          title: "⚠️ VMC - Filtro al 10% residuo"
           message: >
-            Il filtro {{ vmc_name }} ha raggiunto {{ filter_hours }} ore ({{ filter_percentage }}%).
+            Il filtro {{ vmc_name }} ha {{ filter_hours }} ore residue ({{ filter_percentage }}% vita residua).
 
             📅 Pianificare sostituzione nelle prossime 2-3 settimane.
             🛒 Verificare disponibilità filtro di ricambio.
           severity: warning
           icon: mdi:air-filter
         critical:
-          title: "🚨 VMC - Filtro al 95% - URGENTE"
+          title: "🚨 VMC - Filtro al 5% residuo - URGENTE"
           message: >
-            Il filtro {{ vmc_name }} è a {{ filter_hours }} ore ({{ filter_percentage }}%).
+            Il filtro {{ vmc_name }} ha solo {{ filter_hours }} ore residue ({{ filter_percentage }}% vita residua).
 
             ⚠️ SOSTITUIRE ENTRO 1 SETTIMANA
             ⚡ Efficienza VMC ridotta
@@ -181,7 +187,7 @@ action:
         daily_reminder:
           title: "🔔 VMC - Promemoria Filtro"
           message: >
-            Il filtro {{ vmc_name }} è oltre la vita utile ({{ filter_hours }} ore / {{ max_threshold }} ore).
+            Il filtro {{ vmc_name }} è oltre la vita utile ({{ filter_hours }} ore residue).
 
             🛑 SOSTITUIRE FILTRO IL PRIMA POSSIBILE
             📉 Performance VMC compromessa
@@ -203,7 +209,7 @@ action:
         data:
           title: "{{ notif.title }}"
           message: "{{ notif.message }}"
-          notification_id: "vmc_filter_{{ vmc_entity | replace('.', '_') }}"
+          notification_id: "vmc_filter_{{ vmc_entity_input | replace('.', '_') }}"
 
   # 2. Notifica Mobile (se configurata)
   - if:
@@ -256,8 +262,8 @@ action:
             ---
             DETTAGLI VMC
             ---
-            Entità: {{ vmc_entity }}
-            Ore Filtro: {{ filter_hours }} / {{ max_threshold }} ore
+            Entità: {{ vmc_entity_input }}
+            Ore Filtro: {{ filter_hours }} / {{ max_threshold_input }} ore
             Percentuale: {{ filter_percentage }}%
             Data/Ora: {{ now().strftime('%d/%m/%Y %H:%M') }}
 
