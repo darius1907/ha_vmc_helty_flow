@@ -26,6 +26,7 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
@@ -84,6 +85,8 @@ from .const import (
     FILTER_STATUS_FAIR,
     FILTER_STATUS_GOOD,
     FILTER_STATUS_POOR,
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
     POWER_MAPPING,
@@ -713,9 +716,17 @@ class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Reset filter counter."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0417744")
+        response = await tcp_send_command(
+            self.coordinator.ip,
+            5001,
+            f"VMWH04{FILTER_MAX_HOURS}",
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
+
+    def press(self) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async set value to reset filter")
 
 
 class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
@@ -745,6 +756,10 @@ class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
+    def set_value(self, _value: str) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async set value to change device name")
+
 
 class VmcHeltySSIDText(VmcHeltyEntity, TextEntity):
     """VMC Helty WiFi SSID text entity."""
@@ -768,10 +783,13 @@ class VmcHeltySSIDText(VmcHeltyEntity, TextEntity):
             return ssid
         return None
 
-    async def async_set_value(self, value: str) -> None:
-        """Set new WiFi SSID (requires password)."""
-        # Per sicurezza, questa operazione richiede anche la password
-        # Implementazione da completare con form di conferma
+    async def async_set_value(self, _value: str) -> None:
+        """SSID is read-only for now."""
+        raise HomeAssistantError("Changing SSID is not supported yet")
+
+    def set_value(self, _value: str) -> None:
+        """SSID is read-only for now."""
+        raise HomeAssistantError("Changing SSID is not supported yet")
 
 
 class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
@@ -798,8 +816,42 @@ class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
         return None
 
     async def async_set_value(self, value: str) -> None:
-        """Set new WiFi password."""
-        # Implementazione da completare con validazione sicurezza
+        """Set new WiFi password keeping current SSID unchanged."""
+        password = value.strip()
+
+        if (
+            not password
+            or len(password) < MIN_PASSWORD_LENGTH
+            or len(password) > MAX_PASSWORD_LENGTH
+        ):
+            raise HomeAssistantError("Password must be between 8 and 32 characters")
+
+        network_data = (
+            self.coordinator.data.get("network", "") if self.coordinator.data else ""
+        )
+        if not network_data:
+            raise HomeAssistantError("Network information is not available")
+
+        ssid, _ = parse_vmsl_response(network_data)
+        if not ssid:
+            raise HomeAssistantError("Current SSID is not available")
+
+        ssid_padded = ssid.ljust(32, "*")
+        password_padded = password.ljust(32, "*")
+        response = await tcp_send_command(
+            self.coordinator.ip,
+            5001,
+            f"VMSL {ssid_padded}{password_padded}",
+        )
+
+        if response != "OK":
+            raise HomeAssistantError(f"Failed to set WiFi password: {response}")
+
+        await self.coordinator.async_request_refresh()
+
+    def set_value(self, _value: str) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async set value to change WiFi password")
 
 
 class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):
