@@ -398,10 +398,10 @@ class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
     def native_value(self) -> float | None:
         """Return filter life remaining as percentage (0-100%).
 
-        Calculation: (MAX_HOURS - current_hours) / MAX_HOURS * 100
+        Calculation: remaining_hours / MAX_HOURS * 100
         Returns:
-            100.0 when filter is new (0 hours)
-            0.0 when filter reached max hours (3600 hours)
+            100.0 when filter is new (FILTER_MAX_HOURS remaining)
+            0.0 when filter has no remaining hours
             None if filter hours data not available
         """
         if not self.coordinator.data:
@@ -413,11 +413,9 @@ class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
         if filter_hours is None:
             return None
 
-        # Calculate remaining life percentage
-        remaining_hours = max(0, FILTER_MAX_HOURS - int(filter_hours))
-        percentage = (remaining_hours / FILTER_MAX_HOURS) * 100
-
-        return round(percentage, 1)
+        # filter_hours contains remaining hours
+        remaining_hours = min(FILTER_MAX_HOURS, max(0, int(filter_hours)))
+        return round((remaining_hours / FILTER_MAX_HOURS) * 100, 1)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
@@ -430,10 +428,11 @@ class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
         if filter_hours is None:
             return None
 
-        remaining_hours = max(0, FILTER_MAX_HOURS - int(filter_hours))
+        remaining_hours = min(FILTER_MAX_HOURS, max(0, int(filter_hours)))
+        used_hours = max(0, FILTER_MAX_HOURS - remaining_hours)
 
         # Determine status based on percentage
-        percentage = (remaining_hours / FILTER_MAX_HOURS) * 100
+        percentage = round((remaining_hours / FILTER_MAX_HOURS) * 100, 1)
 
         if percentage >= FILTER_STATUS_EXCELLENT:
             status = "excellent"
@@ -458,7 +457,7 @@ class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
             recommendation = "Filter exceeded life - replace urgently"
 
         return {
-            "filter_hours_used": int(filter_hours),
+            "filter_hours_used": used_hours,
             "filter_hours_remaining": remaining_hours,
             "filter_max_hours": FILTER_MAX_HOURS,
             "status": status,
