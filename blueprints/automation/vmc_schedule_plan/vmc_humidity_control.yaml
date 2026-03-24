@@ -138,8 +138,8 @@ blueprint:
 
     notify_service:
       name: Servizio Notifica (opzionale)
-      description: Invia notifica quando boost si attiva (es. notify.mobile_app_iphone)
-      default: ""
+      description: Invia notifica quando boost si attiva (es. notify.mobile_app_m2101k9g)
+      default: "notify.mobile_app_m2101k9g"
       selector:
         text:
 

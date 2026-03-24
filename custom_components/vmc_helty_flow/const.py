@@ -164,7 +164,9 @@ AIR_EXCHANGE_POOR = "Poor"
 DEFAULT_ROOM_VOLUME = 60  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
 
 # Filter life constants
-FILTER_MAX_HOURS = 3600  # Maximum filter life in hours (~6 months at 20h/day)
+FILTER_MAX_HOURS = (
+    17744  # Maximum filter life in hours (approx. 2 years continuous use)
+)
 
 # Filter Status Threshold Percentages
 FILTER_STATUS_EXCELLENT = 90  # Green zone - filter in optimal condition

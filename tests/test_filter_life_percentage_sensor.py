@@ -19,7 +19,9 @@ def mock_coordinator():
     coordinator.ip = "192.168.1.100"
     coordinator.name = "TestVMC"
     coordinator.name_slug = "vmc_helty_testvmc"
-    coordinator.data = {"filter_hours": 0}
+    # Create a real dict and attach it to the mock
+    # This ensures that data modifications work as expected
+    coordinator.data = {"filter_hours": 0, "status": "VMGO,0,0,0,0,0"}
     return coordinator
 
 
@@ -39,11 +41,8 @@ async def test_filter_life_percentage_sensor_init(mock_coordinator):
 
 async def test_filter_life_percentage_new_filter(mock_coordinator):
     """Test filter life percentage with new filter (0 hours)."""
-    mock_coordinator.data = {"filter_hours": 0}
-
-    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
-
     # New filter = 100% life remaining
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
     assert sensor.native_value == 100.0
 
     # Check extra attributes
@@ -56,94 +55,101 @@ async def test_filter_life_percentage_new_filter(mock_coordinator):
 
 
 async def test_filter_life_percentage_half_life(mock_coordinator):
-    """Test filter life percentage at 50% life (1800 hours used)."""
-    coordinator = mock_coordinator
-    coordinator.data = {"filter_hours": 1800}
+    """Test filter life percentage at 50% life (8872 hours used)."""
+    # Reset to known state - half of FILTER_MAX_HOURS (17744 / 2 = 8872)
+    half_hours = FILTER_MAX_HOURS // 2
+    mock_coordinator.data["filter_hours"] = half_hours
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
-    # 1800 hours used of 3600 max = 50% remaining
+    # Half hours used = 50% remaining
     assert sensor.native_value == 50.0
 
     attrs = sensor.extra_state_attributes
     assert attrs is not None
-    assert attrs["filter_hours_used"] == 1800
-    assert attrs["filter_hours_remaining"] == 1800
+    assert attrs["filter_hours_used"] == half_hours
+    assert attrs["filter_hours_remaining"] == half_hours
     assert attrs["status"] == "adequate"
 
 
 async def test_filter_life_percentage_90_percent(mock_coordinator):
-    """Test filter life percentage at 90% warning threshold (3240 hours)."""
-    coordinator = mock_coordinator
-    coordinator.data = {"filter_hours": 3240}
+    """Test filter life percentage at 90% warning threshold."""
+    # 90% used = 10% remaining. hours_used = FILTER_MAX_HOURS * 0.9
+    hours_at_90_percent = int(FILTER_MAX_HOURS * 0.9)
+    mock_coordinator.data["filter_hours"] = hours_at_90_percent
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
-    # 3240 hours used = 10% remaining (360 hours)
+    # 90% used = 10% remaining
     assert sensor.native_value == 10.0
 
     attrs = sensor.extra_state_attributes
     assert attrs is not None
-    assert attrs["filter_hours_used"] == 3240
-    assert attrs["filter_hours_remaining"] == 360
+    assert attrs["filter_hours_used"] == hours_at_90_percent
+    assert attrs["filter_hours_remaining"] == FILTER_MAX_HOURS - hours_at_90_percent
     assert attrs["status"] == "poor"
     assert "Replace filter" in attrs["recommendation"]
 
 
 async def test_filter_life_percentage_95_percent_critical(mock_coordinator):
-    """Test filter life percentage at 95% critical threshold (3420 hours)."""
-    coordinator = mock_coordinator
-    coordinator.data = {"filter_hours": 3420}
+    """Test filter life percentage at 95% critical threshold."""
+    # 95% used = 5% remaining. hours_used = FILTER_MAX_HOURS * 0.95
+    hours_at_95_percent = int(FILTER_MAX_HOURS * 0.95)
+    mock_coordinator.data["filter_hours"] = hours_at_95_percent
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
-    # 3420 hours used = 5% remaining (180 hours)
+    # 95% used = 5% remaining
     assert sensor.native_value == 5.0
 
     attrs = sensor.extra_state_attributes
     assert attrs is not None
-    assert attrs["filter_hours_used"] == 3420
-    assert attrs["filter_hours_remaining"] == 180
+    assert attrs["filter_hours_used"] == hours_at_95_percent
+    assert attrs["filter_hours_remaining"] == FILTER_MAX_HOURS - hours_at_95_percent
     assert attrs["status"] == "critical"
 
 
 async def test_filter_life_percentage_max_hours(mock_coordinator):
-    """Test filter life percentage at max hours (3600 hours)."""
-    coordinator = mock_coordinator
-    coordinator.data = {"filter_hours": 3600}
+    """Test filter life percentage at max hours."""
+    # Max hours used = 0% remaining
+    mock_coordinator.data["filter_hours"] = FILTER_MAX_HOURS
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
-    # 3600 hours used = 0% remaining
+    # Max hours used = 0% remaining
     assert sensor.native_value == 0.0
 
     attrs = sensor.extra_state_attributes
     assert attrs is not None
-    assert attrs["filter_hours_used"] == 3600
+    assert attrs["filter_hours_used"] == FILTER_MAX_HOURS
     assert attrs["filter_hours_remaining"] == 0
     assert attrs["status"] == "expired"
 
 
 async def test_filter_life_percentage_exceeded_max(mock_coordinator):
     """Test filter life percentage when exceeded max hours."""
-    coordinator = mock_coordinator
-    coordinator.data = {"filter_hours": 4000}
+    # Exceed max hours
+    exceeded_hours = int(FILTER_MAX_HOURS * 1.1)  # 110% of max
+    mock_coordinator.data["filter_hours"] = exceeded_hours
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
     # Exceeded max hours = 0% remaining (clamped to 0)
     assert sensor.native_value == 0.0
 
     attrs = sensor.extra_state_attributes
     assert attrs is not None
-    assert attrs["filter_hours_used"] == 4000
+    assert attrs["filter_hours_used"] == exceeded_hours
     assert attrs["filter_hours_remaining"] == 0
     assert attrs["status"] == "expired"
 
 
-async def test_filter_life_percentage_no_data(mock_coordinator):
+async def test_filter_life_percentage_no_data():
     """Test filter life percentage when no data available."""
-    coordinator = mock_coordinator
+    coordinator = MagicMock()
+    coordinator.ip = "192.168.1.100"
+    coordinator.name = "TestVMC"
+    coordinator.name_slug = "vmc_helty_testvmc"
     coordinator.data = None
 
     sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
@@ -154,10 +160,11 @@ async def test_filter_life_percentage_no_data(mock_coordinator):
 
 async def test_filter_life_percentage_missing_filter_hours(mock_coordinator):
     """Test filter life percentage when filter_hours key missing."""
-    coordinator = mock_coordinator
-    coordinator.data = {"other_data": "value"}
+    # Remove the filter_hours key to test missing data handling
+    mock_coordinator.data.clear()
+    mock_coordinator.data.update({"status": "VMGO,0,0,0,0,0", "other_data": "value"})
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
     # Should handle missing filter_hours gracefully
     # Currently returns None as placeholder
@@ -166,22 +173,29 @@ async def test_filter_life_percentage_missing_filter_hours(mock_coordinator):
 
 async def test_filter_life_percentage_status_thresholds(mock_coordinator):
     """Test all status thresholds are correctly categorized."""
-    coordinator = mock_coordinator
-
+    # Test cases based on percentage thresholds, not absolute hours
     test_cases = [
-        (0, "excellent", 100.0),  # 0 hours = excellent
-        (360, "excellent", 90.0),  # 360 hours = 90% = excellent
-        (1080, "good", 70.0),  # 1080 hours = 70% = good
-        (1800, "adequate", 50.0),  # 1800 hours = 50% = adequate
-        (2880, "fair", 20.0),  # 2880 hours = 20% = fair
-        (3240, "poor", 10.0),  # 3240 hours = 10% = poor
-        (3420, "critical", 5.0),  # 3420 hours = 5% = critical
-        (3600, "expired", 0.0),  # 3600 hours = 0% = expired
+        # 0% used = 100% remaining = excellent
+        (int(FILTER_MAX_HOURS * 0.00), "excellent", 100.0),
+        # 10% used = 90% remaining = excellent
+        (int(FILTER_MAX_HOURS * 0.10), "excellent", 90.0),
+        # 30% used = 70% remaining = good
+        (int(FILTER_MAX_HOURS * 0.30), "good", 70.0),
+        # 50% used = 50% remaining = adequate
+        (int(FILTER_MAX_HOURS * 0.50), "adequate", 50.0),
+        # 80% used = 20% remaining = fair
+        (int(FILTER_MAX_HOURS * 0.80), "fair", 20.0),
+        # 90% used = 10% remaining = poor
+        (int(FILTER_MAX_HOURS * 0.90), "poor", 10.0),
+        # 95% used = 5% remaining = critical
+        (int(FILTER_MAX_HOURS * 0.95), "critical", 5.0),
+        # 100% used = 0% remaining = expired
+        (int(FILTER_MAX_HOURS * 1.00), "expired", 0.0),
     ]
 
     for hours, expected_status, expected_percentage in test_cases:
-        coordinator.data = {"filter_hours": hours}
-        sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+        mock_coordinator.data["filter_hours"] = hours
+        sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
         actual = sensor.native_value
         assert (
@@ -198,10 +212,9 @@ async def test_filter_life_percentage_status_thresholds(mock_coordinator):
 
 async def test_filter_life_percentage_rounding(mock_coordinator):
     """Test that percentage is rounded to 1 decimal place."""
-    coordinator = mock_coordinator
-    coordinator.data = {"filter_hours": 1234}  # Arbitrary value
+    mock_coordinator.data["filter_hours"] = 1234  # Arbitrary value
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
     # Should be rounded to 1 decimal
     percentage = sensor.native_value
@@ -213,16 +226,12 @@ async def test_filter_life_percentage_rounding(mock_coordinator):
 
 async def test_filter_life_percentage_calculation_accuracy(mock_coordinator):
     """Test accuracy of percentage calculation."""
-    coordinator = mock_coordinator
+    # Test specific calculation with current FILTER_MAX_HOURS
+    test_hours = 5000
+    mock_coordinator.data["filter_hours"] = test_hours
 
-    # Test specific calculation
-    # 1000 hours used of 3600 max
-    # Remaining: 2600 hours
-    # Percentage: 2600 / 3600 * 100 = 72.22... = 72.2%
-    coordinator.data = {"filter_hours": 1000}
+    sensor = VmcHeltyFilterLifePercentageSensor(mock_coordinator)
 
-    sensor = VmcHeltyFilterLifePercentageSensor(coordinator)
-
-    expected = round((3600 - 1000) / 3600 * 100, 1)
+    # Calculate expected: (FILTER_MAX_HOURS - test_hours) / FILTER_MAX_HOURS * 100
+    expected = round((FILTER_MAX_HOURS - test_hours) / FILTER_MAX_HOURS * 100, 1)
     assert sensor.native_value == expected
-    assert sensor.native_value == 72.2

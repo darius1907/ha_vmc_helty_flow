@@ -347,13 +347,29 @@ class VmcHeltyFilterHoursSensor(VmcHeltyEntity, SensorEntity):
 
     @property
     def native_value(self) -> int | None:
-        """Return filter hours from device status."""
+        """Return filter hours from device status.
+
+        Retrieves filter hours from VMGH? response at position 5.
+        Response format: VMGO,<fan_speed>,<led>,<temp>,<humidity>,<filter_hours>
+        """
         if not self.coordinator.data:
             return None
 
-        # Il contatore filtro potrebbe essere nei dati di stato - da implementare
-        # Per ora restituisce un valore placeholder
-        return 0
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            # Need 6 parts: VMGO + fan_speed + led + temp + humidity + filter_hours
+            if len(parts) < 6:  # noqa: PLR2004
+                return None
+
+            # Filter hours is at position 5
+            return int(parts[5])
+
+        except (ValueError, IndexError):
+            return None
 
 
 class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
@@ -361,7 +377,7 @@ class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
 
     Shows remaining filter life as percentage.
     100% = new filter, 0% = needs replacement.
-    Based on FILTER_MAX_HOURS constant (default 3600 hours ~ 6 months).
+    Based on FILTER_MAX_HOURS constant.
     """
 
     def __init__(self, coordinator):
