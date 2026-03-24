@@ -10,7 +10,6 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.components.button import ButtonEntity
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -186,7 +185,6 @@ async def async_setup_entry(
         # Sensori di rete
         VmcHeltyIPAddressSensor(coordinator),
         # Pulsanti e controlli di testo
-        VmcHeltyResetFilterButton(coordinator),
         VmcHeltyNameText(coordinator),
         VmcHeltySSIDText(coordinator),
         VmcHeltyPasswordText(coordinator),
@@ -702,31 +700,6 @@ class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):
     def native_value(self) -> str:
         """Return device IP address."""
         return str(self.coordinator.ip)
-
-
-class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
-    """VMC Helty reset filter button."""
-
-    def __init__(self, coordinator):
-        """Initialize the button."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.name_slug}_reset_filter"
-        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Reset Filter"
-        self._attr_icon = "mdi:air-filter"
-
-    async def async_press(self) -> None:
-        """Reset filter counter."""
-        response = await tcp_send_command(
-            self.coordinator.ip,
-            5001,
-            f"VMWH04{FILTER_MAX_HOURS}",
-        )
-        if response == "OK":
-            await self.coordinator.async_request_refresh()
-
-    def press(self) -> None:
-        """Synchronous write is not supported; use async path."""
-        raise HomeAssistantError("Use async set value to reset filter")
 
 
 class VmcHeltyNameText(VmcHeltyEntity, TextEntity):

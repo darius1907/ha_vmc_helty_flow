@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from custom_components.vmc_helty_flow.button import VmcHeltyResetFilterButton
 from custom_components.vmc_helty_flow.fan import VmcHeltyFan
 from custom_components.vmc_helty_flow.light import VmcHeltyLight, VmcHeltyLightTimer
 from custom_components.vmc_helty_flow.sensor import (
@@ -13,7 +14,6 @@ from custom_components.vmc_helty_flow.sensor import (
     VmcHeltyNameText,
     VmcHeltyOnOffSensor,
     VmcHeltyPasswordText,
-    VmcHeltyResetFilterButton,
     VmcHeltySensor,
     VmcHeltySSIDText,
 )
