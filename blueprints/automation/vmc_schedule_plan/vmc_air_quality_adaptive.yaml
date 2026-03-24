@@ -32,12 +32,10 @@ blueprint:
       selector:
         entity:
           domain: sensor
-          device_class: co2
 
     voc_sensor:
       name: Sensore VOC (opzionale)
       description: Sensore composti organici volatili (lasciare vuoto se non disponibile)
-      default: {}
       selector:
         entity:
           domain: sensor
