@@ -741,21 +741,6 @@ script:
 
 ---
 
-#### 10. **App Mobile Dedicata (Companion)** ⭐
-**Impatto**: Basso | **Effort**: Molto Alto | **Complessità**: Molto Alta
-
-**Obiettivo**: App nativa iOS/Android per controllo VMC.
-
-**Funzionalità**:
-- Widget iOS/Android per quick control
-- Notifiche push native
-- Grafici avanzati qualità aria
-- Geofencing per automazione ingresso/uscita
-
-**Nota**: Richiede sviluppo React Native o Flutter.
-
----
-
 ## 📚 Documentazione e Guide
 
 ### Nuove Guide da Creare
