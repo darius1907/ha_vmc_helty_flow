@@ -13,9 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WiFi password updates now validate length using integration constraints (`MIN_PASSWORD_LENGTH` / `MAX_PASSWORD_LENGTH`)
 - WiFi password updates now use protocol payload padding (`VMSL <ssid_padded><password_padded>`) and trigger coordinator refresh after success
 - `VmcHeltyResetFilterButton` now uses `FILTER_MAX_HOURS` dynamically for reset command generation
+- Service callbacks are now registered with proper async handlers (instead of lambda wrappers) so Home Assistant always awaits coroutine services correctly
+- Removed obsolete `update_room_volume` service: room volume is now managed only through Options Flow
+- Cleaned service metadata/translations to remove legacy `update_room_volume` references
 
 ### 🐛 Fixed
 - Prevented accidental synchronous writes on text entities by raising explicit `HomeAssistantError` in sync `set_value` paths
+- Fixed warning `coroutine '_handle_set_special_mode' was never awaited` during special mode service execution
 
 ## [1.2.0-beta] - 2026-03-24
 
