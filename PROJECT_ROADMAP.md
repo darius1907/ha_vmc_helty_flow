@@ -3,7 +3,7 @@
 > **Piano di sviluppo** con task tracciabili, milestone e criteri di completamento
 > **Versione**: 1.0
 > **Data inizio**: 2026-03-23
-> **Ultima revisione**: 2026-03-23
+> **Ultima revisione**: 2026-03-26
 
 ---
 
@@ -11,8 +11,8 @@
 
 ### Stato Generale Progetto
 ```
-Versione Corrente: v1.1.0 ✅
-Prossimo Release: v1.1.1 🔄
+Versione Corrente: v1.1.1 ✅
+Prossimo Release: v1.2.0 🔄
 Quality Scale: Silver ⭐⭐
 Test Coverage: >95% ✅
 Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
@@ -21,7 +21,7 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 ### Milestone Overview
 | Milestone | Stato | Data Target | Completamento |
 |-----------|-------|-------------|---------------|
-| v1.1.1 | 🔄 In Progress | 2026-04-15 | ▓▓▓▓▓▓░░░░ 60% |
+| v1.1.1 | ✅ Completed | 2026-03-26 | ▓▓▓▓▓▓▓▓▓▓ 100% |
 | v1.4.0 | 📋 Planned | 2026-11-15 | ░░░░░░░░░░ 0% |
 | v1.2.0 | 📋 Planned | 2026-05-15 | ░░░░░░░░░░ 0% |
 | v1.3.0 | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
@@ -297,12 +297,12 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Effort**: 15min ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
-- [ ] **REL-004**: GitHub Release draft
-  - [ ] Crea release v1.1.1
-  - [ ] "Pre-release" flag abilitato
-  - [ ] Release notes da CHANGELOG
-  - [ ] Richiesta beta testers
-  - **Effort**: 1h
+- [x] **REL-004**: GitHub Release draft
+  - [x] Crea release v1.1.1
+  - [x] "Pre-release" flag abilitato
+  - [x] Release notes da CHANGELOG
+  - [x] Richiesta beta testers
+  - **Effort**: 1h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
 **Sprint 1.3 Total Effort**: ~9 ore
