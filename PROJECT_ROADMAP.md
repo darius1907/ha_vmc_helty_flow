@@ -276,11 +276,11 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Priority**: 🔴 Alta
 
 ##### 9. Git & Release
-- [ ] **REL-001**: Commit e push modifiche
-  - [ ] Branch: `feature/v1.1.1`
-  - [ ] Commit message conventional format
-  - [ ] Push to origin + github
-  - **Effort**: 30min
+- [x] **REL-001**: Commit e push modifiche
+  - [x] Branch: `improvements-v1.2.0`
+  - [x] Commit message conventional format
+  - [x] Push to origin + github
+  - **Effort**: 30min ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
 - [ ] **REL-002**: Create Pull Request
