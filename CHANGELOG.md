@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.1] - 2026-03-226
+## [1.1.1] - 2026-03-26
+
+### ⚠️ Breaking changes
+- Removed obsolete `update_room_volume` service: room volume is now managed only through Options Flow
 
 ### 🔄 Changed
 - `VmcHeltySSIDText` is now explicitly read-only: SSID edits are blocked with a clear user-facing error
@@ -26,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New advanced sensor `VmcHeltyFilterLifePercentageSensor` (SENS-001)
 - New sensor `VmcHeltyPowerSensor` for instantaneous power estimate in W (SENS-003)
 - New sensor `VmcHeltyDailyEnergyEstimateSensor` for daily energy estimate in Wh (SENS-002)
+- New binary sensor `VmcHeltyAirQualityAlertBinarySensor` (SENS-006)
+- New binary sensor `VmcHeltyCondensationRiskBinarySensor` (SENS-007)
+- New binary sensor `VmcHeltyOfflineBinarySensor` (SENS-008)
 
 ### 🔄 Changed
 - Filter hours are now parsed from device response and exposed consistently for filter-life calculations
@@ -44,6 +50,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added comprehensive roadmap and planning updates for upcoming releases
 - Added `EASC_SPECIFICATION.md` for External Advanced Sensor Configuration planning
 - Updated roadmap filter thresholds to match new max filter lifetime (`17744h`)
+- Added English blueprint guide: `blueprints/BLUEPRINT_GUIDE_EN.md`
+- Blueprint references updated:
+  - `blueprints/README.md`
+  - `blueprints/BLUEPRINT_GUIDE.md`
+  - `blueprints/BLUEPRINT_GUIDE_EN.md`
 
 ## [1.1.0] - 2026-03-23
 

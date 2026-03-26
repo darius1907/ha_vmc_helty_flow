@@ -2,6 +2,7 @@
 
 [![hacs][hacsbadge]][hacs]
 [![GitHub Release][releases-shield]][releases]
+[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://github.com/darius1907/ha_vmc_helty_flow/releases)
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]][license]
 
@@ -14,6 +15,12 @@
 Complete integration for Helty Flow Mechanical Ventilation (VMC) systems with Home Assistant.
 
 > **🇮🇹 Versione Italiana**: [README_IT.md](README_IT.md)
+
+## 🧩 Blueprints
+
+- Blueprint catalog: [blueprints/README.md](blueprints/README.md)
+- Full guide (IT): [blueprints/BLUEPRINT_GUIDE.md](blueprints/BLUEPRINT_GUIDE.md)
+- Full guide (EN): [blueprints/BLUEPRINT_GUIDE_EN.md](blueprints/BLUEPRINT_GUIDE_EN.md)
 
 ## 🚀 Quick Installation
 
@@ -101,6 +108,15 @@ Complete integration for Helty Flow Mechanical Ventilation (VMC) systems with Ho
 - **Dew Point Delta**: Difference between outdoor temperature and dew point
 - **Air Exchange Time**: Air exchange time based on fan speed
 - **Daily Air Changes**: Number of daily air changes
+- **Filter Life Percentage**: Remaining filter life based on filter working hours
+- **Power Sensor**: Instantaneous power estimate based on fan speed
+- **Daily Energy Estimate**: Daily estimated energy consumption
+
+### 🚨 **Alert Binary Sensors**
+
+- **Air Quality Alert**: ON when CO2 stays above threshold for configured duration
+- **Condensation Risk Alert**: ON when dew-point delta indicates condensation risk
+- **Offline Alert**: ON when the coordinator detects communication failures
 
 ## 🎨 **Custom Dashboard**
 

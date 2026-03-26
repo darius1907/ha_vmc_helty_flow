@@ -17,7 +17,7 @@ Questa directory contiene il piano di sviluppo completo per VMC Helty Flow v1.2.
 
 **Contenuto**:
 - ✅ Dashboard progressi con percentuali completamento
-- ✅ 3 Milestone dettagliate (v1.1.1, v1.2.0, v1.3.0)
+- ✅ 4 Milestone dettagliate (v1.1.1, v1.4.0, v1.2.0, v1.3.0)
 - ✅ 9 Sprint con task checklist
 - ✅ 80+ task individuali con effort estimate e priority
 - ✅ Timeline Gantt visualizzata
@@ -144,16 +144,16 @@ Questa directory contiene il piano di sviluppo completo per VMC Helty Flow v1.2.
 
 ---
 
-## 📊 Stato Corrente (2026-03-23)
+## 📊 Stato Corrente (2026-03-26)
 
 ### Milestone Attiva: v1.1.1
 **Target**: 2026-04-15
-**Completamento**: ▓▓▓░░░░░░░ 30%
+**Completamento**: ▓▓▓▓▓▓░░░░ 60%
 
-### Sprint Corrente: Sprint 1.1 (Blueprint Testing)
-**Start**: 2026-03-23
-**End**: 2026-04-06
-**Focus**: Testing 3 nuovi blueprint + documentazione
+### Sprint Corrente: Sprint 1.3 (Quality & Release Beta)
+**Start**: 2026-04-14
+**End**: 2026-04-15
+**Focus**: Chiusura QA e preparazione release v1.1.1
 
 ### Prossimi Sprint
 - Sprint 1.2: Sensori Statistici (7-13 Aprile)
@@ -161,9 +161,9 @@ Questa directory contiene il piano di sviluppo completo per VMC Helty Flow v1.2.
 
 ### Key Deliverable in Progress
 - ✅ 3 blueprint nuovi creati
-- 🔄 Blueprint testing in corso
-- 📋 Documentation blueprint in corso
-- 📋 Sensori statistici in planning
+- ✅ Sensori statistici e alert completati
+- ✅ Quality gate tecnici (test, mypy, pre-commit) verificati
+- 🔄 Documentazione release e attività GitHub release in corso
 
 ---
 
@@ -171,10 +171,10 @@ Questa directory contiene il piano di sviluppo completo per VMC Helty Flow v1.2.
 
 ```
 Marzo 2026    │ ▓▓▓▓ Sprint 1.1-1.3 (Blueprint + Sensori)
-Aprile 2026   │ ▓▓▓▓▓▓▓ Sprint 2.1-2.2 (Feedback + Blueprint Extra)
-Maggio 2026   │ ▓▓▓▓ Sprint 2.3-2.4 (Dashboard + Release v1.2.0)
-Giugno 2026   │ ▓▓▓▓ Sprint 3.1-3.2 (Gold Quality + Energy)
-Luglio 2026   │ ▓ Sprint 3.3-3.4 (Scene + Release v1.3.0)
+Aprile 2026   │ ▓▓▓▓▓▓▓ Sprint 3.1-3.2 (Feedback + Blueprint Extra)
+Maggio 2026   │ ▓▓▓▓ Sprint 3.3-3.4 (Dashboard + Release v1.2.0)
+Giugno 2026   │ ▓▓▓▓ Sprint 4.1-4.2 (Gold Quality + Energy)
+Luglio 2026   │ ▓ Sprint 4.3-4.4 (Scene + Release v1.3.0)
 ```
 
 ---
@@ -183,25 +183,25 @@ Luglio 2026   │ ▓ Sprint 3.3-3.4 (Scene + Release v1.3.0)
 
 Task implementabili in 1-2 giorni (entry point per contributors):
 
-1. **Sensore Filter Life Percentage** (2h)
-   - File: `custom_components/vmc_helty_flow/sensor.py`
-   - Task: SENS-001 in PROJECT_ROADMAP.md
-   - Priority: 🔴 Alta
-
-2. **Blueprint Humidity Control Testing** (3h)
-   - File: `blueprints/automation/vmc_schedule_plan/vmc_humidity_control.yaml`
-   - Task: BLU-002 in PROJECT_ROADMAP.md
-   - Priority: 🔴 Alta
-
-3. **Scene Predefinite** (2h)
-   - File: `examples/scenes.yaml` (da creare)
-   - Task: SCENE-001 in PROJECT_ROADMAP.md
-   - Priority: 🟡 Media
-
-4. **Documentation Translation** (4h)
+1. **Traduzione guida blueprint EN** (4h)
    - File: `blueprints/BLUEPRINT_GUIDE_EN.md` (da creare)
    - Task: DOC-003 in PROJECT_ROADMAP.md
    - Priority: 🟢 Bassa
+
+2. **Aggiornamento changelog release** (1h)
+   - File: `CHANGELOG.md`
+   - Task: DOC-004 in PROJECT_ROADMAP.md
+   - Priority: 🔴 Alta
+
+3. **Aggiornamento README release** (1h)
+   - File: `README.md`
+   - Task: DOC-005 in PROJECT_ROADMAP.md
+   - Priority: 🟡 Media
+
+4. **Preparazione PR milestone 1.1.1** (30min)
+   - File: `PROJECT_ROADMAP.md` (checklist release)
+   - Task: REL-001 / REL-002 in PROJECT_ROADMAP.md
+   - Priority: 🔴 Alta
 
 ---
 

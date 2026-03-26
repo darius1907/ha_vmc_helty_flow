@@ -2,6 +2,7 @@
 
 Raccolta di blueprint per automatizzare la VMC Helty Flow in Home Assistant.
 Per la guida completa su quale blueprint scegliere e come configurarli, vedi [BLUEPRINT_GUIDE.md](BLUEPRINT_GUIDE.md).
+For the English version, see [BLUEPRINT_GUIDE_EN.md](BLUEPRINT_GUIDE_EN.md).
 
 ---
 
@@ -65,6 +66,7 @@ Sistema completo di notifiche per la manutenzione del filtro VMC. Avvisi progres
 4. Configura i parametri richiesti
 
 Per la guida dettagliata con decision tree e combinazioni consigliate, consulta [BLUEPRINT_GUIDE.md](BLUEPRINT_GUIDE.md).
+English guide: [BLUEPRINT_GUIDE_EN.md](BLUEPRINT_GUIDE_EN.md).
 
 ## 📌 Requisiti generali
 
