@@ -283,18 +283,18 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Effort**: 30min ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
-- [ ] **REL-002**: Create Pull Request
-  - [ ] PR to main con descrizione dettagliata
-  - [ ] Checklist completamento
-  - [ ] Request review
-  - **Effort**: 30min
+- [x] **REL-002**: Create Pull Request
+  - [x] PR to main con descrizione dettagliata
+  - [x] Checklist completamento
+  - [x] Request review
+  - **Effort**: 30min ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
-- [ ] **REL-003**: Tag release beta
-  - [ ] `git tag v1.1.1`
-  - [ ] Annotated tag con release notes
-  - [ ] Push tag a remotes
-  - **Effort**: 15min
+- [x] **REL-003**: Tag release beta
+  - [x] `git tag v1.1.1`
+  - [x] Annotated tag con release notes
+  - [x] Push tag a remotes
+  - **Effort**: 15min ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
 - [ ] **REL-004**: GitHub Release draft
