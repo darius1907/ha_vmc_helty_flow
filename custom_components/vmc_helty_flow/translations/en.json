@@ -232,20 +232,6 @@
     }
   },
   "services": {
-    "update_room_volume": {
-      "name": "Update Room Volume",
-      "description": "Update the room volume for air exchange calculations",
-      "fields": {
-        "entity_id": {
-          "name": "Entity ID",
-          "description": "The ID of any VMC Helty entity in the room"
-        },
-        "room_volume": {
-          "name": "Room Volume",
-          "description": "The new room volume in cubic meters"
-        }
-      }
-    },
     "set_fan_speed": {
       "name": "Set Fan Speed",
       "description": "Set the VMC fan speed",

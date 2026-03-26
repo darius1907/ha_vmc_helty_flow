@@ -121,7 +121,7 @@
           "retry_attempts": "Tentativi di riconnessione"
         },
         "data_description": {
-          "room_volume": "Volume della stanza in metri cubi per calcoli accurati dei ricambi d'aria (5-200 m³). Modificabile anche tramite servizio update_room_volume",
+          "room_volume": "Volume della stanza in metri cubi per calcoli accurati dei ricambi d'aria (5-200 m³)",
           "scan_interval": "Frequenza di aggiornamento dei dati dal dispositivo VMC (30-600 secondi)",
           "timeout": "Timeout per le connessioni TCP al dispositivo (5-60 secondi)",
           "retry_attempts": "Numero di tentativi in caso di errore di comunicazione (1-10)"
@@ -232,20 +232,6 @@
     }
   },
   "services": {
-    "update_room_volume": {
-      "name": "Aggiorna Volume Stanza",
-      "description": "Aggiorna il volume della stanza per i calcoli di ricambio d'aria",
-      "fields": {
-        "entity_id": {
-          "name": "ID Entità",
-          "description": "L'ID di qualsiasi entità VMC Helty nella stanza"
-        },
-        "room_volume": {
-          "name": "Volume Stanza",
-          "description": "Il nuovo volume della stanza in metri cubi"
-        }
-      }
-    },
     "set_fan_speed": {
       "name": "Imposta Velocità Ventola",
       "description": "Imposta la velocità della ventola VMC",

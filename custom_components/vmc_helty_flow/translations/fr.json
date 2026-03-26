@@ -268,20 +268,6 @@
     }
   },
   "services": {
-    "update_room_volume": {
-      "name": "Mettre à Jour le Volume de la Pièce",
-      "description": "Met à jour le volume de la pièce pour les calculs de renouvellement d'air",
-      "fields": {
-        "entity_id": {
-          "name": "ID d'Entité",
-          "description": "L'ID de n'importe quelle entité VMC Helty dans la pièce"
-        },
-        "room_volume": {
-          "name": "Volume de la Pièce",
-          "description": "Le nouveau volume de la pièce en mètres cubes"
-        }
-      }
-    },
     "set_fan_speed": {
       "name": "Régler la Vitesse du Ventilateur",
       "description": "Règle la vitesse du ventilateur VMC",
