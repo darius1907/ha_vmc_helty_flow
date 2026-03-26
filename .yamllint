@@ -1,0 +1,17 @@
+---
+extends: default
+
+rules:
+  # Blueprint source_url and description lines can exceed 120 chars
+  line-length:
+    max: 150
+    level: warning
+
+  # Blueprint files don't always start with ---
+  document-start:
+    level: warning
+
+  # Allow both true/false and yes/no (HA uses both)
+  truthy:
+    allowed-values: ["true", "false", "yes", "no"]
+    level: warning

@@ -1,0 +1,321 @@
+---
+blueprint:
+  name: VMC Helty Flow - Promemoria Manutenzione Filtro
+  description: >
+    Sistema completo di notifiche per manutenzione filtro VMC.
+
+    **Funzionalità**:
+    - Avviso preventivo quando filtro raggiunge 90% vita utile
+    - Allerta critica quando filtro supera 95% vita utile
+    - Promemoria giornaliero se filtro non sostituito
+    - Notifiche multiple: persistente UI, mobile, email (opzionali)
+    - Traccia data ultimo reset per statistiche
+
+    **Soglie standard** (sensore ore residue, basato su 17744 ore):
+    - 1774 ore residue (10%) = Avviso preventivo
+    - 887 ore residue (5%) = Allerta critica
+    - 0 ore residue = Promemoria urgente giornaliero
+
+  domain: automation
+
+  source_url: https://github.com/darius1907/ha_vmc_helty_flow/blob/main/blueprints/automation/vmc_schedule_plan/vmc_filter_reminder.yaml
+
+  input:
+    vmc_entity:
+      name: Entità VMC
+      description: Entità fan o sensor della VMC (per identificazione)
+      selector:
+        entity:
+          integration: vmc_helty_flow
+
+    filter_hours_sensor:
+      name: Sensore Ore Filtro
+      description: Sensore che traccia le ore di utilizzo del filtro
+      selector:
+        entity:
+          domain: sensor
+
+    warning_threshold:
+      name: Soglia Avviso (ore)
+      description: Ore residue per avviso preventivo (suggerito 1774 = 10%)
+      default: 1774
+      selector:
+        number:
+          min: 100
+          max: 17744
+          step: 1
+          unit_of_measurement: "ore"
+          mode: box
+
+    critical_threshold:
+      name: Soglia Critica (ore)
+      description: Ore residue per allerta critica (suggerito 887 = 5%)
+      default: 887
+      selector:
+        number:
+          min: 0
+          max: 17744
+          step: 1
+          unit_of_measurement: "ore"
+          mode: box
+
+    max_threshold:
+      name: Soglia Esaurito (ore)
+      description: Ore residue per promemoria giornaliero urgente (suggerito 0 = filtro esaurito)
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 1
+          unit_of_measurement: "ore"
+          mode: box
+
+    # Notifiche persistenti (sempre attive)
+    create_persistent_notification:
+      name: Crea Notifica Persistente UI
+      description: Mostra notifica persistente nell'interfaccia Home Assistant
+      default: true
+      selector:
+        boolean:
+
+    # Notifiche mobile (opzionali)
+    notify_mobile:
+      name: Notifica Mobile (opzionale)
+      description: Servizio notify per app mobile (es. notify.mobile_app_iphone)
+      default: ""
+      selector:
+        text:
+
+    # Notifiche email (opzionali)
+    notify_email:
+      name: Notifica Email (opzionale)
+      description: Servizio notify per email (es. notify.email_john)
+      default: ""
+      selector:
+        text:
+
+    # Reminder giornaliero
+    daily_reminder_time:
+      name: Ora Promemoria Giornaliero
+      description: Ora in cui ricevere promemoria giornaliero se filtro oltre soglia massima
+      default: "09:00:00"
+      selector:
+        time:
+
+    # Action buttons
+    include_action_buttons:
+      name: Includi Pulsanti Azione
+      description: Aggiungi pulsanti "Reset Filtro" e "Promemoria Successivo" nelle notifiche mobile
+      default: true
+      selector:
+        boolean:
+
+variables:
+  vmc_entity_input: !input vmc_entity
+  filter_hours_sensor_entity: !input filter_hours_sensor
+  warning_threshold_input: !input warning_threshold
+  critical_threshold_input: !input critical_threshold
+  max_threshold_input: !input max_threshold
+  filter_life_max_hours: 17744
+  vmc_name: >
+    {{ state_attr(vmc_entity_input, 'friendly_name') | default('VMC Helty', true) }}
+  filter_hours: >
+    {{ states(filter_hours_sensor_entity) | float(0) }}
+  filter_percentage: >
+    {{ ((filter_hours / filter_life_max_hours) * 100) | round(1) }}
+  notify_mobile_service: !input notify_mobile
+  notify_email_service: !input notify_email
+  persistent_enabled: !input create_persistent_notification
+  action_buttons: !input include_action_buttons
+
+# Multipli trigger per diversi livelli di avviso
+trigger:
+  # Trigger 1: Avviso preventivo (ore residue sotto soglia warning)
+  - platform: numeric_state
+    entity_id: !input filter_hours_sensor
+    below: !input warning_threshold
+    id: warning
+
+  # Trigger 2: Allerta critica (ore residue sotto soglia critical)
+  - platform: numeric_state
+    entity_id: !input filter_hours_sensor
+    below: !input critical_threshold
+    id: critical
+
+  # Trigger 3: Promemoria giornaliero se sotto soglia esaurito
+  - platform: time
+    at: !input daily_reminder_time
+    id: daily_reminder
+
+condition:
+  # Evita notifiche ridondanti - triggera solo al cambio di soglia
+  - condition: template
+    value_template: >
+      {% set hours = states(filter_hours_sensor_entity) | float(0) %}
+      {% if trigger.id == 'daily_reminder' %}
+        {{ hours <= max_threshold_input }}
+      {% elif trigger.id == 'critical' %}
+        {{ hours <= critical_threshold_input and hours > max_threshold_input }}
+      {% elif trigger.id == 'warning' %}
+        {{ hours <= warning_threshold_input and hours > critical_threshold_input }}
+      {% else %}
+        true
+      {% endif %}
+
+action:
+  - variables:
+      notification_data:
+        warning:
+          title: "⚠️ VMC - Filtro al 10% residuo"
+          message: >
+            Il filtro {{ vmc_name }} ha {{ filter_hours }} ore residue ({{ filter_percentage }}% vita residua).
+
+            📅 Pianificare sostituzione nelle prossime 2-3 settimane.
+            🛒 Verificare disponibilità filtro di ricambio.
+          severity: warning
+          icon: mdi:air-filter
+        critical:
+          title: "🚨 VMC - Filtro al 5% residuo - URGENTE"
+          message: >
+            Il filtro {{ vmc_name }} ha solo {{ filter_hours }} ore residue ({{ filter_percentage }}% vita residua).
+
+            ⚠️ SOSTITUIRE ENTRO 1 SETTIMANA
+            ⚡ Efficienza VMC ridotta
+            💸 Aumento consumi energetici
+          severity: critical
+          icon: mdi:air-filter-alert
+        daily_reminder:
+          title: "🔔 VMC - Promemoria Filtro"
+          message: >
+            Il filtro {{ vmc_name }} è oltre la vita utile ({{ filter_hours }} ore residue).
+
+            🛑 SOSTITUIRE FILTRO IL PRIMA POSSIBILE
+            📉 Performance VMC compromessa
+
+            Dopo sostituzione: premere Reset Filtro nella VMC.
+          severity: error
+          icon: mdi:filter-remove
+
+  - variables:
+      trigger_type: "{{ trigger.id | default('warning', true) }}"
+      notif: "{{ notification_data[trigger_type] }}"
+
+  # 1. Notifica Persistente UI (se abilitata)
+  - if:
+      - condition: template
+        value_template: "{{ persistent_enabled }}"
+    then:
+      - service: persistent_notification.create
+        data:
+          title: "{{ notif.title }}"
+          message: "{{ notif.message }}"
+          notification_id: "vmc_filter_{{ vmc_entity_input | replace('.', '_') }}"
+
+  # 2. Notifica Mobile (se configurata)
+  - if:
+      - condition: template
+        value_template: "{{ notify_mobile_service != '' }}"
+    then:
+      - service: "{{ notify_mobile_service }}"
+        data:
+          title: "{{ notif.title }}"
+          message: "{{ notif.message }}"
+          data:
+            # Notification channel per Android
+            channel: "VMC Maintenance"
+            importance: high
+            # Badge e icona
+            notification_icon: "{{ notif.icon }}"
+            # Action buttons (se abilitati)
+            actions: >
+              {% if action_buttons %}
+              [
+                {
+                  "action": "RESET_VMC_FILTER",
+                  "title": "✅ Reset Filtro",
+                  "icon": "sfsymbols:arrow.counterclockwise"
+                },
+                {
+                  "action": "SNOOZE_VMC_REMINDER",
+                  "title": "⏰ Ricorda tra 1 giorno",
+                  "icon": "sfsymbols:clock"
+                }
+              ]
+              {% else %}
+              []
+              {% endif %}
+            # iOS specific
+            push:
+              interruption-level: time-sensitive
+
+  # 3. Notifica Email (se configurata)
+  - if:
+      - condition: template
+        value_template: "{{ notify_email_service != '' }}"
+    then:
+      - service: "{{ notify_email_service }}"
+        data:
+          title: "{{ notif.title }}"
+          message: >
+            {{ notif.message }}
+
+            ---
+            DETTAGLI VMC
+            ---
+            Entità: {{ vmc_entity_input }}
+            Ore Filtro: {{ filter_hours }} / {{ max_threshold_input }} ore
+            Percentuale: {{ filter_percentage }}%
+            Data/Ora: {{ now().strftime('%d/%m/%Y %H:%M') }}
+
+            ---
+            AZIONI RACCOMANDATE
+            ---
+            1. Ordinare filtro compatibile
+            2. Programmare sostituzione
+            3. Eseguire reset contatore dopo sostituzione
+
+            Per reset: Home Assistant > VMC Helty Flow > Reset Filter Button
+
+  # 4. Logbook entry
+  - service: logbook.log
+    data:
+      name: "VMC Filter Maintenance"
+      message: >
+        {{ notif.title }} - {{ filter_hours }} ore ({{ filter_percentage }}%)
+      entity_id: !input filter_hours_sensor
+
+  # 5. Crea evento per automazioni custom
+  - event: vmc_filter_reminder
+    event_data:
+      vmc_entity: !input vmc_entity
+      filter_hours: "{{ filter_hours }}"
+      filter_percentage: "{{ filter_percentage }}"
+      threshold_type: "{{ trigger_type }}"
+      timestamp: "{{ now().isoformat() }}"
+
+# Note per l'utente
+#
+# AZIONI NOTIFICHE MOBILE:
+# Configura automazione per gestire action buttons:
+#
+# automation:
+#   - alias: "VMC - Gestione Reset Filtro da Notifica"
+#     trigger:
+#       - platform: event
+#         event_type: mobile_app_notification_action
+#         event_data:
+#           action: RESET_VMC_FILTER
+#     action:
+#       - service: button.press
+#         target:
+#           entity_id: button.vmc_helty_reset_filter
+#       - service: notify.mobile_app_*
+#         data:
+#           message: "Filtro VMC resettato con successo!"
+#
+# PERSONALIZZAZIONI:
+# - Modifica soglie in base al tuo modello VMC
+# - Aggiungi notifiche Telegram, Discord, etc.
+# - Integra con calendar per promemoria manutenzione
+# - Crea sensor template per giorni rimanenti stimati

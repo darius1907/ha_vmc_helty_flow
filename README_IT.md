@@ -282,9 +282,34 @@ logger:
 
 ## 🔮 **Prossimi Sviluppi**
 
-- **Rilevamento Automatico**: Discovery automatico dispositivi nella rete locale
-- **Integrazioni Avanzate**: Collegamento con sensori esterni e stazioni meteo
-- **Dashboard Dedicata**: Interface utente specializzata per controllo dei sensori avanzati VMC
+Abbiamo una roadmap di sviluppo attiva con funzionalità entusiasmanti in programma!
+
+### 📋 Risorse di Sviluppo
+
+- **[Roadmap Progetto](PROJECT_ROADMAP.md)** - Piano di sviluppo dettagliato con milestone, task e tracciamento progressi
+- **[Piano Miglioramenti](IMPROVEMENT_PLAN.md)** - Analisi completa e miglioramenti proposti per le prossime versioni
+- **[Guida Blueprint](blueprints/BLUEPRINT_GUIDE.md)** - Documentazione completa blueprint automazioni
+
+### 🎯 Funzionalità in Arrivo (v1.2.0+)
+
+**Priorità Alta**:
+- 🔔 **Sistema Notifiche**: Alerting completo per eventi critici (filtro, qualità aria, offline)
+- 📘 **6 Nuovi Blueprint Automazioni**: Adattamento qualità aria, controllo umidità, promemoria filtro e altro
+- 📊 **Sensori Statistici**: Percentuale vita filtro, stima consumi energetici, tempo funzionamento
+- 📦 **Package Dashboard Pronto**: Package completo importabile con helper, automazioni e viste
+
+**Priorità Media** (v1.3.0):
+- ⭐ **Quality Scale Gold**: Upgrade da Silver a certificazione Gold
+- ⚡ **Integrazione Energy Dashboard**: Traccia consumi VMC nel pannello Energia di Home Assistant
+- 🎭 **Scene Predefinite**: Modalità notte, boost, risparmio energetico
+
+**Richieste Community**:
+- 🤖 Machine Learning per predizione qualità aria
+- 🗣️ Integrazioni avanzate assistenti vocali
+- 📱 App companion mobile
+- 🌐 Coordinamento VMC multi-zona
+
+Consulta la [roadmap completa](PROJECT_ROADMAP.md) per timeline dettagliata e suddivisione task.
 
 ## 📞 **Supporto**
 
@@ -295,11 +320,14 @@ Per problemi, richieste di funzionalità o contributi:
 
 ### Come Contribuire
 
+Accogliamo con piacere i contributi! Consulta le [Linee Guida per Contribuire](CONTRIBUTING.md) e la [Roadmap Progetto](PROJECT_ROADMAP.md) per le priorità correnti.
+
 1. 🍴 Fork del repository
 2. 🌱 Crea un branch per la feature
-3. ✅ Aggiungi test per le modifiche
+3. ✅ Aggiungi test per le modifiche (coverage >95%)
 4. 📝 Aggiorna la documentazione
-5. 🔄 Invia una pull request
+5. 🎯 Controlla [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) per i task prioritari
+6. 🔄 Invia una pull request
 
 ---
 

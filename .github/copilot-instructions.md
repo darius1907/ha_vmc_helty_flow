@@ -165,17 +165,8 @@ def calculate_air_exchange_time(airflow: float, room_volume: float) -> dict:
 ### Service Integration
 ```python
 # Custom services for VMC control
-SERVICE_UPDATE_ROOM_VOLUME = "update_room_volume"
 SERVICE_NETWORK_DIAGNOSTICS = "network_diagnostics"
 SERVICE_SET_SPECIAL_MODE = "set_special_mode"
-
-# Service schemas with VMC-specific validation
-update_room_volume_schema = vol.Schema({
-    vol.Required("entity_id"): cv.entity_id,
-    vol.Required("room_volume"): vol.All(
-        vol.Coerce(float), vol.Range(min=1.0, max=1000.0)
-    ),
-})
 
 set_special_mode_schema = vol.Schema({
     vol.Required("entity_id"): cv.entity_id,

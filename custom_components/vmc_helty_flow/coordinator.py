@@ -85,6 +85,25 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             slug = f"vmc_helty_{slug}"
         return slug
 
+    def _parse_filter_hours(self, status_response: str) -> int | None:
+        """Parse filter hours from VMGH? response.
+
+        Response format: VMGO,<fan_speed>,<led>,<temp>,<humidity>,<filter_hours>
+        Filter hours is at position 5.
+        """
+        try:
+            if not status_response or not status_response.startswith("VMGO"):
+                return None
+
+            parts = status_response.split(",")
+            # Need 6 parts: VMGO + fan_speed + led + temp + humidity + filter_hours
+            if len(parts) < 6:  # noqa: PLR2004
+                return None
+
+            return int(parts[5])
+        except (ValueError, IndexError):
+            return None
+
     async def _get_status_data(self) -> str:
         """Get device status data."""
         try:
@@ -196,11 +215,15 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
             self._handle_successful_update()
 
+            # Parse filter hours from status response
+            filter_hours = self._parse_filter_hours(status_response)
+
             data = {
                 "status": status_response,
                 "sensors": additional_data["sensors"],
                 "name": additional_data["name"],
                 "network": additional_data["network"],
+                "filter_hours": filter_hours,
                 "available": True,
                 "last_update": time.time(),
             }

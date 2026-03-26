@@ -3,9 +3,10 @@
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, ENTITY_NAME_PREFIX
+from .const import DOMAIN, ENTITY_NAME_PREFIX, FILTER_MAX_HOURS
 from .device_info import VmcHeltyEntity
 from .helpers import tcp_send_command
 
@@ -37,6 +38,14 @@ class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Reset filter counter."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0417744")
+        response = await tcp_send_command(
+            self.coordinator.ip,
+            5001,
+            f"VMWH04{FILTER_MAX_HOURS}",
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
+
+    def press(self) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async_press to reset filter")

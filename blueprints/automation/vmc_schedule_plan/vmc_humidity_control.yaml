@@ -1,0 +1,280 @@
+---
+blueprint:
+  name: VMC Helty Flow - Controllo Umidità Automatico
+  description: >
+    Attiva automaticamente boost VMC quando l'umidità supera la soglia configurata.
+    Perfetto per bagno (doccia) e cucina (cottura).
+
+    **Logica di funzionamento**:
+    - Umidità > soglia: Attiva boost per durata minima configurata
+    - Durante boost: Monitora umidità ogni minuto
+    - Umidità scende sotto soglia: Continua boost fino a durata minima
+    - Dopo durata minima: Ritorna a velocità normale solo se umidità OK
+
+    **Caratteristiche**:
+    - Durata minima boost garantita (anche se umidità scende subito)
+    - Estensione automatica boost se umidità rimane alta
+    - Cooldown opzionale tra boost multipli
+    - Notifica opzionale attivazione/disattivazione
+    - Supporto blackout notturno opzionale
+
+  domain: automation
+
+  input:
+    vmc_entity:
+      name: Entità VMC
+      description: L'entità fan della VMC Helty Flow
+      selector:
+        entity:
+          domain: fan
+          integration: vmc_helty_flow
+
+    humidity_sensor:
+      name: Sensore Umidità
+      description: Sensore umidità della stanza (bagno, cucina, etc.)
+      selector:
+        entity:
+          domain: sensor
+          device_class: humidity
+
+    humidity_threshold_high:
+      name: Soglia Umidità Boost
+      description: Percentuale umidità che attiva il boost
+      default: 70
+      selector:
+        number:
+          min: 50
+          max: 95
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+    humidity_threshold_low:
+      name: Soglia Umidità Ritorno
+      description: Percentuale umidità per ritornare a velocità normale
+      default: 60
+      selector:
+        number:
+          min: 40
+          max: 90
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+    boost_duration_min:
+      name: Durata Minima Boost
+      description: Minuti minimi di boost garantiti (anche se umidità scende subito)
+      default: 15
+      selector:
+        number:
+          min: 5
+          max: 60
+          step: 5
+          unit_of_measurement: "minuti"
+          mode: slider
+
+    boost_duration_max:
+      name: Durata Massima Boost
+      description: Minuti massimi di boost (safety timeout)
+      default: 60
+      selector:
+        number:
+          min: 15
+          max: 180
+          step: 15
+          unit_of_measurement: "minuti"
+          mode: slider
+
+    boost_speed:
+      name: Velocità Boost
+      description: Velocità ventola durante boost
+      default: 100
+      selector:
+        select:
+          options:
+            - label: "Alto (75%)"
+              value: "75"
+            - label: "Massimo (100%)"
+              value: "100"
+
+    normal_speed:
+      name: Velocità Normale
+      description: Velocità ventola dopo boost
+      default: 50
+      selector:
+        select:
+          options:
+            - label: "Minimo (25%)"
+              value: "25"
+            - label: "Medio (50%)"
+              value: "50"
+            - label: "Alto (75%)"
+              value: "75"
+
+    cooldown_minutes:
+      name: Cooldown tra Boost
+      description: Minuti di attesa prima di permettere nuovo boost (0 = disabilitato)
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 30
+          step: 5
+          unit_of_measurement: "minuti"
+          mode: slider
+
+    blackout_start:
+      name: Inizio Blackout Notturno (opzionale)
+      description: Disabilita boost automatico durante la notte (vuoto = sempre attivo)
+      default: {}
+      selector:
+        time:
+
+    blackout_end:
+      name: Fine Blackout Notturno (opzionale)
+      description: Riabilita boost automatico (vuoto = sempre attivo)
+      default: {}
+      selector:
+        time:
+
+    notify_service:
+      name: Servizio Notifica (opzionale)
+      description: Invia notifica quando boost si attiva (es. notify.mobile_app_m2101k9g)
+      default: "notify.mobile_app_m2101k9g"
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+variables:
+  humidity_sensor_entity: !input humidity_sensor
+  humidity_high: !input humidity_threshold_high
+  humidity_low: !input humidity_threshold_low
+  duration_min: !input boost_duration_min
+  duration_max: !input boost_duration_max
+  cooldown: !input cooldown_minutes
+  notify: !input notify_service
+  blackout_start_time: !input blackout_start
+  blackout_end_time: !input blackout_end
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input humidity_sensor
+    above: !input humidity_threshold_high
+    for:
+      seconds: 30  # Evita falsi positivi da spike temporanei
+
+condition:
+  # Verifica che non siamo in blackout notturno
+  - condition: template
+    value_template: >
+      {% if blackout_start_time == {} or blackout_end_time == {} %}
+        true
+      {% else %}
+        {% set current = now().strftime('%H:%M') %}
+        {% set start = blackout_start_time %}
+        {% set end = blackout_end_time %}
+        {% if start < end %}
+          {{ current < start or current >= end }}
+        {% else %}
+          {{ current < start and current >= end }}
+        {% endif %}
+      {% endif %}
+
+action:
+  - variables:
+      humidity_current: "{{ states(humidity_sensor_entity) | float(0) }}"
+      boost_start_time: "{{ now() }}"
+
+  # Invia notifica di attivazione (se configurata)
+  - if:
+      - condition: template
+        value_template: "{{ notify != '' }}"
+    then:
+      - service: "{{ notify }}"
+        data:
+          title: "VMC Boost Attivato"
+          message: >
+            Umidità rilevata: {{ humidity_current }}%
+            Soglia: {{ humidity_high }}%
+            Durata minima: {{ duration_min }} minuti
+
+  # Attiva boost
+  - service: fan.set_percentage
+    target:
+      entity_id: !input vmc_entity
+    data:
+      percentage: !input boost_speed
+
+  - service: logbook.log
+    data:
+      name: "VMC Humidity Control"
+      message: "Boost attivato - Umidità: {{ humidity_current }}%"
+
+  # Attendi durata minima garantita
+  - delay:
+      minutes: !input boost_duration_min
+
+  # Loop di monitoraggio fino a umidità normale o timeout massimo
+  - repeat:
+      while:
+        - condition: numeric_state
+          entity_id: !input humidity_sensor
+          above: !input humidity_threshold_low
+        - condition: template
+          value_template: >
+            {{ (now() - boost_start_time).total_seconds() / 60 < duration_max }}
+      sequence:
+        - delay:
+            minutes: 1
+        - service: logbook.log
+          data:
+            name: "VMC Humidity Control"
+            message: >
+              Boost continua - Umidità: {{ states(humidity_sensor_entity) }}%
+              (target: {{ humidity_low }}%)
+
+  # Ritorna a velocità normale
+  - service: fan.set_percentage
+    target:
+      entity_id: !input vmc_entity
+    data:
+      percentage: !input normal_speed
+
+  - variables:
+      boost_duration: >
+        {{ ((now() - boost_start_time).total_seconds() / 60) | round(1) }}
+      final_humidity: "{{ states(humidity_sensor_entity) | float(0) }}"
+
+  # Invia notifica di completamento (se configurata)
+  - if:
+      - condition: template
+        value_template: "{{ notify != '' }}"
+    then:
+      - service: "{{ notify }}"
+        data:
+          title: "VMC Boost Completato"
+          message: >
+            Durata: {{ boost_duration }} minuti
+            Umidità finale: {{ final_humidity }}%
+            Ritorno a velocità normale: {{ normal_speed }}%
+
+  - service: logbook.log
+    data:
+      name: "VMC Humidity Control"
+      message: >
+        Boost completato dopo {{ boost_duration }} minuti
+        Umidità finale: {{ final_humidity }}%
+
+  # Cooldown opzionale prima di permettere nuovo boost
+  - if:
+      - condition: template
+        value_template: "{{ cooldown > 0 }}"
+    then:
+      - delay:
+          minutes: !input cooldown_minutes
+      - service: logbook.log
+        data:
+          name: "VMC Humidity Control"
+          message: "Cooldown completato - Pronto per nuovo boost"
