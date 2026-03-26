@@ -17,7 +17,7 @@ Questa directory contiene il piano di sviluppo completo per VMC Helty Flow v1.2.
 
 **Contenuto**:
 - ✅ Dashboard progressi con percentuali completamento
-- ✅ 3 Milestone dettagliate (v1.2.0-beta, v1.2.0, v1.3.0)
+- ✅ 3 Milestone dettagliate (v1.1.1, v1.2.0, v1.3.0)
 - ✅ 9 Sprint con task checklist
 - ✅ 80+ task individuali con effort estimate e priority
 - ✅ Timeline Gantt visualizzata
@@ -146,7 +146,7 @@ Questa directory contiene il piano di sviluppo completo per VMC Helty Flow v1.2.
 
 ## 📊 Stato Corrente (2026-03-23)
 
-### Milestone Attiva: v1.2.0-beta
+### Milestone Attiva: v1.1.1
 **Target**: 2026-04-15
 **Completamento**: ▓▓▓░░░░░░░ 30%
 
@@ -250,7 +250,7 @@ Task implementabili in 1-2 giorni (entry point per contributors):
 - ✅ New contributors can onboard easily
 
 ### Development Success
-- ✅ v1.2.0-beta released on target (2026-04-15)
+- ✅ v1.1.1 released on target (2026-04-15)
 - ✅ Test coverage >95% maintained
 - ✅ Zero critical bugs open
 - ✅ Community feedback positive

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.1] - 2026-03-226
 
 ### 🔄 Changed
 - `VmcHeltySSIDText` is now explicitly read-only: SSID edits are blocked with a clear user-facing error
@@ -21,8 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevented accidental synchronous writes on text entities by raising explicit `HomeAssistantError` in sync `set_value` paths
 - Fixed warning `coroutine '_handle_set_special_mode' was never awaited` during special mode service execution
 - Aligned special mode mappings between the integration and the Lovelace card so `hyperventilation` uses speed `5` and `night_mode` uses speed `6` consistently
-
-## [1.2.0-beta] - 2026-03-24
 
 ### ✨ Added
 - New advanced sensor `VmcHeltyFilterLifePercentageSensor` (SENS-001)

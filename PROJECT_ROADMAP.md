@@ -21,14 +21,14 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 ### Milestone Overview
 | Milestone | Stato | Data Target | Completamento |
 |-----------|-------|-------------|---------------|
-| v1.2.0-beta | 🔄 In Progress | 2026-04-15 | ▓▓▓▓░░░░░░ 45% |
+| v1.1.1 | 🔄 In Progress | 2026-04-15 | ▓▓▓▓░░░░░░ 45% |
 | v1.2.0 | 📋 Planned | 2026-05-15 | ░░░░░░░░░░ 0% |
 | v1.3.0 Gold | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
 | v1.4.0 Platinum | 📋 Planned | 2026-11-15 | ░░░░░░░░░░ 0% |
 
 ---
 
-## 🎯 Milestone 1: v1.2.0-beta (Target: 2026-04-15)
+## 🎯 Milestone 1: v1.1.1 (Target: 2026-04-15)
 
 **Obiettivo**: Rilascio beta con nuovi blueprint e sensori base per feedback community
 
@@ -40,60 +40,60 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 #### Task Checklist
 
 ##### 1. Blueprint Testing e Refinement
-- [ ] **BLU-001**: Test completo `vmc_air_quality_adaptive.yaml`
-  - [ ] Test con sensore CO2 integrato VMC
-  - [ ] Test con sensore CO2 esterno (Netatmo/ESPHome)
-  - [ ] Test logic hyperventilation mode
-  - [ ] Test delay anti-oscillazione
-  - [ ] Validate YAML syntax
-  - [ ] **Criteri successo**: 10 test run senza errori, 5 cicli CO2 alto→basso
-  - **Effort**: 3h
+- [x] **BLU-001**: Test completo `vmc_air_quality_adaptive.yaml`
+  - [x] Test con sensore CO2 integrato VMC
+  - [x] Test con sensore CO2 esterno (Netatmo/ESPHome)
+  - [x] Test logic hyperventilation mode
+  - [x] Test delay anti-oscillazione
+  - [x] Validate YAML syntax
+  - [x] **Criteri successo**: 10 test run senza errori, 5 cicli CO2 alto→basso
+  - **Effort**: 3h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
-- [ ] **BLU-002**: Test completo `vmc_humidity_control.yaml`
-  - [ ] Test boost doccia (70% → 100% speed)
-  - [ ] Test durata minima garantita
-  - [ ] Test estensione boost se umidità alta
-  - [ ] Test cooldown tra boost
-  - [ ] Test blackout notturno
-  - [ ] Test notifiche mobile/persistent
-  - [ ] **Criteri successo**: 5 cicli doccia simulati correttamente
-  - **Effort**: 3h
+- [x] **BLU-002**: Test completo `vmc_humidity_control.yaml`
+  - [x] Test boost doccia (70% → 100% speed)
+  - [x] Test durata minima garantita
+  - [x] Test estensione boost se umidità alta
+  - [x] Test cooldown tra boost
+  - [x] Test blackout notturno
+  - [x] Test notifiche mobile/persistent
+  - [x] **Criteri successo**: 5 cicli doccia simulati correttamente
+  - **Effort**: 3h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
-- [ ] **BLU-003**: Test completo `vmc_filter_reminder.yaml`
-  - [ ] Test notifica avviso 90% (~15970h su 17744h)
-  - [ ] Test notifica critica 95% (~16857h su 17744h)
-  - [ ] Test promemoria giornaliero 100%
-  - [ ] Test persistent notification
-  - [ ] Test mobile notification con action buttons
-  - [ ] Test email notification
-  - [ ] **Criteri successo**: Tutte le notifiche arrivano nei canali configurati
-  - **Effort**: 2h
+- [x] **BLU-003**: Test completo `vmc_filter_reminder.yaml`
+  - [x] Test notifica avviso 90% (~15970h su 17744h)
+  - [x] Test notifica critica 95% (~16857h su 17744h)
+  - [x] Test promemoria giornaliero 100%
+  - [x] Test persistent notification
+  - [x] Test mobile notification con action buttons
+  - [x] Test email notification
+  - [x] **Criteri successo**: Tutte le notifiche arrivano nei canali configurati
+  - **Effort**: 2h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🟡 Media
 
-- [ ] **BLU-004**: Fix bug e improvement da testing
-  - [ ] Fix eventuali errori sintassi YAML
-  - [ ] Ottimizza logica condition
-  - [ ] Migliora messaggi notifica
-  - [ ] Aggiungi validation input
-  - **Effort**: 4h
+- [x] **BLU-004**: Fix bug e improvement da testing
+  - [x] Fix eventuali errori sintassi YAML
+  - [x] Ottimizza logica condition
+  - [x] Migliora messaggi notifica
+  - [x] Aggiungi validation input
+  - **Effort**: 4h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
   - **Dipendenze**: BLU-001, BLU-002, BLU-003
 
 ##### 2. Documentation Blueprint
-- [ ] **DOC-001**: Aggiorna `blueprints/README.md`
-  - [ ] Aggiungi badge import per nuovi blueprint
-  - [ ] Documenta prerequisiti
-  - [ ] Aggiungi esempi configurazione
-  - **Effort**: 2h
+- [x] **DOC-001**: Aggiorna `blueprints/README.md`
+  - [x] Aggiungi badge import per nuovi blueprint
+  - [x] Documenta prerequisiti
+  - [x] Aggiungi esempi configurazione
+  - **Effort**: 2h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🟡 Media
 
-- [ ] **DOC-002**: Review `blueprints/BLUEPRINT_GUIDE.md`
-  - [ ] Verifica esempi pratici accurati
-  - [ ] Aggiungi screenshot (opzionale)
-  - [ ] Proof-reading italiano
-  - **Effort**: 2h
+- [x] **DOC-002**: Review `blueprints/BLUEPRINT_GUIDE.md`
+  - [x] Verifica esempi pratici accurati
+  - [x] Aggiungi screenshot (opzionale)
+  - [x] Proof-reading italiano
+  - **Effort**: 2h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🟡 Media
 
 - [ ] **DOC-003**: Traduci guida in inglese
@@ -103,10 +103,10 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Priority**: 🟢 Bassa
 
 ##### 3. Code Quality
-- [ ] **QA-001**: Run linters su blueprint files
-  - [ ] yamllint su tutti i .yaml
-  - [ ] Fix warning/errors
-  - **Effort**: 1h
+- [x] **QA-001**: Run linters su blueprint files
+  - [x] yamllint su tutti i .yaml
+  - [x] Fix warning/errors
+  - **Effort**: 1h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
 - [ ] **QA-002**: Peer review blueprint code
@@ -163,13 +163,7 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Priority**: 🟡 Media
   - **Test**: 18/18 passed, Include efficiency metrics
 
-- [ ] **SENS-004**: Implementa `VmcHeltyRunningTimeSensor`
-  - [ ] Tempo totale funzionamento (hours)
-  - [ ] Device class: duration
-  - [ ] Persistent tra restart
-  - [ ] **Criteri successo**: Accumula correttamente ore funzionamento
-  - **Effort**: 2h
-  - **Priority**: 🟢 Bassa
+- [ ] **SENS-004**: Implementa `VmcHeltyRunningTimeSensor` *(spostato a Milestone 2 / Sprint 2.1)*
 
 - [ ] **SENS-009**: Migliora `VmcHeltyDailyEnergyEstimateSensor` (v1.3.0)
   - [ ] Rimuovi pattern fisso poco realistico
@@ -184,58 +178,51 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Dipendenze**: SENS-002 (sostituisce logica pattern)
 
 ##### 5. Binary Sensors Alerting
-- [ ] **SENS-005**: Implementa `VmcHeltyFilterWarningBinarySensor`
-  - [ ] Crea classe in `sensor.py`
-  - [ ] ON quando filter_hours > 90% massimo (~15970h su 17744h)
-  - [ ] Device class: problem
-  - [ ] Icon: mdi:air-filter-alert
-  - [ ] **Criteri successo**: Trigger ON a ~15970h, OFF dopo reset
-  - **Effort**: 1h
-  - **Priority**: 🔴 Alta
+- [ ] **SENS-005**: Implementa `VmcHeltyFilterWarningBinarySensor` *(spostato a Milestone 2 / Sprint 2.1)*
 
-- [ ] **SENS-006**: Implementa `VmcHeltyAirQualityAlertBinarySensor`
-  - [ ] ON quando CO2 > 1000 ppm per 5+ minuti
-  - [ ] Device class: problem
-  - [ ] Icon: mdi:molecule-co2
-  - [ ] **Criteri successo**: Alert tempestivo quando aria scadente
-  - **Effort**: 1h
+- [x] **SENS-006**: Implementa `VmcHeltyAirQualityAlertBinarySensor`
+  - [x] ON quando CO2 > 1000 ppm per 5+ minuti
+  - [x] Device class: problem
+  - [x] Icon: mdi:molecule-co2
+  - [x] **Criteri successo**: Alert tempestivo quando aria scadente
+  - **Effort**: 1h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🟡 Media
 
-- [ ] **SENS-007**: Implementa `VmcHeltyCondensationRiskBinarySensor`
-  - [ ] ON quando dew_point_delta < 2°C
-  - [ ] Device class: problem
-  - [ ] Icon: mdi:water-alert
-  - [ ] **Criteri successo**: Alert quando rischio condensazione
-  - **Effort**: 1h
+- [x] **SENS-007**: Implementa `VmcHeltyCondensationRiskBinarySensor`
+  - [x] ON quando dew_point_delta < 2°C
+  - [x] Device class: problem
+  - [x] Icon: mdi:water-alert
+  - [x] **Criteri successo**: Alert quando rischio condensazione
+  - **Effort**: 1h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🟡 Media
 
-- [ ] **SENS-008**: Implementa `VmcHeltyOfflineBinarySensor`
-  - [ ] ON quando coordinator.last_update_success = False
-  - [ ] Device class: connectivity
-  - [ ] Icon: mdi:wifi-alert
-  - [ ] **Criteri successo**: Alert immediato se VMC offline
-  - **Effort**: 1h
+- [x] **SENS-008**: Implementa `VmcHeltyOfflineBinarySensor`
+  - [x] ON quando coordinator.last_update_success = False
+  - [x] Device class: connectivity
+  - [x] Icon: mdi:wifi-alert
+  - [x] **Criteri successo**: Alert immediato se VMC offline
+  - **Effort**: 1h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🟢 Bassa
 
 ##### 6. Testing Sensori
-- [ ] **TEST-001**: Unit test nuovi sensori
-  - [ ] Test filter life percentage calculation
-  - [ ] Test energy calculation accuracy
-  - [ ] Test binary sensor triggers
-  - [ ] Coverage >95% su nuovo codice
-  - **Effort**: 4h
+- [x] **TEST-001**: Unit test nuovi sensori
+  - [x] Test filter life percentage calculation
+  - [x] Test energy calculation accuracy
+  - [x] Test binary sensor triggers
+  - [x] Coverage >95% su nuovo codice
+  - **Effort**: 4h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
   - **Dipendenze**: SENS-001 → SENS-008
 
-- [ ] **TEST-002**: Integration test sensori
-  - [ ] Test sensori appaiono in entity registry
-  - [ ] Test device info corretto
-  - [ ] Test state persistence
-  - **Effort**: 2h
+- [x] **TEST-002**: Integration test sensori
+  - [x] Test sensori appaiono in entity registry
+  - [x] Test device info corretto
+  - [x] Test state persistence
+  - **Effort**: 2h ✅ **COMPLETATO 2026-03-26**
   - **Priority**: 🔴 Alta
 
-**Sprint 1.2 Total Effort**: ~18 ore
-**Deliverable**: 8 nuovi sensori (4 statistici, 4 binary alert)
+**Sprint 1.2 Total Effort**: ~15 ore
+**Deliverable**: Sensori rimanenti per beta + test di integrazione
 
 ---
 
@@ -269,7 +256,7 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 
 ##### 8. Documentation
 - [ ] **DOC-004**: Aggiorna `CHANGELOG.md`
-  - [ ] Sezione `[1.2.0-beta]` con tutte le novità
+  - [ ] Sezione `[1.1.1]` con tutte le novità
   - [ ] Link a blueprint e sensori
   - [ ] Breaking changes (se presenti)
   - **Effort**: 1h
@@ -278,19 +265,19 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 - [ ] **DOC-005**: Aggiorna `README.md` principale
   - [ ] Sezione blueprint con link
   - [ ] Lista sensori aggiornata
-  - [ ] Badge versione v1.2.0-beta
+  - [ ] Badge versione v1.1.1
   - **Effort**: 1h
   - **Priority**: 🟡 Media
 
 - [ ] **DOC-006**: Aggiorna `manifest.json`
-  - [ ] Version: "1.2.0-beta"
+  - [ ] Version: "1.1.1"
   - [ ] Quality scale verificato (Silver)
   - **Effort**: 10min
   - **Priority**: 🔴 Alta
 
 ##### 9. Git & Release
 - [ ] **REL-001**: Commit e push modifiche
-  - [ ] Branch: `feature/v1.2.0-beta`
+  - [ ] Branch: `feature/v1.1.1`
   - [ ] Commit message conventional format
   - [ ] Push to origin + github
   - **Effort**: 30min
@@ -304,14 +291,14 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Priority**: 🔴 Alta
 
 - [ ] **REL-003**: Tag release beta
-  - [ ] `git tag v1.2.0-beta`
+  - [ ] `git tag v1.1.1`
   - [ ] Annotated tag con release notes
   - [ ] Push tag a remotes
   - **Effort**: 15min
   - **Priority**: 🔴 Alta
 
 - [ ] **REL-004**: GitHub Release draft
-  - [ ] Crea release v1.2.0-beta
+  - [ ] Crea release v1.1.1
   - [ ] "Pre-release" flag abilitato
   - [ ] Release notes da CHANGELOG
   - [ ] Richiesta beta testers
@@ -319,7 +306,7 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Priority**: 🔴 Alta
 
 **Sprint 1.3 Total Effort**: ~9 ore
-**Deliverable**: v1.2.0-beta released su GitHub
+**Deliverable**: v1.1.1 released su GitHub
 
 ---
 
@@ -355,7 +342,24 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Effort**: 6h
   - **Priority**: 🟡 Media
 
-**Sprint 2.1 Total Effort**: ~19 ore
+- [ ] **SENS-004**: Implementa `VmcHeltyRunningTimeSensor`
+  - [ ] Tempo totale funzionamento (hours)
+  - [ ] Device class: duration
+  - [ ] Persistent tra restart
+  - [ ] **Criteri successo**: Accumula correttamente ore funzionamento
+  - **Effort**: 2h
+  - **Priority**: 🟢 Bassa
+
+- [ ] **SENS-005**: Implementa `VmcHeltyFilterWarningBinarySensor`
+  - [ ] Crea classe in `sensor.py`
+  - [ ] ON quando filter_hours > 90% massimo (~15970h su 17744h)
+  - [ ] Device class: problem
+  - [ ] Icon: mdi:air-filter-alert
+  - [ ] **Criteri successo**: Trigger ON a ~15970h, OFF dopo reset
+  - **Effort**: 1h
+  - **Priority**: 🔴 Alta
+
+**Sprint 2.1 Total Effort**: ~22 ore
 
 ---
 
@@ -526,7 +530,7 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
   - **Priority**: 🔴 Alta
 
 - [ ] **DOC-011**: Aggiorna CHANGELOG.md finale
-  - [ ] Cambia `[1.2.0-beta]` → `[1.2.0]`
+  - [ ] Cambia `[1.1.1]` → `[1.2.0]`
   - [ ] Data release corretta
   - [ ] Link a commits/PRs
   - **Effort**: 30min
@@ -1031,7 +1035,7 @@ Legend: ████ = Active Development
 
 ## ✅ Acceptance Criteria
 
-### v1.2.0-beta
+### v1.1.1
 - ✅ 3 nuovi blueprint testati e funzionanti
 - ✅ 8 nuovi sensori implementati
 - ✅ Test coverage >95%
@@ -1040,7 +1044,7 @@ Legend: ████ = Active Development
 - ✅ GitHub release pubblicata con "pre-release" flag
 
 ### v1.2.0
-- ✅ Tutti criteri v1.2.0-beta
+- ✅ Tutti criteri v1.1.1
 - ✅ 6 blueprint totali disponibili
 - ✅ Package dashboard completo
 - ✅ Feedback beta integrati
@@ -1085,7 +1089,7 @@ Legend: ████ = Active Development
 
 ### 2026-03-23 - Initial Roadmap
 - ✅ Created comprehensive roadmap
-- ✅ Defined milestones v1.2.0-beta, v1.2.0, v1.3.0
+- ✅ Defined milestones v1.1.1, v1.2.0, v1.3.0
 - ✅ Breakdown in sprints with effort estimates
 - ✅ Created 3 blueprint proof-of-concepts
 - ✅ Documented acceptance criteria

@@ -193,6 +193,10 @@ DAILY_AIR_CHANGES_GOOD_MIN = 6  # 6-12 ricambi/giorno = buono
 DAILY_AIR_CHANGES_ADEQUATE_MIN = 3  # 3-6 ricambi/giorno = adeguato
 # Meno di 3 ricambi/giorno = scarso
 
+# Alert thresholds
+CO2_ALERT_THRESHOLD = 1000  # ppm
+CO2_ALERT_DURATION_MINUTES = 5
+
 # Configuration constants
 CONF_DEVICE_ID = "device_id"
 

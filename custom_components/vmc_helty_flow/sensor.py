@@ -3,7 +3,7 @@
 import logging
 import math
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
@@ -38,6 +38,8 @@ from .const import (
     AIR_EXCHANGE_TIME_EXCELLENT,
     AIR_EXCHANGE_TIME_GOOD,
     AIRFLOW_MAPPING,
+    CO2_ALERT_DURATION_MINUTES,
+    CO2_ALERT_THRESHOLD,
     COMFORT_HUMIDITY_ACCEPTABLE_MAX,
     COMFORT_HUMIDITY_ACCEPTABLE_MIN,
     COMFORT_HUMIDITY_MAX,
@@ -176,6 +178,9 @@ async def async_setup_entry(
         VmcHeltyDailyAirChangesSensor(coordinator, coordinator.device_id),
         # Sensori di stato
         VmcHeltyOnOffSensor(coordinator),
+        VmcHeltyAirQualityAlertBinarySensor(coordinator),
+        VmcHeltyCondensationRiskBinarySensor(coordinator),
+        VmcHeltyOfflineBinarySensor(coordinator),
         VmcHeltyLastResponseSensor(coordinator),
         VmcHeltyFilterHoursSensor(coordinator),
         VmcHeltyFilterLifePercentageSensor(coordinator),
@@ -307,6 +312,121 @@ class VmcHeltyOnOffSensor(VmcHeltyEntity, BinarySensorEntity):
         return bool(
             self.coordinator.data and self.coordinator.data.get("available", False)
         )
+
+
+class VmcHeltyAirQualityAlertBinarySensor(VmcHeltyEntity, BinarySensorEntity):
+    """Alert when CO2 remains above threshold for more than 5 minutes."""
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_air_quality_alert"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Air Quality Alert"
+        self._attr_device_class = BinarySensorDeviceClass.PROBLEM
+        self._attr_icon = "mdi:molecule-co2"
+        self._co2_above_threshold_since: datetime | None = None
+
+    @property
+    def is_on(self) -> bool:
+        """Return True when CO2 > 1000 ppm for at least 5 minutes."""
+        co2_value = self._get_co2_value()
+        if co2_value is None or co2_value <= CO2_ALERT_THRESHOLD:
+            self._co2_above_threshold_since = None
+            return False
+
+        if self._co2_above_threshold_since is None:
+            self._co2_above_threshold_since = dt_util.utcnow()
+            return False
+
+        return dt_util.utcnow() - self._co2_above_threshold_since >= timedelta(
+            minutes=CO2_ALERT_DURATION_MINUTES
+        )
+
+    def _get_co2_value(self) -> int | None:
+        """Extract CO2 value from VMGI payload."""
+        if not self.coordinator.data:
+            return None
+
+        sensors_data = self.coordinator.data.get("sensors", "")
+        if not sensors_data or not sensors_data.startswith("VMGI"):
+            return None
+
+        try:
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return None
+            return int(parts[4])
+        except (ValueError, IndexError):
+            return None
+
+
+class VmcHeltyCondensationRiskBinarySensor(VmcHeltyEntity, BinarySensorEntity):
+    """Alert when dew point delta indicates condensation risk."""
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_condensation_risk_alert"
+        self._attr_name = (
+            f"{ENTITY_NAME_PREFIX} {coordinator.name} Condensation Risk Alert"
+        )
+        self._attr_device_class = BinarySensorDeviceClass.PROBLEM
+        self._attr_icon = "mdi:water-alert"
+
+    @property
+    def is_on(self) -> bool:
+        """Return True when dew point delta is below 2°C."""
+        if not self.coordinator.data:
+            return False
+
+        sensors_data = self.coordinator.data.get("sensors", "")
+        if not sensors_data or not sensors_data.startswith("VMGI"):
+            return False
+
+        delta = None
+        try:
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return False
+
+            temp_internal = float(parts[1]) / 10
+            temp_external = float(parts[2]) / 10
+            humidity = float(parts[3]) / 10
+
+            if humidity <= 0 or humidity > COMFORT_HUMIDITY_MAX:
+                return False
+
+            internal_dew_point = self._calculate_dew_point(temp_internal, humidity)
+            external_dew_point = self._calculate_dew_point(temp_external, humidity)
+            delta = internal_dew_point - external_dew_point
+        except (ValueError, IndexError, TypeError, ZeroDivisionError):
+            return False
+
+        return delta is not None and delta < DEW_POINT_DELTA_MODERATE_RISK
+
+    def _calculate_dew_point(self, temperature: float, humidity: float) -> float:
+        """Calculate dew point using Magnus-Tetens formula."""
+        a = 17.27
+        b = 237.7
+        gamma = (a * temperature) / (b + temperature) + math.log(humidity / 100.0)
+        return (b * gamma) / (a - gamma)
+
+
+class VmcHeltyOfflineBinarySensor(VmcHeltyEntity, BinarySensorEntity):
+    """Alert when coordinator reports communication failures."""
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_offline_alert"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Offline Alert"
+        self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+        self._attr_icon = "mdi:wifi-alert"
+
+    @property
+    def is_on(self) -> bool:
+        """Return True when the device is considered offline by coordinator."""
+        return not self.coordinator.last_update_success
 
 
 class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):

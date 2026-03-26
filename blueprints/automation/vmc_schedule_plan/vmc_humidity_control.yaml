@@ -1,3 +1,4 @@
+---
 blueprint:
   name: VMC Helty Flow - Controllo Umidità Automatico
   description: >
@@ -183,7 +184,7 @@ condition:
 
 action:
   - variables:
-  humidity_current: "{{ states(humidity_sensor_entity) | float(0) }}"
+      humidity_current: "{{ states(humidity_sensor_entity) | float(0) }}"
       boost_start_time: "{{ now() }}"
 
   # Invia notifica di attivazione (se configurata)

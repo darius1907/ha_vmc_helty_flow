@@ -122,9 +122,9 @@ Sistema completo notifiche manutenzione filtro.
 **Contro**: Nessuno
 
 **Notifiche**:
-- **90% (3240h)**: Avviso preventivo
-- **95% (3420h)**: Allerta critica
-- **100% (3600h)**: Promemoria giornaliero urgente
+- **90% (~15970h)**: Avviso preventivo
+- **95% (~16857h)**: Allerta critica
+- **100% (17744h)**: Promemoria giornaliero urgente
 
 **Canali notifica supportati**:
 - ✅ Persistent notification (UI Home Assistant)

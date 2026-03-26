@@ -11,7 +11,9 @@ from homeassistant.util import dt as dt_util
 from custom_components.vmc_helty_flow import sensor
 from custom_components.vmc_helty_flow.const import DOMAIN
 from custom_components.vmc_helty_flow.sensor import (
+    VmcHeltyAirflowSensor,
     VmcHeltyLastResponseSensor,
+    VmcHeltyOfflineBinarySensor,
     VmcHeltySensor,
 )
 
@@ -61,7 +63,7 @@ async def test_async_setup_entry(mock_hass, mock_config_entry, mock_coordinator)
     async_add_entities.assert_called_once()
     entities = async_add_entities.call_args[0][0]
 
-    assert len(entities) == 22  # ResetFilterButton moved to button.py platform
+    assert len(entities) == 25  # ResetFilterButton moved to button.py platform
     sensor_entities = [e for e in entities if isinstance(e, VmcHeltySensor)]
     assert len(sensor_entities) >= 5  # At least the 5 main sensors
 
@@ -256,3 +258,52 @@ class TestVmcHeltyLastResponseSensor:
 
         assert result == expected
         assert result.tzinfo == dt_util.UTC
+
+
+@pytest.mark.asyncio
+async def test_sensor_entities_have_device_info_and_unique_ids(
+    mock_hass, mock_config_entry, mock_coordinator
+):
+    """Integration-like check: created entities expose device info and unique IDs."""
+    mock_hass.data[DOMAIN][mock_config_entry.entry_id] = mock_coordinator
+    async_add_entities = MagicMock()
+
+    await sensor.async_setup_entry(mock_hass, mock_config_entry, async_add_entities)
+
+    entities = async_add_entities.call_args[0][0]
+    unique_ids = [entity.unique_id for entity in entities]
+
+    assert len(unique_ids) == len(set(unique_ids))
+
+    for entity in entities:
+        info = entity.device_info
+        assert info is not None
+        assert "identifiers" in info
+        assert info["identifiers"]
+
+
+def test_airflow_sensor_state_updates_with_coordinator_data(mock_coordinator):
+    """Integration-like check: entity keeps identity while state updates with data."""
+    airflow_sensor = VmcHeltyAirflowSensor(mock_coordinator)
+    original_unique_id = airflow_sensor.unique_id
+
+    mock_coordinator.data = {"status": "VMGO,1,1,25,0,24"}
+    first_value = airflow_sensor.native_value
+
+    mock_coordinator.data = {"status": "VMGO,4,1,25,0,24"}
+    second_value = airflow_sensor.native_value
+
+    assert original_unique_id == airflow_sensor.unique_id
+    assert first_value == 10
+    assert second_value == 37
+
+
+def test_offline_binary_sensor_tracks_last_update_success(mock_coordinator):
+    """Integration-like check: connectivity alert follows coordinator state changes."""
+    offline_sensor = VmcHeltyOfflineBinarySensor(mock_coordinator)
+
+    mock_coordinator.last_update_success = True
+    assert offline_sensor.is_on is False
+
+    mock_coordinator.last_update_success = False
+    assert offline_sensor.is_on is True
