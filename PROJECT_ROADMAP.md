@@ -3,7 +3,7 @@
 > **Piano di sviluppo** con task tracciabili, milestone e criteri di completamento
 > **Versione**: 1.0
 > **Data inizio**: 2026-03-23
-> **Ultima revisione**: 2026-03-26
+> **Ultima revisione**: 2026-03-26 (v1.2.0 attiva)
 
 ---
 
@@ -22,9 +22,9 @@ Tech Debt: 1 item ⚠️ (SENS-009: monitoraggio energia reale)
 | Milestone | Stato | Data Target | Completamento |
 |-----------|-------|-------------|---------------|
 | v1.1.1 | ✅ Completed | 2026-03-26 | ▓▓▓▓▓▓▓▓▓▓ 100% |
-| v1.4.0 | 📋 Planned | 2026-11-15 | ░░░░░░░░░░ 0% |
-| v1.2.0 | 📋 Planned | 2026-05-15 | ░░░░░░░░░░ 0% |
+| v1.2.0 | 🔄 In Progress | 2026-05-15 | ░░░░░░░░░░ 0% |
 | v1.3.0 | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
+| v1.4.0 | 📋 Planned | 2026-11-15 | ░░░░░░░░░░ 0% |
 
 ---
 
@@ -523,8 +523,8 @@ esac_config:
 **Obiettivo**: Release stabile dopo feedback beta, dashboard package, restanti blueprint
 
 ### Sprint 3.1: Beta Feedback & Fixes (1 settimana)
-**Start**: 2026-04-16
-**End**: 2026-04-22
+**Start**: 2026-03-27
+**End**: 2026-04-02
 
 #### Task Checklist
 
@@ -572,8 +572,8 @@ esac_config:
 ---
 
 ### Sprint 3.2: Blueprint Aggiuntivi (1 settimana)
-**Start**: 2026-04-23
-**End**: 2026-04-29
+**Start**: 2026-04-03
+**End**: 2026-04-09
 
 #### Task Checklist
 
@@ -623,8 +623,8 @@ esac_config:
 ---
 
 ### Sprint 3.3: Dashboard Package (1 settimana)
-**Start**: 2026-04-30
-**End**: 2026-05-06
+**Start**: 2026-04-10
+**End**: 2026-04-16
 
 #### Task Checklist
 
@@ -692,8 +692,8 @@ esac_config:
 ---
 
 ### Sprint 3.4: Final Polish & Release (4 giorni)
-**Start**: 2026-05-07
-**End**: 2026-05-15
+**Start**: 2026-04-17
+**End**: 2026-05-01
 
 #### Task Checklist
 

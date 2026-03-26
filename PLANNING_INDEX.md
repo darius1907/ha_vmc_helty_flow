@@ -144,26 +144,28 @@ Questa directory contiene il piano di sviluppo completo per VMC Helty Flow v1.2.
 
 ---
 
-## 📊 Stato Corrente (2026-03-26)
+## 📊 Stato Corrente (2026-03-27)
 
-### Milestone Attiva: v1.1.1
-**Target**: 2026-04-15
-**Completamento**: ▓▓▓▓▓▓░░░░ 60%
+### Milestone Attiva: v1.2.0
+**Target**: 2026-05-15
+**Completamento**: ░░░░░░░░░░ 0%
 
-### Sprint Corrente: Sprint 1.3 (Quality & Release Beta)
-**Start**: 2026-04-14
-**End**: 2026-04-15
-**Focus**: Chiusura QA e preparazione release v1.1.1
+### Sprint Corrente: Sprint 3.1 (Beta Feedback & Fixes)
+**Start**: 2026-03-27
+**End**: 2026-04-02
+**Focus**: Raccolta feedback community e fix bug da beta v1.1.1
 
 ### Prossimi Sprint
-- Sprint 1.2: Sensori Statistici (7-13 Aprile)
-- Sprint 1.3: Quality & Release Beta (14-15 Aprile)
+- Sprint 3.2: Blueprint Aggiuntivi (3–9 Aprile)
+- Sprint 3.3: Dashboard Package (10–16 Aprile)
+- Sprint 3.4: Final Polish & Release (17 Aprile – 1 Maggio)
 
 ### Key Deliverable in Progress
-- ✅ 3 blueprint nuovi creati
-- ✅ Sensori statistici e alert completati
-- ✅ Quality gate tecnici (test, mypy, pre-commit) verificati
-- 🔄 Documentazione release e attività GitHub release in corso
+- ✅ v1.1.1 rilasciato (tag + GitHub Release)
+- 🔄 FEED-001 — Post feedback su GitHub Discussions e HA Community
+- ⏳ SENS-005 — `VmcHeltyFilterWarningBinarySensor`
+- ⏳ SENS-004 — `VmcHeltyRunningTimeSensor`
+- ⏳ BLU-005/006/007 — 3 blueprint aggiuntivi
 
 ---
 
@@ -183,24 +185,23 @@ Luglio 2026   │ ▓ Sprint 4.3-4.4 (Scene + Release v1.3.0)
 
 Task implementabili in 1-2 giorni (entry point per contributors):
 
-1. **Traduzione guida blueprint EN** (4h)
-   - File: `blueprints/BLUEPRINT_GUIDE_EN.md` (da creare)
-   - Task: DOC-003 in PROJECT_ROADMAP.md
-   - Priority: 🟢 Bassa
-
-2. **Aggiornamento changelog release** (1h)
-   - File: `CHANGELOG.md`
-   - Task: DOC-004 in PROJECT_ROADMAP.md
+1. **Filter Warning Binary Sensor** (1h)
+   - File: `custom_components/vmc_helty_flow/sensor.py`
+   - Task: SENS-005 in PROJECT_ROADMAP.md
    - Priority: 🔴 Alta
 
-3. **Aggiornamento README release** (1h)
-   - File: `README.md`
-   - Task: DOC-005 in PROJECT_ROADMAP.md
+2. **Running Time Sensor** (2h)
+   - File: `custom_components/vmc_helty_flow/sensor.py`
+   - Task: SENS-004 in PROJECT_ROADMAP.md
+   - Priority: 🟢 Bassa
+
+3. **Blueprint: Temperature Compensation** (4h)
+   - File: `blueprints/automation/vmc_temperature_compensation.yaml` (da creare)
+   - Task: BLU-005 in PROJECT_ROADMAP.md
    - Priority: 🟡 Media
 
-4. **Preparazione PR milestone 1.1.1** (30min)
-   - File: `PROJECT_ROADMAP.md` (checklist release)
-   - Task: REL-001 / REL-002 in PROJECT_ROADMAP.md
+4. **Post feedback su Forum HA Community** (1h)
+   - Task: FEED-001 in PROJECT_ROADMAP.md
    - Priority: 🔴 Alta
 
 ---
