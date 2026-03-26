@@ -62,14 +62,14 @@ class VmcHeltyCard extends LitElement {
         label: this._t('modes.hyperventilation'),
         icon: 'mdi:fan-plus',
         attr: 'hyperventilation',
-        speed: 6
+        speed: 5
       },
       {
         key: 'night_mode',
         label: this._t('modes.night_mode'),
         icon: 'mdi:weather-night',
         attr: 'night_mode',
-        speed: 5
+        speed: 6
       },
       {
         key: 'free_cooling',

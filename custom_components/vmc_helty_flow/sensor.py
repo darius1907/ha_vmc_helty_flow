@@ -3,14 +3,13 @@
 import logging
 import math
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.components.button import ButtonEntity
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -21,10 +20,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
+    UnitOfEnergy,
     UnitOfTemperature,
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
@@ -37,6 +38,8 @@ from .const import (
     AIR_EXCHANGE_TIME_EXCELLENT,
     AIR_EXCHANGE_TIME_GOOD,
     AIRFLOW_MAPPING,
+    CO2_ALERT_DURATION_MINUTES,
+    CO2_ALERT_THRESHOLD,
     COMFORT_HUMIDITY_ACCEPTABLE_MAX,
     COMFORT_HUMIDITY_ACCEPTABLE_MIN,
     COMFORT_HUMIDITY_MAX,
@@ -77,8 +80,17 @@ from .const import (
     ENTITY_NAME_PREFIX,
     FAN_SPEED_MAX_NORMAL,
     FANSPEED_MAPPING,
+    FILTER_MAX_HOURS,
+    FILTER_STATUS_ADEQUATE,
+    FILTER_STATUS_EXCELLENT,
+    FILTER_STATUS_FAIR,
+    FILTER_STATUS_GOOD,
+    FILTER_STATUS_POOR,
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
     MIN_RESPONSE_PARTS,
     MIN_STATUS_PARTS,
+    POWER_MAPPING,
 )
 from .coordinator import VmcHeltyCoordinator
 from .device_info import VmcHeltyEntity
@@ -166,12 +178,18 @@ async def async_setup_entry(
         VmcHeltyDailyAirChangesSensor(coordinator, coordinator.device_id),
         # Sensori di stato
         VmcHeltyOnOffSensor(coordinator),
+        VmcHeltyAirQualityAlertBinarySensor(coordinator),
+        VmcHeltyCondensationRiskBinarySensor(coordinator),
+        VmcHeltyOfflineBinarySensor(coordinator),
         VmcHeltyLastResponseSensor(coordinator),
         VmcHeltyFilterHoursSensor(coordinator),
+        VmcHeltyFilterLifePercentageSensor(coordinator),
+        # Sensori energetici
+        VmcHeltyPowerSensor(coordinator),
+        VmcHeltyDailyEnergyEstimateSensor(coordinator),
         # Sensori di rete
         VmcHeltyIPAddressSensor(coordinator),
         # Pulsanti e controlli di testo
-        VmcHeltyResetFilterButton(coordinator),
         VmcHeltyNameText(coordinator),
         VmcHeltySSIDText(coordinator),
         VmcHeltyPasswordText(coordinator),
@@ -296,6 +314,121 @@ class VmcHeltyOnOffSensor(VmcHeltyEntity, BinarySensorEntity):
         )
 
 
+class VmcHeltyAirQualityAlertBinarySensor(VmcHeltyEntity, BinarySensorEntity):
+    """Alert when CO2 remains above threshold for more than 5 minutes."""
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_air_quality_alert"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Air Quality Alert"
+        self._attr_device_class = BinarySensorDeviceClass.PROBLEM
+        self._attr_icon = "mdi:molecule-co2"
+        self._co2_above_threshold_since: datetime | None = None
+
+    @property
+    def is_on(self) -> bool:
+        """Return True when CO2 > 1000 ppm for at least 5 minutes."""
+        co2_value = self._get_co2_value()
+        if co2_value is None or co2_value <= CO2_ALERT_THRESHOLD:
+            self._co2_above_threshold_since = None
+            return False
+
+        if self._co2_above_threshold_since is None:
+            self._co2_above_threshold_since = dt_util.utcnow()
+            return False
+
+        return dt_util.utcnow() - self._co2_above_threshold_since >= timedelta(
+            minutes=CO2_ALERT_DURATION_MINUTES
+        )
+
+    def _get_co2_value(self) -> int | None:
+        """Extract CO2 value from VMGI payload."""
+        if not self.coordinator.data:
+            return None
+
+        sensors_data = self.coordinator.data.get("sensors", "")
+        if not sensors_data or not sensors_data.startswith("VMGI"):
+            return None
+
+        try:
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return None
+            return int(parts[4])
+        except (ValueError, IndexError):
+            return None
+
+
+class VmcHeltyCondensationRiskBinarySensor(VmcHeltyEntity, BinarySensorEntity):
+    """Alert when dew point delta indicates condensation risk."""
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_condensation_risk_alert"
+        self._attr_name = (
+            f"{ENTITY_NAME_PREFIX} {coordinator.name} Condensation Risk Alert"
+        )
+        self._attr_device_class = BinarySensorDeviceClass.PROBLEM
+        self._attr_icon = "mdi:water-alert"
+
+    @property
+    def is_on(self) -> bool:
+        """Return True when dew point delta is below 2°C."""
+        if not self.coordinator.data:
+            return False
+
+        sensors_data = self.coordinator.data.get("sensors", "")
+        if not sensors_data or not sensors_data.startswith("VMGI"):
+            return False
+
+        delta = None
+        try:
+            parts = sensors_data.split(",")
+            if len(parts) < MIN_RESPONSE_PARTS:
+                return False
+
+            temp_internal = float(parts[1]) / 10
+            temp_external = float(parts[2]) / 10
+            humidity = float(parts[3]) / 10
+
+            if humidity <= 0 or humidity > COMFORT_HUMIDITY_MAX:
+                return False
+
+            internal_dew_point = self._calculate_dew_point(temp_internal, humidity)
+            external_dew_point = self._calculate_dew_point(temp_external, humidity)
+            delta = internal_dew_point - external_dew_point
+        except (ValueError, IndexError, TypeError, ZeroDivisionError):
+            return False
+
+        return delta is not None and delta < DEW_POINT_DELTA_MODERATE_RISK
+
+    def _calculate_dew_point(self, temperature: float, humidity: float) -> float:
+        """Calculate dew point using Magnus-Tetens formula."""
+        a = 17.27
+        b = 237.7
+        gamma = (a * temperature) / (b + temperature) + math.log(humidity / 100.0)
+        return (b * gamma) / (a - gamma)
+
+
+class VmcHeltyOfflineBinarySensor(VmcHeltyEntity, BinarySensorEntity):
+    """Alert when coordinator reports communication failures."""
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_offline_alert"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Offline Alert"
+        self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+        self._attr_icon = "mdi:wifi-alert"
+
+    @property
+    def is_on(self) -> bool:
+        """Return True when the device is considered offline by coordinator."""
+        return not self.coordinator.last_update_success
+
+
 class VmcHeltyLastResponseSensor(VmcHeltyEntity, SensorEntity):
     """VMC Helty last response timestamp sensor."""
 
@@ -335,13 +468,342 @@ class VmcHeltyFilterHoursSensor(VmcHeltyEntity, SensorEntity):
 
     @property
     def native_value(self) -> int | None:
-        """Return filter hours from device status."""
+        """Return filter hours from device status.
+
+        Retrieves filter hours from VMGH? response at position 5.
+        Response format: VMGO,<fan_speed>,<led>,<temp>,<humidity>,<filter_hours>
+        """
         if not self.coordinator.data:
             return None
 
-        # Il contatore filtro potrebbe essere nei dati di stato - da implementare
-        # Per ora restituisce un valore placeholder
-        return 0
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            # Need 6 parts: VMGO + fan_speed + led + temp + humidity + filter_hours
+            if len(parts) < 6:  # noqa: PLR2004
+                return None
+
+            # Filter hours is at position 5
+            return int(parts[5])
+
+        except (ValueError, IndexError):
+            return None
+
+
+class VmcHeltyFilterLifePercentageSensor(VmcHeltyEntity, SensorEntity):
+    """VMC Helty filter life percentage sensor.
+
+    Shows remaining filter life as percentage.
+    100% = new filter, 0% = needs replacement.
+    Based on FILTER_MAX_HOURS constant.
+    """
+
+    def __init__(self, coordinator):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_filter_life_percentage"
+        self._attr_name = (
+            f"{ENTITY_NAME_PREFIX} {coordinator.name} Filter Life Percentage"
+        )
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_device_class = None  # No specific device class for percentage
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:air-filter"
+        self._attr_entity_category = None  # Important sensor, not diagnostic
+
+    @property
+    def native_value(self) -> float | None:
+        """Return filter life remaining as percentage (0-100%).
+
+        Calculation: remaining_hours / MAX_HOURS * 100
+        Returns:
+            100.0 when filter is new (FILTER_MAX_HOURS remaining)
+            0.0 when filter has no remaining hours
+            None if filter hours data not available
+        """
+        if not self.coordinator.data:
+            return None
+
+        # Get current filter hours from coordinator
+        filter_hours = self.coordinator.data.get("filter_hours")
+
+        if filter_hours is None:
+            return None
+
+        # filter_hours contains remaining hours
+        remaining_hours = min(FILTER_MAX_HOURS, max(0, int(filter_hours)))
+        return round((remaining_hours / FILTER_MAX_HOURS) * 100, 1)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        filter_hours = self.coordinator.data.get("filter_hours")
+
+        if filter_hours is None:
+            return None
+
+        remaining_hours = min(FILTER_MAX_HOURS, max(0, int(filter_hours)))
+        used_hours = max(0, FILTER_MAX_HOURS - remaining_hours)
+
+        # Determine status based on percentage
+        percentage = round((remaining_hours / FILTER_MAX_HOURS) * 100, 1)
+
+        if percentage >= FILTER_STATUS_EXCELLENT:
+            status = "excellent"
+            recommendation = "Filter in optimal condition"
+        elif percentage >= FILTER_STATUS_GOOD:
+            status = "good"
+            recommendation = "Filter in good condition"
+        elif percentage >= FILTER_STATUS_ADEQUATE:
+            status = "adequate"
+            recommendation = "Filter adequate, monitor regularly"
+        elif percentage >= FILTER_STATUS_FAIR:
+            status = "fair"
+            recommendation = "Plan filter replacement soon"
+        elif percentage >= FILTER_STATUS_POOR:
+            status = "poor"
+            recommendation = "Replace filter within 1-2 weeks"
+        elif percentage > 0:
+            status = "critical"
+            recommendation = "Replace filter immediately - degraded"
+        else:
+            status = "expired"
+            recommendation = "Filter exceeded life - replace urgently"
+
+        return {
+            "filter_hours_used": used_hours,
+            "filter_hours_remaining": remaining_hours,
+            "filter_max_hours": FILTER_MAX_HOURS,
+            "status": status,
+            "recommendation": recommendation,
+        }
+
+
+class VmcHeltyPowerSensor(VmcHeltyEntity, SensorEntity):
+    """VMC Helty instantaneous power consumption sensor.
+
+    Shows current power consumption in Watts based on fan speed.
+    Updates in real-time when fan speed changes.
+    """
+
+    def __init__(self, coordinator: VmcHeltyCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_power"
+        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Power"
+        self._attr_native_unit_of_measurement = "W"
+        self._attr_suggested_display_precision = 1
+        self._attr_device_class = SensorDeviceClass.POWER
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:flash"
+        self._attr_entity_category = None  # Important sensor for energy monitoring
+
+    @property
+    def native_value(self) -> float | None:
+        """Return current power consumption in Watts.
+
+        Maps fan speed to power consumption using POWER_MAPPING:
+        - Speed 0 (off): 0W
+        - Speed 1: 4.6W
+        - Speed 2: 6.5W
+        - Speed 3: 9W
+        - Speed 4: 16.5W
+        - Speed 5 (hyperventilation): 25W
+        - Speed 6 (night mode): 2.5W
+        - Speed 7 (free cooling): 9W
+
+        Returns:
+            Current power consumption in Watts, or None if data unavailable
+        """
+        if not self.coordinator.data:
+            return None
+
+        # Get fan speed from status data
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])  # Part index 1 contains fan speed
+
+            # Map fan speed to power consumption
+            return float(POWER_MAPPING.get(fan_speed, 0))
+
+        except (ValueError, IndexError):
+            return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])
+            power = float(POWER_MAPPING.get(fan_speed, 0))
+
+            # Calculate efficiency metrics
+            airflow = AIRFLOW_MAPPING.get(fan_speed, 0)
+            efficiency = (airflow / power) if power > 0 else 0
+
+            return {
+                "fan_speed": fan_speed,
+                "airflow_m3h": airflow,
+                "efficiency_m3h_per_watt": round(efficiency, 2),
+                "power_mapping": dict(POWER_MAPPING),
+            }
+
+        except (ValueError, IndexError):
+            return None
+
+
+class VmcHeltyDailyEnergyEstimateSensor(VmcHeltyEntity, SensorEntity):
+    """VMC Helty daily energy estimate sensor.
+
+    Estimates daily energy consumption in Wh based on typical usage patterns.
+    Provides a realistic estimate considering average daily runtime and
+    typical speed distribution.
+    """
+
+    def __init__(self, coordinator: VmcHeltyCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.name_slug}_daily_energy_estimate"
+        self._attr_name = (
+            f"{ENTITY_NAME_PREFIX} {coordinator.name} Daily Energy Estimate"
+        )
+        self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_icon = "mdi:lightning-bolt-circle"
+        self._attr_entity_category = None  # Important for energy monitoring
+
+    @property
+    def native_value(self) -> float | None:
+        """Return estimated daily energy consumption in Wh.
+
+        Calculation based on typical VMC usage pattern:
+        - Assumes 18-20 hours daily operation
+        - Speed distribution: 60% speed 2, 25% speed 1, 10% speed 3, 5% speed 4
+        - Average power: ~19W
+        - Daily energy: ~350-380 Wh
+
+        Uses current speed to adjust estimate:
+        - If running at high speed, estimate is higher
+        - If running at low speed, estimate is lower
+        - If off, returns minimum baseline for standby
+
+        Returns:
+            Estimated daily energy in Wh, or None if data unavailable
+        """
+        if not self.coordinator.data:
+            return None
+
+        # Get current fan speed
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])
+
+            # Typical daily operation patterns (hours per speed per day)
+            typical_pattern = {
+                0: 4,  # 4 hours off (sleep, maintenance)
+                1: 5,  # 5 hours at speed 1 (night, light usage)
+                2: 12,  # 12 hours at speed 2 (normal operation)
+                3: 2,  # 2 hours at speed 3 (cooking, showers)
+                4: 1,  # 1 hour at speed 4 (peak usage)
+            }
+
+            # Calculate baseline daily energy from typical pattern
+            baseline_energy = sum(
+                hours * POWER_MAPPING.get(speed, 0)
+                for speed, hours in typical_pattern.items()
+            )
+
+            # Speed adjustment multipliers
+            speed_multipliers = {
+                0: 1.0,  # Off: baseline
+                1: 0.9,  # Speed 1: lower
+                2: 1.0,  # Speed 2: baseline
+                3: 1.1,  # Speed 3: higher
+                4: 1.2,  # Speed 4: highest
+                5: 1.3,  # Hyperventilation
+                6: 0.8,  # Night mode: lowest
+                7: 1.3,  # Free cooling
+            }
+
+            adjustment = speed_multipliers.get(fan_speed, 1.0)
+            return float(baseline_energy * adjustment)
+
+        except (ValueError, IndexError):
+            return None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return additional state attributes."""
+        if not self.coordinator.data:
+            return None
+
+        status_data = self.coordinator.data.get("status", "")
+        if not status_data or not status_data.startswith("VMGO"):
+            return None
+
+        try:
+            parts = status_data.split(",")
+            if len(parts) < MIN_STATUS_PARTS:
+                return None
+
+            fan_speed = int(parts[1])
+            current_power = POWER_MAPPING.get(fan_speed, 0)
+
+            # Daily cost estimate (assuming 0.25 €/kWh average EU rate)
+            daily_energy_wh = self.native_value or 0
+            daily_cost_eur = (daily_energy_wh / 1000) * 0.25
+
+            # Monthly and yearly projections
+            monthly_energy_kwh = (daily_energy_wh * 30) / 1000
+            yearly_energy_kwh = (daily_energy_wh * 365) / 1000
+            yearly_cost_eur = yearly_energy_kwh * 0.25
+
+            return {
+                "current_power_w": current_power,
+                "current_fan_speed": fan_speed,
+                "daily_cost_eur": round(daily_cost_eur, 2),
+                "monthly_energy_kwh": round(monthly_energy_kwh, 1),
+                "yearly_energy_kwh": round(yearly_energy_kwh, 1),
+                "yearly_cost_eur": round(yearly_cost_eur, 2),
+                "calculation_method": (
+                    "Typical usage pattern with current speed adjustment"
+                ),
+                "typical_runtime_hours": 20,
+            }
+
+        except (ValueError, IndexError):
+            return None
 
 
 class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):
@@ -358,23 +820,6 @@ class VmcHeltyIPAddressSensor(VmcHeltyEntity, SensorEntity):
     def native_value(self) -> str:
         """Return device IP address."""
         return str(self.coordinator.ip)
-
-
-class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
-    """VMC Helty reset filter button."""
-
-    def __init__(self, coordinator):
-        """Initialize the button."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.name_slug}_reset_filter"
-        self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Reset Filter"
-        self._attr_icon = "mdi:air-filter"
-
-    async def async_press(self) -> None:
-        """Reset filter counter."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0417744")
-        if response == "OK":
-            await self.coordinator.async_request_refresh()
 
 
 class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
@@ -404,6 +849,10 @@ class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
+    def set_value(self, _value: str) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async set value to change device name")
+
 
 class VmcHeltySSIDText(VmcHeltyEntity, TextEntity):
     """VMC Helty WiFi SSID text entity."""
@@ -427,10 +876,13 @@ class VmcHeltySSIDText(VmcHeltyEntity, TextEntity):
             return ssid
         return None
 
-    async def async_set_value(self, value: str) -> None:
-        """Set new WiFi SSID (requires password)."""
-        # Per sicurezza, questa operazione richiede anche la password
-        # Implementazione da completare con form di conferma
+    async def async_set_value(self, _value: str) -> None:
+        """SSID is read-only for now."""
+        raise HomeAssistantError("Changing SSID is not supported yet")
+
+    def set_value(self, _value: str) -> None:
+        """SSID is read-only for now."""
+        raise HomeAssistantError("Changing SSID is not supported yet")
 
 
 class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
@@ -457,8 +909,42 @@ class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
         return None
 
     async def async_set_value(self, value: str) -> None:
-        """Set new WiFi password."""
-        # Implementazione da completare con validazione sicurezza
+        """Set new WiFi password keeping current SSID unchanged."""
+        password = value.strip()
+
+        if (
+            not password
+            or len(password) < MIN_PASSWORD_LENGTH
+            or len(password) > MAX_PASSWORD_LENGTH
+        ):
+            raise HomeAssistantError("Password must be between 8 and 32 characters")
+
+        network_data = (
+            self.coordinator.data.get("network", "") if self.coordinator.data else ""
+        )
+        if not network_data:
+            raise HomeAssistantError("Network information is not available")
+
+        ssid, _ = parse_vmsl_response(network_data)
+        if not ssid:
+            raise HomeAssistantError("Current SSID is not available")
+
+        ssid_padded = ssid.ljust(32, "*")
+        password_padded = password.ljust(32, "*")
+        response = await tcp_send_command(
+            self.coordinator.ip,
+            5001,
+            f"VMSL {ssid_padded}{password_padded}",
+        )
+
+        if response != "OK":
+            raise HomeAssistantError(f"Failed to set WiFi password: {response}")
+
+        await self.coordinator.async_request_refresh()
+
+    def set_value(self, _value: str) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async set value to change WiFi password")
 
 
 class VmcHeltyAbsoluteHumiditySensor(VmcHeltyEntity, SensorEntity):

@@ -2,6 +2,7 @@
 
 [![hacs][hacsbadge]][hacs]
 [![GitHub Release][releases-shield]][releases]
+[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://github.com/darius1907/ha_vmc_helty_flow/releases)
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]][license]
 
@@ -14,6 +15,12 @@
 Complete integration for Helty Flow Mechanical Ventilation (VMC) systems with Home Assistant.
 
 > **🇮🇹 Versione Italiana**: [README_IT.md](README_IT.md)
+
+## 🧩 Blueprints
+
+- Blueprint catalog: [blueprints/README.md](blueprints/README.md)
+- Full guide (IT): [blueprints/BLUEPRINT_GUIDE.md](blueprints/BLUEPRINT_GUIDE.md)
+- Full guide (EN): [blueprints/BLUEPRINT_GUIDE_EN.md](blueprints/BLUEPRINT_GUIDE_EN.md)
 
 ## 🚀 Quick Installation
 
@@ -101,6 +108,15 @@ Complete integration for Helty Flow Mechanical Ventilation (VMC) systems with Ho
 - **Dew Point Delta**: Difference between outdoor temperature and dew point
 - **Air Exchange Time**: Air exchange time based on fan speed
 - **Daily Air Changes**: Number of daily air changes
+- **Filter Life Percentage**: Remaining filter life based on filter working hours
+- **Power Sensor**: Instantaneous power estimate based on fan speed
+- **Daily Energy Estimate**: Daily estimated energy consumption
+
+### 🚨 **Alert Binary Sensors**
+
+- **Air Quality Alert**: ON when CO2 stays above threshold for configured duration
+- **Condensation Risk Alert**: ON when dew-point delta indicates condensation risk
+- **Offline Alert**: ON when the coordinator detects communication failures
 
 ## 🎨 **Custom Dashboard**
 
@@ -281,9 +297,34 @@ logger:
 
 ## 🔮 **Future Developments**
 
-- **Automatic Detection**: Automatic discovery of devices in the local network
-- **Advanced Integrations**: Connection with external sensors and weather stations
-- **Dedicated Dashboard**: Specialized user interface for advanced VMC sensor control
+We have an active development roadmap with exciting features planned!
+
+### 📋 Development Resources
+
+- **[Project Roadmap](PROJECT_ROADMAP.md)** - Detailed development plan with milestones, tasks, and progress tracking
+- **[Improvement Plan](IMPROVEMENT_PLAN.md)** - Complete analysis and proposed improvements for upcoming versions
+- **[Blueprint Guide](blueprints/BLUEPRINT_GUIDE.md)** - Comprehensive automation blueprint documentation
+
+### 🎯 Upcoming Features (v1.2.0+)
+
+**High Priority**:
+- 🔔 **Notification System**: Complete alerting for critical events (filter, air quality, offline)
+- 📘 **6 New Automation Blueprints**: Air quality adaptive, humidity control, filter reminders, and more
+- 📊 **Statistical Sensors**: Filter life percentage, energy estimates, running time tracking
+- 📦 **Ready-to-Use Dashboard Package**: Complete importable package with helpers, automations, and views
+
+**Medium Priority** (v1.3.0):
+- ⭐ **Quality Scale Gold**: Upgrade from Silver to Gold certification
+- ⚡ **Energy Dashboard Integration**: Track VMC power consumption in Home Assistant Energy
+- 🎭 **Predefined Scenes**: Night mode, boost, energy saving scenarios
+
+**Community Requests**:
+- 🤖 Machine Learning air quality predictions
+- 🗣️ Voice assistant advanced integrations
+- 📱 Mobile companion app
+- 🌐 Multi-zone VMC coordination
+
+See the [full roadmap](PROJECT_ROADMAP.md) for detailed timeline and task breakdown.
 
 ## 📞 **Support**
 
@@ -294,10 +335,13 @@ For issues, feature requests, or contributions:
 
 ### How to Contribute
 
+We welcome contributions! See our [Contributing Guidelines](CONTRIBUTING.md) and [Project Roadmap](PROJECT_ROADMAP.md) for current priorities.
+
 1. 🍴 Fork the repository
 2. 🌱 Create a branch for the feature
-3. ✅ Add tests for changes
+3. ✅ Add tests for changes (coverage >95%)
 4. 📝 Update documentation
+5. 🎯 Check [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) for priority tasks
 5. 🔄 Submit a pull request
 
 ---
@@ -309,7 +353,7 @@ For issues, feature requests, or contributions:
 ![GitHub commits since latest release][commits-since-shield]
 ![GitHub last commit][last-commit-shield]
 
-**Version**: 1.1.0
+**Version**: 1.1.1
 **Compatibility**: Home Assistant 2024.1+
 **License**: MIT
 **HACS Status**: ✅ Available in the official HACS repository

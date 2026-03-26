@@ -47,41 +47,6 @@ NETWORK_INFO_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 DEVICE_NAME_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 
 
-async def _handle_update_room_volume(hass: HomeAssistant, call: ServiceCall) -> None:
-    """Handle room volume update service call."""
-    entity_id = call.data["entity_id"]
-    new_volume = float(call.data["room_volume"])
-
-    # Trova l'entità
-    entity_registry_instance = entity_registry.async_get(hass)
-    entity_entry = entity_registry_instance.async_get(entity_id)
-
-    if not entity_entry:
-        raise HomeAssistantError(f"Entity {entity_id} not found")
-
-    if entity_entry.config_entry_id is None:
-        raise HomeAssistantError(f"Entity {entity_id} has no config entry")
-
-    config_entry = hass.config_entries.async_get_entry(entity_entry.config_entry_id)
-    if not config_entry or config_entry.domain != DOMAIN:
-        raise HomeAssistantError(
-            f"Entity {entity_id} is not from VMC Helty Flow integration"
-        )
-
-    # Aggiorna il volume nelle options (non più in data)
-    new_options = {**config_entry.options, "room_volume": new_volume}
-    hass.config_entries.async_update_entry(config_entry, options=new_options)
-
-    # Ricarica l'integrazione per applicare i cambiamenti
-    await hass.config_entries.async_reload(config_entry.entry_id)
-
-    _LOGGER.info(
-        "Updated room volume for %s to %.1f m³",
-        config_entry.data.get("name", config_entry.data.get("ip")),
-        new_volume,
-    )
-
-
 async def _handle_network_diagnostics(
     _: HomeAssistant, call: ServiceCall
 ) -> dict[str, Any]:
@@ -177,17 +142,8 @@ async def _handle_set_special_mode(hass: HomeAssistant, call: ServiceCall) -> No
         raise HomeAssistantError(f"Failed to set special mode {mode}: {err}") from err
 
 
-def _create_service_schemas() -> tuple[vol.Schema, vol.Schema, vol.Schema]:
+def _create_service_schemas() -> tuple[vol.Schema, vol.Schema]:
     """Create service schemas for all VMC services."""
-    update_room_volume_schema = vol.Schema(
-        {
-            vol.Required("entity_id"): cv.entity_id,
-            vol.Required("room_volume"): vol.All(
-                vol.Coerce(float), vol.Range(min=MIN_ROOM_VOLUME, max=MAX_ROOM_VOLUME)
-            ),
-        }
-    )
-
     network_diagnostics_schema = vol.Schema(
         {
             vol.Required("ip"): cv.string,
@@ -204,34 +160,27 @@ def _create_service_schemas() -> tuple[vol.Schema, vol.Schema, vol.Schema]:
         }
     )
 
-    return (
-        update_room_volume_schema,
-        network_diagnostics_schema,
-        set_special_mode_schema,
-    )
+    return (network_diagnostics_schema, set_special_mode_schema)
 
 
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Setup services for the integration."""
     # Get service schemas
-    (
-        update_room_volume_schema,
-        network_diagnostics_schema,
-        set_special_mode_schema,
-    ) = _create_service_schemas()
+    network_diagnostics_schema, set_special_mode_schema = _create_service_schemas()
 
-    # Register services using external handler functions
-    hass.services.async_register(
-        DOMAIN,
-        "update_room_volume",
-        lambda call: _handle_update_room_volume(hass, call),
-        schema=update_room_volume_schema,
-    )
+    async def _async_handle_network_diagnostics(call: ServiceCall) -> dict[str, Any]:
+        """Handle network diagnostics service."""
+        return await _handle_network_diagnostics(hass, call)
 
+    async def _async_handle_set_special_mode(call: ServiceCall) -> None:
+        """Handle set special mode service."""
+        await _handle_set_special_mode(hass, call)
+
+    # Register services using async handler functions
     hass.services.async_register(
         DOMAIN,
         "network_diagnostics",
-        lambda call: _handle_network_diagnostics(hass, call),
+        _async_handle_network_diagnostics,
         schema=network_diagnostics_schema,
         supports_response=SupportsResponse.ONLY,
     )
@@ -239,7 +188,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN,
         "set_special_mode",
-        lambda call: _handle_set_special_mode(hass, call),
+        _async_handle_set_special_mode,
         schema=set_special_mode_schema,
     )
 

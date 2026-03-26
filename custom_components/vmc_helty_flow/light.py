@@ -4,6 +4,7 @@ from homeassistant.components.light import LightEntity
 from homeassistant.components.light.const import ColorMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -102,6 +103,8 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
         self._attr_unique_id = f"{coordinator.name_slug}_light_timer"
         self._attr_name = f"{ENTITY_NAME_PREFIX} {coordinator.name} Light Timer"
         self._attr_icon = "mdi:timer"
+        self._attr_color_mode = ColorMode.ONOFF
+        self._attr_supported_color_modes = {ColorMode.ONOFF}
 
     @property
     def extra_state_attributes(self):
@@ -149,3 +152,11 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
         response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH1400000")
         if response == "OK":
             await self.coordinator.async_request_refresh()
+
+    def turn_on(self, **_kwargs) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async turn on to change light state")
+
+    def turn_off(self, **_kwargs) -> None:
+        """Synchronous write is not supported; use async path."""
+        raise HomeAssistantError("Use async turn off to change light state")

@@ -26,8 +26,8 @@ PART_INDEX_LIGHTS_LEVEL = 11
 PART_INDEX_LIGHTS_TIMER = 15
 
 # Valori speciali per la velocità ventola
-FAN_SPEED_NIGHT_MODE = 5
-FAN_SPEED_HYPERVENTILATION = 6
+FAN_SPEED_NIGHT_MODE = 6
+FAN_SPEED_HYPERVENTILATION = 5
 FAN_SPEED_FREE_COOLING = 7
 FAN_SPEED_MAX_NORMAL = 4
 FAN_SPEED_OFF = 0
@@ -51,6 +51,19 @@ AIRFLOW_MAPPING = {
     5: 42,  # Hyperventilation
     6: 7,  # Night Mode
     7: 26,  # Free Cooling
+}
+
+# Mappatura consumo energetico per velocità ventola (Watts)
+# Basato su specifiche tipiche VMC residenziali
+POWER_MAPPING = {
+    0: 0,  # Spenta
+    1: 4.6,  # Velocità 1 - consumo minimo
+    2: 6.5,  # Velocità 2
+    3: 9,  # Velocità 3
+    4: 16.5,  # Velocità 4 - consumo massimo normale
+    5: 25,  # Hyperventilation - consumo massimo
+    6: 2.5,  # Night Mode - consumo ridotto
+    7: 9,  # Free Cooling - simile a velocità 3
 }
 
 FANSPEED_MAPPING = {
@@ -150,6 +163,18 @@ AIR_EXCHANGE_POOR = "Poor"
 # NOTE: This should be configured by user for their specific room
 DEFAULT_ROOM_VOLUME = 60  # m³ (example: 4m x 4m x 3.75m or 5m x 4m x 3m domestic room)
 
+# Filter life constants
+FILTER_MAX_HOURS = (
+    17744  # Maximum filter life in hours (approx. 2 years continuous use)
+)
+
+# Filter Status Threshold Percentages
+FILTER_STATUS_EXCELLENT = 90  # Green zone - filter in optimal condition
+FILTER_STATUS_GOOD = 70  # Good condition
+FILTER_STATUS_ADEQUATE = 50  # Adequate - monitor regularly
+FILTER_STATUS_FAIR = 20  # Fair - plan replacement
+FILTER_STATUS_POOR = 10  # Poor - replace within 1-2 weeks
+
 # Air Exchange Time Thresholds (minutes) - Tempo ideale per ricambio completo aria
 AIR_EXCHANGE_TIME_EXCELLENT = 120  # Meno di 120 minuti = eccellente
 AIR_EXCHANGE_TIME_GOOD = 240  # 120-240 minuti = buono
@@ -167,6 +192,10 @@ DAILY_AIR_CHANGES_EXCELLENT_MIN = 12  # 12+ ricambi/giorno = eccellente
 DAILY_AIR_CHANGES_GOOD_MIN = 6  # 6-12 ricambi/giorno = buono
 DAILY_AIR_CHANGES_ADEQUATE_MIN = 3  # 3-6 ricambi/giorno = adeguato
 # Meno di 3 ricambi/giorno = scarso
+
+# Alert thresholds
+CO2_ALERT_THRESHOLD = 1000  # ppm
+CO2_ALERT_DURATION_MINUTES = 5
 
 # Configuration constants
 CONF_DEVICE_ID = "device_id"

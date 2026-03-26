@@ -5,7 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.1] - 2026-03-26
+
+### ⚠️ Breaking changes
+- Removed obsolete `update_room_volume` service: room volume is now managed only through Options Flow
+
+### 🔄 Changed
+- `VmcHeltySSIDText` is now explicitly read-only: SSID edits are blocked with a clear user-facing error
+- `VmcHeltyPasswordText` now supports password updates while preserving the current SSID
+- WiFi password updates now validate length using integration constraints (`MIN_PASSWORD_LENGTH` / `MAX_PASSWORD_LENGTH`)
+- WiFi password updates now use protocol payload padding (`VMSL <ssid_padded><password_padded>`) and trigger coordinator refresh after success
+- `VmcHeltyResetFilterButton` now uses `FILTER_MAX_HOURS` dynamically for reset command generation
+- Service callbacks are now registered with proper async handlers (instead of lambda wrappers) so Home Assistant always awaits coroutine services correctly
+- Removed obsolete `update_room_volume` service: room volume is now managed only through Options Flow
+- Cleaned service metadata/translations to remove legacy `update_room_volume` references
+
+### 🐛 Fixed
+- Prevented accidental synchronous writes on text entities by raising explicit `HomeAssistantError` in sync `set_value` paths
+- Fixed warning `coroutine '_handle_set_special_mode' was never awaited` during special mode service execution
+- Aligned special mode mappings between the integration and the Lovelace card so `hyperventilation` uses speed `5` and `night_mode` uses speed `6` consistently
+
+### ✨ Added
+- New advanced sensor `VmcHeltyFilterLifePercentageSensor` (SENS-001)
+- New sensor `VmcHeltyPowerSensor` for instantaneous power estimate in W (SENS-003)
+- New sensor `VmcHeltyDailyEnergyEstimateSensor` for daily energy estimate in Wh (SENS-002)
+- New binary sensor `VmcHeltyAirQualityAlertBinarySensor` (SENS-006)
+- New binary sensor `VmcHeltyCondensationRiskBinarySensor` (SENS-007)
+- New binary sensor `VmcHeltyOfflineBinarySensor` (SENS-008)
+
+### 🔄 Changed
+- Filter hours are now parsed from device response and exposed consistently for filter-life calculations
+- Updated `FILTER_MAX_HOURS` from `3600` to `17744` (value aligned with real filter reset behavior)
+- Updated humidity blueprint notification default service (`notify.mobile_app_m2101k9g`)
+
+### 🐛 Fixed
+- Refactored filter-life tests to use dynamic expectations based on `FILTER_MAX_HOURS`
+- Improved robustness of filter-life test fixtures and edge-case handling
+
+### 🧪 Testing
+- Full test suite validated: 578 tests passed
+- Pre-commit checks passed (format, lint, type-check, tests)
+
+### 📚 Documentation
+- Added comprehensive roadmap and planning updates for upcoming releases
+- Added `EASC_SPECIFICATION.md` for External Advanced Sensor Configuration planning
+- Updated roadmap filter thresholds to match new max filter lifetime (`17744h`)
+- Added English blueprint guide: `blueprints/BLUEPRINT_GUIDE_EN.md`
+- Blueprint references updated:
+  - `blueprints/README.md`
+  - `blueprints/BLUEPRINT_GUIDE.md`
+  - `blueprints/BLUEPRINT_GUIDE_EN.md`
 
 ## [1.1.0] - 2026-03-23
 
