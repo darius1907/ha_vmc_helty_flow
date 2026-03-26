@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🐛 Fixed
 - Prevented accidental synchronous writes on text entities by raising explicit `HomeAssistantError` in sync `set_value` paths
 - Fixed warning `coroutine '_handle_set_special_mode' was never awaited` during special mode service execution
+- Aligned special mode mappings between the integration and the Lovelace card so `hyperventilation` uses speed `5` and `night_mode` uses speed `6` consistently
 
 ## [1.2.0-beta] - 2026-03-24
 
