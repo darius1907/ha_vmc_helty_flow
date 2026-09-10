@@ -18,9 +18,9 @@ from homeassistant.components.sensor import (
 from homeassistant.components.text import TextEntity, TextMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     UnitOfEnergy,
+    UnitOfRatio,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -169,7 +169,7 @@ async def async_setup_entry(
             coordinator,
             "co2",
             "CO2",
-            CONCENTRATION_PARTS_PER_MILLION,
+            UnitOfRatio.PARTS_PER_MILLION,
             SensorDeviceClass.CO2,
             SensorStateClass.MEASUREMENT,
         ),
