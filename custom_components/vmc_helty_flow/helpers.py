@@ -141,11 +141,11 @@ async def tcp_send_command(
     if timeout is None:
         timeout = TCP_TIMEOUT
 
-        # Assicura che il comando termini con NLCR (\n\r)
-        if not command.endswith("\n\r"):
-            # Rimuovi eventuali terminazioni errate
-            command = command.rstrip("\r\n")
-            command += "\n\r"
+    # Assicura che il comando termini con NLCR (\n\r)
+    if not command.endswith("\n\r"):
+        # Rimuovi eventuali terminazioni errate
+        command = command.rstrip("\r\n")
+        command += "\n\r"
 
     try:
         _LOGGER.debug(
@@ -309,7 +309,9 @@ async def validate_network_connectivity(
         else:
             ping_cmd = ["ping", "-c", "1", "-W", "1", ip]
 
-        result = subprocess.run(ping_cmd, capture_output=True, timeout=5, check=False)
+        result = await asyncio.to_thread(
+            subprocess.run, ping_cmd, capture_output=True, timeout=5, check=False
+        )
         diagnostics["ping_success"] = result.returncode == 0
         if not diagnostics["ping_success"]:
             error_output = (
