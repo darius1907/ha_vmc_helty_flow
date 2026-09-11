@@ -222,3 +222,62 @@ class TestTcpSendCommand:
                 await tcp_send_command("192.168.1.100", 5001, "TEST")
 
         mock_writer.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_default_no_retry(self):
+        """Senza specificare retries, un solo tentativo viene effettuato."""
+        with (
+            patch(
+                "asyncio.open_connection", side_effect=ConnectionRefusedError()
+            ) as mock_open,
+            pytest.raises(VMCConnectionError),
+        ):
+            await tcp_send_command("192.168.1.100", 5001, "TEST")
+
+        assert mock_open.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_retry_succeeds_after_transient_failure(self):
+        """Con retries > 1, un fallimento transitorio viene ritentato con successo."""
+        mock_reader = AsyncMock()
+        mock_writer = AsyncMock()
+        mock_reader.read.return_value = b"OK\r\n"
+
+        with patch(
+            "asyncio.open_connection",
+            side_effect=[ConnectionRefusedError(), (mock_reader, mock_writer)],
+        ) as mock_open:
+            result = await tcp_send_command("192.168.1.100", 5001, "TEST", retries=2)
+
+        assert result == "OK"
+        assert mock_open.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_retry_exhausted_raises_last_error(self):
+        """Se tutti i tentativi falliscono, l'errore viene rilanciato dopo l'ultimo."""
+        with (
+            patch(
+                "asyncio.open_connection", side_effect=ConnectionRefusedError()
+            ) as mock_open,
+            pytest.raises(VMCConnectionError),
+        ):
+            await tcp_send_command("192.168.1.100", 5001, "TEST", retries=3)
+
+        assert mock_open.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_protocol_error_not_retried(self):
+        """Un errore di protocollo nella risposta non deve essere ritentato."""
+        mock_reader = AsyncMock()
+        mock_writer = AsyncMock()
+        mock_reader.read.return_value = b"ERROR: Invalid command\r\n"
+
+        with (
+            patch(
+                "asyncio.open_connection", return_value=(mock_reader, mock_writer)
+            ) as mock_open,
+            pytest.raises(VMCConnectionError),
+        ):
+            await tcp_send_command("192.168.1.100", 5001, "INVALID", retries=3)
+
+        assert mock_open.call_count == 1

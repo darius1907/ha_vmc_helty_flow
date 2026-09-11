@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     DEFAULT_PORT,
+    DEFAULT_RETRY_ATTEMPTS,
     DEFAULT_ROOM_VOLUME,
     DOMAIN,
     NETWORK_INFO_UPDATE_INTERVAL,
@@ -26,7 +27,6 @@ from .helpers import (
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_SCAN_INTERVAL = timedelta(seconds=SENSORS_UPDATE_INTERVAL)
 NETWORK_INFO_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 DEVICE_NAME_INTERVAL = timedelta(seconds=NETWORK_INFO_UPDATE_INTERVAL)
 
@@ -36,11 +36,15 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
         """Initialize the coordinator."""
+        scan_interval_seconds = int(
+            config_entry.options.get("scan_interval", SENSORS_UPDATE_INTERVAL)
+        )
+        normal_update_interval = timedelta(seconds=scan_interval_seconds)
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=DEFAULT_SCAN_INTERVAL,
+            update_interval=normal_update_interval,
             config_entry=config_entry,
         )
         self.config_entry = config_entry
@@ -51,7 +55,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         self._consecutive_errors = 0
         self._max_consecutive_errors = 5
         self._error_recovery_interval = timedelta(seconds=30)
-        self._normal_update_interval = DEFAULT_SCAN_INTERVAL
+        self._normal_update_interval = normal_update_interval
         self._recovery_update_interval = timedelta(seconds=60)
 
         # Timestamps for smart update intervals
@@ -72,6 +76,15 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         # Leggi solo da options (migrazione automatica gestita in __init__.py)
         room_volume = self.config_entry.options.get("room_volume", DEFAULT_ROOM_VOLUME)
         return float(room_volume)
+
+    @property
+    def retry_attempts(self) -> int:
+        """Return configured number of retry attempts from config entry options."""
+        if self.config_entry is None:
+            return DEFAULT_RETRY_ATTEMPTS
+        return int(
+            self.config_entry.options.get("retry_attempts", DEFAULT_RETRY_ATTEMPTS)
+        )
 
     @property
     def name_slug(self) -> str:
@@ -107,7 +120,9 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
     async def _get_status_data(self) -> str:
         """Get device status data."""
         try:
-            return await tcp_send_command(self.ip, DEFAULT_PORT, "VMGH?")
+            return await tcp_send_command(
+                self.ip, DEFAULT_PORT, "VMGH?", retries=self.retry_attempts
+            )
         except VMCTimeoutError as err:
             _LOGGER.warning("Timeout getting status from %s: %s", self.ip, err)
             self._handle_error()
@@ -139,7 +154,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         # Sensors data - always updated (every 60 seconds)
         try:
             responses["sensors"] = await tcp_send_command(
-                self.ip, DEFAULT_PORT, "VMGI?"
+                self.ip, DEFAULT_PORT, "VMGI?", retries=self.retry_attempts
             )
         except VMCConnectionError as err:
             _LOGGER.warning("Unable to read sensors from %s: %s", self.ip, err)
@@ -150,7 +165,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         if time_since_name_update >= DEVICE_NAME_INTERVAL.total_seconds():
             try:
                 responses["name"] = await tcp_send_command(
-                    self.ip, DEFAULT_PORT, "VMNM?"
+                    self.ip, DEFAULT_PORT, "VMNM?", retries=self.retry_attempts
                 )
                 self._last_name_update = current_time
                 if responses["name"]:
@@ -167,7 +182,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         if time_since_network_update >= NETWORK_INFO_INTERVAL.total_seconds():
             try:
                 responses["network"] = await tcp_send_command(
-                    self.ip, DEFAULT_PORT, "VMSL?"
+                    self.ip, DEFAULT_PORT, "VMSL?", retries=self.retry_attempts
                 )
                 self._last_network_update = current_time
                 if responses["network"]:
