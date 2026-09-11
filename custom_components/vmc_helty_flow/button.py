@@ -40,7 +40,7 @@ class VmcHeltyResetFilterButton(VmcHeltyEntity, ButtonEntity):
         """Reset filter counter."""
         response = await tcp_send_command(
             self.coordinator.ip,
-            5001,
+            self.coordinator.port,
             f"VMWH04{FILTER_MAX_HOURS}",
         )
         if response == "OK":

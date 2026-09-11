@@ -15,6 +15,7 @@ class TestVmcHeltyEntity:
         coordinator = Mock()
         coordinator.config_entry.entry_id = "test_entry_123"
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         entity = VmcHeltyEntity(coordinator)
@@ -30,6 +31,7 @@ class TestVmcHeltyEntity:
         # Crea mock coordinator senza config_entry
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         entity = VmcHeltyEntity(coordinator)
@@ -44,6 +46,7 @@ class TestVmcHeltyEntity:
         """Test inizializzazione con device_info personalizzato."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         device_info = {
@@ -60,6 +63,7 @@ class TestVmcHeltyEntity:
         """Test device_info con valori predefiniti."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         entity = VmcHeltyEntity(coordinator)
@@ -80,6 +84,7 @@ class TestVmcHeltyEntity:
         """Test device_info con valori personalizzati."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.200"
+        coordinator.port = 5001
         coordinator.name = "Custom VMC"
 
         custom_device_info = {
@@ -112,6 +117,7 @@ class TestVmcHeltyEntity:
         """Test device_info con alcuni valori personalizzati."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.150"
+        coordinator.port = 5001
         coordinator.name = "Partial VMC"
 
         partial_device_info = {
@@ -135,6 +141,7 @@ class TestVmcHeltyEntity:
         """Test generazione unique_id con IP contenente punti."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.255"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         entity = VmcHeltyEntity(coordinator)
@@ -148,6 +155,7 @@ class TestVmcHeltyEntity:
         """Test che device_info usi la costante DOMAIN corretta."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         entity = VmcHeltyEntity(coordinator)
@@ -162,6 +170,7 @@ class TestVmcHeltyEntity:
         """Test che VmcHeltyEntity erediti correttamente da Entity."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         entity = VmcHeltyEntity(coordinator)
@@ -175,6 +184,7 @@ class TestVmcHeltyEntity:
         """Test che il riferimento al coordinator sia mantenuto."""
         coordinator = Mock(spec=["ip", "name"])
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         entity = VmcHeltyEntity(coordinator)

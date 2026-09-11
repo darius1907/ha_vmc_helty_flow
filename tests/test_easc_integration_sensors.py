@@ -71,6 +71,7 @@ def _make_coordinator(vmgi: str = _VMGI, options: dict | None = None):
     coord.data = {"sensors": vmgi}
     coord.config_entry.options = options or {}
     coord.ip = "192.168.1.1"
+    coord.port = 5001
     coord.name = "Test VMC"
     coord.name_slug = "vmc_helty_testvmc"
     return coord

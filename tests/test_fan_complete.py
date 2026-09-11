@@ -14,6 +14,7 @@ class TestVmcHeltyFan:
     def setup_method(self):
         """Set up test fixtures."""
         self.coordinator = Mock()
+        self.coordinator.port = 5001
         self.coordinator.name = "testvmc"
         self.coordinator.name_slug = "vmc_helty_testvmc"
         self.coordinator.data = {}
@@ -244,6 +245,7 @@ class TestAsyncSetupEntry:
         # Mock del coordinator
         coordinator = Mock()
         coordinator.ip = "192.168.1.100"
+        coordinator.port = 5001
         coordinator.name = "Test VMC"
 
         # Simula i dati di hass

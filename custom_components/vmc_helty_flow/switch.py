@@ -85,7 +85,9 @@ class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
     async def async_turn_on(self, **_kwargs) -> None:
         """Turn on the mode."""
         response = await tcp_send_command(
-            str(self.coordinator.ip), 5001, str(MODES[self._mode_key]["cmd"])
+            str(self.coordinator.ip),
+            self.coordinator.port,
+            str(MODES[self._mode_key]["cmd"]),
         )
         if response == "OK":
             await self.coordinator.async_request_refresh()
@@ -93,7 +95,9 @@ class VmcHeltyModeSwitch(VmcHeltyEntity, SwitchEntity):
     async def async_turn_off(self, **_kwargs) -> None:
         """Turn off the mode (set to manual speed 1)."""
         # Disattiva la modalità speciale impostando velocità manuale 1
-        response = await tcp_send_command(str(self.coordinator.ip), 5001, "VMWH0000001")
+        response = await tcp_send_command(
+            str(self.coordinator.ip), self.coordinator.port, "VMWH0000001"
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
@@ -133,7 +137,9 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
             "Panel LED Switch: Sending turn_on command VMWH0100010 to %s",
             self.coordinator.ip,
         )
-        response = await tcp_send_command(str(self.coordinator.ip), 5001, "VMWH0100010")
+        response = await tcp_send_command(
+            str(self.coordinator.ip), self.coordinator.port, "VMWH0100010"
+        )
         _LOGGER.debug("Panel LED Switch: Turn_on response: %s", response)
         if response == "OK":
             _LOGGER.debug(
@@ -149,7 +155,9 @@ class VmcHeltyPanelLedSwitch(VmcHeltyEntity, SwitchEntity):
             "Panel LED Switch: Sending turn_off command VMWH0100000 to %s",
             self.coordinator.ip,
         )
-        response = await tcp_send_command(str(self.coordinator.ip), 5001, "VMWH0100000")
+        response = await tcp_send_command(
+            str(self.coordinator.ip), self.coordinator.port, "VMWH0100000"
+        )
         _LOGGER.debug("Panel LED Switch: Turn_off response: %s", response)
         if response == "OK":
             _LOGGER.debug(
@@ -192,12 +200,16 @@ class VmcHeltySensorsSwitch(VmcHeltyEntity, SwitchEntity):
 
     async def async_turn_on(self, **_kwargs) -> None:
         """Turn on sensors."""
-        response = await tcp_send_command(str(self.coordinator.ip), 5001, "VMWH0300000")
+        response = await tcp_send_command(
+            str(self.coordinator.ip), self.coordinator.port, "VMWH0300000"
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **_kwargs) -> None:
         """Turn off sensors."""
-        response = await tcp_send_command(str(self.coordinator.ip), 5001, "VMWH0300002")
+        response = await tcp_send_command(
+            str(self.coordinator.ip), self.coordinator.port, "VMWH0300002"
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
