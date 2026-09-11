@@ -13,6 +13,14 @@
 
 Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) Helty Flow con Home Assistant.
 
+> **🇬🇧 English version**: [README.md](README.md)
+
+## 🧩 Blueprint
+
+- Catalogo blueprint: [blueprints/README.md](blueprints/README.md)
+- Guida completa (IT): [blueprints/BLUEPRINT_GUIDE.md](blueprints/BLUEPRINT_GUIDE.md)
+- Guida completa (EN): [blueprints/BLUEPRINT_GUIDE_EN.md](blueprints/BLUEPRINT_GUIDE_EN.md)
+
 ## 🚀 Installazione Rapida
 
 ### Via HACS (Consigliato)
@@ -28,8 +36,6 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
    > **Nota**: Se non trovi l'integrazione nella ricerca, potrebbero essere necessarie alcune ore dopo la pubblicazione. In alternativa, puoi aggiungerla come repository personalizzato usando il badge qui sotto:
 
    [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=darius1907&repository=ha_vmc_helty_flow&category=integration)
-
-2. **Configura l'Integrazione**:
 
 2. **Configura l'Integrazione**:
    - Vai in **Impostazioni** → **Dispositivi e Servizi**
@@ -96,11 +102,23 @@ Integrazione completa per sistemi di Ventilazione Meccanica Controllata (VMC) He
 
 ### 📈 **Sensori Avanzati**
 
-- **Dew Point**: Calcolo punto di rugiada per prevenzione condensa
-- **Comfort Index**: Indice di comfort basato su temperatura e umidità
-- **Dew Point Delta**: Differenza tra temperatura esterna e punto rugiada
+- **Absolute Humidity**: Umidità assoluta calcolata in g/m³ *(EASC-enabled)*
+- **Dew Point**: Calcolo punto di rugiada per prevenzione condensa *(EASC-enabled)*
+- **Comfort Index**: Indice di comfort basato su temperatura e umidità *(EASC-enabled)*
+- **Dew Point Delta**: Differenza tra punto di rugiada interno ed esterno *(EASC-enabled)*
 - **Air Exchange Time**: Tempo di ricambio aria basato su velocità ventola
 - **Daily Air Changes**: Numero ricambi d'aria giornalieri
+- **Filter Life Percentage**: Percentuale di vita residua del filtro basata sulle ore di funzionamento
+- **Power Sensor**: Stima della potenza istantanea basata sulla velocità ventola
+- **Daily Energy Estimate**: Stima del consumo energetico giornaliero
+
+> 🔗 I **sensori EASC-enabled** supportano sorgenti dati esterne. Consulta [External Advanced Sensor Configuration](docs/EXTERNAL_ADVANCED_SENSORS.md) per i dettagli di configurazione.
+
+### 🚨 **Sensori Binari di Allerta**
+
+- **Air Quality Alert**: ON quando il CO2 resta sopra la soglia per la durata configurata
+- **Condensation Risk Alert**: ON quando il delta del punto di rugiada indica rischio condensa
+- **Offline Alert**: ON quando il coordinator rileva errori di comunicazione
 
 ## 🎨 **Dashboard Personalizzata**
 
@@ -111,7 +129,7 @@ Card Lovelace personalizzata per controllo completo del sistema VMC:
 - **🎛️ Controllo Ventola**: Interfaccia intuitiva con pulsanti velocità (0-4)
 - **📊 Monitor Ambientale**: Visualizzazione sensori con indicatori colorati
 - **🔄 Aggiornamenti Real-time**: Stato ventola e sensori in tempo reale
-- **� Design Responsive**: Ottimizzato per mobile, tablet e desktop
+- **📱 Design Responsive**: Ottimizzato per mobile, tablet e desktop
 - **🎨 Temi Multipli**: Default, Compact, Minimal
 - **⚙️ Configurazione Visuale**: Editor grafico integrato in Lovelace
 
@@ -148,7 +166,7 @@ show_co2: true
 show_voc: true
 ```
 
-## �🚀 Configurazione Guidata
+## 🚀 Configurazione Guidata
 
 ### 📡 **Scansione Incrementale**
 
@@ -171,10 +189,9 @@ show_voc: true
      - **🛑 Termina scansione**: Ferma tutto senza aggiungere
 
 4. **Feedback Immediato**
-
-- Visualizzazione in tempo reale dei dispositivi trovati
-- Informazioni dettagliate (nome, IP, modello) per ogni dispositivo
-- Contatore progressivo e indicatore posizione nella scansione
+   - Visualizzazione in tempo reale dei dispositivi trovati
+   - Informazioni dettagliate (nome, IP, modello) per ogni dispositivo
+   - Contatore progressivo e indicatore posizione nella scansione
 
 ### 🔧 **Validazioni e Sicurezza**
 
@@ -210,6 +227,30 @@ Subnet: 192.168.0.0/23
 Porta: 5001
 Timeout: 15 secondi
 ```
+
+## 🔬 **External Advanced Sensor Configuration (EASC)**
+
+EASC permette ai quattro sensori calcolati di leggere temperatura e umidità da **qualsiasi entità Home Assistant** invece che dai sensori integrati del VMC — utile se vuoi usare un termostato ambiente, una stazione meteo Netatmo, o un sensore ESPHome per calcoli più accurati.
+
+### Configurazione rapida
+
+1. Vai in **Impostazioni → Dispositivi e Servizi → VMC Helty Flow → Configura**
+2. Abilita **"Configura sensori avanzati (EASC)"** → **Invia**
+3. Per ogni sensore, inserisci un entity_id (es. `sensor.temperatura_soggiorno`) oppure lascia `vmc`
+4. Seleziona la formula di calcolo: `magnus` (Magnus-Tetens, default) o `custom` (August-Roche-Magnus, WMO)
+
+Quando un'entità esterna non è disponibile, il sensore **ricade automaticamente** sui dati del VMC.
+
+### Esempio — usare un sensore Netatmo in soggiorno
+
+```text
+Dew Point → sorgente temperatura: sensor.netatmo_soggiorno_temperatura
+Dew Point → sorgente umidità:     sensor.netatmo_soggiorno_umidita
+```
+
+📖 **Documentazione completa**: [docs/EXTERNAL_ADVANCED_SENSORS.md](docs/EXTERNAL_ADVANCED_SENSORS.md)
+
+---
 
 ## 🔄 **Automazioni e Integrazioni**
 
@@ -290,12 +331,22 @@ Abbiamo una roadmap di sviluppo attiva con funzionalità entusiasmanti in progra
 - **[Piano Miglioramenti](IMPROVEMENT_PLAN.md)** - Analisi completa e miglioramenti proposti per le prossime versioni
 - **[Guida Blueprint](blueprints/BLUEPRINT_GUIDE.md)** - Documentazione completa blueprint automazioni
 
-### 🎯 Funzionalità in Arrivo (v1.2.0+)
+### 🎯 Novità della v1.2.1
 
-**Priorità Alta**:
+**Correzioni bug** (dettagli completi in [CHANGELOG.md](CHANGELOG.md)):
+- 🐢 Risolti i blocchi dell'interfaccia Home Assistant quando più dispositivi VMC avevano problemi di comunicazione contemporaneamente
+- 🔌 Risolto il problema dei dispositivi configurati con una porta TCP non predefinita, risultati irraggiungibili
+- 💥 Risolto un crash al reload della config entry quando cambiava il nome di un dispositivo
+- ⚙️ Le opzioni `scan_interval` e `retry_attempts` vengono ora effettivamente applicate
+- 🔁 Le risposte vuote/fallite dei dispositivi vengono ora correttamente ritentate
+
+**Rilasciato con la v1.2.0**:
+- 🔬 **EASC — External Advanced Sensor Configuration**: Collega Umidità Assoluta, Punto di Rugiada, Indice di Comfort e Delta Punto di Rugiada a qualsiasi entità HA con fallback automatico sul VMC. Supporta le formule Magnus-Tetens e August-Roche-Magnus. Vedi [docs/EXTERNAL_ADVANCED_SENSORS.md](docs/EXTERNAL_ADVANCED_SENSORS.md).
+- 🚨 **Filter Warning Binary Sensor**: Avvisa quando le ore filtro superano il 90% della vita massima.
+
+**In arrivo (v1.3.0)**:
 - 🔔 **Sistema Notifiche**: Alerting completo per eventi critici (filtro, qualità aria, offline)
-- 📘 **6 Nuovi Blueprint Automazioni**: Adattamento qualità aria, controllo umidità, promemoria filtro e altro
-- 📊 **Sensori Statistici**: Percentuale vita filtro, stima consumi energetici, tempo funzionamento
+- 📘 **Blueprint Automazioni**: Adattamento qualità aria, controllo umidità, promemoria filtro
 - 📦 **Package Dashboard Pronto**: Package completo importabile con helper, automazioni e viste
 
 **Priorità Media** (v1.3.0):
@@ -338,7 +389,7 @@ Accogliamo con piacere i contributi! Consulta le [Linee Guida per Contribuire](C
 ![GitHub commits since latest release][commits-since-shield]
 ![GitHub last commit][last-commit-shield]
 
-**Versione**: 1.0.0-RC2
+**Versione**: 1.2.1
 **Compatibilità**: Home Assistant 2024.1+
 **Licenza**: MIT
 **Stato HACS**: ✅ Disponibile nel repository ufficiale HACS

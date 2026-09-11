@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-09-11
+
+### 🐛 Fixed
+
+- **Home Assistant responsiveness during VMC communication failures** (#5): the coordinator now honors the configured connection timeout instead of silently falling back to a hardcoded 5s default, and the blocking `subprocess.run()` ping diagnostic no longer runs on the event loop (moved to a worker thread via `asyncio.to_thread`) — this was the root cause of multi-second-to-minute HA UI freezes when multiple VMC devices went offline at once.
+- **Hardcoded TCP port** (#9): the port selected during device discovery/setup is now actually used at runtime. Every command (coordinator polling, fan/light/switch/sensor/button entities, device registry, device actions) previously always targeted port 5001 regardless of what was configured, making any device on a non-default port completely unreachable.
+- **Crash on config entry reload** (#11): reloading a config entry (triggered automatically whenever a VMC device's mnemonic name changes) no longer raises `ConfigEntryError`. The integration now delegates to Home Assistant's own `hass.config_entries.async_reload()` instead of manually re-implementing unload+setup, which bypassed Home Assistant's state-machine transition and could leave the entry in a degraded state.
+- **`scan_interval` and `retry_attempts` options ignored** (#13, #14): both values, configurable in the options flow, were saved but never read back. Polling now honors the configured `scan_interval` instead of always defaulting to 180s, and failed TCP commands are now actually retried up to `retry_attempts` times instead of failing on the first attempt.
+- **Retry not triggered by empty/invalid device responses** (#16): the VMC hardware occasionally closes the connection with an empty payload instead of a proper status response, without raising a network-level error — this silently bypassed the retry logic and could delay integration startup (`ConfigEntryNotReady`) or fail a polling cycle outright. The coordinator now retries on this condition too. Device registration/reload lookups (`device_registry.py`) also now honor the configured timeout and retry count, not just the port.
+
+### 🧪 Testing
+
+- **754 tests** — all passing.
+- New/updated coverage for TCP retry behavior (connection errors, empty responses, protocol errors), coordinator `timeout`/`port`/`retry_attempts`/`scan_interval` properties, and device registry timeout/retry threading.
+
 ## [1.2.0] - 2026-03-30
 
 ### ✨ Added

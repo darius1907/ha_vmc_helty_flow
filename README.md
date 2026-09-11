@@ -331,13 +331,20 @@ We have an active development roadmap with exciting features planned!
 - **[Improvement Plan](IMPROVEMENT_PLAN.md)** - Complete analysis and proposed improvements for upcoming versions
 - **[Blueprint Guide](blueprints/BLUEPRINT_GUIDE.md)** - Comprehensive automation blueprint documentation
 
-### 🎯 What's new in v1.2.0 (in progress)
+### 🎯 What's new in v1.2.1
 
-**Already shipped**:
+**Bug fixes** (see [CHANGELOG.md](CHANGELOG.md) for full details):
+- 🐢 Fixed Home Assistant UI freezes when multiple VMC devices had communication issues at once
+- 🔌 Fixed devices configured with a non-default TCP port being unreachable
+- 💥 Fixed a crash on config entry reload when a device's name changed
+- ⚙️ `scan_interval` and `retry_attempts` options are now actually applied
+- 🔁 Failed/empty device responses are now properly retried
+
+**Shipped in v1.2.0**:
 - 🔬 **EASC — External Advanced Sensor Configuration**: Connect Absolute Humidity, Dew Point, Comfort Index, and Dew Point Delta to any HA entity with automatic VMC fallback. Supports Magnus-Tetens and August-Roche-Magnus formulas. See [docs/EXTERNAL_ADVANCED_SENSORS.md](docs/EXTERNAL_ADVANCED_SENSORS.md).
 - 🚨 **Filter Warning Binary Sensor**: Alerts when filter hours exceed 90% of maximum life.
 
-**Upcoming**:
+**Upcoming (v1.3.0)**:
 - 🔔 **Notification System**: Complete alerting for critical events (filter, air quality, offline)
 - 📘 **Automation Blueprints**: Air quality adaptive, humidity control, filter reminders
 - 📦 **Ready-to-Use Dashboard Package**: Complete importable package with helpers, automations, and views
@@ -382,7 +389,7 @@ We welcome contributions! See our [Contributing Guidelines](CONTRIBUTING.md) and
 ![GitHub commits since latest release][commits-since-shield]
 ![GitHub last commit][last-commit-shield]
 
-**Version**: 1.2.0
+**Version**: 1.2.1
 **Compatibility**: Home Assistant 2024.1+
 **License**: MIT
 **HACS Status**: ✅ Available in the official HACS repository
