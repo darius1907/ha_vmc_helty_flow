@@ -13,6 +13,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .const import (
     DEFAULT_PORT,
     DEFAULT_ROOM_VOLUME,
+    DEFAULT_TIMEOUT,
     DOMAIN,
     NETWORK_INFO_UPDATE_INTERVAL,
     SENSORS_UPDATE_INTERVAL,
@@ -74,6 +75,13 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         return float(room_volume)
 
     @property
+    def timeout(self) -> int:
+        """Return configured TCP timeout from config entry options."""
+        if self.config_entry is None:
+            return DEFAULT_TIMEOUT
+        return int(self.config_entry.options.get("timeout", DEFAULT_TIMEOUT))
+
+    @property
     def port(self) -> int:
         """Return configured TCP port from config entry data."""
         if self.config_entry is None:
@@ -114,7 +122,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
     async def _get_status_data(self) -> str:
         """Get device status data."""
         try:
-            return await tcp_send_command(self.ip, self.port, "VMGH?")
+            return await tcp_send_command(self.ip, self.port, "VMGH?", self.timeout)
         except VMCTimeoutError as err:
             _LOGGER.warning("Timeout getting status from %s: %s", self.ip, err)
             self._handle_error()
@@ -145,7 +153,9 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
         # Sensors data - always updated (every 60 seconds)
         try:
-            responses["sensors"] = await tcp_send_command(self.ip, self.port, "VMGI?")
+            responses["sensors"] = await tcp_send_command(
+                self.ip, self.port, "VMGI?", self.timeout
+            )
         except VMCConnectionError as err:
             _LOGGER.warning("Unable to read sensors from %s: %s", self.ip, err)
             responses["sensors"] = None
@@ -154,7 +164,9 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         time_since_name_update = current_time - self._last_name_update
         if time_since_name_update >= DEVICE_NAME_INTERVAL.total_seconds():
             try:
-                responses["name"] = await tcp_send_command(self.ip, self.port, "VMNM?")
+                responses["name"] = await tcp_send_command(
+                    self.ip, self.port, "VMNM?", self.timeout
+                )
                 self._last_name_update = current_time
                 if responses["name"]:
                     self._cached_data["name"] = responses["name"]
@@ -170,7 +182,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         if time_since_network_update >= NETWORK_INFO_INTERVAL.total_seconds():
             try:
                 responses["network"] = await tcp_send_command(
-                    self.ip, self.port, "VMSL?"
+                    self.ip, self.port, "VMSL?", self.timeout
                 )
                 self._last_network_update = current_time
                 if responses["network"]:
