@@ -25,6 +25,8 @@ class TestAsyncGetOrCreateDevice:
         self.coordinator = Mock()
         self.coordinator.ip = "192.168.1.100"
         self.coordinator.port = 5001
+        self.coordinator.timeout = 10
+        self.coordinator.retry_attempts = 3
         self.coordinator.name = "Test Device"
         self.coordinator.config_entry.entry_id = "test_entry_id"
 
@@ -52,8 +54,12 @@ class TestAsyncGetOrCreateDevice:
             result = await async_get_or_create_device(self.hass, self.coordinator)
 
             assert result.id == "new_device"
-            mock_unique_id.assert_called_once_with(self.hass, "192.168.1.100", 5001)
-            mock_device_info.assert_called_once_with(self.hass, "192.168.1.100", 5001)
+            mock_unique_id.assert_called_once_with(
+                self.hass, "192.168.1.100", 5001, 10, 3
+            )
+            mock_device_info.assert_called_once_with(
+                self.hass, "192.168.1.100", 5001, 10, 3
+            )
 
             # Verifica che async_get_or_create sia stato chiamato
             mock_device_registry.async_get_or_create.assert_called_once()
@@ -286,7 +292,7 @@ class TestAsyncGetDeviceUniqueId:
             result = await async_get_device_unique_id(self.hass, "192.168.1.100")
 
             assert result == "aabbccddeeff"
-            mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMSL?")
+            mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMSL?", 10, 3)
 
     @pytest.mark.asyncio
     async def test_get_unique_id_fallback_to_name(self):
@@ -305,8 +311,8 @@ class TestAsyncGetDeviceUniqueId:
             result = await async_get_device_unique_id(self.hass, "192.168.1.100")
 
             assert result == "helty_test_device_192_168_1_100"
-            mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMSL?")
-            mock_name_id.assert_called_once_with("192.168.1.100", 5001)
+            mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMSL?", 10, 3)
+            mock_name_id.assert_called_once_with("192.168.1.100", 5001, 10, 3)
 
     @pytest.mark.asyncio
     async def test_get_unique_id_exception_handling(self):

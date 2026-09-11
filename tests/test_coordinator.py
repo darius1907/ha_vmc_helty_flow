@@ -80,6 +80,47 @@ class TestVmcHeltyCoordinator:
     @patch(
         "custom_components.vmc_helty_flow.coordinator.DataUpdateCoordinator.__init__"
     )
+    @patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command")
+    @pytest.mark.asyncio
+    async def test_get_status_data_retries_on_empty_response(
+        self, mock_tcp_send, mock_super_init, _mock_tcp
+    ):
+        """Una risposta vuota/non valida viene ritentata fino a retry_attempts volte."""
+        mock_super_init.return_value = None
+        coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
+        coordinator.hass = self.hass
+
+        mock_tcp_send.side_effect = ["", "", "VMGO,2,1,0,0,1,0"]
+
+        result = await coordinator._get_status_data()
+
+        assert result == "VMGO,2,1,0,0,1,0"
+        assert mock_tcp_send.call_count == 3
+
+    @patch(
+        "custom_components.vmc_helty_flow.coordinator.DataUpdateCoordinator.__init__"
+    )
+    @patch("custom_components.vmc_helty_flow.coordinator.tcp_send_command")
+    @pytest.mark.asyncio
+    async def test_update_data_fails_after_retries_exhausted_on_empty_response(
+        self, mock_tcp_send, mock_super_init, _mock_tcp
+    ):
+        """Se la risposta resta vuota dopo tutti i tentativi, l'update fallisce."""
+        mock_super_init.return_value = None
+        coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
+        coordinator._consecutive_errors = 0
+
+        mock_tcp_send.return_value = ""
+
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+
+        assert mock_tcp_send.call_count == 3
+        assert coordinator._consecutive_errors == 1
+
+    @patch(
+        "custom_components.vmc_helty_flow.coordinator.DataUpdateCoordinator.__init__"
+    )
     @pytest.mark.asyncio
     async def test_update_data_connection_error(self, mock_super_init, mock_tcp):
         """Test aggiornamento dati con errore di connessione."""
