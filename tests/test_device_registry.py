@@ -24,6 +24,7 @@ class TestAsyncGetOrCreateDevice:
         self.hass = Mock(spec=HomeAssistant)
         self.coordinator = Mock()
         self.coordinator.ip = "192.168.1.100"
+        self.coordinator.port = 5001
         self.coordinator.name = "Test Device"
         self.coordinator.config_entry.entry_id = "test_entry_id"
 
@@ -51,8 +52,8 @@ class TestAsyncGetOrCreateDevice:
             result = await async_get_or_create_device(self.hass, self.coordinator)
 
             assert result.id == "new_device"
-            mock_unique_id.assert_called_once_with(self.hass, "192.168.1.100")
-            mock_device_info.assert_called_once_with(self.hass, "192.168.1.100")
+            mock_unique_id.assert_called_once_with(self.hass, "192.168.1.100", 5001)
+            mock_device_info.assert_called_once_with(self.hass, "192.168.1.100", 5001)
 
             # Verifica che async_get_or_create sia stato chiamato
             mock_device_registry.async_get_or_create.assert_called_once()
@@ -305,7 +306,7 @@ class TestAsyncGetDeviceUniqueId:
 
             assert result == "helty_test_device_192_168_1_100"
             mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMSL?")
-            mock_name_id.assert_called_once_with("192.168.1.100")
+            mock_name_id.assert_called_once_with("192.168.1.100", 5001)
 
     @pytest.mark.asyncio
     async def test_get_unique_id_exception_handling(self):

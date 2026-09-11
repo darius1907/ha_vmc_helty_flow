@@ -81,7 +81,7 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
 
         # Formato comando corretto: VMWH06nnn000 dove nnn è il livello (0-100)
         response = await tcp_send_command(
-            self.coordinator.ip, 5001, f"VMWH06{light_level:03d}000"
+            self.coordinator.ip, self.coordinator.port, f"VMWH06{light_level:03d}000"
         )
         if response == "OK":
             await self.coordinator.async_request_refresh()
@@ -89,7 +89,9 @@ class VmcHeltyLight(VmcHeltyEntity, LightEntity):
     async def async_turn_off(self, **_kwargs) -> None:
         """Turn off the light."""
         # VMWH0600000 per luci disattivate
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH0600000")
+        response = await tcp_send_command(
+            self.coordinator.ip, self.coordinator.port, "VMWH0600000"
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
@@ -141,7 +143,7 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
 
         # Formato comando corretto: VMWH14nnnnn dove nnnnn è il timer in secondi
         response = await tcp_send_command(
-            self.coordinator.ip, 5001, f"VMWH14{timer_seconds:05d}"
+            self.coordinator.ip, self.coordinator.port, f"VMWH14{timer_seconds:05d}"
         )
         if response == "OK":
             await self.coordinator.async_request_refresh()
@@ -149,7 +151,9 @@ class VmcHeltyLightTimer(VmcHeltyEntity, LightEntity):
     async def async_turn_off(self, **_kwargs) -> None:
         """Disable light timer."""
         # VMWH1400000 per disattivare il timer
-        response = await tcp_send_command(self.coordinator.ip, 5001, "VMWH1400000")
+        response = await tcp_send_command(
+            self.coordinator.ip, self.coordinator.port, "VMWH1400000"
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 

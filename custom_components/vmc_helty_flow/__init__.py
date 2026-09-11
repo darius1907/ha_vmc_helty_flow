@@ -124,7 +124,7 @@ async def _handle_set_special_mode(hass: HomeAssistant, call: ServiceCall) -> No
     try:
         # Use tcp_send_command directly
         command = f"VMWH{speed:07d}"
-        result = await tcp_send_command(coordinator.ip, DEFAULT_PORT, command)
+        result = await tcp_send_command(coordinator.ip, coordinator.port, command)
 
         _LOGGER.info(
             "Set special mode %s (speed %d) for %s: %s",

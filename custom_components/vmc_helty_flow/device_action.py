@@ -6,6 +6,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 
 from .const import (
+    DEFAULT_PORT,
     DOMAIN,
     FAN_SPEED_MAX_NORMAL,
     FAN_SPEED_OFF,
@@ -52,8 +53,16 @@ async def async_setup_device_actions(hass: HomeAssistant) -> None:
         if not ip:
             raise HomeAssistantError(f"Cannot find IP for device {device_id}")
 
+        # Risolve la porta configurata dal coordinator della config entry
+        port = DEFAULT_PORT
+        for entry_id in device.config_entries:
+            coordinator = hass.data.get(DOMAIN, {}).get(entry_id)
+            if coordinator is not None:
+                port = getattr(coordinator, "port", DEFAULT_PORT)
+                break
+
         # Esegue l'azione richiesta
-        await _execute_device_action(ip, action, parameters)
+        await _execute_device_action(ip, port, action, parameters)
 
     # Registra il servizio per le azioni del dispositivo
     hass.services.async_register(
@@ -64,7 +73,9 @@ async def async_setup_device_actions(hass: HomeAssistant) -> None:
     )
 
 
-async def _execute_device_action(ip: str, action: str, parameters: dict) -> None:
+async def _execute_device_action(
+    ip: str, port: int, action: str, parameters: dict
+) -> None:
     """Execute a device action."""
     actions = {
         "set_fan_speed": _set_fan_speed,
@@ -81,78 +92,78 @@ async def _execute_device_action(ip: str, action: str, parameters: dict) -> None
     if action not in actions:
         raise HomeAssistantError(f"Unknown action: {action}")
 
-    await actions[action](ip, parameters)
+    await actions[action](ip, port, parameters)
 
 
-async def _set_fan_speed(ip: str, parameters: dict) -> None:
+async def _set_fan_speed(ip: str, port: int, parameters: dict) -> None:
     """Set fan speed (0-4)."""
     speed = parameters.get("speed", 1)
     if not FAN_SPEED_OFF <= speed <= FAN_SPEED_MAX_NORMAL:
         raise HomeAssistantError("Speed must be between 0 and 4")
 
-    response = await tcp_send_command(ip, 5001, f"VMWH000000{speed}")
+    response = await tcp_send_command(ip, port, f"VMWH000000{speed}")
     if response != "OK":
         raise HomeAssistantError(f"Failed to set fan speed: {response}")
 
 
-async def _set_hyperventilation(ip: str, parameters: dict) -> None:
+async def _set_hyperventilation(ip: str, port: int, parameters: dict) -> None:
     """Set hyperventilation mode."""
     enable = parameters.get("enable", True)
     command = "VMWH0000005" if enable else "VMWH0000001"  # Enable or set to speed 1
 
-    response = await tcp_send_command(ip, 5001, command)
+    response = await tcp_send_command(ip, port, command)
     if response != "OK":
         raise HomeAssistantError(f"Failed to set hyperventilation: {response}")
 
 
-async def _set_night_mode(ip: str, parameters: dict) -> None:
+async def _set_night_mode(ip: str, port: int, parameters: dict) -> None:
     """Set night mode."""
     enable = parameters.get("enable", True)
     command = "VMWH0000006" if enable else "VMWH0000001"  # Enable or set to speed 1
 
-    response = await tcp_send_command(ip, 5001, command)
+    response = await tcp_send_command(ip, port, command)
     if response != "OK":
         raise HomeAssistantError(f"Failed to set night mode: {response}")
 
 
-async def _set_free_cooling(ip: str, parameters: dict) -> None:
+async def _set_free_cooling(ip: str, port: int, parameters: dict) -> None:
     """Set free cooling mode."""
     enable = parameters.get("enable", True)
     command = "VMWH0000007" if enable else "VMWH0000001"  # Enable or set to speed 1
 
-    response = await tcp_send_command(ip, 5001, command)
+    response = await tcp_send_command(ip, port, command)
     if response != "OK":
         raise HomeAssistantError(f"Failed to set free cooling: {response}")
 
 
-async def _set_panel_led(ip: str, parameters: dict) -> None:
+async def _set_panel_led(ip: str, port: int, parameters: dict) -> None:
     """Set panel LED state."""
     enable = parameters.get("enable", True)
     command = "VMWH0100010" if enable else "VMWH0100000"
 
-    response = await tcp_send_command(ip, 5001, command)
+    response = await tcp_send_command(ip, port, command)
     if response != "OK":
         raise HomeAssistantError(f"Failed to set panel LED: {response}")
 
 
-async def _set_sensors(ip: str, parameters: dict) -> None:
+async def _set_sensors(ip: str, port: int, parameters: dict) -> None:
     """Set sensors state."""
     enable = parameters.get("enable", True)
     command = "VMWH0300000" if enable else "VMWH0300002"
 
-    response = await tcp_send_command(ip, 5001, command)
+    response = await tcp_send_command(ip, port, command)
     if response != "OK":
         raise HomeAssistantError(f"Failed to set sensors: {response}")
 
 
-async def _reset_filter(ip: str, _parameters: dict) -> None:
+async def _reset_filter(ip: str, port: int, _parameters: dict) -> None:
     """Reset filter counter."""
-    response = await tcp_send_command(ip, 5001, "VMWH0417744")
+    response = await tcp_send_command(ip, port, "VMWH0417744")
     if response != "OK":
         raise HomeAssistantError(f"Failed to reset filter: {response}")
 
 
-async def _set_device_name(ip: str, parameters: dict) -> None:
+async def _set_device_name(ip: str, port: int, parameters: dict) -> None:
     """Set device name."""
     name = parameters.get("name", "")
     if not name or len(name) > MAX_DEVICE_NAME_LENGTH:
@@ -161,12 +172,12 @@ async def _set_device_name(ip: str, parameters: dict) -> None:
     # Rimuove caratteri non ASCII e spazi
     safe_name = "".join(c for c in name if c.isalnum() or c == "_")
 
-    response = await tcp_send_command(ip, 5001, f"VMNM {safe_name}")
+    response = await tcp_send_command(ip, port, f"VMNM {safe_name}")
     if response != "OK":
         raise HomeAssistantError(f"Failed to set device name: {response}")
 
 
-async def _set_network_config(ip: str, parameters: dict) -> None:
+async def _set_network_config(ip: str, port: int, parameters: dict) -> None:
     """Set network configuration (SSID and password)."""
     ssid = parameters.get("ssid", "")
     password = parameters.get("password", "")
@@ -185,7 +196,7 @@ async def _set_network_config(ip: str, parameters: dict) -> None:
     ssid_padded = ssid.ljust(32, "*")
     password_padded = password.ljust(32, "*")
 
-    response = await tcp_send_command(ip, 5001, f"VMSL {ssid_padded}{password_padded}")
+    response = await tcp_send_command(ip, port, f"VMSL {ssid_padded}{password_padded}")
     if response != "OK":
         raise HomeAssistantError(f"Failed to set network config: {response}")
 

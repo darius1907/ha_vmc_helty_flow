@@ -96,13 +96,15 @@ class TestExecuteDeviceAction:
     @patch("custom_components.vmc_helty_flow.device_action._set_fan_speed")
     async def test_execute_valid_action(self, mock_set_fan_speed):
         """Test executing a valid action."""
-        await _execute_device_action("192.168.1.100", "set_fan_speed", {"speed": 2})
-        mock_set_fan_speed.assert_called_once_with("192.168.1.100", {"speed": 2})
+        await _execute_device_action(
+            "192.168.1.100", 5001, "set_fan_speed", {"speed": 2}
+        )
+        mock_set_fan_speed.assert_called_once_with("192.168.1.100", 5001, {"speed": 2})
 
     async def test_execute_invalid_action(self):
         """Test executing an invalid action."""
         with pytest.raises(HomeAssistantError, match="Unknown action: invalid_action"):
-            await _execute_device_action("192.168.1.100", "invalid_action", {})
+            await _execute_device_action("192.168.1.100", 5001, "invalid_action", {})
 
 
 class TestSetFanSpeed:
@@ -113,19 +115,19 @@ class TestSetFanSpeed:
         """Test successful fan speed setting."""
         mock_tcp.return_value = "OK"
 
-        await _set_fan_speed("192.168.1.100", {"speed": 2})
+        await _set_fan_speed("192.168.1.100", 5001, {"speed": 2})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000002")
 
     async def test_set_fan_speed_invalid_speed_high(self):
         """Test fan speed setting with invalid high speed."""
         with pytest.raises(HomeAssistantError, match="Speed must be between 0 and 4"):
-            await _set_fan_speed("192.168.1.100", {"speed": 5})
+            await _set_fan_speed("192.168.1.100", 5001, {"speed": 5})
 
     async def test_set_fan_speed_invalid_speed_negative(self):
         """Test fan speed setting with invalid negative speed."""
         with pytest.raises(HomeAssistantError, match="Speed must be between 0 and 4"):
-            await _set_fan_speed("192.168.1.100", {"speed": -1})
+            await _set_fan_speed("192.168.1.100", 5001, {"speed": -1})
 
     @patch("custom_components.vmc_helty_flow.device_action.tcp_send_command")
     async def test_set_fan_speed_failure(self, mock_tcp):
@@ -133,14 +135,14 @@ class TestSetFanSpeed:
         mock_tcp.return_value = "ERROR"
 
         with pytest.raises(HomeAssistantError, match="Failed to set fan speed: ERROR"):
-            await _set_fan_speed("192.168.1.100", {"speed": 2})
+            await _set_fan_speed("192.168.1.100", 5001, {"speed": 2})
 
     @patch("custom_components.vmc_helty_flow.device_action.tcp_send_command")
     async def test_set_fan_speed_default_value(self, mock_tcp):
         """Test fan speed setting with default value."""
         mock_tcp.return_value = "OK"
 
-        await _set_fan_speed("192.168.1.100", {})
+        await _set_fan_speed("192.168.1.100", 5001, {})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000001")
 
@@ -153,7 +155,7 @@ class TestSetHyperventilation:
         """Test enabling hyperventilation."""
         mock_tcp.return_value = "OK"
 
-        await _set_hyperventilation("192.168.1.100", {"enable": True})
+        await _set_hyperventilation("192.168.1.100", 5001, {"enable": True})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000005")
 
@@ -162,7 +164,7 @@ class TestSetHyperventilation:
         """Test disabling hyperventilation."""
         mock_tcp.return_value = "OK"
 
-        await _set_hyperventilation("192.168.1.100", {"enable": False})
+        await _set_hyperventilation("192.168.1.100", 5001, {"enable": False})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000001")
 
@@ -171,7 +173,7 @@ class TestSetHyperventilation:
         """Test hyperventilation with default value."""
         mock_tcp.return_value = "OK"
 
-        await _set_hyperventilation("192.168.1.100", {})
+        await _set_hyperventilation("192.168.1.100", 5001, {})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000005")
 
@@ -183,7 +185,7 @@ class TestSetHyperventilation:
         with pytest.raises(
             HomeAssistantError, match="Failed to set hyperventilation: ERROR"
         ):
-            await _set_hyperventilation("192.168.1.100", {"enable": True})
+            await _set_hyperventilation("192.168.1.100", 5001, {"enable": True})
 
 
 class TestSetNightMode:
@@ -194,7 +196,7 @@ class TestSetNightMode:
         """Test enabling night mode."""
         mock_tcp.return_value = "OK"
 
-        await _set_night_mode("192.168.1.100", {"enable": True})
+        await _set_night_mode("192.168.1.100", 5001, {"enable": True})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000006")
 
@@ -203,7 +205,7 @@ class TestSetNightMode:
         """Test disabling night mode."""
         mock_tcp.return_value = "OK"
 
-        await _set_night_mode("192.168.1.100", {"enable": False})
+        await _set_night_mode("192.168.1.100", 5001, {"enable": False})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000001")
 
@@ -213,7 +215,7 @@ class TestSetNightMode:
         mock_tcp.return_value = "ERROR"
 
         with pytest.raises(HomeAssistantError, match="Failed to set night mode: ERROR"):
-            await _set_night_mode("192.168.1.100", {"enable": True})
+            await _set_night_mode("192.168.1.100", 5001, {"enable": True})
 
 
 class TestSetFreeCooling:
@@ -224,7 +226,7 @@ class TestSetFreeCooling:
         """Test enabling free cooling."""
         mock_tcp.return_value = "OK"
 
-        await _set_free_cooling("192.168.1.100", {"enable": True})
+        await _set_free_cooling("192.168.1.100", 5001, {"enable": True})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000007")
 
@@ -233,7 +235,7 @@ class TestSetFreeCooling:
         """Test disabling free cooling."""
         mock_tcp.return_value = "OK"
 
-        await _set_free_cooling("192.168.1.100", {"enable": False})
+        await _set_free_cooling("192.168.1.100", 5001, {"enable": False})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0000001")
 
@@ -245,7 +247,7 @@ class TestSetFreeCooling:
         with pytest.raises(
             HomeAssistantError, match="Failed to set free cooling: ERROR"
         ):
-            await _set_free_cooling("192.168.1.100", {"enable": True})
+            await _set_free_cooling("192.168.1.100", 5001, {"enable": True})
 
 
 class TestSetPanelLed:
@@ -256,7 +258,7 @@ class TestSetPanelLed:
         """Test enabling panel LED."""
         mock_tcp.return_value = "OK"
 
-        await _set_panel_led("192.168.1.100", {"enable": True})
+        await _set_panel_led("192.168.1.100", 5001, {"enable": True})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0100010")
 
@@ -265,7 +267,7 @@ class TestSetPanelLed:
         """Test disabling panel LED."""
         mock_tcp.return_value = "OK"
 
-        await _set_panel_led("192.168.1.100", {"enable": False})
+        await _set_panel_led("192.168.1.100", 5001, {"enable": False})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0100000")
 
@@ -275,7 +277,7 @@ class TestSetPanelLed:
         mock_tcp.return_value = "ERROR"
 
         with pytest.raises(HomeAssistantError, match="Failed to set panel LED: ERROR"):
-            await _set_panel_led("192.168.1.100", {"enable": True})
+            await _set_panel_led("192.168.1.100", 5001, {"enable": True})
 
 
 class TestSetSensors:
@@ -286,7 +288,7 @@ class TestSetSensors:
         """Test enabling sensors."""
         mock_tcp.return_value = "OK"
 
-        await _set_sensors("192.168.1.100", {"enable": True})
+        await _set_sensors("192.168.1.100", 5001, {"enable": True})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0300000")
 
@@ -295,7 +297,7 @@ class TestSetSensors:
         """Test disabling sensors."""
         mock_tcp.return_value = "OK"
 
-        await _set_sensors("192.168.1.100", {"enable": False})
+        await _set_sensors("192.168.1.100", 5001, {"enable": False})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0300002")
 
@@ -305,7 +307,7 @@ class TestSetSensors:
         mock_tcp.return_value = "ERROR"
 
         with pytest.raises(HomeAssistantError, match="Failed to set sensors: ERROR"):
-            await _set_sensors("192.168.1.100", {"enable": True})
+            await _set_sensors("192.168.1.100", 5001, {"enable": True})
 
 
 class TestResetFilter:
@@ -316,7 +318,7 @@ class TestResetFilter:
         """Test successful filter reset."""
         mock_tcp.return_value = "OK"
 
-        await _reset_filter("192.168.1.100", {})
+        await _reset_filter("192.168.1.100", 5001, {})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMWH0417744")
 
@@ -326,7 +328,7 @@ class TestResetFilter:
         mock_tcp.return_value = "ERROR"
 
         with pytest.raises(HomeAssistantError, match="Failed to reset filter: ERROR"):
-            await _reset_filter("192.168.1.100", {})
+            await _reset_filter("192.168.1.100", 5001, {})
 
 
 class TestSetDeviceName:
@@ -337,7 +339,7 @@ class TestSetDeviceName:
         """Test successful device name setting."""
         mock_tcp.return_value = "OK"
 
-        await _set_device_name("192.168.1.100", {"name": "Test_Device"})
+        await _set_device_name("192.168.1.100", 5001, {"name": "Test_Device"})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMNM Test_Device")
 
@@ -346,7 +348,7 @@ class TestSetDeviceName:
         """Test device name setting with special characters."""
         mock_tcp.return_value = "OK"
 
-        await _set_device_name("192.168.1.100", {"name": "Test Device@#$%"})
+        await _set_device_name("192.168.1.100", 5001, {"name": "Test Device@#$%"})
 
         mock_tcp.assert_called_once_with("192.168.1.100", 5001, "VMNM TestDevice")
 
@@ -355,7 +357,7 @@ class TestSetDeviceName:
         with pytest.raises(
             HomeAssistantError, match="Name must be between 1 and 32 characters"
         ):
-            await _set_device_name("192.168.1.100", {"name": ""})
+            await _set_device_name("192.168.1.100", 5001, {"name": ""})
 
     async def test_set_device_name_too_long(self):
         """Test device name setting with too long name."""
@@ -363,7 +365,7 @@ class TestSetDeviceName:
         with pytest.raises(
             HomeAssistantError, match="Name must be between 1 and 32 characters"
         ):
-            await _set_device_name("192.168.1.100", {"name": long_name})
+            await _set_device_name("192.168.1.100", 5001, {"name": long_name})
 
     @patch("custom_components.vmc_helty_flow.device_action.tcp_send_command")
     async def test_set_device_name_failure(self, mock_tcp):
@@ -373,7 +375,7 @@ class TestSetDeviceName:
         with pytest.raises(
             HomeAssistantError, match="Failed to set device name: ERROR"
         ):
-            await _set_device_name("192.168.1.100", {"name": "Test"})
+            await _set_device_name("192.168.1.100", 5001, {"name": "Test"})
 
 
 class TestSetNetworkConfig:
@@ -385,7 +387,7 @@ class TestSetNetworkConfig:
         mock_tcp.return_value = "OK"
 
         await _set_network_config(
-            "192.168.1.100", {"ssid": "TestWiFi", "password": "password123"}
+            "192.168.1.100", 5001, {"ssid": "TestWiFi", "password": "password123"}
         )
 
         expected_command = (
@@ -399,7 +401,7 @@ class TestSetNetworkConfig:
             HomeAssistantError, match="SSID must be between 1 and 32 characters"
         ):
             await _set_network_config(
-                "192.168.1.100", {"ssid": "", "password": "password123"}
+                "192.168.1.100", 5001, {"ssid": "", "password": "password123"}
             )
 
     async def test_set_network_config_long_ssid(self):
@@ -409,7 +411,7 @@ class TestSetNetworkConfig:
             HomeAssistantError, match="SSID must be between 1 and 32 characters"
         ):
             await _set_network_config(
-                "192.168.1.100", {"ssid": long_ssid, "password": "password123"}
+                "192.168.1.100", 5001, {"ssid": long_ssid, "password": "password123"}
             )
 
     async def test_set_network_config_empty_password(self):
@@ -418,7 +420,7 @@ class TestSetNetworkConfig:
             HomeAssistantError, match="Password must be between 8 and 32 characters"
         ):
             await _set_network_config(
-                "192.168.1.100", {"ssid": "TestWiFi", "password": ""}
+                "192.168.1.100", 5001, {"ssid": "TestWiFi", "password": ""}
             )
 
     async def test_set_network_config_short_password(self):
@@ -427,7 +429,7 @@ class TestSetNetworkConfig:
             HomeAssistantError, match="Password must be between 8 and 32 characters"
         ):
             await _set_network_config(
-                "192.168.1.100", {"ssid": "TestWiFi", "password": "short"}
+                "192.168.1.100", 5001, {"ssid": "TestWiFi", "password": "short"}
             )
 
     async def test_set_network_config_long_password(self):
@@ -437,7 +439,7 @@ class TestSetNetworkConfig:
             HomeAssistantError, match="Password must be between 8 and 32 characters"
         ):
             await _set_network_config(
-                "192.168.1.100", {"ssid": "TestWiFi", "password": long_password}
+                "192.168.1.100", 5001, {"ssid": "TestWiFi", "password": long_password}
             )
 
     @patch("custom_components.vmc_helty_flow.device_action.tcp_send_command")
@@ -449,7 +451,7 @@ class TestSetNetworkConfig:
             HomeAssistantError, match="Failed to set network config: ERROR"
         ):
             await _set_network_config(
-                "192.168.1.100", {"ssid": "TestWiFi", "password": "password123"}
+                "192.168.1.100", 5001, {"ssid": "TestWiFi", "password": "password123"}
             )
 
     @patch("custom_components.vmc_helty_flow.device_action.tcp_send_command")
@@ -461,7 +463,7 @@ class TestSetNetworkConfig:
         password_32 = "b" * 32
 
         await _set_network_config(
-            "192.168.1.100", {"ssid": ssid_32, "password": password_32}
+            "192.168.1.100", 5001, {"ssid": ssid_32, "password": password_32}
         )
 
         expected_command = f"VMSL {ssid_32}{password_32}"

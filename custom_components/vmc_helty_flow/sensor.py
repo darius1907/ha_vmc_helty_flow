@@ -909,7 +909,9 @@ class VmcHeltyNameText(VmcHeltyEntity, TextEntity):
 
     async def async_set_value(self, value: str) -> None:
         """Set new device name."""
-        response = await tcp_send_command(self.coordinator.ip, 5001, f"VMNM {value}")
+        response = await tcp_send_command(
+            self.coordinator.ip, self.coordinator.port, f"VMNM {value}"
+        )
         if response == "OK":
             await self.coordinator.async_request_refresh()
 
@@ -997,7 +999,7 @@ class VmcHeltyPasswordText(VmcHeltyEntity, TextEntity):
         password_padded = password.ljust(32, "*")
         response = await tcp_send_command(
             self.coordinator.ip,
-            5001,
+            self.coordinator.port,
             f"VMSL {ssid_padded}{password_padded}",
         )
 

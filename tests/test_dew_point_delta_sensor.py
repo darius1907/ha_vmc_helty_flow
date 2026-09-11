@@ -14,6 +14,7 @@ class TestVmcHeltyDewPointDeltaSensor:
         mock_coordinator = Mock()
         mock_coordinator.config_entry.options = {}
         mock_coordinator.ip = "192.168.1.100"
+        mock_coordinator.port = 5001
         mock_coordinator.name = "Test"
         mock_coordinator.name_slug = "vmc_helty_testvmc"
 

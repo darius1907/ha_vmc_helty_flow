@@ -30,6 +30,7 @@ def mock_coordinator():
     """Create a mock coordinator."""
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
+    coordinator.port = 5001
     coordinator.name = "VMC Test"
     coordinator.last_update_success = True
     coordinator.last_update = datetime(2023, 1, 1, 12, 0, 0)
