@@ -9,7 +9,14 @@ from homeassistant.helpers import device_registry, entity_registry
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DEFAULT_PORT, DOMAIN, MAX_UNIQUE_ID_LENGTH, MIN_UNIQUE_ID_LENGTH
+from .const import (
+    DEFAULT_PORT,
+    DEFAULT_RETRY_ATTEMPTS,
+    DEFAULT_TIMEOUT,
+    DOMAIN,
+    MAX_UNIQUE_ID_LENGTH,
+    MIN_UNIQUE_ID_LENGTH,
+)
 from .helpers import tcp_send_command
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,12 +28,16 @@ async def async_get_or_create_device(
     """Get o crea un device entry nel device registry."""
     device_registry_instance = device_registry.async_get(hass)
 
-    # Recupera l'indirizzo IP e la porta dal coordinatore
+    # Recupera IP, porta, timeout e retry configurati dal coordinatore
     ip_address = getattr(coordinator, "ip", "")
     port = getattr(coordinator, "port", DEFAULT_PORT)
+    timeout = getattr(coordinator, "timeout", DEFAULT_TIMEOUT)
+    retries = getattr(coordinator, "retry_attempts", DEFAULT_RETRY_ATTEMPTS)
 
     # Cerca di ottenere l'indirizzo MAC o un identificatore univoco
-    unique_id = await async_get_device_unique_id(hass, ip_address, port)
+    unique_id = await async_get_device_unique_id(
+        hass, ip_address, port, timeout, retries
+    )
 
     # Se non è disponibile un identificatore univoco, usa l'IP
     # (non è l'ideale, ma è meglio di niente)
@@ -34,7 +45,7 @@ async def async_get_or_create_device(
         unique_id = f"helty_flow_{ip_address.replace('.', '_')}"
 
     # Ottieni informazioni aggiuntive sul dispositivo
-    device_info = await async_get_device_info(hass, ip_address, port)
+    device_info = await async_get_device_info(hass, ip_address, port, timeout, retries)
 
     # Crea o aggiorna il device nel registry
     if coordinator.config_entry is None:
@@ -57,12 +68,18 @@ async def async_get_or_create_device(
 
 
 async def async_get_device_unique_id(
-    _hass: HomeAssistant, ip_address: str, port: int = DEFAULT_PORT
+    _hass: HomeAssistant,
+    ip_address: str,
+    port: int = DEFAULT_PORT,
+    timeout: int = DEFAULT_TIMEOUT,
+    retries: int = DEFAULT_RETRY_ATTEMPTS,
 ) -> str | None:
     """Ottieni un identificatore univoco per il dispositivo."""
     try:
         # Cerca di ottenere un identificatore dal dispositivo tramite protocollo
-        network_info = await tcp_send_command(ip_address, port, "VMSL?")
+        network_info = await tcp_send_command(
+            ip_address, port, "VMSL?", timeout, retries
+        )
 
         if network_info and network_info.startswith("VMSL"):
             unique_id = _extract_unique_id_from_network_info(network_info)
@@ -70,7 +87,7 @@ async def async_get_device_unique_id(
                 return unique_id
 
         # In alternativa, prova a ottenere il nome dispositivo come parte dell'ID
-        return await _get_device_name_based_id(ip_address, port)
+        return await _get_device_name_based_id(ip_address, port, timeout, retries)
 
     except Exception:
         _LOGGER.exception("Failed to get unique ID for device %s", ip_address)
@@ -105,10 +122,13 @@ def _extract_unique_id_from_network_info(network_info: str) -> str | None:
 
 
 async def _get_device_name_based_id(
-    ip_address: str, port: int = DEFAULT_PORT
+    ip_address: str,
+    port: int = DEFAULT_PORT,
+    timeout: int = DEFAULT_TIMEOUT,
+    retries: int = DEFAULT_RETRY_ATTEMPTS,
 ) -> str | None:
     """Get device ID based on device name."""
-    device_name = await tcp_send_command(ip_address, port, "VMNM?")
+    device_name = await tcp_send_command(ip_address, port, "VMNM?", timeout, retries)
     if device_name and device_name.startswith("VMNM"):
         parts = device_name.split(",")
         if len(parts) > 1 and parts[1]:
@@ -119,7 +139,11 @@ async def _get_device_name_based_id(
 
 
 async def async_get_device_info(
-    _hass: HomeAssistant, ip_address: str, port: int = DEFAULT_PORT
+    _hass: HomeAssistant,
+    ip_address: str,
+    port: int = DEFAULT_PORT,
+    timeout: int = DEFAULT_TIMEOUT,
+    retries: int = DEFAULT_RETRY_ATTEMPTS,
 ) -> dict[str, Any]:
     """Ottieni informazioni dettagliate sul dispositivo."""
     device_info = {
@@ -129,7 +153,9 @@ async def async_get_device_info(
 
     try:
         # Ottieni nome dispositivo
-        name_response = await tcp_send_command(ip_address, port, "VMNM?")
+        name_response = await tcp_send_command(
+            ip_address, port, "VMNM?", timeout, retries
+        )
         if name_response and name_response.startswith("VMNM"):
             parts = name_response.split(",")
             if len(parts) > 1:
@@ -137,7 +163,9 @@ async def async_get_device_info(
 
         # Cerca di ottenere la versione firmware se disponibile
         version_cmd = "VMCV?"  # Comando ipotetico per la versione, da adattare
-        version_response = await tcp_send_command(ip_address, port, version_cmd)
+        version_response = await tcp_send_command(
+            ip_address, port, version_cmd, timeout, retries
+        )
         if version_response and not version_response.startswith("ERROR"):
             # Estrai la versione dalla risposta se disponibile
             version_match = re.search(r"(\d+\.\d+\.\d+)", version_response)

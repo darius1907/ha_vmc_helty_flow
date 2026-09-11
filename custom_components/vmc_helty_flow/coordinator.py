@@ -133,17 +133,62 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             return None
 
     async def _get_status_data(self) -> str:
-        """Get device status data."""
-        try:
-            return await tcp_send_command(
-                self.ip, self.port, "VMGH?", self.timeout, self.retry_attempts
-            )
-        except VMCTimeoutError as err:
-            _LOGGER.warning("Timeout getting status from %s: %s", self.ip, err)
+        """Get device status data.
+
+        Retries up to ``retry_attempts`` times, both on connection/timeout
+        errors and on a "successful" but empty/invalid response — the VMC
+        hardware sometimes closes the connection with an empty payload
+        instead of raising a network-level error, which would otherwise
+        bypass the retry logic in ``tcp_send_command``.
+        """
+        attempts = max(1, self.retry_attempts)
+        status_response = ""
+        last_timeout_err: VMCTimeoutError | None = None
+        last_connection_err: VMCConnectionError | None = None
+
+        for attempt in range(1, attempts + 1):
+            last_timeout_err = None
+            last_connection_err = None
+            try:
+                status_response = await tcp_send_command(
+                    self.ip, self.port, "VMGH?", self.timeout
+                )
+            except VMCTimeoutError as err:
+                last_timeout_err = err
+                _LOGGER.warning(
+                    "Timeout getting status from %s (tentativo %d/%d): %s",
+                    self.ip,
+                    attempt,
+                    attempts,
+                    err,
+                )
+            except VMCConnectionError as err:
+                last_connection_err = err
+                _LOGGER.warning(
+                    "Connection error to %s (tentativo %d/%d): %s",
+                    self.ip,
+                    attempt,
+                    attempts,
+                    err,
+                )
+            else:
+                if status_response and status_response.startswith("VMGO"):
+                    return status_response
+                _LOGGER.warning(
+                    "Risposta di stato non valida da %s (tentativo %d/%d): %r",
+                    self.ip,
+                    attempt,
+                    attempts,
+                    status_response,
+                )
+
+        if last_timeout_err is not None:
             self._handle_error()
-            raise UpdateFailed(f"Timeout communicating with {self.ip}") from err
-        except VMCConnectionError as err:
-            _LOGGER.exception("Connection error to %s", self.ip)
+            raise UpdateFailed(
+                f"Timeout communicating with {self.ip}"
+            ) from last_timeout_err
+
+        if last_connection_err is not None:
             if self._consecutive_errors == 0 or self._consecutive_errors % 5 == 0:
                 try:
                     diagnostics = await validate_network_connectivity(
@@ -159,7 +204,14 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
                 except Exception as diag_err:
                     _LOGGER.debug("Unable to run network diagnostics: %s", diag_err)
             self._handle_error()
-            raise UpdateFailed(f"Connection error to {self.ip}: {err}") from err
+            raise UpdateFailed(
+                f"Connection error to {self.ip}: {last_connection_err}"
+            ) from last_connection_err
+
+        # Nessuna eccezione, ma la risposta resta non valida dopo tutti i
+        # tentativi: la gestione dell'errore/conteggio è lasciata al chiamante
+        # (_async_update_data), come per il comportamento preesistente.
+        return status_response
 
     async def _get_additional_data(self) -> dict[str, str | None]:
         """Get additional device data (sensors, name, network) with smart intervals."""
