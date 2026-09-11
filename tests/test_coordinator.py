@@ -152,3 +152,21 @@ class TestVmcHeltyCoordinator:
         assert coordinator.config_entry == self.config_entry
         assert coordinator.ip == "192.168.1.100"
         assert coordinator.name == "Test VMC"
+        assert coordinator.retry_attempts == 3
+        assert coordinator._normal_update_interval == timedelta(seconds=60)
+
+    @patch(
+        "custom_components.vmc_helty_flow.coordinator.DataUpdateCoordinator.__init__"
+    )
+    def test_coordinator_uses_configured_options(self, mock_super_init, _mock_tcp):
+        """Test che retry_attempts e scan_interval configurati vengano usati."""
+        mock_super_init.return_value = None
+        self.config_entry.options = {
+            "scan_interval": 120,
+            "retry_attempts": 5,
+        }
+
+        coordinator = VmcHeltyCoordinator(self.hass, self.config_entry)
+
+        assert coordinator.retry_attempts == 5
+        assert coordinator._normal_update_interval == timedelta(seconds=120)

@@ -103,7 +103,7 @@ class TestUpdateIntervals:
 
                 # tcp_send_command chiamato solo per i sensori
                 assert mock_tcp.call_count == 1
-                mock_tcp.assert_called_with(coordinator.ip, 5001, "VMGI?", 10)
+                mock_tcp.assert_called_with(coordinator.ip, 5001, "VMGI?", 10, 3)
 
     @pytest.mark.asyncio
     async def test_network_info_updated_after_interval(self, coordinator):

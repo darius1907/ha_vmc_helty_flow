@@ -113,7 +113,11 @@ async def _send_and_receive(
 
 
 async def tcp_send_command(
-    ip: str, port: int, command: str, timeout: int | None = None
+    ip: str,
+    port: int,
+    command: str,
+    timeout: int | None = None,
+    retries: int = 1,
 ) -> str:
     """Invia un comando TCP al dispositivo VMC e restituisce la risposta.
 
@@ -122,6 +126,9 @@ async def tcp_send_command(
         port: Porta TCP del dispositivo
         command: Comando da inviare (senza terminatori)
         timeout: Timeout in secondi (usa il default se None)
+        retries: Numero massimo di tentativi in caso di errore di
+            connessione/timeout (>=1). Gli errori di protocollo non
+            vengono ritentati.
 
     Returns:
         La risposta dal dispositivo come stringa
@@ -132,11 +139,12 @@ async def tcp_send_command(
         VMCResponseError: Se c'è un errore nella risposta
     """
     _LOGGER.info(
-        "tcp_send_command-> ip: %s, port: %s, command: %s, timeout: %s",
+        "tcp_send_command-> ip: %s, port: %s, command: %s, timeout: %s, retries: %s",
         ip,
         port,
         command,
         timeout,
+        retries,
     )
     if timeout is None:
         timeout = TCP_TIMEOUT
@@ -147,38 +155,59 @@ async def tcp_send_command(
         command = command.rstrip("\r\n")
         command += "\n\r"
 
-    try:
-        _LOGGER.debug(
-            "Connessione a %s:%s timeout: %s, comando: %s",
-            ip,
-            port,
-            timeout,
-            command.strip(),
-        )
+    attempts = max(1, retries)
 
-        reader, writer = await _establish_connection(ip, port, timeout)
-
+    for attempt in range(1, attempts + 1):
         try:
-            return await _send_and_receive(reader, writer, command, ip, port, timeout)
-        finally:
-            # Chiudi sempre la connessione
-            try:
-                writer.close()
-                await asyncio.wait_for(writer.wait_closed(), timeout=1.0)
-            except (TimeoutError, Exception) as err:
-                _LOGGER.debug("Errore durante la chiusura della connessione: %s", err)
+            _LOGGER.debug(
+                "Connessione a %s:%s timeout: %s, tentativo %d/%d, comando: %s",
+                ip,
+                port,
+                timeout,
+                attempt,
+                attempts,
+                command.strip(),
+            )
 
-    except VMCConnectionError:
-        # Rilancia le eccezioni specifiche
-        raise
-    except Exception as err:
-        # Cattura qualsiasi altra eccezione e convertila in un errore appropriato
-        _LOGGER.exception(
-            "Errore imprevisto durante la comunicazione con %s:%s", ip, port
-        )
-        raise VMCConnectionError(
-            f"Errore durante la comunicazione con {ip}:{port}: {err}"
-        ) from err
+            reader, writer = await _establish_connection(ip, port, timeout)
+
+            try:
+                return await _send_and_receive(
+                    reader, writer, command, ip, port, timeout
+                )
+            finally:
+                # Chiudi sempre la connessione
+                try:
+                    writer.close()
+                    await asyncio.wait_for(writer.wait_closed(), timeout=1.0)
+                except (TimeoutError, Exception) as err:
+                    _LOGGER.debug(
+                        "Errore durante la chiusura della connessione: %s", err
+                    )
+
+        except VMCConnectionError:
+            if attempt < attempts:
+                _LOGGER.debug(
+                    "Tentativo %d/%d fallito per %s:%s, nuovo tentativo",
+                    attempt,
+                    attempts,
+                    ip,
+                    port,
+                )
+                continue
+            # Rilancia le eccezioni specifiche dopo l'ultimo tentativo
+            raise
+        except Exception as err:
+            # Cattura qualsiasi altra eccezione e convertila in un errore appropriato
+            _LOGGER.exception(
+                "Errore imprevisto durante la comunicazione con %s:%s", ip, port
+            )
+            raise VMCConnectionError(
+                f"Errore durante la comunicazione con {ip}:{port}: {err}"
+            ) from err
+
+    # Irraggiungibile: il ciclo termina sempre con un return o un raise
+    raise VMCConnectionError(f"Errore sconosciuto comunicando con {ip}:{port}")
 
 
 async def _get_device_name(ip: str, port: int, timeout: int) -> str:
