@@ -21,6 +21,7 @@ def mock_coordinator():
     """Create a mock coordinator."""
     coordinator = MagicMock()
     coordinator.ip = "192.168.1.100"
+    coordinator.port = 5001
     coordinator.name = "VMC Test"
     coordinator.data = {
         "status": "VMGO,3,1,25,0,24",

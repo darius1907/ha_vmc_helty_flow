@@ -57,6 +57,7 @@ class TestSetSpecialModeService:
 
         # Set coordinator IP as string (not AsyncMock)
         mock_coordinator.ip = "192.168.1.100"
+        mock_coordinator.port = 5001
         mock_coordinator.async_request_refresh = AsyncMock()
 
         # Mock entity entry

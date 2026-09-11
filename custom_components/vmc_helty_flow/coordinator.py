@@ -74,6 +74,13 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         return float(room_volume)
 
     @property
+    def port(self) -> int:
+        """Return configured TCP port from config entry data."""
+        if self.config_entry is None:
+            return DEFAULT_PORT
+        return int(self.config_entry.data.get("port", DEFAULT_PORT))
+
+    @property
     def name_slug(self) -> str:
         """Return device name as a slug with vmc_helty_ prefix (safe for entity IDs)."""
         slug = re.sub(r"[^a-z0-9]+", "_", self.name.lower())
@@ -107,7 +114,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
     async def _get_status_data(self) -> str:
         """Get device status data."""
         try:
-            return await tcp_send_command(self.ip, DEFAULT_PORT, "VMGH?")
+            return await tcp_send_command(self.ip, self.port, "VMGH?")
         except VMCTimeoutError as err:
             _LOGGER.warning("Timeout getting status from %s: %s", self.ip, err)
             self._handle_error()
@@ -117,7 +124,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
             if self._consecutive_errors == 0 or self._consecutive_errors % 5 == 0:
                 try:
                     diagnostics = await validate_network_connectivity(
-                        self.ip, DEFAULT_PORT
+                        self.ip, self.port
                     )
                     _LOGGER.info(
                         "Network diagnostics for %s: ping=%s, tcp=%s, details=%s",
@@ -138,9 +145,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
 
         # Sensors data - always updated (every 60 seconds)
         try:
-            responses["sensors"] = await tcp_send_command(
-                self.ip, DEFAULT_PORT, "VMGI?"
-            )
+            responses["sensors"] = await tcp_send_command(self.ip, self.port, "VMGI?")
         except VMCConnectionError as err:
             _LOGGER.warning("Unable to read sensors from %s: %s", self.ip, err)
             responses["sensors"] = None
@@ -149,9 +154,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         time_since_name_update = current_time - self._last_name_update
         if time_since_name_update >= DEVICE_NAME_INTERVAL.total_seconds():
             try:
-                responses["name"] = await tcp_send_command(
-                    self.ip, DEFAULT_PORT, "VMNM?"
-                )
+                responses["name"] = await tcp_send_command(self.ip, self.port, "VMNM?")
                 self._last_name_update = current_time
                 if responses["name"]:
                     self._cached_data["name"] = responses["name"]
@@ -167,7 +170,7 @@ class VmcHeltyCoordinator(DataUpdateCoordinator):
         if time_since_network_update >= NETWORK_INFO_INTERVAL.total_seconds():
             try:
                 responses["network"] = await tcp_send_command(
-                    self.ip, DEFAULT_PORT, "VMSL?"
+                    self.ip, self.port, "VMSL?"
                 )
                 self._last_network_update = current_time
                 if responses["network"]:

@@ -148,7 +148,7 @@ class VmcHeltyFan(VmcHeltyEntity, FanEntity):
 
         try:
             response = await tcp_send_command(
-                self.coordinator.ip, 5001, f"VMWH000000{speed}"
+                self.coordinator.ip, self.coordinator.port, f"VMWH000000{speed}"
             )
             if response == "OK":
                 # Forza aggiornamento del coordinatore

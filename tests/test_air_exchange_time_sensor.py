@@ -25,6 +25,7 @@ class TestVmcHeltyAirExchangeTimeSensor(unittest.TestCase):
         """Set up test fixtures."""
         self.coordinator = Mock()
         self.coordinator.ip = "192.168.1.100"
+        self.coordinator.port = 5001
         self.coordinator.name_slug = "vmc_helty_testvmc"
         self.coordinator.name = "TestVMC"
         self.coordinator.room_volume = self.TEST_ROOM_VOLUME

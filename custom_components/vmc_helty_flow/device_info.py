@@ -49,7 +49,7 @@ class VmcHeltyEntity(Entity):
             model=self._device_info.get("model", "VMC Flow"),
             sw_version=self._device_info.get("sw_version"),
             hw_version=self._device_info.get("hw_version"),
-            configuration_url=f"http://{self.coordinator.ip}:5001",
+            configuration_url=f"http://{self.coordinator.ip}:{self.coordinator.port}",
             suggested_area=self._device_info.get("suggested_area"),
         )
 
