@@ -3,7 +3,7 @@
 > **Piano di sviluppo** con task tracciabili, milestone e criteri di completamento
 > **Versione**: 1.0
 > **Data inizio**: 2026-03-23
-> **Ultima revisione**: 2026-07-02 (v1.2.0 rilasciato 2026-03-30 — EASC completo; allineamento roadmap post-pausa sviluppo)
+> **Ultima revisione**: 2026-09-11 (v1.2.1 rilasciato 2026-09-11 — patch di bugfix per affidabilità comunicazione TCP)
 
 ---
 
@@ -11,7 +11,7 @@
 
 ### Stato Generale Progetto
 ```
-Versione Corrente: v1.2.0 ✅
+Versione Corrente: v1.2.1 ✅
 Prossimo Release: v1.3.0 📋
 Quality Scale: Silver ⭐⭐
 Test Coverage: 84% ✅ (gate: 65%)
@@ -23,6 +23,7 @@ Tech Debt: 2 item ⚠️ (SENS-009: monitoraggio energia reale; debug logging in
 |-----------|-------|-------------|---------------|
 | v1.1.1 | ✅ Completed | 2026-03-26 | ▓▓▓▓▓▓▓▓▓▓ 100% |
 | v1.2.0 | ✅ Completed | 2026-03-30 | ▓▓▓▓▓▓▓▓▓▓ 100% |
+| v1.2.1 | ✅ Completed (patch, non pianificata) | 2026-09-11 | ▓▓▓▓▓▓▓▓▓▓ 100% |
 | v1.3.0 | 📋 Planned | 2026-08-15 | ░░░░░░░░░░ 0% |
 | v1.4.0 | 📋 Planned | 2026-11-15 | ░░░░░░░░░░ 0% |
 | v1.5.0 | 📋 Planned | 2027-02-15 | ░░░░░░░░░░ 0% |
